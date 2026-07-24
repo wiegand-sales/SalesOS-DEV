@@ -3593,6 +3593,7 @@ function renderTeam(){
   ma.innerHTML=''
     +'<div class="content">'
     +(wiegandView==='team'?(''
+    +zielInfoBoxHtml()
     // KPI Kacheln (reiches Format wie Coaching Sessions: Trend-Pfeil + Sparkline)
     +(function(){
       var oemOk2=KPI_TARGETS.crOEM.dir==='lte'?(oemD!==null&&oemD<=KPI_TARGETS.crOEM.val):(oemD!==null&&oemD>=KPI_TARGETS.crOEM.val);var oemCol=oemD!==null&&oemOk2?'#206A72':'var(--amber-dark)';
