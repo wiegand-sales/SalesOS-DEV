@@ -297,14 +297,13 @@ tr:hover td{background:var(--bg2);}
     <div id="coachingSubNav" class="wiegand-subnav hidden">
       <div class="sb-item sb-navsub" id="nav-coaching-team" onclick="selectCoachingTeam()">Overview KPIs</div>
       <div class="sb-item sb-navsub" id="nav-coaching-overview" onclick="setCoachFilterView('overview')">Overview Coachings</div>
-      <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivität</div>
+      <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivitäten</div>
       <div id="coachingCoachSubItems"></div>
     </div>
     <div class="sb-item" id="nav-settings" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="settingsSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-settings-integrations" onclick="selectSettingsSub('integrations')">Integrationen</div>
       <div class="sb-item sb-navsub" id="nav-settings-data" onclick="selectSettingsSub('data')">Daten & Backup</div>
-      <div class="sb-item sb-navsub" id="nav-settings-log" onclick="selectSettingsSub('log')">Protokoll</div>
     </div>
   </div>
   <div class="sb-divider"></div>
@@ -685,7 +684,7 @@ function setOverviewPerfSort(key){
 }
 var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = Standard (Monatsanfang)
 var overviewChartMetric='margeGesamt';
-var settingsView='integrations'; // 'integrations' | 'data' | 'log'
+var settingsView='integrations'; // 'integrations' | 'data'
 var activityFilterPerson='ALL'; // 'ALL' | employee-id (Coach)
 var activityFilterDays=7;
 function setActivityFilterPerson(v){activityFilterPerson=v;renderActivity();}
@@ -2600,7 +2599,7 @@ function renderSidebar(){
   var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
   var na=document.getElementById('nav-coaching-activity');if(na)na.classList.toggle('active',view==='activity');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
-  ['integrations','data','log'].forEach(function(sv){
+  ['integrations','data'].forEach(function(sv){
     var el=document.getElementById('nav-settings-'+sv);if(el)el.classList.toggle('active',view==='settings'&&settingsView===sv);
   });
   // Dynamische Coach-Untermenüpunkte (SDM/SC), ersetzt die frühere horizontale Tab-Leiste in SFP Coaching
@@ -5649,8 +5648,20 @@ var CATEGORY_META={
 function renderActivity(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   var coachList=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+  var auditActionLabels={kpi_target_global:'Globale KPI-Ziele geändert',kpi_target_employee:'Individuelle KPI-Ziele geändert',employee_deactivated:'Mitarbeiter deaktiviert'};
+  var auditActionCategory={kpi_target_global:'kpi_target',kpi_target_employee:'kpi_target',employee_deactivated:'employee'};
+  var auditAsActivity=(adminAuditLog||[]).map(function(a){
+    return {
+      actorId:a.changedBy||null,
+      actorName:null,
+      category:auditActionCategory[a.action]||'kpi_target',
+      createdAt:a.changedAt,
+      description:(auditActionLabels[a.action]||a.action)+(a.details?': '+a.details:'')
+    };
+  });
+  var combinedLog=activityLog.concat(auditAsActivity).sort(function(x,y){return (y.createdAt||'').localeCompare(x.createdAt||'');});
   var cutoff=(function(){var d=new Date(today()+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-activityFilterDays);return d.toISOString().slice(0,10);})();
-  var filtered=activityLog.filter(function(a){
+  var filtered=combinedLog.filter(function(a){
     if(activityFilterPerson!=='ALL'){
       if(activityFilterPerson.indexOf('NAME:')===0){
         if(a.actorId||a.actorName!==activityFilterPerson.slice(5))return false;
@@ -5672,11 +5683,33 @@ function renderActivity(){
   }
   var maxN=100;
 
-  var h='<div class="topbar"><div class="tb-left">'
-    +'<div style="width:40px;height:40px;border-radius:9px;background:var(--purple-bg);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:16px"><i class="ti ti-activity"></i></div>'
-    +'<div><div class="tb-name">Aktivität</div><div class="tb-meta">Änderungsprotokoll · alle Nutzer</div></div></div>'
-    +'</div>'
-    +'<div class="content">';
+  // ── Petrol-Infobox: Zeitraum, Aktivitäten gesamt, Heute, aktivste Kategorie, aktivster Nutzer ──
+  var todayCount=combinedLog.filter(function(a){return (a.createdAt||'').slice(0,10)===today();}).length;
+  var catCounts={};
+  filtered.forEach(function(a){catCounts[a.category]=(catCounts[a.category]||0)+1;});
+  var topCat=Object.keys(catCounts).sort(function(a,b){return catCounts[b]-catCounts[a];})[0];
+  var topCatLabel=topCat?((CATEGORY_META[topCat]||{}).label||topCat.toUpperCase()):'—';
+  var topCatCount=topCat?catCounts[topCat]:0;
+  var userCounts={};
+  filtered.forEach(function(a){
+    var key=a.actorId||('n:'+(a.actorName||'Unbekannt'));
+    userCounts[key]=(userCounts[key]||0)+1;
+  });
+  var topUserKey=Object.keys(userCounts).sort(function(a,b){return userCounts[b]-userCounts[a];})[0];
+  var topUserName='—',topUserCount=0;
+  if(topUserKey){
+    topUserCount=userCounts[topUserKey];
+    if(topUserKey.indexOf('n:')===0)topUserName=topUserKey.slice(2);
+    else{var tu=employees.find(function(e){return e.id===topUserKey;});topUserName=tu?tu.name:'Unbekannt';}
+  }
+  var h='<div class="content">';
+  h+='<div class="month-bar" style="grid-template-columns:auto 1fr 1fr 1fr 1fr">';
+  h+='<div class="mb-month"><div class="l">Zeitraum</div><div class="v">Letzte '+activityFilterDays+' Tage</div></div>';
+  h+='<div class="mb-stat"><div class="l">Aktivitäten gesamt</div><div class="row"><span class="n">'+filtered.length+'</span></div><div class="m">im gewählten Zeitraum</div></div>';
+  h+='<div class="mb-stat"><div class="l">Heute</div><div class="row"><span class="n">'+todayCount+'</span></div><div class="m">unabhängig vom Filter</div></div>';
+  h+='<div class="mb-stat"><div class="l">Aktivste Kategorie</div><div class="row"><span class="n">'+topCatCount+'</span></div><div class="m">'+topCatLabel+'</div></div>';
+  h+='<div class="mb-stat"><div class="l">Aktivster Nutzer</div><div class="row"><span class="n">'+topUserCount+'</span></div><div class="m">'+topUserName+'</div></div>';
+  h+='</div>';
 
   // ── Chart-Karte mit Filter ──
   h+='<div class="card" style="margin-bottom:22px">';
@@ -5717,7 +5750,7 @@ function renderActivity(){
 
   // ── Verlauf-Liste ──
   h+='<div class="card">';
-  h+='<div class="card-title" style="margin-bottom:12px">Verlauf <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+filtered.length+' von '+activityLog.length+')</span></div>';
+  h+='<div class="card-title" style="margin-bottom:12px">Verlauf <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+filtered.length+' von '+combinedLog.length+')</span></div>';
   if(!filtered.length){
     h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-history-off" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Einträge</div>';
   } else {
@@ -5833,26 +5866,7 @@ function renderEinstellungen(){
     +'</div>'
     ):'')
 
-    // ══ PROTOKOLL ══
-    +(settingsView==='log'?(
-    '<div class="card">'
-    +'<div class="card-title"><i class="ti ti-history"></i> Zuletzt geänderte KPI-Ziele & Admin-Aktionen</div>'
-    +(function(){
-      if(!adminAuditLog.length)return '<div style="font-size:12px;color:var(--text3);text-align:center;padding:14px">Noch keine Änderungen protokolliert</div>';
-      var actionLabels={kpi_target_global:'Globale KPI-Ziele',kpi_target_employee:'Individuelle KPI-Ziele',employee_deactivated:'Mitarbeiter deaktiviert'};
-      return '<div style="display:flex;flex-direction:column;gap:6px">'
-        +adminAuditLog.slice(0,20).map(function(a){
-          var who=a.changedBy?(employees.find(function(e){return e.id===a.changedBy;})||{}).name:null;
-          return '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--bg2);border-radius:var(--r-md);font-size:12px">'
-            +'<span style="font-weight:600;width:150px;flex-shrink:0">'+(actionLabels[a.action]||a.action)+'</span>'
-            +'<span style="color:var(--text2);flex:1">'+(a.details||'')+'</span>'
-            +'<span style="color:var(--text3);flex-shrink:0">'+(who?who+' · ':'')+fd(a.changedAt?a.changedAt.slice(0,10):'')+'</span>'
-            +'</div>';
-        }).join('')
-        +'</div>';
-    })()
-    +'</div>'
-    ):'')
+    // ══ PROTOKOLL (entfernt, siehe Aktivitäten > Verlauf) ══
 
     // ══ ÜBER (immer sichtbar, unabhängig vom Tab) ══
     +'<div style="margin-top:24px;padding:16px 20px;background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-lg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);display:flex;align-items:center;gap:16px">'
