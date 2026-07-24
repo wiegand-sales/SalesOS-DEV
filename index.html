@@ -83,6 +83,7 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(155deg,#f2f3f0 0%
 .sec-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:11px;}
 .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;backdrop-filter:blur(8px);}
 /* KPI GRIDS */
+select{accent-color:#206A72;}select option:checked{background:#206A72;color:#fff;}
 .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}.month-bar{background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);border-radius:var(--r-lg);padding:16px 24px;display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr 1fr;align-items:start;margin-top:76px;margin-bottom:22px;box-shadow:0 12px 28px rgba(15,61,66,0.22);}.mb-month{padding-right:22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-month .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:5px;}.mb-month .v{font-size:15px;font-weight:700;color:#fff;margin-top:1px;}.mb-stat{padding:0 22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-stat:last-child{border-right:none;}.mb-stat .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:5px;}.mb-stat .row{display:flex;align-items:baseline;gap:8px;}.mb-stat .n{font-size:20px;font-weight:700;color:#fff;}.mb-stat .n-unit{font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);}.mb-stat .m{font-size:12.5px;font-weight:600;color:#7ED2DB;margin-top:2px;}.mb-total .l{color:rgba(255,255,255,0.75);}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
@@ -2960,7 +2961,7 @@ function buildOverviewTab(liste){
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
   h+='<div class="card-title" style="margin:0">Performance Trend <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+selLabel+'</span></div>';
-  h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
+  h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
   [{k:'margeGesamt',l:'Marge Gesamt'},{k:'aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Gesamt'},{k:'convOEM',l:'Opt. OEM'},{k:'upsells',l:'Opt. Upsell'},{k:'wka',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
