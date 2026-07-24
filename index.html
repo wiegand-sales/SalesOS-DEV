@@ -679,7 +679,7 @@ function setOverviewPerfSort(key){
   renderTeam();
 }
 var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = Standard (Monatsanfang)
-var overviewChartMetric='crOEM';
+var overviewChartMetric='margeGesamt';
 var settingsView='integrations'; // 'integrations' | 'data' | 'log'
 var activityFilterPerson='ALL'; // 'ALL' | employee-id (Coach)
 var activityFilterDays=7;
@@ -2961,7 +2961,7 @@ function buildOverviewTab(liste){
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
   h+='<div class="card-title" style="margin:0">Performance Trend <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+selLabel+'</span></div>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
-  [{k:'aktivitaeten',l:'Aktivitäten'},{k:'convOEM',l:'Conv. OEM'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'},{k:'upsells',l:'Upsells'},{k:'wka',l:'WKA'},{k:'margeGesamt',l:'Marge'}].forEach(function(it){
+  [{k:'margeGesamt',l:'Marge Gesamt'},{k:'aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Gesamt'},{k:'convOEM',l:'Opt. OEM'},{k:'upsells',l:'Opt. Upsell'},{k:'wka',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
   h+='</select>';
@@ -3220,15 +3220,16 @@ function buildOverviewTab(liste){
       crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#206A72'},
       crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#206A72'},
       aktivitaeten:{f:'aktivitaeten',l:'Aktivitäten',c:'#206A72'},
-      convOEM:    {f:'convOEM',    l:'Conv. OEM',c:'#206A72'},
-      upsells:    {f:'upsells',    l:'Upsells',  c:'#206A72'},
-      wka:        {f:'wka',        l:'WKA',      c:'#206A72'},
-      margeGesamt:{f:'margeGesamt',l:'Marge €',  c:'#206A72'}
+      optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#206A72'},
+      convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#206A72'},
+      upsells:    {f:'upsells',    l:'Opt. Upsell',c:'#206A72'},
+      wka:        {f:'wka',        l:'Opt. WKA', c:'#206A72'},
+      margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#206A72'}
     };
     var m=mMap[metric]||mMap.crOEM;
     window._overviewChartData=null;
     if(!allRows||!allRows.length)return;
-    var sumMetrics=['aktivitaeten','margeGesamt','convOEM','upsells','wka'];
+    var sumMetrics=['aktivitaeten','margeGesamt','optGesamt','convOEM','upsells','wka'];
     var useSum=sumMetrics.indexOf(metric)>=0;
     // Stufe 1: pro Kalendertag zusammenfassen (bei "Alle" über Mitarbeiter kombiniert)
     var byDate={};
