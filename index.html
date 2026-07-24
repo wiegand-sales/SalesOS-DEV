@@ -291,10 +291,15 @@ tr:hover td{background:var(--bg2);}
     <div class="sb-item" id="nav-team" onclick="toggleWiegandNav()"><div class="sb-icon"><i class="ti ti-layout-grid"></i></div> SFP Wiegand <i class="ti ti-chevron-up" id="wiegandNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="wiegandSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Overview</div>
-      <div class="sb-item sb-navsub" id="nav-team-team" onclick="selectWiegandSub('team')">Team</div>
       <div class="sb-item sb-navsub" id="nav-team-ziel" onclick="selectWiegandSub('ziel')">KPIs</div>
     </div>
-    <div class="sb-item" id="nav-coaching" onclick="showView('coaching')"><div class="sb-icon"><i class="ti ti-calendar-event"></i></div> SFP Coaching</div>
+    <div class="sb-item" id="nav-coaching" onclick="toggleCoachingNav()"><div class="sb-icon"><i class="ti ti-calendar-event"></i></div> SFP Coaching <i class="ti ti-chevron-down" id="coachingNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
+    <div id="coachingSubNav" class="wiegand-subnav hidden">
+      <div class="sb-item sb-navsub" id="nav-coaching-overview" onclick="setCoachFilterView('overview')">Overview</div>
+      <div class="sb-item sb-navsub" id="nav-coaching-team" onclick="selectCoachingTeam()">Team</div>
+      <div class="sb-item sb-navsub" id="nav-coaching-coverage" onclick="setCoachFilterView('coverage')">Coverage</div>
+      <div id="coachingCoachSubItems"></div>
+    </div>
     <div class="sb-item" id="nav-activity" onclick="showView('activity')"><div class="sb-icon"><i class="ti ti-activity"></i></div> Aktivität</div>
     <div class="sb-item" id="nav-settings" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="settingsSubNav" class="wiegand-subnav">
@@ -692,7 +697,7 @@ function toggleSettingsNav(){
   settingsNavOpen=!settingsNavOpen;
   var sub=document.getElementById('settingsSubNav');if(sub)sub.classList.toggle('hidden',!settingsNavOpen);
   var chev=document.getElementById('settingsNavChevron');if(chev)chev.className='ti ti-chevron-'+(settingsNavOpen?'up':'down');
-  if(settingsNavOpen)closeWiegandSubnav();
+  if(settingsNavOpen){closeWiegandSubnav();closeCoachingSubnav();}
   selectSettingsSub(settingsView);
 }
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
@@ -856,7 +861,7 @@ sb.auth.onAuthStateChange(function(event, session){
   if(session){ initAppAfterLogin(); }
 });
 
-function setCoachFilterView(v){coachFilterView=v;renderCoachingAnsicht();}
+function setCoachFilterView(v){coachFilterView=v;view='coaching';coachingNavOpen=true;renderSidebar();renderMain();}
 // Coach-Wirksamkeit: für jede abgeschlossene Session mit Coach + Ziel-KPI wird die
 // Ø-Veränderung 14 Tage vor vs. nach der Session berechnet (in Zielrichtung normalisiert:
 // positiv = Bewegung Richtung Ziel, unabhängig davon ob das KPI "mind." oder "max." ist).
@@ -1244,15 +1249,6 @@ function renderCoachingAnsicht(){
     '<div><div class="tb-name">SFP Coaching</div><div class="tb-meta">'+liste.length+' Mitarbeiter · '+gep.length+' geplant · '+abg.length+' abgeschlossen</div></div></div>'+
     '<button class="btn btn-primary" onclick="openSessionModal(0)"><i class="ti ti-plus"></i> Session planen</button>'+
     '</div>';
-  h+='<div class="tab-bar">';
-  h+='<div class="tab'+(coachFilterView==='overview'?' active':'')+'" onclick="setCoachFilterView(\'overview\')">Overview</div>';
-  h+='<div class="tab'+(coachFilterView==='coverage'?' active':'')+'" onclick="setCoachFilterView(\'coverage\')">Coverage</div>';
-  if(coachList.length){
-    coachList.forEach(function(c){
-      h+='<div class="tab'+(coachFilterView===c.id?' active':'')+'" onclick="setCoachFilterView(\''+c.id+'\')">'+c.name.split(' ')[0]+'</div>';
-    });
-  }
-  h+='</div>';
   h+='<div class="content">';
 
   if(coachFilterView==='coverage'){
@@ -2554,16 +2550,32 @@ function renderSidebar(){
   var el=document.getElementById('empList');
   el.innerHTML='';
   document.querySelectorAll('.sb-item').forEach(function(x){x.classList.remove('active');});
-  if(view==='team')document.getElementById('nav-team').classList.add('active');
+  var isTeamTab=(view==='team'&&wiegandView==='team');
+  if(view==='team'&&!isTeamTab)document.getElementById('nav-team').classList.add('active');
   var nto=document.getElementById('nav-team-overview');if(nto)nto.classList.toggle('active',view==='team'&&wiegandView==='overview');
-  var ntt=document.getElementById('nav-team-team');if(ntt)ntt.classList.toggle('active',view==='team'&&wiegandView==='team');
   var ntz=document.getElementById('nav-team-ziel');if(ntz)ntz.classList.toggle('active',view==='team'&&wiegandView==='ziel');
-  var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching');
+  var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab);
+  var nco=document.getElementById('nav-coaching-overview');if(nco)nco.classList.toggle('active',view==='coaching'&&coachFilterView==='overview');
+  var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
+  var ncv=document.getElementById('nav-coaching-coverage');if(ncv)ncv.classList.toggle('active',view==='coaching'&&coachFilterView==='coverage');
   var na=document.getElementById('nav-activity');if(na)na.classList.toggle('active',view==='activity');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
   ['integrations','data','log'].forEach(function(sv){
     var el=document.getElementById('nav-settings-'+sv);if(el)el.classList.toggle('active',view==='settings'&&settingsView===sv);
   });
+  // Dynamische Coach-Untermenüpunkte (SDM/SC), ersetzt die frühere horizontale Tab-Leiste in SFP Coaching
+  var coachSubEl=document.getElementById('coachingCoachSubItems');
+  if(coachSubEl){
+    coachSubEl.innerHTML='';
+    var coachListSb=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+    coachListSb.forEach(function(c){
+      var d=document.createElement('div');
+      d.className='sb-item sb-navsub'+((view==='coaching'&&coachFilterView===c.id)?' active':'');
+      d.textContent=c.name.split(' ')[0];
+      d.onclick=(function(cid){return function(){setCoachFilterView(cid);};})(c.id);
+      coachSubEl.appendChild(d);
+    });
+  }
   var HIDDEN=[];
   var visible=activeOrRecentlyEndedEmployees().filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
   // Mitarbeiter in Onboarding-Phase kommen alle in eine Gruppe -- AUSSER VLC (Valencia):
@@ -2642,6 +2654,7 @@ function showView(v){
   view=v;
   if(v!=='team')closeWiegandSubnav();
   if(v!=='settings')closeSettingsSubnav();
+  if(v!=='coaching'&&v!=='team')closeCoachingSubnav();
   renderSidebar();renderMain();
 }
 function closeWiegandSubnav(){
@@ -2654,15 +2667,35 @@ function closeSettingsSubnav(){
   var sub=document.getElementById('settingsSubNav');if(sub)sub.classList.add('hidden');
   var chev=document.getElementById('settingsNavChevron');if(chev)chev.className='ti ti-chevron-down';
 }
+function closeCoachingSubnav(){
+  coachingNavOpen=false;
+  var sub=document.getElementById('coachingSubNav');if(sub)sub.classList.add('hidden');
+  var chev=document.getElementById('coachingNavChevron');if(chev)chev.className='ti ti-chevron-down';
+}
 var wiegandNavOpen=true;
 function toggleWiegandNav(){
   wiegandNavOpen=!wiegandNavOpen;
   var sub=document.getElementById('wiegandSubNav');if(sub)sub.classList.toggle('hidden',!wiegandNavOpen);
   var chev=document.getElementById('wiegandNavChevron');if(chev)chev.className='ti ti-chevron-'+(wiegandNavOpen?'up':'down');
-  if(wiegandNavOpen)closeSettingsSubnav();
+  if(wiegandNavOpen){closeSettingsSubnav();closeCoachingSubnav();}
+  if(wiegandView==='team')wiegandView='overview'; // 'team' gehoert jetzt zu SFP Coaching, nicht mehr zu SFP Wiegand
   selectWiegandSub(wiegandView);
 }
 function selectWiegandSub(v){wiegandView=v;view='team';renderSidebar();renderMain();}
+var coachingNavOpen=false;
+function toggleCoachingNav(){
+  coachingNavOpen=!coachingNavOpen;
+  var sub=document.getElementById('coachingSubNav');if(sub)sub.classList.toggle('hidden',!coachingNavOpen);
+  var chev=document.getElementById('coachingNavChevron');if(chev)chev.className='ti ti-chevron-'+(coachingNavOpen?'up':'down');
+  if(coachingNavOpen){closeWiegandSubnav();closeSettingsSubnav();}
+  if(coachingNavOpen){
+    if(view==='team'&&wiegandView==='team'){renderSidebar();renderMain();}
+    else{setCoachFilterView(coachFilterView);}
+  } else {
+    renderSidebar();
+  }
+}
+function selectCoachingTeam(){wiegandView='team';view='team';coachingNavOpen=true;renderSidebar();renderMain();}
 function renderMain(){if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
 
 // ── TEAM VIEW ──
