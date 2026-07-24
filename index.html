@@ -6868,7 +6868,12 @@ function importCSV(file){
   var reader=new FileReader();
   reader.onload=function(e){
     try{
-      var lines=e.target.result.split(/\r?\n/).filter(function(l){return l.trim();});
+      // Excel exportiert deutsche CSVs meist in Windows-1252 (Umlaute werden sonst zu "?"/Mojibake).
+      // UTF-8-BOM pruefen; falls vorhanden UTF-8 nutzen, sonst Windows-1252 dekodieren.
+      var bytes=new Uint8Array(e.target.result);
+      var hasBom=bytes.length>=3&&bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF;
+      var text=new TextDecoder(hasBom?'utf-8':'windows-1252').decode(hasBom?bytes.subarray(3):bytes);
+      var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
       if(lines.length<2){if(statusEl)statusEl.textContent='Keine Datenzeilen gefunden.';return;}
       // Trennzeichen automatisch erkennen: deutsches Excel exportiert bei Komma-Dezimalzahlen oft mit Semikolon
       var delim=(lines[0].split(';').length>lines[0].split(',').length)?';':',';
@@ -6936,7 +6941,7 @@ function importCSV(file){
       if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Fehler beim Verarbeiten: '+ex.message;}
     }
   };
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
 }
 
 function saveFTP(){
