@@ -2178,6 +2178,67 @@ function kpiZieleHtml(){
     +'</div></div>';
 }
 // ── Zielvereinbarung: volle Jahres-/Wochenansicht (unter SFP Wiegand > Zielvereinbarung) ──
+// ── Zielvereinbarung: Petrol-Infobox (Zeitraum, Jahr, Monat, Ø/Monat, Ist/Soll Monat, Ist/Soll Jahr) ──
+// Nutzt dieselben .month-bar/.mb-stat-Klassen wie die Overview-Monatsleiste (buildMonthBar) - keine neuen CSS-Regeln noetig.
+function zielInfoBoxHtml(){
+  var HIDDEN=[];
+  var liste=employees.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
+  var year=today().slice(0,4);
+  var curMonthNum=+today().slice(5,7);
+  var mk=today().slice(0,7);
+  var monthLabel=MONTH_NAMES_ZIEL[curMonthNum-1]+' '+year;
+  var eur=function(v){return '€ '+Math.round(v).toLocaleString('de-DE');};
+
+  function istForMonth(mkey){
+    var sum=0;
+    liste.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if((x.date||'').slice(0,7)!==mkey)return;
+        sum+=x.margeGesamt||x.margin||0;
+      });
+    });
+    return sum;
+  }
+  function zielForMonth(mkey){
+    var wMeta=getMonthWeeksZiel(mkey);
+    var mRec=zielStore[mkey]||{};
+    var mVisible=liste.filter(function(e){return empActiveInZielMonth(e,mkey);});
+    var sum=0;
+    mVisible.forEach(function(e){
+      var r=mRec[e.id]||{};
+      var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
+      var monthSum=weeks.reduce(function(a,b){return a+b;},0);
+      var optTag=r.optTag!=null?r.optTag:0;
+      var margeOpt=r.margeOpt!=null?r.margeOpt:0;
+      sum+=monthSum*optTag*margeOpt;
+    });
+    return sum;
+  }
+
+  var monatIst=istForMonth(mk);
+  var monatZiel=zielForMonth(mk);
+
+  var jahrIst=0,jahrZiel=0,monthsCount=0;
+  for(var m=1;m<=curMonthNum;m++){
+    var mkey=year+'-'+(m<10?'0'+m:m);
+    jahrIst+=istForMonth(mkey);
+    jahrZiel+=zielForMonth(mkey);
+    monthsCount++;
+  }
+  var avgIst=monthsCount?jahrIst/monthsCount:0;
+  var avgZiel=monthsCount?jahrZiel/monthsCount:0;
+  var pctMonat=monatZiel>0?Math.round(monatIst/monatZiel*100):(monatIst>0?100:0);
+  var pctJahr=jahrZiel>0?Math.round(jahrIst/jahrZiel*100):(jahrIst>0?100:0);
+
+  return '<div class="month-bar">'
+    +'<div class="mb-month"><div class="l">Zeitraum</div><div class="v">'+monthLabel+'</div></div>'
+    +'<div class="mb-stat"><div class="l">Jahr</div><div class="row"><span class="n">'+eur(jahrIst)+'</span></div><div class="m">Ziel: '+eur(jahrZiel)+'</div></div>'
+    +'<div class="mb-stat"><div class="l">Monat</div><div class="row"><span class="n">'+eur(monatIst)+'</span></div><div class="m">Ziel: '+eur(monatZiel)+'/Mon.</div></div>'
+    +'<div class="mb-stat"><div class="l">Ø pro Monat</div><div class="row"><span class="n">'+eur(avgIst)+'</span></div><div class="m">Ziel: '+eur(avgZiel)+'/Mon.</div></div>'
+    +'<div class="mb-stat"><div class="l">Ist/Soll Monat</div><div class="row"><span class="n">'+pctMonat+'%</span></div><div class="m">'+eur(monatIst)+' / '+eur(monatZiel)+'</div></div>'
+    +'<div class="mb-stat"><div class="l">Ist/Soll Jahr</div><div class="row"><span class="n">'+pctJahr+'%</span></div><div class="m">'+eur(jahrIst)+' / '+eur(jahrZiel)+'</div></div>'
+    +'</div>';
+}
 function zielvereinbarungHtml(){
   var GH='background:var(--bg2);padding:9px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;display:flex;align-items:center';
   var GD='padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;min-width:0';
@@ -2299,7 +2360,8 @@ function zielvereinbarungHtml(){
     +'<div style="font-weight:800;padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
     +'<div style="font-weight:800;color:var(--purple-dark);padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearTargetSum).toLocaleString('de-DE')+'</div>'
     +'</div>';
-  return zielverlaufJahrChartHtml()
+  return zielInfoBoxHtml()
+    +zielverlaufJahrChartHtml()
     +'<div class="card">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
     +'<div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung</div>'
