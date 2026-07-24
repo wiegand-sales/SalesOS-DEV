@@ -3689,17 +3689,18 @@ function renderTeam(){
   function teamGetPerf(id){return customActive?getPerfRange(id,fromBound,toBound):getPerf(id,days);}
   var HIDDEN=[];
   var allVisible=activeOrRecentlyEndedEmployees().filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
+  var allVisibleActive=employees.filter(function(e){return e.active!==false&&HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
   var inactiveAll=employees.filter(function(e){return e.active===false&&HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
-  var onboardingEmpsT=allVisible.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';});
+  var onboardingEmpsT=allVisibleActive.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';});
   var FDEFS=[
-    {key:'ALL',    label:'Alle',       n:allVisible.length},
-    {key:'SE',     label:'SE',         n:allVisible.filter(function(e){return e.role==='SE'&&e.phase!=='Onboarding';}).length},
-    {key:'SR',     label:'SR',         n:allVisible.filter(function(e){return e.role==='SR'&&e.phase!=='Onboarding';}).length},
-    {key:'VLC',    label:'VLC',        n:allVisible.filter(function(e){return e.role==='VLC';}).length},
+    {key:'ALL',    label:'Alle',       n:allVisibleActive.length},
+    {key:'SE',     label:'SE',         n:allVisibleActive.filter(function(e){return e.role==='SE'&&e.phase!=='Onboarding';}).length},
+    {key:'SR',     label:'SR',         n:allVisibleActive.filter(function(e){return e.role==='SR'&&e.phase!=='Onboarding';}).length},
+    {key:'VLC',    label:'VLC',        n:allVisibleActive.filter(function(e){return e.role==='VLC';}).length},
     {key:'OB',     label:'Onboarding', n:onboardingEmpsT.length},
     {key:'INAKTIV',label:'Inaktiv',    n:inactiveAll.length},
   ];
-  var list=teamFilter==='INAKTIV'?inactiveAll:teamFilter==='ALL'?allVisible:teamFilter==='OB'?allVisible.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';}):teamFilter==='VLC'?allVisible.filter(function(e){return e.role==='VLC';}):allVisible.filter(function(e){return e.role===teamFilter&&e.phase!=='Onboarding';});
+  var list=teamFilter==='INAKTIV'?inactiveAll:teamFilter==='ALL'?allVisibleActive:teamFilter==='OB'?allVisibleActive.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';}):teamFilter==='VLC'?allVisibleActive.filter(function(e){return e.role==='VLC';}):allVisibleActive.filter(function(e){return e.role===teamFilter&&e.phase!=='Onboarding';});
   var allP=list.map(function(e){return teamGetPerf(e.id);}).reduce(function(a,b){return a.concat(b);},[]);
   function tAvg(key){if(!allP.length)return null;return allP.reduce(function(a,x){return a+x[key];},0)/allP.length;}
   var totalAlerts=list.reduce(function(a,e){return a+checkAlerts(e.id).length;},0);
