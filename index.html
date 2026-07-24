@@ -83,7 +83,7 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(155deg,#f2f3f0 0%
 .sec-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:11px;}
 .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;backdrop-filter:blur(8px);}
 /* KPI GRIDS */
-.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}.month-bar{background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);border-radius:var(--r-lg);padding:16px 24px;display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr;align-items:center;margin-top:76px;margin-bottom:22px;box-shadow:0 12px 28px rgba(15,61,66,0.22);}.mb-month{padding-right:22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-month .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;}.mb-month .v{font-size:15px;font-weight:700;color:#fff;margin-top:1px;}.mb-stat{padding:0 22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-stat:last-child{border-right:none;}.mb-stat .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:5px;}.mb-stat .row{display:flex;align-items:baseline;gap:8px;}.mb-stat .n{font-size:20px;font-weight:700;color:#fff;}.mb-stat .n-unit{font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);}.mb-stat .m{font-size:12.5px;font-weight:600;color:#7ED2DB;margin-top:2px;}.mb-total .l{color:rgba(255,255,255,0.75);}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}.month-bar{background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);border-radius:var(--r-lg);padding:16px 24px;display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr 1fr;align-items:start;margin-top:76px;margin-bottom:22px;box-shadow:0 12px 28px rgba(15,61,66,0.22);}.mb-month{padding-right:22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-month .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:5px;}.mb-month .v{font-size:15px;font-weight:700;color:#fff;margin-top:1px;}.mb-stat{padding:0 22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-stat:last-child{border-right:none;}.mb-stat .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:5px;}.mb-stat .row{display:flex;align-items:baseline;gap:8px;}.mb-stat .n{font-size:20px;font-weight:700;color:#fff;}.mb-stat .n-unit{font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);}.mb-stat .m{font-size:12.5px;font-weight:600;color:#7ED2DB;margin-top:2px;}.mb-total .l{color:rgba(255,255,255,0.75);}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
 .g2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}.section-hdr{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;}.funnel-wrap{display:flex;flex-direction:column;gap:5px;padding-top:2px;}.donut-wrap{display:flex;gap:24px;align-items:center;flex-wrap:wrap;}.donut-legend{display:flex;flex-direction:column;gap:9px;flex:1;min-width:140px;}.donut-legend-item{display:flex;align-items:center;gap:9px;font-size:12.5px;}.donut-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}.donut-legend-name{flex:1;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.donut-legend-val{font-weight:700;color:var(--text);}.donut-legend-pct{font-size:11px;color:var(--text3);width:34px;text-align:right;}
@@ -2483,6 +2483,19 @@ function buildMonthBar(liste){
     });
   });
   var gesamtAnzahl=sums.convOEM+sums.upsells+sums.wka;
+  // Ziel Marge/Mon. team-weit fuer den aktuellen Kalendermonat (gleiche Berechnung wie Zielvereinbarung-Jahresverlauf)
+  var wMeta=getMonthWeeksZiel(mk);
+  var mRec=zielStore[mk]||{};
+  var mVisible=liste.filter(function(e){return empActiveInZielMonth(e,mk);});
+  var zielMargeSum=0;
+  mVisible.forEach(function(e){
+    var r=mRec[e.id]||{};
+    var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
+    var monthSum=weeks.reduce(function(a,b){return a+b;},0);
+    var optTag=r.optTag!=null?r.optTag:0;
+    var margeOpt=r.margeOpt!=null?r.margeOpt:0;
+    zielMargeSum+=monthSum*optTag*margeOpt;
+  });
   var eur=function(v){return '€ '+Math.round(v).toLocaleString('de-DE');};
   var monthLabel=MONTH_NAMES_DE[new Date(today()+'T00:00:00Z').getUTCMonth()]+' '+today().slice(0,4);
   return '<div class="month-bar">'
@@ -2491,6 +2504,7 @@ function buildMonthBar(liste){
     +'<div class="mb-stat"><div class="l">Upsells</div><div class="row"><span class="n">'+sums.upsells+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeUpsell)+' Marge</div></div>'
     +'<div class="mb-stat"><div class="l">WKA</div><div class="row"><span class="n">'+sums.wka+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeWKA)+' Marge</div></div>'
     +'<div class="mb-stat mb-total"><div class="l">Gesamt</div><div class="row"><span class="n">'+gesamtAnzahl+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeGesamt)+' Marge</div></div>'
+    +'<div class="mb-stat mb-margin"><div class="l">Margenerhöhung</div><div class="row"><span class="n">'+eur(sums.margeGesamt)+'</span></div><div class="m">Ziel: '+eur(zielMargeSum)+'/Mon.</div></div>'
     +'</div>';
 }
 // ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
