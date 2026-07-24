@@ -306,9 +306,16 @@ tr:hover td{background:var(--bg2);}
   </div>
 </div>
 <div class="sidebar">
-  <div class="sb-header" style="position:relative">
+  <div class="sb-header">
     <div class="sb-logo"><div class="sb-brand-badge">SO</div><span class="sb-title">Sales OS</span></div>
-    <button onclick="logout()" title="Abmelden" style="position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:4px"><i class="ti ti-logout"></i></button>
+    <div id="sbProfileRow" style="display:flex;align-items:center;gap:8px;margin-top:12px">
+      <div class="av" id="sbProfileAvatar" style="width:30px;height:30px;font-size:12px;background:var(--purple-bg);color:var(--purple);flex-shrink:0">?</div>
+      <div style="flex:1;min-width:0">
+        <div id="sbProfileName" style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)">—</div>
+        <div id="sbProfileRole" style="font-size:11px;color:var(--text3)">—</div>
+      </div>
+      <button onclick="logout()" title="Abmelden" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:4px;flex-shrink:0"><i class="ti ti-logout"></i></button>
+    </div>
   </div>
   <div class="sb-nav">
     <div class="sb-item" id="nav-team" onclick="toggleWiegandNav()"><div class="sb-icon"><i class="ti ti-layout-grid"></i></div> SFP Wiegand <i class="ti ti-chevron-up" id="wiegandNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
@@ -2820,6 +2827,23 @@ function renderSidebar(){
   var el=document.getElementById('empList');
   el.innerHTML='';
   document.querySelectorAll('.sb-item').forEach(function(x){x.classList.remove('active');});
+  (function(){
+    var avatarEl=document.getElementById('sbProfileAvatar'),nameEl=document.getElementById('sbProfileName'),roleEl=document.getElementById('sbProfileRole');
+    if(!avatarEl)return;
+    if(currentCoach){
+      var c=COLORS[currentCoach.color%COLORS.length];
+      avatarEl.style.background=c.bg;avatarEl.style.color=c.text;
+      avatarEl.textContent=ini(currentCoach.name);
+      nameEl.textContent=currentCoach.name;
+      roleEl.textContent=currentCoach.role==='SDM'?'Coach':'Coach';
+    } else if(currentAuthUser){
+      var adminName=ADMIN_NAME_MAP[currentAuthUser.email]||currentAuthUser.email||'Admin';
+      avatarEl.style.background='var(--purple-bg)';avatarEl.style.color='var(--purple)';
+      avatarEl.textContent=ini(adminName);
+      nameEl.textContent=adminName;
+      roleEl.textContent='Admin';
+    }
+  })();
   var isTeamTab=(view==='team'&&wiegandView==='team');
   if(view==='team'&&!isTeamTab)document.getElementById('nav-team').classList.add('active');
   var nto=document.getElementById('nav-team-overview');if(nto)nto.classList.toggle('active',view==='team'&&wiegandView==='overview');
