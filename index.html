@@ -889,9 +889,6 @@ function initAppAfterLogin(){
 
 sb.auth.getSession().then(function(res){
   if(res.data.session){ initAppAfterLogin(); }
-  else {
-    document.getElementById('auth-form').style.display = 'block';
-  }
 });
 sb.auth.onAuthStateChange(function(event, session){
   if(session){ initAppAfterLogin(); }
