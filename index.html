@@ -5735,16 +5735,14 @@ function renderActivity(){
     days.forEach(function(d){
       var pct=Math.max(2,Math.round(d.n/maxN*100));
       h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">'
-        +(activityFilterDays<=30?'<div style="font-size:10px;color:var(--text3);margin-bottom:3px">'+(d.n||'')+'</div>':'')
+        +'<div style="font-size:10px;color:var(--text3);margin-bottom:3px;line-height:1.2">'+(activityFilterDays<=30?(d.n||'\u00A0'):'\u00A0')+'</div>'
         +'<div style="width:100%;background:linear-gradient(180deg,#5FBAC4,#206A72);border-radius:3px 3px 0 0;height:'+pct+'%" title="'+fd(d.ds)+': '+d.n+'"></div>'
         +'</div>';
     });
     h+='</div>';
-    if(activityFilterDays<=30){
-      h+='<div style="display:flex;gap:6px;padding:0 4px;margin-top:6px">';
-      days.forEach(function(d){h+='<div style="flex:1;text-align:center;font-size:10px;color:var(--text3)">'+d.wd+'</div>';});
-      h+='</div>';
-    }
+    h+='<div style="display:flex;gap:6px;padding:0 4px;margin-top:6px">';
+    days.forEach(function(d){h+='<div style="flex:1;text-align:center;font-size:10px;color:var(--text3)">'+(activityFilterDays<=30?d.wd:'\u00A0')+'</div>';});
+    h+='</div>';
   }
   h+='</div>';
 
