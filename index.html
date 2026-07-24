@@ -84,6 +84,29 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(155deg,#f2f3f0 0%
 .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;backdrop-filter:blur(8px);}
 /* KPI GRIDS */
 select{accent-color:#206A72;}select option:checked{background:#206A72;color:#fff;}
+.wizard-overlay{position:fixed;inset:0;background:rgba(15,40,44,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.wizard-overlay.hidden{display:none;}
+.wizard-card{width:420px;max-width:100%;min-height:460px;border-radius:20px;overflow:hidden;background:linear-gradient(160deg,#0c3b40 0%,#164e54 45%,#1d6169 100%);color:#fff;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.4);position:relative;font-family:Inter,sans-serif;}
+.wizard-skip{position:absolute;top:16px;right:18px;color:rgba(255,255,255,.6);font-size:12px;cursor:pointer;background:none;border:none;font-family:inherit;}
+.wizard-skip:hover{color:#fff;}
+.wizard-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 34px 24px;gap:12px;}
+.wizard-icon{width:60px;height:60px;border-radius:16px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:4px;}
+.wizard-title{font-size:19px;font-weight:800;}
+.wizard-sub{font-size:13px;color:rgba(255,255,255,.7);max-width:290px;line-height:1.5;}
+.wizard-stat{font-size:42px;font-weight:800;line-height:1;}
+.wizard-stagerow{display:flex;gap:12px;margin-top:6px;}
+.wizard-stagebox{background:rgba(255,255,255,.12);border-radius:12px;padding:14px;min-width:78px;}
+.wizard-stagebox strong{display:block;font-size:24px;font-weight:800;}
+.wizard-stagebox span{font-size:9.5px;color:rgba(255,255,255,.65);}
+.wizard-taskrow{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;width:100%;font-size:12.5px;margin-bottom:7px;}
+.wizard-taskrow i{flex-shrink:0;color:rgba(255,255,255,.7);}
+.wizard-quote{font-size:18px;font-weight:700;line-height:1.55;font-style:italic;max-width:320px;}
+.wizard-footer{padding:18px 26px 22px;display:flex;align-items:center;justify-content:space-between;}
+.wizard-dots{display:flex;gap:6px;}
+.wizard-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .2s;}
+.wizard-dot.active{background:#fff;width:18px;border-radius:4px;}
+.wizard-next-btn{background:#fff;color:#174C52;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;}
+.wizard-next-btn:hover{background:#f0f0f0;}
 .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}.month-bar{background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);border-radius:var(--r-lg);padding:16px 24px;display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr 1fr;align-items:start;margin-top:76px;margin-bottom:22px;box-shadow:0 12px 28px rgba(15,61,66,0.22);}.mb-month{padding-right:22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-month .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:5px;}.mb-month .v{font-size:15px;font-weight:700;color:#fff;margin-top:1px;}.mb-stat{padding:0 22px;border-right:1px solid rgba(255,255,255,0.14);}.mb-stat:last-child{border-right:none;}.mb-stat .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:5px;}.mb-stat .row{display:flex;align-items:baseline;gap:8px;}.mb-stat .n{font-size:20px;font-weight:700;color:#fff;}.mb-stat .n-unit{font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);}.mb-stat .m{font-size:12.5px;font-weight:600;color:#7ED2DB;margin-top:2px;}.mb-total .l{color:rgba(255,255,255,0.75);}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
@@ -312,6 +335,16 @@ tr:hover td{background:var(--bg2);}
   <button class="sb-add" onclick="openModal('addEmpModal')"><i class="ti ti-plus"></i> Mitarbeiter hinzufügen</button>
 </div>
 <div class="main" id="mainArea"></div>
+<div class="wizard-overlay hidden" id="loginWizardOverlay">
+  <div class="wizard-card">
+    <button class="wizard-skip" onclick="closeLoginWizard()">Überspringen</button>
+    <div class="wizard-body" id="wizardBody"></div>
+    <div class="wizard-footer">
+      <div class="wizard-dots" id="wizardDots"></div>
+      <button class="wizard-next-btn" id="wizardNextBtn" onclick="wizardNext()">Weiter <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+</div>
 
 <!-- MODALS -->
 <div class="modal-ov hidden" id="addEmpModal"><div class="modal">
@@ -627,6 +660,7 @@ function loginWithPassword(){
   function showMsg(text,cls){msg.textContent=text;msg.className='login-message '+cls;msg.style.display='block';}
   if(!email || !password){ showMsg('Bitte E-Mail und Passwort eingeben.','login-message-info'); return; }
   showMsg('Anmelden…','login-message-info');
+  window._freshLoginClick=true;
   sb.auth.signInWithPassword({ email: email, password: password }).then(function(res){
     if(res.error){ showMsg('Fehler: ' + res.error.message,'login-message-error'); }
     // Bei Erfolg uebernimmt onAuthStateChange den Rest (initAppAfterLogin)
@@ -845,6 +879,10 @@ function initAppAfterLogin(){
     Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase()]).then(function(){
       lsLoad();               // Rest der Daten (protocols, ...) bleibt vorerst lokal
       runAppInit();
+      if(window._freshLoginClick){
+        window._freshLoginClick=false;
+        openLoginWizard();
+      }
     });
   });
 }
@@ -944,6 +982,201 @@ function coachingOverviewInfoBoxHtml(liste,hD,heute){
   });
   h+='</div>';
   return h;
+}
+// ═══════════════ LOGIN-WIZARD (Petrol-Karussell, wie in SalesOS) ═══════════════
+var MOTIVATION_QUOTES=[
+"Kleine Schritte, jeden Tag - das ist der Unterschied.","Disziplin schlägt Motivation, jedes Mal.","Der beste Zeitpunkt anzufangen war gestern. Der zweitbeste ist jetzt.",
+"Fortschritt zählt mehr als Perfektion.","Wer nicht dranbleibt, hat schon verloren, bevor es losging.","Aus jedem Nein lernst du etwas fürs nächste Ja.",
+"Erfolg ist die Summe kleiner Anstrengungen, jeden Tag wiederholt.","Konzentrier dich auf das, was du beeinflussen kannst.","Ein Rückschlag ist kein Ausstieg, sondern eine Kurve.",
+"Wer fragt, führt das Gespräch.","Zuhören ist die unterschätzteste Vertriebstechnik.","Vertrauen wird verdient, nicht verlangt.",
+"Gute Vorbereitung schlägt spontanes Talent.","Jeder Anruf ist eine neue Chance, nicht eine Wiederholung.","Der Kunde kauft nie das Produkt, sondern das Ergebnis.",
+"Wachstum passiert außerhalb der Komfortzone.","Konsequenz ist die Brücke zwischen Zielen und Ergebnissen.","Wer aufgibt, bevor der Erfolg kommt, hat ihn nie gesehen.",
+"Ein gutes Coaching verändert mehr als tausend Tipps.","Reflektier täglich - auch fünf Minuten reichen.","Die besten Verkäufer sind die besten Fragensteller.",
+"Motivation bringt dich in Gang, Gewohnheit hält dich in Bewegung.","Kritik ist Feedback in Verkleidung - nutze sie.","Wer wächst, macht Fehler. Wer nichts macht, wächst nicht.",
+"Ehrlichkeit im Gespräch schlägt jeden Trick.","Der erste Eindruck entscheidet, der zweite bestätigt.","Konstanz schlägt Intensität, langfristig immer.",
+"Erfolgreiche Menschen tun das, was andere aufschieben.","Ziele ohne Plan sind nur Wünsche.","Sei neugierig auf den Kunden, nicht nur auf den Abschluss.",
+"Jede Ablehnung bringt dich näher ans nächste Ja.","Was du wiederholst, wird du.","Struktur gibt Freiheit, kein Chaos.",
+"Der Unterschied zwischen gut und großartig ist Übung.","Bleib ruhig, wenn's hart wird - genau da entscheidet sich alles.","Ein Lächeln hört man auch am Telefon.",
+"Wer über sich hinauswächst, verändert auch das Team.","Kleine Erfolge feiern - sie summieren sich.","Vorbereitung ist der Unterschied zwischen Zufall und Können.",
+"Der Kunde merkt, ob du an dein Produkt glaubst.","Frag nach dem Warum, bevor du das Was verkaufst.","Beharrlichkeit gewinnt gegen Talent, wenn Talent nicht beharrlich ist.",
+"Wachstum beginnt mit ehrlichem Feedback.","Verantwortung übernehmen ist der erste Schritt zur Verbesserung.","Ein starkes Nein heute kann ein besseres Ja morgen sein.",
+"Die Energie im ersten Satz entscheidet oft über das ganze Gespräch.","Sei der Grund, warum ein Kunde gerne wiederkommt.","Übung schlägt Zufall, jedes Mal.",
+"Wer nach vorne schaut, verliert die Angst vor dem letzten Anruf.","Dein Mindset bestimmt deine Zahlen, nicht umgekehrt.","Klarheit im Ziel bringt Ruhe im Handeln.",
+"Der Unterschied liegt oft im letzten Prozent Einsatz.","Gute Gewohnheiten bauen sich langsam, aber sicher auf.","Jeder Tag ist eine neue Chance, die gestern verpasst wurde, nachzuholen.",
+"Sei präzise in der Sprache, dann wirkst du sicherer.","Vertrieb ist Beziehungsarbeit mit Zahlen am Ende.","Wer den Kunden versteht, muss ihn nicht überzeugen.",
+"Bleib dran, auch wenn's mühsam wird - genau dort trennt sich die Spreu vom Weizen.","Erfolg hinterlässt Spuren - folge deinen eigenen guten.","Der beste Verkäufer im Raum ist oft der beste Zuhörer.",
+"Fokus schlägt Fleiß, wenn der Fleiß am falschen Ort ansetzt.","Ein ehrliches Coaching-Gespräch bringt mehr als zehn Standardtipps.","Sei geduldig mit dem Prozess, ungeduldig mit dem Fortschritt.",
+"Wer nicht fragt, bekommt selten die volle Antwort.","Deine Stimme trägt mehr Überzeugung als deine Worte.","Ziele schriftlich festhalten verdoppelt die Wahrscheinlichkeit, sie zu erreichen.",
+"Ein Nein heute ist kein Nein für immer.","Konzentriere dich auf den nächsten Schritt, nicht auf die ganze Treppe.","Wer sich selbst reflektiert, wächst schneller als der Rest.",
+"Beständigkeit im Kleinen erzeugt Großes im Ganzen.","Der Unterschied zwischen Traum und Ziel ist ein Datum.","Sei der Mensch, mit dem der Kunde gerne noch mal spricht.",
+"Ein starkes Team trägt auch schwache Tage.","Frage zweimal nach, bevor du eine Lösung anbietest.","Übe die schwierigen Gespräche öfter als die einfachen.",
+"Wachstum fühlt sich selten bequem an.","Wer den Prozess liebt, gewinnt auch ohne sofortigen Erfolg.","Dein nächster Anruf kennt deine letzten Ergebnisse nicht - nutze das.",
+"Beharrlichkeit ist lauter als Talent.","Ein gutes Ziel motiviert auch an einem schlechten Tag.","Vertrauen aufbauen dauert länger, als es zu verlieren.",
+"Sei konkret in deinen Vorsätzen, nicht nur ambitioniert.","Wer sich verbessern will, muss sich beobachten lassen.","Kleine Disziplin heute erspart große Reue morgen.",
+"Ein starker Pitch beginnt mit einer starken Frage.","Der Erfolg von morgen beginnt mit der Vorbereitung von heute.","Sei geduldig mit dir selbst - Wachstum ist kein Sprint.",
+"Wer den Kunden ernst nimmt, verdient sein Vertrauen.","Übe Einwandsbehandlung wie einen Muskel - regelmäßig.","Konstante kleine Verbesserungen schlagen sporadische große Sprünge.",
+"Dein Ton macht mehr als die Hälfte der Botschaft aus.","Wer nicht nachfragt, verpasst die eigentliche Chance.","Bleib neugierig - das hält dich scharf.",
+"Ein motiviertes Team schlägt ein talentiertes Team ohne Zusammenhalt.","Reflektiere Erfolge genauso gründlich wie Misserfolge.","Jeder Tag zählt - auch die ruhigen.",
+"Sei mutig genug, unbequeme Fragen zu stellen.","Der beste Moment für Feedback ist jetzt, nicht später.","Vertrieb beginnt mit Zuhören und endet mit Vertrauen.","Wer heute übt, gewinnt morgen leichter."
+];
+function nextMotivationQuote(){
+  var bag=[];
+  try{bag=JSON.parse(localStorage.getItem('motivationBag')||'[]');}catch(e){bag=[];}
+  if(!bag||!bag.length){
+    bag=MOTIVATION_QUOTES.map(function(_,i){return i;});
+    for(var i=bag.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=bag[i];bag[i]=bag[j];bag[j]=t;}
+  }
+  var idx=bag.pop();
+  try{localStorage.setItem('motivationBag',JSON.stringify(bag));}catch(e){}
+  return MOTIVATION_QUOTES[idx];
+}
+function employeeActiveList(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach;});}
+function getCoacheesFor(coachId){
+  return employeeActiveList().filter(function(e){
+    var sessions=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).sort(function(a,b){return b.date.localeCompare(a.date);});
+    return sessions.length&&sessions[0].coachId===coachId;
+  });
+}
+function wizardMargeInfo(){
+  var mk=today().slice(0,7);
+  var liste=employeeActiveList();
+  var monatIst=0;
+  liste.forEach(function(e){
+    (performance[e.id]||[]).forEach(function(x){
+      if((x.date||'').slice(0,7)!==mk)return;
+      monatIst+=x.margeGesamt||x.margin||0;
+    });
+  });
+  var wMeta=getMonthWeeksZiel(mk);
+  var mRec=zielStore[mk]||{};
+  var mVisible=liste.filter(function(e){return empActiveInZielMonth(e,mk);});
+  var monatZiel=0;
+  mVisible.forEach(function(e){
+    var r=mRec[e.id]||{};
+    var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
+    var monthSum=weeks.reduce(function(a,b){return a+b;},0);
+    var optTag=r.optTag!=null?r.optTag:0;
+    var margeOpt=r.margeOpt!=null?r.margeOpt:0;
+    monatZiel+=monthSum*optTag*margeOpt;
+  });
+  var pct=monatZiel>0?Math.round(monatIst/monatZiel*100):0;
+  return {ist:monatIst,ziel:monatZiel,pct:pct};
+}
+function wizardOverdueList(scopeList){
+  return scopeList.filter(function(e){var t=tageSeitLetzterSession(e.id);return t===null||t>30;});
+}
+function wizardQaFaelligList(scopeList){
+  var cutoff=addDaysUTC(today(),-60);
+  return scopeList.filter(function(e){
+    var cnt=(callRatings[e.id]||[]).filter(function(r){return r.date>=cutoff;}).length;
+    return cnt<5;
+  });
+}
+function wizardUpcomingSessions(coachIdOrNull){
+  var all=[];
+  employeeActiveList().forEach(function(e){
+    (protocols[e.id]||[]).forEach(function(p){
+      if(p.status!=='geplant')return;
+      if(p.date<today())return;
+      if(coachIdOrNull!==null&&p.coachId!==coachIdOrNull)return;
+      all.push({empName:e.name,date:p.date});
+    });
+  });
+  all.sort(function(a,b){return a.date.localeCompare(b.date);});
+  return all;
+}
+function wizardPerformanceScore(empId){
+  var cutoff=addDaysUTC(today(),-30);
+  var rows=(performance[empId]||[]).filter(function(x){return(x.date||'')>=cutoff;});
+  if(!rows.length)return null;
+  var sum=0,n=0;
+  rows.forEach(function(x){if(x.crOEM!=null){sum+=x.crOEM;n++;}});
+  return n?sum/n:null;
+}
+function wizardTopWorst(scopeList,count){
+  var scored=scopeList.map(function(e){return{e:e,score:wizardPerformanceScore(e.id)};}).filter(function(x){return x.score!==null;});
+  scored.sort(function(a,b){return b.score-a.score;});
+  return {top:scored.slice(0,count),worst:scored.slice(-count).reverse()};
+}
+function buildAdminWizardPages(){
+  var liste=employeeActiveList();
+  var overdue=wizardOverdueList(liste);
+  var qaList=wizardQaFaelligList(liste);
+  var marge=wizardMargeInfo();
+  var upcoming=wizardUpcomingSessions(null);
+  var coachEmps=employees.filter(function(e){return(e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+  var coachCounts={};
+  liste.forEach(function(e){
+    (protocols[e.id]||[]).forEach(function(p){
+      if(p.status==='geplant')return;
+      if(p.coachId)coachCounts[p.coachId]=(coachCounts[p.coachId]||0)+1;
+    });
+  });
+  var dist=coachEmps.map(function(c){return{n:String(coachCounts[c.id]||0),l:c.name.split(' ')[0].toUpperCase()};}).sort(function(a,b){return(+b.n)-(+a.n);});
+  return [
+    {type:'stat',icon:'ti-alert-triangle',stat:String(overdue.length),title:'Überfällige Coachings',sub:overdue.length?('Team-weit: '+overdue.slice(0,3).map(function(e){return e.name;}).join(', ')+(overdue.length>3?' und weitere.':'.')):'Aktuell ist niemand überfällig.'},
+    {type:'stat',icon:'ti-clipboard-check',stat:String(qaList.length),title:'QA fällig',sub:qaList.length?(qaList.length+' Mitarbeiter mit unter 5 QA-Calls in den letzten 60 Tagen.'):'Alle Mitarbeiter sind im QA-Ziel.'},
+    {type:'stat',icon:'ti-chart-bar',stat:'€ '+Math.round(marge.ist).toLocaleString('de-DE'),title:'Margenerhöhung diesen Monat',sub:'Ziel: € '+Math.round(marge.ziel).toLocaleString('de-DE')+' · aktuell bei '+marge.pct+'% des Monatsziels.'},
+    {type:'tasklist',title:'Anstehende Sessions',sub:'Die nächsten geplanten Coachings im Team.',items:upcoming.length?upcoming.slice(0,5).map(function(u){return{icon:'ti-calendar-event',text:u.empName+' · '+fd(u.date)};}):[{icon:'ti-calendar-off',text:'Keine geplanten Sessions'}]},
+    {type:'stagerow',title:'Verteilung über Coaches',sub:'Alle abgeschlossenen Coachings, gesamt.',boxes:dist.length?dist:[{n:'0',l:'—'}]},
+    {type:'quote',quote:nextMotivationQuote()}
+  ];
+}
+function buildCoachWizardPages(coach){
+  var coachees=getCoacheesFor(coach.id);
+  var overdue=wizardOverdueList(coachees);
+  var qaList=wizardQaFaelligList(coachees);
+  var marge=wizardMargeInfo();
+  var upcoming=wizardUpcomingSessions(coach.id);
+  var tw=wizardTopWorst(coachees,3);
+  return [
+    {type:'stat',icon:'ti-alert-triangle',stat:String(overdue.length),title:'Überfällige Coaching Sessions',sub:overdue.length?(overdue.slice(0,3).map(function(e){return e.name;}).join(', ')+(overdue.length>3?' und weitere.':'.')):'Bei deinen Mitarbeitern ist aktuell niemand überfällig.'},
+    {type:'tasklist',title:'Geplante Coaching Sessions',sub:'Deine anstehenden Termine.',items:upcoming.length?upcoming.slice(0,5).map(function(u){return{icon:'ti-calendar-event',text:u.empName+' · '+fd(u.date)};}):[{icon:'ti-calendar-off',text:'Keine geplanten Sessions'}]},
+    {type:'stat',icon:'ti-clipboard-check',stat:String(qaList.length),title:'QA fällig',sub:qaList.length?(qaList.map(function(e){return e.name;}).join(', ')+' brauchen eine QA-Bewertung.'):'Alle deine Mitarbeiter sind im QA-Ziel.'},
+    {type:'stat',icon:'ti-chart-bar',stat:'€ '+Math.round(marge.ist).toLocaleString('de-DE'),title:'Margenerhöhung diesen Monat',sub:'Ziel: € '+Math.round(marge.ziel).toLocaleString('de-DE')+' · aktuell bei '+marge.pct+'% des Monatsziels.'},
+    {type:'stagerow',title:'Top 3 Mitarbeiter',sub:'Ø CR OEM der letzten 30 Tage.',boxes:tw.top.length?tw.top.map(function(x){return{n:Math.round(x.score)+'%',l:x.e.name.split(' ')[0].toUpperCase()};}):[{n:'—',l:'Keine Daten'}]},
+    {type:'stagerow',title:'Worst 3 Mitarbeiter',sub:'Ø CR OEM der letzten 30 Tage.',boxes:tw.worst.length?tw.worst.map(function(x){return{n:Math.round(x.score)+'%',l:x.e.name.split(' ')[0].toUpperCase()};}):[{n:'—',l:'Keine Daten'}]},
+    {type:'quote',quote:nextMotivationQuote()}
+  ];
+}
+var wizardPage=0,wizardPages=[];
+function openLoginWizard(){
+  wizardPages=currentCoach?buildCoachWizardPages(currentCoach):buildAdminWizardPages();
+  wizardPage=0;
+  renderWizardPage();
+  document.getElementById('loginWizardOverlay').classList.remove('hidden');
+}
+function closeLoginWizard(){
+  document.getElementById('loginWizardOverlay').classList.add('hidden');
+}
+function wizardNext(){
+  if(wizardPage>=wizardPages.length-1){closeLoginWizard();return;}
+  wizardPage++;
+  renderWizardPage();
+}
+function renderWizardPage(){
+  var pageCount=wizardPages.length;
+  var dotsEl=document.getElementById('wizardDots');
+  dotsEl.innerHTML='';
+  for(var i=0;i<pageCount;i++){
+    var d=document.createElement('span');
+    d.className='wizard-dot'+(i===wizardPage?' active':'');
+    dotsEl.appendChild(d);
+  }
+  document.getElementById('wizardNextBtn').innerHTML=wizardPage===pageCount-1?'Los geht\'s <i class="ti ti-check"></i>':'Weiter <i class="ti ti-arrow-right"></i>';
+  var p=wizardPages[wizardPage];
+  var body=document.getElementById('wizardBody');
+  if(p.type==='quote'){
+    body.innerHTML='<div class="wizard-icon"><i class="ti ti-bulb"></i></div><div class="wizard-quote">"'+p.quote+'"</div>';
+  } else if(p.type==='tasklist'){
+    body.innerHTML='<div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>'
+      +p.items.map(function(it){return '<div class="wizard-taskrow"><i class="ti '+it.icon+'"></i>'+it.text+'</div>';}).join('');
+  } else if(p.type==='stagerow'){
+    body.innerHTML='<div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>'
+      +'<div class="wizard-stagerow">'+p.boxes.map(function(b){return '<div class="wizard-stagebox"><strong>'+b.n+'</strong><span>'+b.l+'</span></div>';}).join('')+'</div>';
+  } else {
+    body.innerHTML='<div class="wizard-icon"><i class="ti '+p.icon+'"></i></div><div class="wizard-stat">'+p.stat+'</div><div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>';
+  }
 }
 function buildCoachingAbdeckungTab(liste,hD,heute){
   var HIDDEN=[];
