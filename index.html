@@ -297,7 +297,6 @@ tr:hover td{background:var(--bg2);}
     <div id="coachingSubNav" class="wiegand-subnav hidden">
       <div class="sb-item sb-navsub" id="nav-coaching-team" onclick="selectCoachingTeam()">Overview KPIs</div>
       <div class="sb-item sb-navsub" id="nav-coaching-overview" onclick="setCoachFilterView('overview')">Overview Coachings</div>
-      <div class="sb-item sb-navsub" id="nav-coaching-coverage" onclick="setCoachFilterView('coverage')">Coverage</div>
       <div id="coachingCoachSubItems"></div>
     </div>
     <div class="sb-item" id="nav-activity" onclick="showView('activity')"><div class="sb-icon"><i class="ti ti-activity"></i></div> Aktivität</div>
@@ -2599,7 +2598,6 @@ function renderSidebar(){
   var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab);
   var nco=document.getElementById('nav-coaching-overview');if(nco)nco.classList.toggle('active',view==='coaching'&&coachFilterView==='overview');
   var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
-  var ncv=document.getElementById('nav-coaching-coverage');if(ncv)ncv.classList.toggle('active',view==='coaching'&&coachFilterView==='coverage');
   var na=document.getElementById('nav-activity');if(na)na.classList.toggle('active',view==='activity');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
   ['integrations','data','log'].forEach(function(sv){
@@ -2609,7 +2607,14 @@ function renderSidebar(){
   var coachSubEl=document.getElementById('coachingCoachSubItems');
   if(coachSubEl){
     coachSubEl.innerHTML='';
-    var coachListSb=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+    var coachOrder=['Kathrin','Dogoro','Joey'];
+    var coachListSb=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;}).sort(function(a,b){
+      var ia=coachOrder.indexOf(a.name.split(' ')[0]),ib=coachOrder.indexOf(b.name.split(' ')[0]);
+      if(ia===-1&&ib===-1)return a.name.localeCompare(b.name,'de');
+      if(ia===-1)return 1;
+      if(ib===-1)return -1;
+      return ia-ib;
+    });
     coachListSb.forEach(function(c){
       var d=document.createElement('div');
       d.className='sb-item sb-navsub'+((view==='coaching'&&coachFilterView===c.id)?' active':'');
@@ -2729,10 +2734,9 @@ function toggleCoachingNav(){
   coachingNavOpen=!coachingNavOpen;
   var sub=document.getElementById('coachingSubNav');if(sub)sub.classList.toggle('hidden',!coachingNavOpen);
   var chev=document.getElementById('coachingNavChevron');if(chev)chev.className='ti ti-chevron-'+(coachingNavOpen?'up':'down');
-  if(coachingNavOpen){closeWiegandSubnav();closeSettingsSubnav();}
   if(coachingNavOpen){
-    if(view==='team'&&wiegandView==='team'){renderSidebar();renderMain();}
-    else{setCoachFilterView(coachFilterView);}
+    closeWiegandSubnav();closeSettingsSubnav();
+    selectCoachingTeam(); // Klick auf SFP Coaching oeffnet immer Overview KPIs
   } else {
     renderSidebar();
   }
