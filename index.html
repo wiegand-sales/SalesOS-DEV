@@ -3702,7 +3702,7 @@ function renderTeam(){
       s+='</div>';
       s+='</div>';
       s+='</div>';
-      s+='<canvas id="teamPerfChart" height="80"></canvas></div>';
+      s+='<div style="height:280px;position:relative"><canvas id="teamPerfChart"></canvas></div></div>';
       return s;
     })()
     // ── Alert Banner + Coaching-Abdeckung + SFP Performance Tabelle (alles unter Team) ──
@@ -3803,6 +3803,7 @@ function renderTeam(){
       data:{labels:d.labels,datasets:d.datasets},
       options:{
         responsive:true,
+        maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:20,padding:12}}},
         scales:{
           x:{ticks:{font:{size:11},maxTicksLimit:12},grid:{display:false}},
