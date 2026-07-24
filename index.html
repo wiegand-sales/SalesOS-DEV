@@ -3708,7 +3708,6 @@ function renderTeam(){
     // ── Alert Banner + Coaching-Abdeckung + SFP Performance Tabelle (alles unter Team) ──
     // Alert Banner
     +(totalAlerts>0?'<div class="alert alert-warn" style="margin-bottom:18px"><i class="ti ti-alert-triangle" style="font-size:18px;color:var(--amber);flex-shrink:0"></i><div><div style="font-size:13px;font-weight:600;color:var(--amber-dark)">'+totalAlerts+' Performance-Alert'+(totalAlerts!==1?'s':'')+' im Team</div><div style="font-size:12px;color:var(--amber-dark)">'+list.filter(function(e){return checkAlerts(e.id).length>0;}).map(function(e){return e.name;}).join(', ')+'</div></div></div>':'')
-    +coverageHtml
     +'<div class="card">'
     +'<div class="card-title"><i class="ti ti-table"></i> SFP Performance <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· CR als % aller Gespräche · Gut ≥ '+CR_GOOD+'%'+(showTrend?' · Pfeil = Trend vs. 7-Tage-Ø':'')+'</span></div>'
     +'<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
