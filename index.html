@@ -4465,23 +4465,12 @@ function renderTab(){
         +'</div></div>';
     }
     // Chart
-    var mMap={
-      calls:{f:'aktivitaeten',l:'Aktivitäten',c:'#206A72'},
-      convOEM:{f:'convOEM',l:'Conv. OEM',c:'#206A72'},
-      optGesamt:{f:'optGesamt',l:'Opt. Gesamt',c:'#206A72'},
-      crOEM:{f:'crOEM',l:'CR OEM %',c:'#206A72'},
-      crTeilweise:{f:'crTeilweise',l:'CR TW %',c:'#206A72'},
-      crYes:{f:'crYes',l:'CR Yes %',c:'#206A72'},
-      crSuperYes:{f:'crSuperYes',l:'CR SY %',c:'#206A72'},
-      crMegaYes:{f:'crMegaYes',l:'CR MY %',c:'#206A72'},
-      margeGesamt:{f:'margeGesamt',l:'Marge',c:'#206A72'}
-    };
     html+='<div class="card" style="margin-bottom:22px">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">'
       +'<div class="card-title" style="margin:0">Performance Trend</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
       +'<div class="chart-toggle">';
-    [{k:'aktivitaeten',l:'Aktivitäten'},{k:'convOEM',l:'Conv. OEM'},{k:'optGesamt',l:'Opt. Ges.'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'},{k:'margeGesamt',l:'Marge'}].forEach(function(it){
+    [{k:'margeGesamt',l:'Marge Gesamt'},{k:'aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges.'},{k:'convOEM',l:'Opt. OEM'},{k:'upsells',l:'Opt. Upsells'},{k:'wka',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
       html+='<button class="'+(perfMetric===it.k?'active':'')+'" data-m="'+it.k+'" onclick="setMetric(this.dataset.m)">'+it.l+'</button>';
     });
     html+='</div><div class="chart-toggle">';
@@ -4496,7 +4485,7 @@ function renderTab(){
       +'<button class="btn btn-sm'+(perfCustomActive?' btn-primary':'')+'" style="padding:3px 8px" onclick="applyPerfCustomRange()"><i class="ti ti-check"></i></button>'
       +(perfCustomActive?'<button class="btn btn-sm" style="padding:3px 7px" onclick="clearPerfCustomRange()" title="Custom-Zeitraum zurücksetzen"><i class="ti ti-x"></i></button>':'')
       +'</div>'
-      +'</div></div><canvas id="perfChart" height="80"></canvas>'
+      +'</div></div><div style="height:280px;position:relative"><canvas id="perfChart"></canvas></div>'
       +'<div style="display:flex;gap:16px;margin-top:8px;font-size:10.5px;color:var(--text2)">'
       +'<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:0;border-top:1.5px dashed rgba(32,106,114,0.7);display:inline-block"></span>Coaching zu diesem KPI (Kürzel = Coach)</span>'
       +'<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:0;border-top:1.5px dashed rgba(140,140,140,0.6);display:inline-block"></span>Coaching zu anderem Thema</span>'
@@ -5641,7 +5630,9 @@ function renderTab(){
       var labels=data.map(function(d){return fd(d.date);});
       var mMap={
         aktivitaeten:{f:'aktivitaeten',l:'Aktivitäten',    c:'#206A72'},
-        convOEM:     {f:'convOEM',     l:'Conv. OEM',      c:'#206A72'},
+        convOEM:     {f:'convOEM',     l:'Opt. OEM',       c:'#206A72'},
+        upsells:     {f:'upsells',     l:'Opt. Upsells',   c:'#206A72'},
+        wka:         {f:'wka',         l:'Opt. WKA',       c:'#206A72'},
         optGesamt:   {f:'optGesamt',   l:'Opt. Gesamt',    c:'#206A72'},
         crOEM:       {f:'crOEM',       l:'CR OEM %',       c:'#206A72'},
         crTeilweise: {f:'crTeilweise', l:'CR TW %',        c:'#206A72'},
@@ -5793,6 +5784,7 @@ function renderTab(){
         plugins:[coachLinePlugin],
         options:{
           responsive:true,
+          maintainAspectRatio:false,
           layout:{padding:{top:14}},
           plugins:{
             legend:{
