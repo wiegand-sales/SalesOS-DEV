@@ -3582,13 +3582,16 @@ function renderTeam(){
     +(function(){
       var TMETRICS=[
         {k:'aktivitaeten',l:'Aktivitäten',c:'#206A72'},
-        {k:'convOEM',    l:'Conv. OEM',  c:'#206A72'},
-        {k:'crOEM',      l:'CR OEM',     c:'#206A72'},
-        {k:'crTeilweise',l:'CR TW',      c:'#206A72'},
-        {k:'crYes',      l:'CR Yes',     c:'#206A72'},
-        {k:'crSuperYes', l:'CR SY',      c:'#206A72'},
-        {k:'crMegaYes',  l:'CR MY',      c:'#206A72'},
-        {k:'margeGesamt',l:'Marge',      c:'#206A72'},
+        {k:'optGesamt',  l:'Opt. Gesamt', c:'#206A72'},
+        {k:'margeGesamt',l:'Marge Gesamt',c:'#206A72'},
+        {k:'convOEM',    l:'Opt. OEM',    c:'#206A72'},
+        {k:'upsells',    l:'Opt. Upsell', c:'#206A72'},
+        {k:'wka',        l:'Opt. WKA',    c:'#206A72'},
+        {k:'crOEM',      l:'CR OEM',      c:'#206A72'},
+        {k:'crTeilweise',l:'CR TW',       c:'#206A72'},
+        {k:'crYes',      l:'CR Yes',      c:'#206A72'},
+        {k:'crSuperYes', l:'CR SY',       c:'#206A72'},
+        {k:'crMegaYes',  l:'CR MY',       c:'#206A72'},
       ];
       var s='<div class="card" style="margin-bottom:22px">';
       s+='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px">';
@@ -3661,8 +3664,11 @@ function renderTeam(){
       crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#206A72'},
       crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#206A72'},
       aktivitaeten:{f:'aktivitaeten',l:'Aktivitäten',c:'#206A72'},
-      convOEM:    {f:'convOEM',    l:'Conv. OEM',c:'#206A72'},
-      margeGesamt:{f:'margeGesamt',l:'Marge €',  c:'#206A72'}
+      optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#206A72'},
+      convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#206A72'},
+      upsells:    {f:'upsells',    l:'Opt. Upsell',c:'#206A72'},
+      wka:        {f:'wka',        l:'Opt. WKA', c:'#206A72'},
+      margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#206A72'}
     };
     var m=mMap[metric]||mMap.crOEM;
     if(!allRows||!allRows.length){return;}
@@ -3687,7 +3693,9 @@ function renderTeam(){
       crOEM:{min:0,max:100,step:20},crTeilweise:{min:0,max:100,step:20},
       crYes:{min:0,max:100,step:20},crSuperYes:{min:0,max:100,step:20},
       crMegaYes:{min:0,max:100,step:20},aktivitaeten:{min:0,max:300,step:50},
-      convOEM:{min:0,max:50,step:10},margeGesamt:{min:0,max:5000,step:1000}
+      optGesamt:{min:0,max:50,step:10},convOEM:{min:0,max:50,step:10},
+      upsells:{min:0,max:30,step:5},wka:{min:0,max:15,step:5},
+      margeGesamt:{min:0,max:5000,step:1000}
     };
     var yS=yScales[metric]||{min:0,max:100,step:20};
     var datasets=[{
