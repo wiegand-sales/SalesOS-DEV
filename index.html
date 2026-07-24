@@ -297,7 +297,6 @@ tr:hover td{background:var(--bg2);}
     <div class="sb-item" id="nav-activity" onclick="showView('activity')"><div class="sb-icon"><i class="ti ti-activity"></i></div> Aktivität</div>
     <div class="sb-item" id="nav-settings" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="settingsSubNav" class="wiegand-subnav">
-      <div class="sb-item sb-navsub" id="nav-settings-kpi" onclick="selectSettingsSub('kpi')">KPI-Ziele</div>
       <div class="sb-item sb-navsub" id="nav-settings-integrations" onclick="selectSettingsSub('integrations')">Integrationen</div>
       <div class="sb-item sb-navsub" id="nav-settings-data" onclick="selectSettingsSub('data')">Daten & Backup</div>
       <div class="sb-item sb-navsub" id="nav-settings-log" onclick="selectSettingsSub('log')">Protokoll</div>
@@ -674,7 +673,7 @@ function setOverviewSelectNone(){overviewSelectedIds=[];renderTeam();}
 var overviewPerfGroup='day'; // 'day' | 'week' | 'month' – eigener Zustand, unabhängig vom Mitarbeiter-Tab
 var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = Standard (Monatsanfang)
 var overviewChartMetric='crOEM';
-var settingsView='kpi'; // 'kpi' | 'integrations' | 'data' | 'log'
+var settingsView='integrations'; // 'integrations' | 'data' | 'log'
 var activityFilterPerson='ALL'; // 'ALL' | employee-id (Coach)
 var activityFilterDays=7;
 function setActivityFilterPerson(v){activityFilterPerson=v;renderActivity();}
@@ -2048,9 +2047,9 @@ function loadZielvereinbarungFromSupabase(){
   });
 }
 var zielYearView=today().slice(0,4);
-function setZielYearView(delta){zielYearView=(+zielYearView+delta)+'';renderEinstellungen();}
-function jumpToZielMonth(monthKey){zielMonth=monthKey;renderEinstellungen();}
-function toggleZielMonth(monthKey){zielMonth=(zielMonth===monthKey)?'':monthKey;renderEinstellungen();}
+function setZielYearView(delta){zielYearView=(+zielYearView+delta)+'';renderTeam();}
+function jumpToZielMonth(monthKey){zielMonth=monthKey;renderTeam();}
+function toggleZielMonth(monthKey){zielMonth=(zielMonth===monthKey)?'':monthKey;renderTeam();}
 var zielNlTargets={};
 function updateZielNlTarget(monthKey,value){
   var num=parseFloat(value);if(isNaN(num))num=0;
@@ -2058,13 +2057,13 @@ function updateZielNlTarget(monthKey,value){
   sb.from('settings').upsert({key:'ziel_nl_'+monthKey,value:String(num)},{onConflict:'key'}).then(function(res){
     if(res.error)console.warn('Ziel NL Marge speichern fehlgeschlagen:',res.error);
   });
-  renderEinstellungen();
+  renderTeam();
 }
 function setZielMonth(delta){
   var y=+zielMonth.slice(0,4),m=+zielMonth.slice(5,7);
   m+=delta;if(m<1){m=12;y--;}else if(m>12){m=1;y++;}
   zielMonth=y+'-'+(m<10?'0'+m:m);
-  renderEinstellungen();
+  renderTeam();
 }
 function updateZielField(empId,field,weekIdx,value){
   if(!zielStore[zielMonth])zielStore[zielMonth]={};
@@ -2073,7 +2072,7 @@ function updateZielField(empId,field,weekIdx,value){
   var num=parseFloat(value);if(isNaN(num))num=0;
   if(field==='week'){if(!rec.weeks)rec.weeks=[];rec.weeks[weekIdx]=num;}
   else{rec[field]=num;}
-  renderEinstellungen();
+  renderTeam();
 }
 // Farbe fuer KPI-Werte OHNE hinterlegten Zielwert: nur Petrol (besser/gleich Vormonat) oder Rot
 // (schlechter als Vormonat) - nie neutral schwarz. Ohne Vormonatswert (z.B. neuer Mitarbeiter) faellt
@@ -2145,6 +2144,38 @@ function zielverlaufJahrChartHtml(){
   h+=barsHtml;
   h+='</div>';
   return h;
+}
+// ── Zielwerte & Richtung (ehemals Settings > KPI-Ziele, jetzt unter Zielvereinbarung) ──
+function kpiZieleHtml(){
+  function zRow(key,label,einheit,step){
+    var t=KPI_TARGETS[key];
+    return '<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="width:170px;font-size:13px;font-weight:500">'+label+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<select id="dir-'+key+'" style="width:64px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
+      +'<option value="gte"'+(t.dir==='gte'?' selected':'')+'>≥</option>'
+      +'<option value="lte"'+(t.dir==='lte'?' selected':'')+'>≤</option>'
+      +'</select>'
+      +'<input type="number" id="val-'+key+'" value="'+t.val+'" step="'+(step||1)+'" min="0" max="100" style="width:80px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
+      +(einheit?'<span style="font-size:12px;color:var(--text2)">'+einheit+'</span>':'')
+      +'</div>'
+      +'<div style="margin-left:auto;font-size:11px;color:var(--text3)">Aktuell: '+t.dir+' '+t.val+(einheit||'')+'</div>'
+      +'</div>';
+  }
+  return '<div class="card">'
+    +'<div class="card-title"><i class="ti ti-target"></i> Zielwerte & Richtung</div>'
+    +'<p style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.6">Lege fest ob ein Wert <strong>größer (≥)</strong> oder <strong>kleiner (≤)</strong> als der Zielwert sein soll. Gilt als globaler Standard für alle Mitarbeiter.</p>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 40px">'
+    +zRow('crOEM','CR OEM','%',1)
+    +zRow('crSuperYes','CR SY (Super Yes)','%',1)
+    +zRow('crTeilweise','CR TW (Teilweise)','%',1)
+    +zRow('crMegaYes','CR MY (Mega Yes)','%',1)
+    +zRow('optPerH','Opt./Stunde','',0.1)
+    +'</div>'
+    +'<div style="margin-top:16px;display:flex;align-items:center;gap:12px">'
+    +'<button class="btn btn-primary btn-sm" style="width:auto" onclick="zieleSpeichern()"><i class="ti ti-check"></i> Zielwerte speichern</button>'
+    +'<span id="ziele-status" style="font-size:12px;color:var(--teal)"></span>'
+    +'</div></div>';
 }
 // ── Zielvereinbarung: volle Jahres-/Wochenansicht (unter SFP Wiegand > Zielvereinbarung) ──
 function zielvereinbarungHtml(){
@@ -2294,7 +2325,8 @@ function zielvereinbarungHtml(){
     +'<span id="ziel-status" style="font-size:12px;color:var(--teal)"></span>'
     +'</div>'
     +'<div style="font-size:11px;color:var(--text3);margin-top:10px">Monat anklicken, um die Mitarbeiter-Wochenansicht auf-/zuzuklappen. "Ziel NL Marge/Mon." ist der zu Jahresbeginn kalkulierte Referenzwert und wird beim Eintragen sofort gespeichert.</div>'
-    +'</div>';
+    +'</div>'
+    +kpiZieleHtml();
 }
 function saveZielvereinbarung(){
   var st=document.getElementById('ziel-status');
@@ -2456,7 +2488,7 @@ function renderSidebar(){
   var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching');
   var na=document.getElementById('nav-activity');if(na)na.classList.toggle('active',view==='activity');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
-  ['kpi','integrations','data','log'].forEach(function(sv){
+  ['integrations','data','log'].forEach(function(sv){
     var el=document.getElementById('nav-settings-'+sv);if(el)el.classList.toggle('active',view==='settings'&&settingsView===sv);
   });
   var HIDDEN=[];
@@ -5525,21 +5557,6 @@ function renderActivity(){
 
 function renderEinstellungen(){
   var ma=document.getElementById('mainArea');if(!ma)return;
-  function zRow(key,label,einheit,step){
-    var t=KPI_TARGETS[key];
-    return '<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="width:170px;font-size:13px;font-weight:500">'+label+'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<select id="dir-'+key+'" style="width:64px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
-      +'<option value="gte"'+(t.dir==='gte'?' selected':'')+'>≥</option>'
-      +'<option value="lte"'+(t.dir==='lte'?' selected':'')+'>≤</option>'
-      +'</select>'
-      +'<input type="number" id="val-'+key+'" value="'+t.val+'" step="'+(step||1)+'" min="0" max="100" style="width:80px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
-      +(einheit?'<span style="font-size:12px;color:var(--text2)">'+einheit+'</span>':'')
-      +'</div>'
-      +'<div style="margin-left:auto;font-size:11px;color:var(--text3)">Aktuell: '+t.dir+' '+t.val+(einheit||'')+'</div>'
-      +'</div>';
-  }
 
   ma.innerHTML='<div class="topbar"><div class="tb-left">'
     +'<div style="width:40px;height:40px;border-radius:9px;background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:16px"><i class="ti ti-settings"></i></div>'
@@ -5547,23 +5564,7 @@ function renderEinstellungen(){
     +'</div></div>'
     +'<div class="content" style="max-width:100%">'
 
-    // ══ KPI-ZIELE ══
-    +(settingsView==='kpi'?(
-    '<div class="card">'
-    +'<div class="card-title"><i class="ti ti-target"></i> Zielwerte & Richtung</div>'
-    +'<p style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.6">Lege fest ob ein Wert <strong>größer (≥)</strong> oder <strong>kleiner (≤)</strong> als der Zielwert sein soll. Gilt als globaler Standard für alle Mitarbeiter.</p>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 40px">'
-    +zRow('crOEM','CR OEM','%',1)
-    +zRow('crSuperYes','CR SY (Super Yes)','%',1)
-    +zRow('crTeilweise','CR TW (Teilweise)','%',1)
-    +zRow('crMegaYes','CR MY (Mega Yes)','%',1)
-    +zRow('optPerH','Opt./Stunde','',0.1)
-    +'</div>'
-    +'<div style="margin-top:16px;display:flex;align-items:center;gap:12px">'
-    +'<button class="btn btn-primary btn-sm" style="width:auto" onclick="zieleSpeichern()"><i class="ti ti-check"></i> Zielwerte speichern</button>'
-    +'<span id="ziele-status" style="font-size:12px;color:var(--teal)"></span>'
-    +'</div></div>'
-    ):'')
+    // ══ KPI-ZIELE (verschoben nach SFP Wiegand > Zielvereinbarung, siehe kpiZieleHtml()) ══
 
     // ══ ZIELVEREINBARUNG (verschoben nach SFP Wiegand > Zielvereinbarung, siehe zielvereinbarungHtml()) ══
 
@@ -7082,7 +7083,7 @@ function zieleSpeichern(){
     }
   });
   CR_GOOD=KPI_TARGETS.crOEM.val;
-  renderEinstellungen();
+  renderTeam();
   sb.from('kpi_targets').upsert(updates,{onConflict:'metric_key'}).then(function(res){
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     if(changes.length){logAdminAction('kpi_target_global',changes.join(' · '));logActivity('kpi_target','updated','Globale KPI-Ziele geändert: '+changes.join(' · '),null,null);}
