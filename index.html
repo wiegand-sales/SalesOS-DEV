@@ -2127,11 +2127,14 @@ function zielverlaufJahrChartHtml(){
   var barsHtml='<div style="display:flex;align-items:flex-end;gap:6px;height:'+CH+'px;padding:0 4px">';
   for(var i=0;i<12;i++){
     var pctNl=pct(zielNlArr[i]),pctZiel=pct(zielMargeArr[i]),pctErz=erzieltArr[i]!=null?pct(erzieltArr[i]):null;
-    barsHtml+='<div style="flex:1;position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center">'
-      +'<div style="position:absolute;left:26px;right:26px;bottom:'+pctNl+'%;border-top:2px dashed #BD2D29" title="Ziel NL Marge/Mon. (Mindestziel): €'+zielNlArr[i].toLocaleString('de-DE')+'"></div>'
+    var tipTxt='Ziel NL Marge/Mon. (Mindestziel): €'+zielNlArr[i].toLocaleString('de-DE')
+      +'\nZiel Marge/Mon.: €'+zielMargeArr[i].toLocaleString('de-DE')
+      +'\nErzielte Marge: '+(erzieltArr[i]!=null?'€'+erzieltArr[i].toLocaleString('de-DE'):'—');
+    barsHtml+='<div style="flex:1;position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center;cursor:default" title="'+tipTxt+'">'
+      +'<div style="position:absolute;left:26px;right:26px;bottom:'+pctNl+'%;border-top:2px dashed #BD2D29"></div>'
       +'<div style="display:flex;align-items:flex-end;gap:4px;height:100%">'
-      +'<div style="width:24px;height:'+pctZiel+'%;background:linear-gradient(180deg,#7ED2DB,#5FBAC4);border-radius:3px 3px 0 0" title="Ziel Marge/Mon.: €'+zielMargeArr[i].toLocaleString('de-DE')+'"></div>'
-      +(pctErz!=null?'<div style="width:24px;height:'+pctErz+'%;background:linear-gradient(180deg,#247982,#0F3D42);border-radius:3px 3px 0 0" title="Erzielte Marge: €'+erzieltArr[i].toLocaleString('de-DE')+'"></div>':'<div style="width:24px"></div>')
+      +'<div style="width:24px;height:'+pctZiel+'%;background:linear-gradient(180deg,#7ED2DB,#5FBAC4);border-radius:3px 3px 0 0"></div>'
+      +(pctErz!=null?'<div style="width:24px;height:'+pctErz+'%;background:linear-gradient(180deg,#247982,#0F3D42);border-radius:3px 3px 0 0"></div>':'<div style="width:24px"></div>')
       +'</div>'
       +'</div>';
   }
