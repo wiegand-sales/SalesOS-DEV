@@ -297,9 +297,9 @@ tr:hover td{background:var(--bg2);}
     <div id="coachingSubNav" class="wiegand-subnav hidden">
       <div class="sb-item sb-navsub" id="nav-coaching-team" onclick="selectCoachingTeam()">Overview KPIs</div>
       <div class="sb-item sb-navsub" id="nav-coaching-overview" onclick="setCoachFilterView('overview')">Overview Coachings</div>
+      <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivität</div>
       <div id="coachingCoachSubItems"></div>
     </div>
-    <div class="sb-item" id="nav-activity" onclick="showView('activity')"><div class="sb-icon"><i class="ti ti-activity"></i></div> Aktivität</div>
     <div class="sb-item" id="nav-settings" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="settingsSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-settings-integrations" onclick="selectSettingsSub('integrations')">Integrationen</div>
@@ -2595,10 +2595,10 @@ function renderSidebar(){
   if(view==='team'&&!isTeamTab)document.getElementById('nav-team').classList.add('active');
   var nto=document.getElementById('nav-team-overview');if(nto)nto.classList.toggle('active',view==='team'&&wiegandView==='overview');
   var ntz=document.getElementById('nav-team-ziel');if(ntz)ntz.classList.toggle('active',view==='team'&&wiegandView==='ziel');
-  var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab);
+  var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab||view==='activity');
   var nco=document.getElementById('nav-coaching-overview');if(nco)nco.classList.toggle('active',view==='coaching'&&coachFilterView==='overview');
   var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
-  var na=document.getElementById('nav-activity');if(na)na.classList.toggle('active',view==='activity');
+  var na=document.getElementById('nav-coaching-activity');if(na)na.classList.toggle('active',view==='activity');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
   ['integrations','data','log'].forEach(function(sv){
     var el=document.getElementById('nav-settings-'+sv);if(el)el.classList.toggle('active',view==='settings'&&settingsView===sv);
@@ -2701,9 +2701,10 @@ function showView(v){
   view=v;
   if(v!=='team')closeWiegandSubnav();
   if(v!=='settings')closeSettingsSubnav();
-  if(v!=='coaching'&&v!=='team')closeCoachingSubnav();
+  if(v!=='coaching'&&v!=='team'&&v!=='activity')closeCoachingSubnav();
   renderSidebar();renderMain();
 }
+function selectCoachingActivity(){view='activity';coachingNavOpen=true;renderSidebar();renderMain();}
 function closeWiegandSubnav(){
   wiegandNavOpen=false;
   var sub=document.getElementById('wiegandSubNav');if(sub)sub.classList.add('hidden');
