@@ -308,7 +308,7 @@ tr:hover td{background:var(--bg2);}
 <div class="sidebar">
   <div class="sb-header">
     <div class="sb-logo"><div class="sb-brand-badge">SO</div><span class="sb-title">Sales OS</span></div>
-    <div id="sbProfileRow" style="display:flex;align-items:center;gap:8px;margin-top:12px">
+    <div id="sbProfileRow" style="display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
       <div class="av" id="sbProfileAvatar" style="width:30px;height:30px;font-size:12px;background:var(--purple-bg);color:var(--purple);flex-shrink:0">?</div>
       <div style="flex:1;min-width:0">
         <div id="sbProfileName" style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)">—</div>
@@ -2914,9 +2914,10 @@ function renderSidebar(){
     var d=document.createElement('div');
     d.className='emp-item'+(view==='emp'&&emp.id===selectedEmp?' active':'');
     var alrt=al.length?('<i class="ti ti-alert-triangle" style="font-size:13px;color:var(--amber);flex-shrink:0"></i>'):'';
+    var missingEnd=(emp.active===false&&!emp.endDate)?('<i class="ti ti-calendar-exclamation" title="Vertragsende fehlt" style="font-size:13px;color:var(--red);flex-shrink:0"></i>'):'';
     d.innerHTML='<div class="av" style="width:38px;height:38px;font-size:14px;background:'+c.bg+';color:'+c.text+'">'+ini(emp.name)+'</div>'
       +'<div style="flex:1;min-width:0"><div class="emp-name">'+emp.name+'</div><div class="emp-role">'+emp.role+'</div></div>'
-      +alrt;
+      +alrt+missingEnd;
     d.onclick=(function(eid){return function(){selectedEmp=eid;view='emp';activeTab='performance';renderSidebar();renderMain();};})(emp.id);
     return d;
   }
