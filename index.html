@@ -291,7 +291,7 @@ tr:hover td{background:var(--bg2);}
     <div id="wiegandSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Overview</div>
       <div class="sb-item sb-navsub" id="nav-team-team" onclick="selectWiegandSub('team')">Team</div>
-      <div class="sb-item sb-navsub" id="nav-team-ziel" onclick="selectWiegandSub('ziel')">Zielvereinbarung</div>
+      <div class="sb-item sb-navsub" id="nav-team-ziel" onclick="selectWiegandSub('ziel')">KPIs</div>
     </div>
     <div class="sb-item" id="nav-coaching" onclick="showView('coaching')"><div class="sb-icon"><i class="ti ti-calendar-event"></i></div> SFP Coaching</div>
     <div class="sb-item" id="nav-activity" onclick="showView('activity')"><div class="sb-icon"><i class="ti ti-activity"></i></div> Aktivität</div>
@@ -2140,7 +2140,7 @@ function zielverlaufJahrChartHtml(){
   for(var i=0;i<12;i++){barsHtml+='<div style="flex:1;text-align:center;font-size:10.5px;color:var(--text3)">'+MONTH_SHORT_DE[i]+'</div>';}
   barsHtml+='</div>';
   var h='<div class="card">';
-  h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar" style="color:var(--purple)"></i> Zielvereinbarung — Jahresverlauf</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+yr+'</span></div>';
+  h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar" style="color:var(--purple)"></i> Monatliche Zielvereinbarung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+yr+'</span></div>';
   h+=barsHtml;
   h+='</div>';
   return h;
@@ -2152,18 +2152,18 @@ function kpiZieleHtml(){
     return '<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)">'
       +'<div style="width:170px;font-size:13px;font-weight:500">'+label+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<select id="dir-'+key+'" style="width:64px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
+      +'<select id="dir-'+key+'" style="width:64px;height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
       +'<option value="gte"'+(t.dir==='gte'?' selected':'')+'>≥</option>'
       +'<option value="lte"'+(t.dir==='lte'?' selected':'')+'>≤</option>'
       +'</select>'
-      +'<input type="number" id="val-'+key+'" value="'+t.val+'" step="'+(step||1)+'" min="0" max="100" style="width:80px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
+      +'<input type="number" id="val-'+key+'" value="'+t.val+'" step="'+(step||1)+'" min="0" max="100" style="width:80px;height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
       +(einheit?'<span style="font-size:12px;color:var(--text2)">'+einheit+'</span>':'')
       +'</div>'
       +'<div style="margin-left:auto;font-size:11px;color:var(--text3)">Aktuell: '+t.dir+' '+t.val+(einheit||'')+'</div>'
       +'</div>';
   }
   return '<div class="card">'
-    +'<div class="card-title"><i class="ti ti-target"></i> Zielwerte & Richtung</div>'
+    +'<div class="card-title"><i class="ti ti-target"></i> Allgemeine KPIs</div>'
     +'<p style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.6">Lege fest ob ein Wert <strong>größer (≥)</strong> oder <strong>kleiner (≤)</strong> als der Zielwert sein soll. Gilt als globaler Standard für alle Mitarbeiter.</p>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 40px">'
     +zRow('crOEM','CR OEM','%',1)
@@ -2173,7 +2173,7 @@ function kpiZieleHtml(){
     +zRow('optPerH','Opt./Stunde','',0.1)
     +'</div>'
     +'<div style="margin-top:16px;display:flex;align-items:center;gap:12px">'
-    +'<button class="btn btn-primary btn-sm" style="width:auto" onclick="zieleSpeichern()"><i class="ti ti-check"></i> Zielwerte speichern</button>'
+    +'<button class="btn btn-primary" style="width:auto;height:34px" onclick="zieleSpeichern()"><i class="ti ti-check"></i> Zielwerte speichern</button>'
     +'<span id="ziele-status" style="font-size:12px;color:var(--teal)"></span>'
     +'</div></div>';
 }
@@ -2277,15 +2277,15 @@ function zielvereinbarungHtml(){
       var c=COLORS[e.color%COLORS.length];
       var weekCells=weeksMeta.map(function(wm,i){
         var isHol=wm.holidayNames.length>0;
-        return '<div style="'+GD+';justify-content:center"><input type="number" min="0" max="7" value="'+weeks[i]+'" onchange="updateZielField(\''+e.id+'\',\'week\','+i+',this.value)" style="width:48px;padding:8px 2px;text-align:center'+(isHol?';border-color:var(--amber)':'')+'"></div>';
+        return '<div style="'+GD+';justify-content:center"><input type="number" min="0" max="7" value="'+weeks[i]+'" onchange="updateZielField(\''+e.id+'\',\'week\','+i+',this.value)" style="width:48px;height:34px;box-sizing:border-box;padding:0 2px;text-align:center'+(isHol?';border-color:var(--amber)':'')+'"></div>';
       }).join('');
       var rowBg=idx%2===1?'background:rgba(0,0,0,0.03);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
         +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+e.name+'</div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
         +weekCells
         +'<div style="'+GD+';justify-content:center;font-weight:600">'+monthSum+'</div>'
-        +'<div style="'+GD+'"><input type="number" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" style="text-align:right"></div>'
-        +'<div style="'+GD+'"><input type="number" min="0" value="'+margeOpt+'" onchange="updateZielField(\''+e.id+'\',\'margeOpt\',null,this.value)" style="text-align:right"></div>'
+        +'<div style="'+GD+'"><input type="number" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
+        +'<div style="'+GD+'"><input type="number" min="0" value="'+margeOpt+'" onchange="updateZielField(\''+e.id+'\',\'margeOpt\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
         +'<div style="'+GD+';justify-content:flex-end;font-weight:600;color:var(--purple)">€ '+Math.round(target).toLocaleString('de-DE')+'</div>'
         +'</div>';
     }).join('');
@@ -2347,7 +2347,7 @@ function zielvereinbarungHtml(){
       +'<div style="'+GD+';justify-content:center;font-weight:600">'+mDaysSum+'</div>'
       +'<div style="'+GD+';justify-content:center;color:var(--text2)">'+(mAvgOpt||'–')+'</div>'
       +'<div style="'+GD+';justify-content:center;color:var(--text2)">'+(mAvgMarge?'€ '+mAvgMarge:'–')+'</div>'
-      +'<div style="'+GD+'" onclick="event.stopPropagation()"><input type="number" min="0" value="'+mNl+'" onchange="updateZielNlTarget(\''+mk+'\',this.value)" style="text-align:right" placeholder="0"></div>'
+      +'<div style="'+GD+'" onclick="event.stopPropagation()"><input type="number" min="0" value="'+mNl+'" onchange="updateZielNlTarget(\''+mk+'\',this.value)" style="height:34px;box-sizing:border-box;text-align:right" placeholder="0"></div>'
       +'<div style="'+GD+';justify-content:flex-end;font-weight:600;color:var(--purple)">€ '+Math.round(mTargetSum).toLocaleString('de-DE')+'</div>'
       +'</div>');
     if(isCurrent)monthRows.push(weekDetailHtml);
@@ -2366,9 +2366,9 @@ function zielvereinbarungHtml(){
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
     +'<div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung</div>'
     +'<div style="display:flex;align-items:center;gap:10px">'
-    +'<button class="btn" onclick="setZielYearView(-1)">◀</button>'
+    +'<button class="btn" style="height:34px" onclick="setZielYearView(-1)">◀</button>'
     +'<div style="font-size:14px;font-weight:700;min-width:60px;text-align:center">'+year+'</div>'
-    +'<button class="btn" onclick="setZielYearView(1)">▶</button>'
+    +'<button class="btn" style="height:34px" onclick="setZielYearView(1)">▶</button>'
     +'</div></div>'
     +'<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)">'
     +'<div style="display:grid;grid-template-columns:'+yearGridTemplate+'">'
@@ -2383,7 +2383,7 @@ function zielvereinbarungHtml(){
     +yearTotalRow
     +'</div>'
     +'<div style="margin-top:16px;display:flex;align-items:center;gap:12px">'
-    +'<button class="btn btn-primary" style="width:auto" onclick="saveZielvereinbarung()"><i class="ti ti-check"></i> Zielvereinbarung speichern</button>'
+    +'<button class="btn btn-primary" style="width:auto;height:34px" onclick="saveZielvereinbarung()"><i class="ti ti-check"></i> Zielvereinbarung speichern</button>'
     +'<span id="ziel-status" style="font-size:12px;color:var(--teal)"></span>'
     +'</div>'
     +'<div style="font-size:11px;color:var(--text3);margin-top:10px">Monat anklicken, um die Mitarbeiter-Wochenansicht auf-/zuzuklappen. "Ziel NL Marge/Mon." ist der zu Jahresbeginn kalkulierte Referenzwert und wird beim Eintragen sofort gespeichert.</div>'
