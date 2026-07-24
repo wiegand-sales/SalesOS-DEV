@@ -2812,9 +2812,9 @@ function buildOverviewTab(liste){
   var HIDDEN=[];
   var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;}).slice().sort(function(a,b){return a.name.localeCompare(b.name);});
   if(!visible.length)return '<div class="card" style="text-align:center;color:var(--text3);padding:40px">Keine Mitarbeiter vorhanden</div>';
-  if(!overviewSelectedIds){overviewSelectedIds=[visible[0].id];}
+  if(!overviewSelectedIds){overviewSelectedIds=visible.map(function(e){return e.id;});}
   overviewSelectedIds=overviewSelectedIds.filter(function(id){return visible.some(function(e){return e.id===id;});});
-  if(!overviewSelectedIds.length)overviewSelectedIds=[visible[0].id];
+  if(!overviewSelectedIds.length)overviewSelectedIds=visible.map(function(e){return e.id;});
   var selectedEmps=visible.filter(function(e){return overviewSelectedIds.indexOf(e.id)>=0;});
   var isAll=selectedEmps.length!==1;
   var emp=isAll?null:selectedEmps[0];
@@ -2964,11 +2964,11 @@ function buildOverviewTab(liste){
 
     h+='<div class="g2" style="margin-bottom:22px">';
     h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> Conversion-Mix</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
+    h+='<div class="section-hdr" style="margin-top:0;justify-content:flex-start"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> Conversion-Mix</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
     h+='<div class="funnel-wrap">'+donutSvg(mixEntries,mixTotal,'Gesamt')+'</div>';
     h+='</div>';
     h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> CR-Verteilung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
+    h+='<div class="section-hdr" style="margin-top:0;justify-content:flex-start"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> CR-Verteilung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
     h+='<div class="funnel-wrap">'+donutSvg(crRaw,crSumRaw,'Ø Verteilung')+'</div>';
     h+='</div>';
     h+='</div>';
