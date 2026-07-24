@@ -2797,14 +2797,15 @@ function allTeams(){
 function activeEmployees(){
   return employees.filter(function(e){return e.active!==false;});
 }
-// Fuer die SFP Wiegand Overview: aktuell Aktive PLUS Mitarbeiter, deren Vertragsende innerhalb der
-// letzten 12 Monate liegt - damit sie in der Performance-Tabelle so lange sichtbar bleiben, wie ihr
-// Vertragsende es hergibt, statt sofort beim Deaktivieren zu verschwinden.
+// Fuer die SFP Wiegand Overview: aktuell Aktive PLUS ALLE ehemaligen Mitarbeiter, die jemals
+// Performance-Daten hatten - dauerhaft, nicht nur zeitlich begrenzt. Ein Mitarbeiter, der bis
+// 31.07.2026 gearbeitet hat, muss auch Jahre spaeter noch in der Performance-Tabelle fuer Juli 2026
+// auftauchen, weil seine Zahlen das damalige Gesamtergebnis mitgepraegt haben - unabhaengig vom
+// aktuellen Status oder davon, wie lange das Vertragsende her ist.
 function activeOrRecentlyEndedEmployees(){
-  var cutoff=monthBoundsUTC(today(),12).from;
   return employees.filter(function(e){
     if(e.active!==false)return true;
-    return e.endDate&&e.endDate>=cutoff;
+    return performance[e.id]&&performance[e.id].length>0;
   });
 }
 
@@ -2882,7 +2883,7 @@ function renderSidebar(){
     });
   }
   var HIDDEN=[];
-  var visible=activeOrRecentlyEndedEmployees().filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
+  var visible=employees.filter(function(e){return e.active!==false&&HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
   // Mitarbeiter in Onboarding-Phase kommen alle in eine Gruppe -- AUSSER VLC (Valencia):
   // VLC wird immer als eigener Standort gefuehrt, unabhaengig vom Onboarding-Status
   var onboardingEmps=visible.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';});
