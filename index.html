@@ -903,6 +903,42 @@ function computeCoachEffectiveness(){
   return result;
 }
 // ── Coaching-Abdeckung: eigener, ausgebauter Tab mit mehr Informationen ──
+// ── SFP Coaching > Overview Coachings: Petrol-Infobox (ersetzt die frühere 3-Kacheln+Chart-Zeile) ──
+function coachingOverviewInfoBoxHtml(liste,hD,heute){
+  var HIDDEN=[];
+  var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
+  var coachEmps=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+  var ueberfaellig=visible.filter(function(e){var t=tageSeitLetzterSession(e.id);return t===null||t>30;});
+  var qaCutoff60=addDaysUTC(heute,-60);
+  var qaDueListe=visible.map(function(e){
+    var cnt=(callRatings[e.id]||[]).filter(function(r){return r.date>=qaCutoff60;}).length;
+    return {e:e,cnt:cnt};
+  }).filter(function(x){return x.cnt<5;});
+  var coachCounts={},totalCoached=0;
+  visible.forEach(function(e){
+    (protocols[e.id]||[]).forEach(function(p){
+      if(p.status==='geplant')return;
+      totalCoached++;
+      if(p.coachId)coachCounts[p.coachId]=(coachCounts[p.coachId]||0)+1;
+    });
+  });
+  var coachDistRows=coachEmps.map(function(c){return {name:c.name,n:coachCounts[c.id]||0};}).sort(function(a,b){return b.n-a.n;});
+  var monthLabel=MONTH_NAMES_ZIEL[hD.getMonth()]+' '+hD.getFullYear();
+  var coachColors=['#7ED2DB','#5FBAC4','#247982','#164e54','#0c3b40'];
+
+  var totalStatCols=3+coachDistRows.length;
+  var h='<div class="month-bar" style="grid-template-columns:auto '+Array(totalStatCols).fill('1fr').join(' ')+'">';
+  h+='<div class="mb-month"><div class="l">Zeitraum</div><div class="v">'+monthLabel+'</div></div>';
+  h+='<div class="mb-stat"><div class="l">QA fällig</div><div class="row"><span class="n">'+qaDueListe.length+'</span></div></div>';
+  h+='<div class="mb-stat"><div class="l">Überfällige Coachings</div><div class="row"><span class="n">'+ueberfaellig.length+'</span></div></div>';
+  h+='<div class="mb-stat"><div class="l">Sessions gesamt</div><div class="row"><span class="n">'+totalCoached+'</span></div></div>';
+  coachDistRows.forEach(function(r,idx){
+    var col=coachColors[idx%coachColors.length];
+    h+='<div class="mb-stat"><div class="l" style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:'+col+';display:inline-block;flex-shrink:0"></span>'+r.name.split(' ')[0]+'</div><div class="row"><span class="n">'+r.n+'</span></div></div>';
+  });
+  h+='</div>';
+  return h;
+}
 function buildCoachingAbdeckungTab(liste,hD,heute){
   var HIDDEN=[];
   var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
@@ -1255,13 +1291,8 @@ function renderCoachingAnsicht(){
     h+=buildCoachingAbdeckungTab(liste,hD,heute);
   } else {
 
-  // ══ ZEILE 1: 3 Stat-Kacheln + Linien-Chart (volle Breite) ══
-  h+='<div style="display:grid;grid-template-columns:repeat(3,140px) 1fr;gap:12px;margin-bottom:16px;align-items:stretch">';
-  h+='<div style="background:var(--bg);border:1px solid var(--border);border-top:3px solid var(--purple);border-radius:var(--r-lg);padding:12px 14px"><div style="font-size:10.5px;font-weight:600;color:var(--purple);letter-spacing:.05em;margin-bottom:4px">7 TAGE</div><div style="display:flex;align-items:baseline;gap:6px"><div style="font-size:20px;font-weight:700;color:var(--purple);line-height:1">'+s7+'</div><div style="font-size:12px;font-weight:700;color:'+t7.col+'">'+t7.arrow+'</div></div><div style="font-size:10.5px;color:var(--text2);margin-top:3px">Sessions</div><div style="font-size:10px;color:'+t7.col+';margin-top:1px;font-weight:600">'+t7.txt+'</div></div>';
-  h+='<div style="background:var(--bg);border:1px solid var(--border);border-top:3px solid var(--teal);border-radius:var(--r-lg);padding:12px 14px"><div style="font-size:10.5px;font-weight:600;color:var(--teal);letter-spacing:.05em;margin-bottom:4px">14 TAGE</div><div style="display:flex;align-items:baseline;gap:6px"><div style="font-size:20px;font-weight:700;color:var(--teal);line-height:1">'+s14+'</div><div style="font-size:12px;font-weight:700;color:'+t14.col+'">'+t14.arrow+'</div></div><div style="font-size:10.5px;color:var(--text2);margin-top:3px">Sessions</div><div style="font-size:10px;color:'+t14.col+';margin-top:1px;font-weight:600">'+t14.txt+'</div></div>';
-  h+='<div style="background:var(--bg);border:1px solid var(--border);border-top:3px solid var(--blue);border-radius:var(--r-lg);padding:12px 14px"><div style="font-size:10.5px;font-weight:600;color:var(--blue-dark);letter-spacing:.05em;margin-bottom:4px">30 TAGE</div><div style="display:flex;align-items:baseline;gap:6px"><div style="font-size:20px;font-weight:700;color:var(--blue-dark);line-height:1">'+s30+'</div><div style="font-size:12px;font-weight:700;color:'+t30.col+'">'+t30.arrow+'</div></div><div style="font-size:10.5px;color:var(--text2);margin-top:3px">Sessions</div><div style="font-size:10px;color:'+t30.col+';margin-top:1px;font-weight:600">'+t30.txt+'</div></div>';
-  h+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-lg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:12px 14px"><div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.05em;margin-bottom:8px">SESSION-VERLAUF – 45 TAGE VOR/NACH HEUTE</div>'+buildChart()+'</div>';
-  h+='</div>';
+  // ══ Petrol-Infobox: Zeitraum, QA fällig, Überfällige Coachings, Sessions gesamt, je Coach eine Spalte ══
+  h+=coachingOverviewInfoBoxHtml(liste,hD,heute);
 
   // ══ Coach-Wirksamkeit (nur Overview, ab 2 Coaches sinnvoll) ══
   if(coachFilterView==='overview'&&coachList.length>=2){
