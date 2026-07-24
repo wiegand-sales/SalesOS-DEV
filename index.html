@@ -2827,6 +2827,19 @@ function buildOverviewTab(liste){
   var perfAll=isAll?[]:(performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;}).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
 
   function kpiCol(v,t,dir){if(v===null)return 'var(--text3)';return(dir==='lte'?v<=t:v>=t)?'#206A72':'var(--red)';}
+  // Ziel fuer Opt. OEM-Kachel: Durchschnitt aller eingetragenen "Opt./Tag"-Werte aus der Zielvereinbarung (aktueller Monat)
+  function avgOptTagZielvereinbarung(){
+    var zmk=today().slice(0,7);
+    var zRec=zielStore[zmk]||{};
+    var zVisible=visible.filter(function(e){return empActiveInZielMonth(e,zmk);});
+    var zVals=[];
+    zVisible.forEach(function(e){
+      var r=zRec[e.id]||{};
+      if(r.optTag!=null)zVals.push(r.optTag);
+    });
+    return zVals.length?zVals.reduce(function(a,b){return a+b;},0)/zVals.length:null;
+  }
+  var optOemZiel=avgOptTagZielvereinbarung();
   var h='';
   h+=buildMonthBar(visible);
 
@@ -2856,10 +2869,10 @@ function buildOverviewTab(liste){
     }
     var kpisAll=[
       {label:'CR OEM', key:'crOEM',      target:CR_GOOD, dir:'gte', pct:true},
-      {label:'CR TW',  key:'crTeilweise', target:null,    dir:'lte', pct:true},
-      {label:'CR SY',  key:'crSuperYes',  target:null,    dir:'gte', pct:true},
-      {label:'CR MY',  key:'crMegaYes',   target:null,    dir:'gte', pct:true},
-      {label:'Conv. OEM',key:'convOEM',   target:null,    dir:'gte', pct:false},
+      {label:'CR TW',  key:'crTeilweise', target:KPI_TARGETS.crTeilweise.val, dir:KPI_TARGETS.crTeilweise.dir, pct:true},
+      {label:'CR SY',  key:'crSuperYes',  target:KPI_TARGETS.crSuperYes.val,  dir:KPI_TARGETS.crSuperYes.dir,  pct:true},
+      {label:'CR MY',  key:'crMegaYes',   target:KPI_TARGETS.crMegaYes.val,   dir:KPI_TARGETS.crMegaYes.dir,   pct:true},
+      {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false},
     ];
     h+='<div class="g5" style="margin-bottom:22px">';
     kpisAll.forEach(function(k){
@@ -2894,7 +2907,7 @@ function buildOverviewTab(liste){
     {label:'CR TW',  key:'crTeilweise', target:empT.crTeilweise.val, dir:empT.crTeilweise.dir, pct:true},
     {label:'CR SY',  key:'crSuperYes',  target:empT.crSuperYes.val,  dir:empT.crSuperYes.dir,  pct:true},
     {label:'CR MY',  key:'crMegaYes',   target:empT.crMegaYes.val,   dir:empT.crMegaYes.dir,   pct:true},
-    {label:'Conv. OEM',key:'convOEM',   target:null,                  dir:'gte',               pct:false},
+    {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false},
   ];
   h+='<div class="g5" style="margin-bottom:22px">';
   kpis.forEach(function(k){
