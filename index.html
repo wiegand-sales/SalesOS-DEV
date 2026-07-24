@@ -5500,6 +5500,7 @@ function renderTab(){
     html+='<div><label>Phase</label><select id="es-phase">'
       +'<option'+(emp.phase==='Onboarding'?' selected':'')+'>Onboarding</option>'
       +'<option'+(emp.phase==='Aktiv'?' selected':'')+'>Aktiv</option>'
+      +'<option'+(emp.phase==='Inaktiv'?' selected':'')+'>Inaktiv</option>'
       +'</select></div>';
     html+='<div><label>Anstellung</label><select id="es-contract">'
       +'<option value="Vollzeit"'+(emp.contract==='Vollzeit'||emp.contract==='full'?' selected':'')+'>Vollzeit</option>'
@@ -5626,14 +5627,6 @@ function renderTab(){
       }
       html+='</div>';
     } // Ende historie
-
-    if(true){
-      html+='<div class="card" style="border-top:2px solid var(--amber)">'
-      html+='<div class="card-title" style="color:var(--amber-dark)"><i class="ti ti-user-off"></i> Mitarbeiter deaktivieren</div>'
-      html+='<p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">Deaktivierte Mitarbeiter werden in der Sidebar nach "Inaktiv" verschoben, nicht ausgeblendet. Alle Daten bleiben vollständig erhalten und fließen bis zum Vertragsende (und einige Monate danach) weiterhin in die Statistik-Werte ein.</p>'
-      html+='<button class="btn btn-sm" style="background:var(--amber-bg);color:var(--amber-dark);border-color:var(--amber)" onclick="mitarbeiterDeaktivieren()"><i class="ti ti-user-off"></i> '+emp.name+' deaktivieren</button>'
-      html+='</div>';
-    } // Ende verwaltung
   }
 
   tc2.innerHTML=html;
@@ -7193,6 +7186,9 @@ function saveEmpEinstellungen(){
   emp.name=document.getElementById('es-name').value.trim()||emp.name;
   emp.role=document.getElementById('es-role').value;
   emp.phase=document.getElementById('es-phase').value;
+  var wasActive=oldSnapshot.phase!=='Inaktiv';
+  var nowActive=emp.phase!=='Inaktiv';
+  emp.active=nowActive;
   emp.team=teamVal||emp.team;
   var locEl=document.getElementById('es-location');
   if(locEl)emp.location=locEl.value.trim()||emp.team;
@@ -7204,7 +7200,7 @@ function saveEmpEinstellungen(){
   if(notesEl)emp.notes=notesEl.value;
   renderSidebar();renderEmpDetail();  lsSave();
   sb.from('employees').update({
-    name:emp.name,role:emp.role,phase:emp.phase,team:emp.team,
+    name:emp.name,role:emp.role,phase:emp.phase,team:emp.team,active:emp.active,
     start_date:emp.startDate||null,end_date:emp.endDate||null,
     contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color
   }).eq('id',emp.id).then(function(res){
@@ -7218,6 +7214,8 @@ function saveEmpEinstellungen(){
     if(oldSnapshot.startDate!==emp.startDate)stammChanges.push('Vertragsbeginn: '+(oldSnapshot.startDate||'—')+' → '+(emp.startDate||'—'));
     if(oldSnapshot.endDate!==emp.endDate)stammChanges.push('Vertragsende: '+(oldSnapshot.endDate||'—')+' → '+(emp.endDate||'—'));
     if(stammChanges.length)logActivity('stammdaten','updated','Stammdaten geändert: '+stammChanges.join(' · '),emp.id,emp.name);
+    if(wasActive&&!nowActive){logAdminAction('employee_deactivated','Mitarbeiter: '+emp.name);logActivity('employee','deleted','Mitarbeiter deaktiviert (Phase: Inaktiv): '+emp.name,emp.id,emp.role);}
+    else if(!wasActive&&nowActive){logActivity('employee','updated','Mitarbeiter reaktiviert (Phase: '+emp.phase+'): '+emp.name,emp.id,emp.role);}
   });
   // Team-/Rollenwechsel-Historie protokollieren
   var histRows=[];
@@ -7272,20 +7270,7 @@ function saveEmpZiele(){
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
-function mitarbeiterDeaktivieren(){
-  var emp=employees.find(function(e){return e.id===selectedEmp;});
-  if(!emp)return;
-  if(!confirm('Mitarbeiter deaktivieren: '+emp.name+'?\n\nWird nach "Inaktiv" verschoben, nicht ausgeblendet. Alle Daten bleiben vollständig erhalten.'))return;
-  emp.active=false;
-  view='team';
-  renderSidebar();
-  renderMain();
-  sb.from('employees').update({active:false}).eq('id',emp.id).then(function(res){
-    if(res.error){alert('Fehler beim Deaktivieren: '+res.error.message+'\n\nDer Mitarbeiter ist lokal ausgeblendet, aber die Änderung wurde NICHT gespeichert.');return;}
-    logAdminAction('employee_deactivated','Mitarbeiter: '+emp.name);
-    logActivity('employee','deleted','Mitarbeiter deaktiviert: '+emp.name,emp.id,emp.role);
-  });
-}
+// (mitarbeiterDeaktivieren() entfernt - Deaktivierung/Reaktivierung laeuft jetzt sauber ueber die Phase im Stammdaten-Formular)
 
 
 
