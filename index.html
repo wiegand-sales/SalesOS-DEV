@@ -909,11 +909,18 @@ function coachingOverviewInfoBoxHtml(liste,hD,heute){
   var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
   var coachEmps=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
   var ueberfaellig=visible.filter(function(e){var t=tageSeitLetzterSession(e.id);return t===null||t>30;});
-  var qaCutoff60=addDaysUTC(heute,-60);
-  var qaDueListe=visible.map(function(e){
-    var cnt=(callRatings[e.id]||[]).filter(function(r){return r.date>=qaCutoff60;}).length;
-    return {e:e,cnt:cnt};
-  }).filter(function(x){return x.cnt<5;});
+  function qaFaelligCountAt(refDate){
+    var cutoff=addDaysUTC(refDate,-60);
+    return visible.filter(function(e){
+      var cnt=(callRatings[e.id]||[]).filter(function(r){return r.date>=cutoff&&r.date<=refDate;}).length;
+      return cnt<5;
+    }).length;
+  }
+  var qaFaelligNow=qaFaelligCountAt(heute);
+  var qaFaelligVorwoche=qaFaelligCountAt(addDaysUTC(heute,-7));
+  var qaDelta=qaFaelligNow-qaFaelligVorwoche;
+  var qaTrendCol=qaDelta===0?'#7ED2DB':(qaDelta>0?'#f0a5a3':'#7ED2DB'); // mehr QA-faellig = schlechter (rot), weniger/gleich = gut (teal)
+  var qaTrendTxt='Vorwoche: '+qaFaelligVorwoche+' ('+(qaDelta>=0?'+':'')+qaDelta+')';
   var coachCounts={},totalCoached=0;
   visible.forEach(function(e){
     (protocols[e.id]||[]).forEach(function(p){
@@ -929,12 +936,13 @@ function coachingOverviewInfoBoxHtml(liste,hD,heute){
   var totalStatCols=3+coachDistRows.length;
   var h='<div class="month-bar" style="grid-template-columns:auto '+Array(totalStatCols).fill('1fr').join(' ')+'">';
   h+='<div class="mb-month"><div class="l">Zeitraum</div><div class="v">'+monthLabel+'</div></div>';
-  h+='<div class="mb-stat"><div class="l">QA fällig</div><div class="row"><span class="n">'+qaDueListe.length+'</span></div></div>';
-  h+='<div class="mb-stat"><div class="l">Überfällige Coachings</div><div class="row"><span class="n">'+ueberfaellig.length+'</span></div></div>';
-  h+='<div class="mb-stat"><div class="l">Sessions gesamt</div><div class="row"><span class="n">'+totalCoached+'</span></div></div>';
+  h+='<div class="mb-stat"><div class="l">QA fällig</div><div class="row"><span class="n">'+qaFaelligNow+'</span></div><div class="m" style="color:'+qaTrendCol+'">'+qaTrendTxt+'</div></div>';
+  h+='<div class="mb-stat"><div class="l">Überfällige Coachings</div><div class="row"><span class="n">'+ueberfaellig.length+'</span></div><div class="m">&gt;30 Tage kein Coaching</div></div>';
+  h+='<div class="mb-stat"><div class="l">Sessions gesamt</div><div class="row"><span class="n">'+totalCoached+'</span></div><div class="m">Alle abgeschlossenen Coachings</div></div>';
   coachDistRows.forEach(function(r,idx){
     var col=coachColors[idx%coachColors.length];
-    h+='<div class="mb-stat"><div class="l" style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:'+col+';display:inline-block;flex-shrink:0"></span>'+r.name.split(' ')[0]+'</div><div class="row"><span class="n">'+r.n+'</span></div></div>';
+    var anteil=totalCoached>0?Math.round(r.n/totalCoached*100):0;
+    h+='<div class="mb-stat"><div class="l" style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:'+col+';display:inline-block;flex-shrink:0"></span>'+r.name.split(' ')[0]+'</div><div class="row"><span class="n">'+r.n+'</span></div><div class="m">Anteil: '+anteil+'%</div></div>';
   });
   h+='</div>';
   return h;
