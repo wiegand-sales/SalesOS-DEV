@@ -2091,6 +2091,61 @@ function empActiveInZielMonth(e,monthKey){
   if(e.startDate&&e.startDate>b.to)return false;
   return true;
 }
+// ── Zielvereinbarung — Jahresverlauf: Ziel NL (gestrichelte Referenzlinie) vs. Ziel/Erzielte Marge (Balken) ──
+// Eigenstaendige Funktion, damit dasselbe Diagramm sowohl in Overview als auch in Zielvereinbarung genutzt werden kann.
+function zielverlaufJahrChartHtml(){
+  var yr=today().slice(0,4);
+  var MONTH_SHORT_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  var zielNlArr=[],zielMargeArr=[],erzieltArr=[];
+  for(var m=1;m<=12;m++){
+    var mk=yr+'-'+(m<10?'0'+m:m);
+    var wMeta=getMonthWeeksZiel(mk);
+    var mRec=zielStore[mk]||{};
+    var mVisible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
+    var mTargetSum=0;
+    mVisible.forEach(function(e){
+      var r=mRec[e.id]||{};
+      var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
+      var monthSum=weeks.reduce(function(a,b){return a+b;},0);
+      var optTag=r.optTag!=null?r.optTag:0;
+      var margeOpt=r.margeOpt!=null?r.margeOpt:0;
+      mTargetSum+=monthSum*optTag*margeOpt;
+    });
+    var erzieltSum=0,hasData=false;
+    mVisible.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if((x.date||'').slice(0,7)!==mk)return;
+        erzieltSum+=x.margeGesamt||x.margin||0; hasData=true;
+      });
+    });
+    zielNlArr.push(zielNlTargets[mk]!=null?zielNlTargets[mk]:0);
+    zielMargeArr.push(Math.round(mTargetSum));
+    erzieltArr.push(hasData?Math.round(erzieltSum):null);
+  }
+  var maxV=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
+  var CH=200; // Diagrammhoehe in px
+  function pct(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV*100));}
+  var barsHtml='<div style="display:flex;align-items:flex-end;gap:6px;height:'+CH+'px;padding:0 4px">';
+  for(var i=0;i<12;i++){
+    var pctNl=pct(zielNlArr[i]),pctZiel=pct(zielMargeArr[i]),pctErz=erzieltArr[i]!=null?pct(erzieltArr[i]):null;
+    barsHtml+='<div style="flex:1;position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center">'
+      +'<div style="position:absolute;left:26px;right:26px;bottom:'+pctNl+'%;border-top:2px dashed #BD2D29" title="Ziel NL Marge/Mon. (Mindestziel): €'+zielNlArr[i].toLocaleString('de-DE')+'"></div>'
+      +'<div style="display:flex;align-items:flex-end;gap:4px;height:100%">'
+      +'<div style="width:24px;height:'+pctZiel+'%;background:linear-gradient(180deg,#7ED2DB,#5FBAC4);border-radius:3px 3px 0 0" title="Ziel Marge/Mon.: €'+zielMargeArr[i].toLocaleString('de-DE')+'"></div>'
+      +(pctErz!=null?'<div style="width:24px;height:'+pctErz+'%;background:linear-gradient(180deg,#247982,#0F3D42);border-radius:3px 3px 0 0" title="Erzielte Marge: €'+erzieltArr[i].toLocaleString('de-DE')+'"></div>':'<div style="width:24px"></div>')
+      +'</div>'
+      +'</div>';
+  }
+  barsHtml+='</div>';
+  barsHtml+='<div style="display:flex;gap:6px;padding:0 4px;margin-top:8px">';
+  for(var i=0;i<12;i++){barsHtml+='<div style="flex:1;text-align:center;font-size:10.5px;color:var(--text3)">'+MONTH_SHORT_DE[i]+'</div>';}
+  barsHtml+='</div>';
+  var h='<div class="card">';
+  h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar" style="color:var(--purple)"></i> Zielvereinbarung — Jahresverlauf</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+yr+'</span></div>';
+  h+=barsHtml;
+  h+='</div>';
+  return h;
+}
 // ── Zielvereinbarung: volle Jahres-/Wochenansicht (unter SFP Wiegand > Zielvereinbarung) ──
 function zielvereinbarungHtml(){
   var GH='background:var(--bg2);padding:9px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;display:flex;align-items:center';
@@ -2213,7 +2268,8 @@ function zielvereinbarungHtml(){
     +'<div style="font-weight:800;padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
     +'<div style="font-weight:800;color:var(--purple-dark);padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearTargetSum).toLocaleString('de-DE')+'</div>'
     +'</div>';
-  return '<div class="card">'
+  return zielverlaufJahrChartHtml()
+    +'<div class="card">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
     +'<div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung</div>'
     +'<div style="display:flex;align-items:center;gap:10px">'
@@ -2825,58 +2881,7 @@ function buildOverviewTab(liste){
   })();
 
   // ── Zielvereinbarung — Jahresverlauf (Entwurf C: Ziel NL als gestrichelte Referenzlinie, Ziel/Erzielt als Balken mit Farbverlauf) ──
-  (function(){
-    var yr=today().slice(0,4);
-    var MONTH_SHORT_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-    var zielNlArr=[],zielMargeArr=[],erzieltArr=[];
-    for(var m=1;m<=12;m++){
-      var mk=yr+'-'+(m<10?'0'+m:m);
-      var wMeta=getMonthWeeksZiel(mk);
-      var mRec=zielStore[mk]||{};
-      var mVisible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
-      var mTargetSum=0;
-      mVisible.forEach(function(e){
-        var r=mRec[e.id]||{};
-        var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
-        var monthSum=weeks.reduce(function(a,b){return a+b;},0);
-        var optTag=r.optTag!=null?r.optTag:0;
-        var margeOpt=r.margeOpt!=null?r.margeOpt:0;
-        mTargetSum+=monthSum*optTag*margeOpt;
-      });
-      var erzieltSum=0,hasData=false;
-      mVisible.forEach(function(e){
-        (performance[e.id]||[]).forEach(function(x){
-          if((x.date||'').slice(0,7)!==mk)return;
-          erzieltSum+=x.margeGesamt||x.margin||0; hasData=true;
-        });
-      });
-      zielNlArr.push(zielNlTargets[mk]!=null?zielNlTargets[mk]:0);
-      zielMargeArr.push(Math.round(mTargetSum));
-      erzieltArr.push(hasData?Math.round(erzieltSum):null);
-    }
-    var maxV=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
-    var CH=200; // Diagrammhoehe in px
-    function pct(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV*100));}
-    var barsHtml='<div style="display:flex;align-items:flex-end;gap:6px;height:'+CH+'px;padding:0 4px">';
-    for(var i=0;i<12;i++){
-      var pctNl=pct(zielNlArr[i]),pctZiel=pct(zielMargeArr[i]),pctErz=erzieltArr[i]!=null?pct(erzieltArr[i]):null;
-      barsHtml+='<div style="flex:1;position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center">'
-        +'<div style="position:absolute;left:26px;right:26px;bottom:'+pctNl+'%;border-top:2px dashed #BD2D29" title="Ziel NL Marge/Mon. (Mindestziel): €'+zielNlArr[i].toLocaleString('de-DE')+'"></div>'
-        +'<div style="display:flex;align-items:flex-end;gap:4px;height:100%">'
-        +'<div style="width:24px;height:'+pctZiel+'%;background:linear-gradient(180deg,#7ED2DB,#5FBAC4);border-radius:3px 3px 0 0" title="Ziel Marge/Mon.: €'+zielMargeArr[i].toLocaleString('de-DE')+'"></div>'
-        +(pctErz!=null?'<div style="width:24px;height:'+pctErz+'%;background:linear-gradient(180deg,#247982,#0F3D42);border-radius:3px 3px 0 0" title="Erzielte Marge: €'+erzieltArr[i].toLocaleString('de-DE')+'"></div>':'<div style="width:24px"></div>')
-        +'</div>'
-        +'</div>';
-    }
-    barsHtml+='</div>';
-    barsHtml+='<div style="display:flex;gap:6px;padding:0 4px;margin-top:8px">';
-    for(var i=0;i<12;i++){barsHtml+='<div style="flex:1;text-align:center;font-size:10.5px;color:var(--text3)">'+MONTH_SHORT_DE[i]+'</div>';}
-    barsHtml+='</div>';
-    h+='<div class="card">';
-    h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar" style="color:var(--purple)"></i> Zielvereinbarung — Jahresverlauf</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+yr+'</span></div>';
-    h+=barsHtml;
-    h+='</div>';
-  })();
+  h+=zielverlaufJahrChartHtml();
 
   // ── Top 3 (höchste Margenerhöhung) & Worst 3 (schwächste CR OEM/CR MY) im aktuellen Kalendermonat ──
   (function(){
