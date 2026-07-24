@@ -2539,7 +2539,12 @@ function zielvereinbarungHtml(){
   var weekDetailHtml=(function(){
     if(!zielMonth)return '';
     var monthLabel=MONTH_NAMES_ZIEL[+zielMonth.slice(5,7)-1]+' '+zielMonth.slice(0,4);
-    var visibleEmps=employees.filter(function(e){return empActiveInZielMonth(e,zielMonth)&&!e.isPureCoach;}).sort(function(a,b){return a.name.localeCompare(b.name);});
+    var ZIEL_ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+    var visibleEmps=employees.filter(function(e){return empActiveInZielMonth(e,zielMonth)&&!e.isPureCoach;}).sort(function(a,b){
+      var ra=ZIEL_ROLE_ORDER[a.role]!=null?ZIEL_ROLE_ORDER[a.role]:99,rb=ZIEL_ROLE_ORDER[b.role]!=null?ZIEL_ROLE_ORDER[b.role]:99;
+      if(ra!==rb)return ra-rb;
+      return a.name.localeCompare(b.name);
+    });
     var rec=zielStore[zielMonth]||{};
     var teamDaysSum=0,teamTargetSum=0,margeVals=[];
     var weekHeaderCells=weeksMeta.map(function(wm){
