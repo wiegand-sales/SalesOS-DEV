@@ -730,7 +730,6 @@ var activityFilterPerson='ALL'; // 'ALL' | employee-id (Coach)
 var activityFilterDays=7;
 function setActivityFilterPerson(v){activityFilterPerson=v;renderActivity();}
 function setActivityFilterDays(d){activityFilterDays=d;renderActivity();}
-function setSettingsView(v){settingsView=v;renderEinstellungen();}
 var settingsNavOpen=true;
 function toggleSettingsNav(){
   settingsNavOpen=!settingsNavOpen;
@@ -768,7 +767,6 @@ function applyOverviewMonth(){
   setOverviewDateRange(from,to);
 }
 function setOverviewPerfGroup(g){overviewPerfGroup=g;renderTeam();}
-function setWiegandView(v){wiegandView=v;renderTeam();}
 var coachCalYear=null, coachCalMonthIdx=null; // Kalender-Monatsnavigation SFP Coaching (init. beim ersten Rendern auf aktuellen Monat)
 function setCoachCalMonth(delta){
   var d=new Date(coachCalYear,coachCalMonthIdx+delta,1);
@@ -1236,7 +1234,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
       var last=_ss[0];
       h+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(189,45,41,0.06);border:1px solid var(--border2);border-radius:var(--r-md);cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'
         +'<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div>'
-        +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+e.name+'</div><div style="font-size:11px;color:var(--text2)">'+e.role+' · '+e.phase+'</div></div>'
+        +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(e.name)+'</div><div style="font-size:11px;color:var(--text2)">'+e.role+' · '+e.phase+'</div></div>'
         +'<div style="text-align:right;flex-shrink:0"><div style="font-size:12px;color:var(--text3)">Letztes Coaching</div><div style="font-size:12px;font-weight:600">'+(last?fd(last.date):'nie')+'</div></div>'
         +'<div style="width:70px;text-align:right;flex-shrink:0"><span style="font-size:14px;font-weight:700;color:var(--red)">'+(t===null?'nie':t+'d')+'</span></div>'
         +'<button class="btn btn-sm btn-primary" data-eid="'+e.id+'" onclick="event.stopPropagation();openSessionModal(this.dataset.eid)"><i class="ti ti-calendar-plus"></i> Planen</button>'
@@ -1302,7 +1300,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
     var s=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).length;
     var sim=(solidroadData[e.id]&&solidroadData[e.id].simulations)?solidroadData[e.id].simulations.length:0;
     h+='<tr style="'+(idx%2===1?'background:rgba(0,0,0,0.03);':'')+'cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'
-      +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);font-weight:500">'+e.name+'</td>'
+      +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);font-weight:500">'+esc(e.name)+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);text-align:right">'+q+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);text-align:right">'+s+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);text-align:right">'+sim+'</td>'
@@ -1704,7 +1702,7 @@ function exportEmpSummary(empId){
   }).join(''):'';
   var milestonesHtml=milestones.length?milestones.map(function(m){return '<li>'+fd(m.date)+' – '+m.label+'</li>';}).join(''):'<li>Noch keine Meilensteine erreicht</li>';
 
-  var html='<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Zusammenfassung – '+emp.name+'</title>'
+  var html='<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Zusammenfassung – '+esc(emp.name)+'</title>'
     +'<style>'
     +'body{font-family:Arial,Helvetica,sans-serif;color:#1a1a18;margin:0;padding:32px;font-size:13px;line-height:1.5}'
     +'h1{font-size:20px;margin:0 0 4px}'
@@ -1717,7 +1715,7 @@ function exportEmpSummary(empId){
     +'.notes-box{background:#f7f7f5;border:1px solid #ddd;border-radius:6px;padding:12px;white-space:pre-wrap}'
     +'@media print{body{padding:16px}}'
     +'</style></head><body>'
-    +'<h1>Coaching-Zusammenfassung: '+emp.name+'</h1>'
+    +'<h1>Coaching-Zusammenfassung: '+esc(emp.name)+'</h1>'
     +'<div class="meta">'+emp.role+' · '+(emp.team||'')+' · '+emp.phase+(emp.startDate?' · Start '+fd(emp.startDate):'')+' · erstellt am '+fd(today())+'</div>'
     +'<h2>KPI-Übersicht (Ø letzte 30 Tage)</h2>'
     +'<table><tr><th>KPI</th><th>Aktuell</th><th>Ziel</th><th>Ø Rolle ('+emp.role+')</th><th>Status</th></tr>'+kpiHtml+'</table>'
@@ -1778,7 +1776,7 @@ function exportTeamReport(){
     var sCount=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).length;
     var tage=tageSeitLetzterSession(e.id);
     var al=checkAlerts(e.id).length;
-    return '<tr><td>'+e.name+'</td><td>'+e.role+'</td><td>'+(ea('crOEM')!==null?Math.round(ea('crOEM'))+'%':'—')+'</td>'
+    return '<tr><td>'+esc(e.name)+'</td><td>'+e.role+'</td><td>'+(ea('crOEM')!==null?Math.round(ea('crOEM'))+'%':'—')+'</td>'
       +'<td>'+(ea('crSuperYes')!==null?Math.round(ea('crSuperYes'))+'%':'—')+'</td>'
       +'<td>'+sCount+'</td><td>'+(tage===null?'nie':tage+'d')+'</td><td>'+(al>0?al+' ⚠':'✓')+'</td></tr>';
   }).join('');
@@ -2329,7 +2327,6 @@ function loadZielvereinbarungFromSupabase(){
 }
 var zielYearView=today().slice(0,4);
 function setZielYearView(delta){zielYearView=(+zielYearView+delta)+'';renderTeam();}
-function jumpToZielMonth(monthKey){zielMonth=monthKey;renderTeam();}
 function toggleZielMonth(monthKey){zielMonth=(zielMonth===monthKey)?'':monthKey;renderTeam();}
 var zielNlTargets={};
 function updateZielNlTarget(monthKey,value){
@@ -2338,12 +2335,6 @@ function updateZielNlTarget(monthKey,value){
   sb.from('settings').upsert({key:'ziel_nl_'+monthKey,value:String(num)},{onConflict:'key'}).then(function(res){
     if(res.error)console.warn('Ziel NL Marge speichern fehlgeschlagen:',res.error);
   });
-  renderTeam();
-}
-function setZielMonth(delta){
-  var y=+zielMonth.slice(0,4),m=+zielMonth.slice(5,7);
-  m+=delta;if(m<1){m=12;y--;}else if(m>12){m=1;y++;}
-  zielMonth=y+'-'+(m<10?'0'+m:m);
   renderTeam();
 }
 function updateZielField(empId,field,weekIdx,value){
@@ -2570,7 +2561,7 @@ function zielvereinbarungHtml(){
       }).join('');
       var rowBg=idx%2===1?'background:rgba(0,0,0,0.03);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
-        +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+e.name+'</div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
+        +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
         +weekCells
         +'<div style="'+GD+';justify-content:center;font-weight:600">'+monthSum+'</div>'
         +'<div style="'+GD+'"><input type="number" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
@@ -2701,6 +2692,7 @@ function saveZielvereinbarung(){
   });
 }
 function ini(n){return n.split(' ').map(function(x){return x[0];}).join('').toUpperCase().slice(0,2);}
+function esc(s){if(s==null)return '';return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function fd(d){
   if(!d)return '';
   var p=d.split('-');
@@ -2743,12 +2735,6 @@ function addDaysUTC(dateStr,delta){
   d.setUTCDate(d.getUTCDate()+delta);
   return d.toISOString().slice(0,10);
 }
-function addMonthsUTC(dateStr,delta){
-  var p=dateStr.split('-').map(Number);
-  var d=new Date(Date.UTC(p[0],p[1]-1,p[2]));
-  d.setUTCMonth(d.getUTCMonth()+delta);
-  return d.toISOString().slice(0,10);
-}
 function monthBoundsUTC(dateStr,monthsAgo){
   var p=dateStr.split('-').map(Number);
   var d=new Date(Date.UTC(p[0],p[1]-1,1));
@@ -2758,11 +2744,8 @@ function monthBoundsUTC(dateStr,monthsAgo){
   var to=toD.toISOString().slice(0,10);
   return {from:from,to:to,ym:from.slice(0,7)};
 }
-function avgSkill(id){var p=protocols[id];if(!p||!p.length||!p[0].skills)return null;var v=Object.values(p[0].skills);return Math.round(v.reduce(function(a,b){return a+b;},0)/v.length);}
 function lastRating(id){var p=protocols[id];return(p&&p.length)?p[0].rating:null;}
 function scoreColor(s){return s>=85?'var(--teal)':s>=70?'var(--purple)':'var(--amber)';}
-function phaseBg(ph){return{Aktiv:RS['Yes'].bg,Onboarding:RS['Teilweise'].bg,Entwicklung:RS['Super Yes'].bg}[ph]||'#f0efec';}
-function phaseCol(ph){return{Aktiv:RS['Yes'].color,Onboarding:RS['Teilweise'].color,Entwicklung:RS['Super Yes'].color}[ph]||'#6b6b67';}
 function getPerf(id,days){
   var p=performance[id]||[];
   var cutoff=new Date();
@@ -2917,7 +2900,7 @@ function renderSidebar(){
     var alrt=al.length?('<div title="'+al.length+' Performance-Alert'+(al.length!==1?'s':'')+'" style="width:18px;height:18px;border-radius:50%;background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 5px rgba(15,61,66,0.3)"><i class="ti ti-alert-triangle" style="font-size:10px;color:#fff"></i></div>'):'';
     var missingEnd=(emp.active===false&&!emp.endDate)?('<i class="ti ti-calendar-exclamation" title="Vertragsende fehlt" style="font-size:13px;color:var(--red);flex-shrink:0"></i>'):'';
     d.innerHTML='<div class="av" style="width:38px;height:38px;font-size:14px;background:'+c.bg+';color:'+c.text+'">'+ini(emp.name)+'</div>'
-      +'<div style="flex:1;min-width:0"><div class="emp-name">'+emp.name+'</div><div class="emp-role">'+emp.role+'</div></div>'
+      +'<div style="flex:1;min-width:0"><div class="emp-name">'+esc(emp.name)+'</div><div class="emp-role">'+emp.role+'</div></div>'
       +alrt+missingEnd;
     d.onclick=(function(eid){return function(){selectedEmp=eid;view='emp';activeTab='performance';renderSidebar();renderMain();};})(emp.id);
     return d;
@@ -3013,13 +2996,6 @@ function letzteSessionMA(id){
   return p.length?p.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0]:null;
 }
 
-function naechsteGeplanteSession(id){
-  var p=(protocols[id]||[]).filter(function(pr){return pr.status==='geplant'&&pr.date>=today();});
-  if(!p.length)return null;
-  p.sort(function(a,b){return a.date.localeCompare(b.date);});
-  return p[0].date;
-}
-
 // Persönliche Bestwerte (Highscores) über die gesamte Performance-Historie
 function personalBestEvents(empId){
   var rows=(performance[empId]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
@@ -3091,22 +3067,6 @@ function tageSeitLetzterSession(id){
   if(!ls)return null;
   var diff=new Date(today())-new Date(ls.date+'T00:00:00');
   return Math.floor(diff/86400000);
-}
-function entwicklungsfelder(id){
-  var p=protocols[id]||[];
-  if(!p.length)return [];
-  // Aggregate skills across all protocols
-  var summen={};var anz={};
-  p.forEach(function(pr){
-    if(!pr.skills)return;
-    Object.keys(pr.skills).forEach(function(k){
-      summen[k]=(summen[k]||0)+pr.skills[k];
-      anz[k]=(anz[k]||0)+1;
-    });
-  });
-  var erg=Object.keys(summen).map(function(k){return {name:k,schnitt:summen[k]/anz[k]};});
-  erg.sort(function(a,b){return a.schnitt-b.schnitt;});
-  return erg.slice(0,3).map(function(e){return e.name;});
 }
 function aufmerksamkeitFarbe(tage){
   if(tage===null)return 'var(--red)';
@@ -3439,7 +3399,7 @@ function buildOverviewTab(liste){
       var checked=overviewSelectedIds.indexOf(e.id)>=0;
       h+='<label style="display:flex;align-items:center;gap:8px;padding:5px 6px;font-size:12px;cursor:pointer;border-radius:4px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
         +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleOverviewEmpId(\''+e.id+'\')" style="cursor:pointer">'
-        +'<span>'+e.name+' <span style="color:var(--text3);font-size:11px">('+e.role+')</span></span>'
+        +'<span>'+esc(e.name)+' <span style="color:var(--text3);font-size:11px">('+e.role+')</span></span>'
         +'</label>';
     });
     h+='</div>';
@@ -3751,7 +3711,7 @@ function renderTeam(){
       +'<td style="padding:10px 14px;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;align-items:center;gap:9px">'
       +'<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+'">'+ini(e.name)+'</div>'
-      +'<div><div style="font-weight:500">'+e.name+(al.length?'<i class="ti ti-alert-triangle" style="font-size:12px;color:var(--amber);margin-left:4px"></i>':'')+'</div>'
+      +'<div><div style="font-weight:500">'+esc(e.name)+(al.length?'<i class="ti ti-alert-triangle" style="font-size:12px;color:var(--amber);margin-left:4px"></i>':'')+'</div>'
       +'<div style="font-size:11px;color:var(--text2)">'+e.phase+'</div></div></div></td>'
       // CR Spalten
       +crCell(ea('crOEM'),empTargets(e).crOEM.val,empTargets(e).crOEM.dir)
@@ -3811,7 +3771,7 @@ function renderTeam(){
     ueberfaellig.slice(0,6).forEach(function(e){
       var t=tageSeitLetzterSession(e.id);
       coverageHtml+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">'
-        +'<span style="cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'+e.name+'</span>'
+        +'<span style="cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'+esc(e.name)+'</span>'
         +'<span style="font-weight:700;color:var(--red)">'+(t===null?'nie':t+'d')+'</span></div>';
     });
     if(ueberfaellig.length>6)coverageHtml+='<div style="font-size:11px;color:var(--text3)">+'+(ueberfaellig.length-6)+' weitere</div>';
@@ -4135,7 +4095,7 @@ function renderEmpDetail(){
   document.getElementById('mainArea').innerHTML=
     '<div class="topbar"><div class="tb-left">'
     +'<div class="av" style="width:40px;height:40px;font-size:17px;background:'+c.bg+';color:'+c.text+'">'+ini(emp.name)+'</div>'
-    +'<div><div class="tb-name">'+emp.name+'</div><div class="tb-meta">'+emp.role+' · '+emp.phase+(emp.startDate?' · Start '+fd(emp.startDate):'')+' · '+p.length+' Session'+(p.length!==1?'s':'')+'</div></div>'
+    +'<div><div class="tb-name">'+esc(emp.name)+'</div><div class="tb-meta">'+emp.role+' · '+emp.phase+(emp.startDate?' · Start '+fd(emp.startDate):'')+' · '+p.length+' Session'+(p.length!==1?'s':'')+'</div></div>'
     +'</div><div style="display:flex;gap:8px">'
     +'<button class="btn btn-primary" data-eid="'+emp.id+'" onclick="exportEmpSummary(this.dataset.eid)"><i class="ti ti-file-description"></i> Zusammenfassung (PDF)</button>'
     +'<button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Print</button></div></div>'
@@ -4416,7 +4376,6 @@ function renderTab(){
     var perf7=getPerf(emp.id,7);
     var perfAll=(performance[emp.id]||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
     var perfRangeData=empGetPerf(emp.id);
-    function avgRange(key){if(!perfRangeData.length)return null;return perfRangeData.reduce(function(a,x){return a+(x[key]||0);},0)/perfRangeData.length;}
     function kpiCol(v,t,dir){if(v===null)return 'var(--text3)';return(dir==='lte'?v<=t:v>=t)?'#206A72':'var(--red)';}
     var kpis=[
       {label:'CR OEM', key:'crOEM',      target:empT.crOEM.val,      dir:empT.crOEM.dir,      pct:true},
@@ -5476,7 +5435,7 @@ function renderTab(){
     if(true){
     html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i> Stammdaten</div>';
     html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
-    html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+emp.name+'"></div>';
+    html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+esc(emp.name)+'"></div>';
     html+='<div><label>Position</label>'
       +'<select id="es-role" onchange="var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}">'
       +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
@@ -5593,7 +5552,7 @@ function renderTab(){
 
       // ── Dokumente / Anhänge ──
       html+='<div class="card"><div class="card-title"><i class="ti ti-paperclip"></i> Dokumente</div>'
-        +'<p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">Zielvereinbarungen, Zertifikate oder sonstige Unterlagen zu '+emp.name+'.</p>'
+        +'<p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">Zielvereinbarungen, Zertifikate oder sonstige Unterlagen zu '+esc(emp.name)+'.</p>'
         +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">'
         +'<label class="btn btn-sm btn-primary" style="cursor:pointer"><i class="ti ti-upload"></i> Datei hochladen<input type="file" id="doc-upload-input" style="display:none" onchange="uploadEmpDocument(this.files[0])"></label>'
         +'<span id="doc-upload-status" style="font-size:12px;color:var(--text2)"></span>'
@@ -5801,7 +5760,7 @@ function renderTab(){
                     if(!sess.length)return ctx.dataset.label;
                     return sess.map(function(s){
                       var c=s.coachId?employees.find(function(e){return e.id===s.coachId;}):null;
-                      return (s.type||'Coaching')+(s.focus?' – '+s.focus:'')+(c?' ('+c.name+')':'');
+                      return (s.type||'Coaching')+(s.focus?' – '+s.focus:'')+(c?' ('+esc(c.name)+')':'');
                     });
                   }
                   return ctx.dataset.label+': '+ctx.formattedValue;
@@ -5970,7 +5929,7 @@ function renderActivity(){
   h+='<div style="display:flex;align-items:center;gap:8px">';
   h+='<select onchange="setActivityFilterPerson(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
   h+='<option value="ALL"'+(activityFilterPerson==='ALL'?' selected':'')+'>Alle Personen</option>';
-  coachList.forEach(function(c){h+='<option value="'+c.id+'"'+(activityFilterPerson===c.id?' selected':'')+'>'+c.name+'</option>';});
+  coachList.forEach(function(c){h+='<option value="'+c.id+'"'+(activityFilterPerson===c.id?' selected':'')+'>'+esc(c.name)+'</option>';});
   var adminNames=[];
   activityLog.forEach(function(a){if(!a.actorId&&a.actorName&&adminNames.indexOf(a.actorName)<0)adminNames.push(a.actorName);});
   adminNames.forEach(function(nm){var val='NAME:'+nm;h+='<option value="'+val+'"'+(activityFilterPerson===val?' selected':'')+'>'+nm+'</option>';});
@@ -7361,7 +7320,7 @@ function openSessionModal(empId){
   var sel=document.getElementById('sessionEmpSel');
   if(sel){
     sel.innerHTML=employees.filter(function(e){return e.active!==false;}).map(function(e){
-      return '<option value="'+e.id+'"'+(e.id===selectedEmp?' selected':'')+'>'+e.name+'</option>';
+      return '<option value="'+e.id+'"'+(e.id===selectedEmp?' selected':'')+'>'+esc(e.name)+'</option>';
     }).join('');
   }
   var fmSel=document.getElementById('sessionFocusMetric');
