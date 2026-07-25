@@ -4457,11 +4457,11 @@ function renderTab(){
     });
     html+='</div>';
     if(alerts.length){
-      html+='<div class="alert alert-danger" style="margin-bottom:16px">'
-        +'<i class="ti ti-alert-circle" style="font-size:18px;color:var(--red);flex-shrink:0"></i>'
-        +'<div><div style="font-size:13px;font-weight:600;color:var(--red)">'+alerts.length+' KPI'+(alerts.length!==1?'s':'')+' unter Zielwert</div>'
-        +'<div style="font-size:12px;color:var(--red)">'+alerts.map(function(a){return a.key+': '+a.val;}).join(' · ')+'</div>'
-        +'<div style="margin-top:8px"><button class="btn btn-sm btn-primary" onclick="openSessionModal(selectedEmp)"><i class="ti ti-calendar"></i> Session planen</button></div>'
+      html+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 12px 28px rgba(15,61,66,0.22)">'
+        +'<i class="ti ti-alert-circle" style="font-size:18px;color:#7ED2DB;flex-shrink:0"></i>'
+        +'<div><div style="font-size:13px;font-weight:600;color:#fff">'+alerts.length+' KPI'+(alerts.length!==1?'s':'')+' unter Zielwert</div>'
+        +'<div style="font-size:12px;color:rgba(255,255,255,0.75)">'+alerts.map(function(a){return a.key+': '+a.val;}).join(' · ')+'</div>'
+        +'<div style="margin-top:8px"><button class="btn btn-sm" style="background:#fff;color:#174C52;border:none" onclick="openSessionModal(selectedEmp)"><i class="ti ti-calendar"></i> Session planen</button></div>'
         +'</div></div>';
     }
     // Chart
