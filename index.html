@@ -2914,7 +2914,7 @@ function renderSidebar(){
     var al=checkAlerts(emp.id);
     var d=document.createElement('div');
     d.className='emp-item'+(view==='emp'&&emp.id===selectedEmp?' active':'');
-    var alrt=al.length?('<i class="ti ti-alert-triangle" style="font-size:13px;color:var(--amber);flex-shrink:0"></i>'):'';
+    var alrt=al.length?('<div title="'+al.length+' Performance-Alert'+(al.length!==1?'s':'')+'" style="width:18px;height:18px;border-radius:50%;background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 5px rgba(15,61,66,0.3)"><i class="ti ti-alert-triangle" style="font-size:10px;color:#fff"></i></div>'):'';
     var missingEnd=(emp.active===false&&!emp.endDate)?('<i class="ti ti-calendar-exclamation" title="Vertragsende fehlt" style="font-size:13px;color:var(--red);flex-shrink:0"></i>'):'';
     d.innerHTML='<div class="av" style="width:38px;height:38px;font-size:14px;background:'+c.bg+';color:'+c.text+'">'+ini(emp.name)+'</div>'
       +'<div style="flex:1;min-width:0"><div class="emp-name">'+emp.name+'</div><div class="emp-role">'+emp.role+'</div></div>'
