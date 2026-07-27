@@ -2599,13 +2599,13 @@ function zielvereinbarungHtml(){
       +'<div style="'+GH+';justify-content:flex-end">Ziel Marge/Mon.</div>'
       +'</div>'
       +rowsHtml
-      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:var(--bg2)">'
-      +'<div style="font-weight:700;padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center">Team gesamt</div>'
+      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)">'
+      +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center">Team gesamt</div>'
       +weekTotalCells
-      +'<div style="font-weight:700;text-align:center;padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:center">'+teamDaysSum+'</div>'
-      +'<div style="padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:flex-end">–</div>'
-      +'<div style="font-weight:700;padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:flex-end">Ø € '+avgMarge+'</div>'
-      +'<div style="font-weight:700;color:#0c3b40;padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamTargetSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="font-weight:700;color:#fff;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamDaysSum+'</div>'
+      +'<div style="color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">–</div>'
+      +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">Ø € '+avgMarge+'</div>'
+      +'<div style="font-weight:700;color:#7ED2DB;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamTargetSum).toLocaleString('de-DE')+'</div>'
       +'</div>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:var(--text3)"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block"></span> Woche enthält einen bayerischen Feiertag — Standardwert bereits reduziert, Hover für Details</div>'
@@ -2648,13 +2648,13 @@ function zielvereinbarungHtml(){
       +'</div>');
     if(isCurrent)monthRows.push(weekDetailHtml);
   }
-  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:var(--bg2)">'
-    +'<div style="font-weight:800;padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center">Jahresergebnis</div>'
-    +'<div style="font-weight:800;padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:center">'+yearDaysSum+'</div>'
-    +'<div style="padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:center">–</div>'
-    +'<div style="padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:center">–</div>'
-    +'<div style="font-weight:800;padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
-    +'<div style="font-weight:800;color:var(--purple-dark);padding:10px 14px;border-top:2px solid var(--purple);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearTargetSum).toLocaleString('de-DE')+'</div>'
+  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)">'
+    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center">Jahresergebnis</div>'
+    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+yearDaysSum+'</div>'
+    +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">–</div>'
+    +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">–</div>'
+    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
+    +'<div style="font-weight:800;color:#7ED2DB;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearTargetSum).toLocaleString('de-DE')+'</div>'
     +'</div>';
   return zielInfoBoxHtml()
     +zielverlaufJahrChartHtml()
