@@ -2487,6 +2487,14 @@ function kpiZieleHtml(){
 // ── Zielvereinbarung: volle Jahres-/Wochenansicht (unter SFP Wiegand > Zielvereinbarung) ──
 // ── Zielvereinbarung: Petrol-Infobox (Zeitraum, Jahr, Monat, Ø/Monat, Ist/Soll Monat, Ist/Soll Jahr) ──
 // Nutzt dieselben .month-bar/.mb-stat-Klassen wie die Overview-Monatsleiste (buildMonthBar) - keine neuen CSS-Regeln noetig.
+function istForEmpMonth(empId,mkey){
+  var sum=0;
+  (performance[empId]||[]).forEach(function(x){
+    if((x.date||'').slice(0,7)!==mkey)return;
+    sum+=x.margeGesamt||x.margin||0;
+  });
+  return sum;
+}
 function zielInfoBoxHtml(){
   var HIDDEN=[];
   var liste=employees.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
@@ -2555,8 +2563,8 @@ function zielvereinbarungHtml(){
   // die volle Kartenbreite ueber fr-Anteile, keine separate Leerspalte.
   var ZIEL_WK_COL=64; // KW-Felder bleiben fest, brauchen konsistente lesbare Breite
   var weeksMeta=getMonthWeeksZiel(zielMonth);
-  var weekGridTemplate='2.2fr repeat('+weeksMeta.length+','+ZIEL_WK_COL+'px) 0.8fr 0.9fr 1fr 1.3fr';
-  var yearGridTemplate='1.6fr 1fr 0.9fr 1fr 1.2fr 1.3fr';
+  var weekGridTemplate='2.2fr repeat('+weeksMeta.length+','+ZIEL_WK_COL+'px) 0.8fr 0.9fr 1fr 1.3fr 1.2fr 0.8fr';
+  var yearGridTemplate='1.6fr 1fr 0.9fr 1fr 1.2fr 1.3fr 1.2fr 0.8fr';
 
   // ── Aufgeklappter Wochen-Detailblick fuer den aktuell gewaehlten Monat (wird unter dessen Monatszeile eingehaengt) ──
   var weekDetailHtml=(function(){
@@ -2569,7 +2577,7 @@ function zielvereinbarungHtml(){
       return a.name.localeCompare(b.name);
     });
     var rec=zielStore[zielMonth]||{};
-    var teamDaysSum=0,teamTargetSum=0,margeVals=[];
+    var teamDaysSum=0,teamTargetSum=0,teamIstSum=0,margeVals=[];
     var weekHeaderCells=weeksMeta.map(function(wm){
       var isHol=wm.holidayNames.length>0;
       var isShort=wm.defaultDays<5;
@@ -2585,7 +2593,11 @@ function zielvereinbarungHtml(){
       var optTag=r.optTag!=null?r.optTag:0;
       var margeOpt=r.margeOpt!=null?r.margeOpt:0;
       var target=monthSum*optTag*margeOpt;
-      teamDaysSum+=monthSum;teamTargetSum+=target;if(margeOpt)margeVals.push(margeOpt);
+      var istMarge=istForEmpMonth(e.id,zielMonth);
+      var pct=target>0?Math.round(istMarge/target*100):(istMarge>0?100:0);
+      var pctOk=pct>=100;
+      var pctBadge='<span style="font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:12px;background:'+(pctOk?'rgba(32,106,114,0.14)':'rgba(200,60,60,0.12)')+';color:'+(pctOk?'#0c3b40':'#B23A3A')+'">'+pct+'%</span>';
+      teamDaysSum+=monthSum;teamTargetSum+=target;teamIstSum+=istMarge;if(margeOpt)margeVals.push(margeOpt);
       var c=COLORS[e.color%COLORS.length];
       var weekCells=weeksMeta.map(function(wm,i){
         var isHol=wm.holidayNames.length>0;
@@ -2599,6 +2611,8 @@ function zielvereinbarungHtml(){
         +'<div style="'+GD+'"><input type="number" class="ziel-num" id="zf-'+e.id+'-opt" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
         +'<div style="'+GD+'"><input type="number" class="ziel-num" id="zf-'+e.id+'-marge" min="0" value="'+margeOpt+'" onchange="updateZielField(\''+e.id+'\',\'margeOpt\',null,this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
         +'<div style="'+GD+';justify-content:flex-end"><span style="font-weight:700;color:#0c3b40;background:rgba(32,106,114,0.14);border-radius:6px;padding:4px 10px">€ '+Math.round(target).toLocaleString('de-DE')+'</span></div>'
+        +'<div style="'+GD+';justify-content:flex-end;color:var(--text2)">€ '+Math.round(istMarge).toLocaleString('de-DE')+'</div>'
+        +'<div style="'+GD+';justify-content:center">'+pctBadge+'</div>'
         +'</div>';
     }).join('');
     var avgMarge=margeVals.length?Math.round(margeVals.reduce(function(a,b){return a+b;},0)/margeVals.length):0;
@@ -2613,6 +2627,8 @@ function zielvereinbarungHtml(){
       +'<div style="'+GH+';justify-content:flex-end">Opt./Tag</div>'
       +'<div style="'+GH+';justify-content:flex-end">Marge/Opt.</div>'
       +'<div style="'+GH+';justify-content:flex-end">Ziel Marge/Mon.</div>'
+      +'<div style="'+GH+';justify-content:flex-end">Ist Marge/Mon.</div>'
+      +'<div style="'+GH+';justify-content:center">%</div>'
       +'</div>'
       +rowsHtml
       +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)">'
@@ -2622,6 +2638,8 @@ function zielvereinbarungHtml(){
       +'<div style="color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">–</div>'
       +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">Ø € '+avgMarge+'</div>'
       +'<div style="font-weight:700;color:#7ED2DB;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamTargetSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamIstSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="font-weight:700;color:#7ED2DB;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+(teamTargetSum>0?Math.round(teamIstSum/teamTargetSum*100):(teamIstSum>0?100:0))+'%</div>'
       +'</div>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:var(--text3)"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block"></span> Woche enthält einen bayerischen Feiertag — Standardwert bereits reduziert, Hover für Details</div>'
@@ -2631,13 +2649,13 @@ function zielvereinbarungHtml(){
   // ── Eine Tabelle: 12 Monatszeilen, Klick klappt den Wochen-Detailblick direkt darunter auf/zu ──
   var year=zielYearView;
   var monthRows=[];
-  var yearDaysSum=0,yearNlSum=0,yearTargetSum=0;
+  var yearDaysSum=0,yearNlSum=0,yearTargetSum=0,yearIstSum=0;
   for(var m=1;m<=12;m++){
     var mk=year+'-'+(m<10?'0'+m:m);
     var wMeta=getMonthWeeksZiel(mk);
     var mRec=zielStore[mk]||{};
     var mVisible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
-    var mDaysSum=0,mTargetSum=0,mMargeVals=[],mOptVals=[];
+    var mDaysSum=0,mTargetSum=0,mIstSum=0,mMargeVals=[],mOptVals=[];
     mVisible.forEach(function(e){
       var r=mRec[e.id]||{};
       var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
@@ -2645,13 +2663,15 @@ function zielvereinbarungHtml(){
       var optTag=r.optTag!=null?r.optTag:0;
       var margeOpt=r.margeOpt!=null?r.margeOpt:0;
       mDaysSum+=monthSum;mTargetSum+=monthSum*optTag*margeOpt;
+      mIstSum+=istForEmpMonth(e.id,mk);
       if(margeOpt)mMargeVals.push(margeOpt);
       if(optTag)mOptVals.push(optTag);
     });
     var mAvgMarge=mMargeVals.length?Math.round(mMargeVals.reduce(function(a,b){return a+b;},0)/mMargeVals.length):0;
     var mAvgOpt=mOptVals.length?Math.round(mOptVals.reduce(function(a,b){return a+b;},0)/mOptVals.length):0;
     var mNl=zielNlTargets[mk]!=null?zielNlTargets[mk]:0;
-    yearDaysSum+=mDaysSum;yearNlSum+=mNl;yearTargetSum+=mTargetSum;
+    var mPct=mTargetSum>0?Math.round(mIstSum/mTargetSum*100):(mIstSum>0?100:0);
+    yearDaysSum+=mDaysSum;yearNlSum+=mNl;yearTargetSum+=mTargetSum;yearIstSum+=mIstSum;
     var isCurrent=mk===zielMonth;
     var rowBg=isCurrent?'background:var(--purple-bg);':(m%2===0?'background:rgba(32,106,114,0.07);':'');
     monthRows.push('<div style="display:grid;grid-template-columns:'+yearGridTemplate+';cursor:pointer;'+rowBg+(isCurrent?'border-left:3px solid var(--purple);':'')+'" onclick="toggleZielMonth(\''+mk+'\')">'
@@ -2661,6 +2681,8 @@ function zielvereinbarungHtml(){
       +'<div style="'+GD+';justify-content:center;color:var(--text2)">'+(mAvgMarge?'€ '+mAvgMarge:'–')+'</div>'
       +'<div style="'+GD+'" onclick="event.stopPropagation()"><input type="number" class="ziel-num" id="zf-mk-'+mk+'" min="0" value="'+mNl+'" onchange="updateZielNlTarget(\''+mk+'\',this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right" placeholder="0"></div>'
       +'<div style="'+GD+';justify-content:flex-end;font-weight:600;color:var(--purple)">€ '+Math.round(mTargetSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="'+GD+';justify-content:flex-end;color:var(--text2)">€ '+Math.round(mIstSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="'+GD+';justify-content:center"><span style="font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:12px;background:'+(mPct>=100?'rgba(32,106,114,0.14)':'rgba(200,60,60,0.12)')+';color:'+(mPct>=100?'#0c3b40':'#B23A3A')+'">'+mPct+'%</span></div>'
       +'</div>');
     if(isCurrent)monthRows.push(weekDetailHtml);
   }
@@ -2671,6 +2693,8 @@ function zielvereinbarungHtml(){
     +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">–</div>'
     +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
     +'<div style="font-weight:800;color:#7ED2DB;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearTargetSum).toLocaleString('de-DE')+'</div>'
+    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearIstSum).toLocaleString('de-DE')+'</div>'
+    +'<div style="font-weight:800;color:#7ED2DB;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+(yearTargetSum>0?Math.round(yearIstSum/yearTargetSum*100):(yearIstSum>0?100:0))+'%</div>'
     +'</div>';
   return zielInfoBoxHtml()
     +zielverlaufJahrChartHtml()
@@ -2690,6 +2714,8 @@ function zielvereinbarungHtml(){
     +'<div style="'+GH+';justify-content:center">Ø Marge/Opt.</div>'
     +'<div style="'+GH+';justify-content:flex-end">Ziel NL Marge/Mon.</div>'
     +'<div style="'+GH+';justify-content:flex-end">Ziel Marge/Mon.</div>'
+    +'<div style="'+GH+';justify-content:flex-end">Ist Marge/Mon.</div>'
+    +'<div style="'+GH+';justify-content:center">%</div>'
     +'</div>'
     +monthRows.join('')
     +yearTotalRow
