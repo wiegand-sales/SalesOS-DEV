@@ -2531,7 +2531,7 @@ function zielInfoBoxHtml(){
     +'</div>';
 }
 function zielvereinbarungHtml(){
-  var GH='background:var(--bg2);padding:9px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;display:flex;align-items:center';
+  var GH='background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;display:flex;align-items:center';
   var GD='padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;min-width:0';
   // Zwei strukturell unterschiedliche Tabellen (Monats-Aggregat vs. Mitarbeiter-Wochendetail) -
   // jede bekommt ihre EIGENE, in sich sinnvolle Spaltenverteilung. Kein erzwungenes
@@ -2575,14 +2575,14 @@ function zielvereinbarungHtml(){
         var isHol=wm.holidayNames.length>0;
         return '<div style="'+GD+';justify-content:center"><input type="number" class="ziel-num" min="0" max="7" value="'+weeks[i]+'" onchange="updateZielField(\''+e.id+'\',\'week\','+i+',this.value)" style="width:48px;height:34px;box-sizing:border-box;padding:0 2px;text-align:center'+(isHol?';border-color:var(--amber)':'')+'"></div>';
       }).join('');
-      var rowBg=idx%2===1?'background:rgba(0,0,0,0.03);':'';
+      var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
         +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
         +weekCells
         +'<div style="'+GD+';justify-content:center;font-weight:600">'+monthSum+'</div>'
         +'<div style="'+GD+'"><input type="number" class="ziel-num" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
         +'<div style="'+GD+'"><input type="number" class="ziel-num" min="0" value="'+margeOpt+'" onchange="updateZielField(\''+e.id+'\',\'margeOpt\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
-        +'<div style="'+GD+';justify-content:flex-end;font-weight:600;color:var(--purple)">€ '+Math.round(target).toLocaleString('de-DE')+'</div>'
+        +'<div style="'+GD+';justify-content:flex-end"><span style="font-weight:700;color:#0c3b40;background:rgba(32,106,114,0.14);border-radius:6px;padding:4px 10px">€ '+Math.round(target).toLocaleString('de-DE')+'</span></div>'
         +'</div>';
     }).join('');
     var avgMarge=margeVals.length?Math.round(margeVals.reduce(function(a,b){return a+b;},0)/margeVals.length):0;
@@ -2605,7 +2605,7 @@ function zielvereinbarungHtml(){
       +'<div style="font-weight:700;text-align:center;padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:center">'+teamDaysSum+'</div>'
       +'<div style="padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:flex-end">–</div>'
       +'<div style="font-weight:700;padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:flex-end">Ø € '+avgMarge+'</div>'
-      +'<div style="font-weight:700;color:var(--purple);padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamTargetSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="font-weight:700;color:#0c3b40;padding:10px 14px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamTargetSum).toLocaleString('de-DE')+'</div>'
       +'</div>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:var(--text3)"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block"></span> Woche enthält einen bayerischen Feiertag — Standardwert bereits reduziert, Hover für Details</div>'
