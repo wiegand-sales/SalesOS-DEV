@@ -2643,7 +2643,7 @@ function zielvereinbarungHtml(){
       +'<div style="'+GD+';justify-content:center;font-weight:600">'+mDaysSum+'</div>'
       +'<div style="'+GD+';justify-content:center;color:var(--text2)">'+(mAvgOpt||'–')+'</div>'
       +'<div style="'+GD+';justify-content:center;color:var(--text2)">'+(mAvgMarge?'€ '+mAvgMarge:'–')+'</div>'
-      +'<div style="'+GD+'" onclick="event.stopPropagation()"><input type="number" min="0" value="'+mNl+'" onchange="updateZielNlTarget(\''+mk+'\',this.value)" style="height:34px;box-sizing:border-box;text-align:right" placeholder="0"></div>'
+      +'<div style="'+GD+'" onclick="event.stopPropagation()"><input type="number" class="ziel-num" min="0" value="'+mNl+'" onchange="updateZielNlTarget(\''+mk+'\',this.value)" style="height:34px;box-sizing:border-box;text-align:right" placeholder="0"></div>'
       +'<div style="'+GD+';justify-content:flex-end;font-weight:600;color:var(--purple)">€ '+Math.round(mTargetSum).toLocaleString('de-DE')+'</div>'
       +'</div>');
     if(isCurrent)monthRows.push(weekDetailHtml);
