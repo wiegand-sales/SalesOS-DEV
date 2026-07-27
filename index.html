@@ -61,6 +61,8 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(155deg,#f2f3f0 0%
 .tb-name{font-size:18px;font-weight:700;}
 .tb-meta{font-size:12px;color:var(--text2);margin-top:1px;}
 .btn{padding:8px 13px;font-size:13px;font-weight:500;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border2);background:rgba(255,255,255,0.5);color:var(--text);display:flex;align-items:center;gap:6px;transition:all .15s ease;font-family:inherit;}
+.ziel-num::-webkit-outer-spin-button,.ziel-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.ziel-num{-moz-appearance:textfield;}
 .btn:hover{background:rgba(255,255,255,0.85);box-shadow:0 2px 8px rgba(15,61,66,.1);}
 .btn-primary{background:linear-gradient(180deg,#27808a 0%,#206A72 100%);color:#fff;border-color:var(--purple);box-shadow:0 6px 16px rgba(32,106,114,.28);}
 .btn-primary:hover{background:linear-gradient(180deg,#1f6d76 0%,#174C52 100%);box-shadow:0 4px 14px rgba(32,106,114,.38);transform:translateY(-1px);}
@@ -2571,15 +2573,15 @@ function zielvereinbarungHtml(){
       var c=COLORS[e.color%COLORS.length];
       var weekCells=weeksMeta.map(function(wm,i){
         var isHol=wm.holidayNames.length>0;
-        return '<div style="'+GD+';justify-content:center"><input type="number" min="0" max="7" value="'+weeks[i]+'" onchange="updateZielField(\''+e.id+'\',\'week\','+i+',this.value)" style="width:48px;height:34px;box-sizing:border-box;padding:0 2px;text-align:center'+(isHol?';border-color:var(--amber)':'')+'"></div>';
+        return '<div style="'+GD+';justify-content:center"><input type="number" class="ziel-num" min="0" max="7" value="'+weeks[i]+'" onchange="updateZielField(\''+e.id+'\',\'week\','+i+',this.value)" style="width:48px;height:34px;box-sizing:border-box;padding:0 2px;text-align:center'+(isHol?';border-color:var(--amber)':'')+'"></div>';
       }).join('');
       var rowBg=idx%2===1?'background:rgba(0,0,0,0.03);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
         +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
         +weekCells
         +'<div style="'+GD+';justify-content:center;font-weight:600">'+monthSum+'</div>'
-        +'<div style="'+GD+'"><input type="number" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
-        +'<div style="'+GD+'"><input type="number" min="0" value="'+margeOpt+'" onchange="updateZielField(\''+e.id+'\',\'margeOpt\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
+        +'<div style="'+GD+'"><input type="number" class="ziel-num" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
+        +'<div style="'+GD+'"><input type="number" class="ziel-num" min="0" value="'+margeOpt+'" onchange="updateZielField(\''+e.id+'\',\'margeOpt\',null,this.value)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
         +'<div style="'+GD+';justify-content:flex-end;font-weight:600;color:var(--purple)">€ '+Math.round(target).toLocaleString('de-DE')+'</div>'
         +'</div>';
     }).join('');
