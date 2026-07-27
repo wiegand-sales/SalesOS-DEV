@@ -2332,7 +2332,7 @@ var MONTH_NAMES_ZIEL=['Januar','Februar','März','April','Mai','Juni','Juli','Au
 var zielMonth=today().slice(0,7);
 var zielStore={};
 function loadZielvereinbarungFromSupabase(){
-  return sb.from('zielvereinbarung').select('*').then(function(res){
+  return selectAllPaginated('zielvereinbarung').then(function(res){
     if(res.error){console.warn('zielvereinbarung load failed:',res.error);return false;}
     zielStore={};
     res.data.forEach(function(r){
