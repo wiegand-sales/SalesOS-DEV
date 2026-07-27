@@ -2389,9 +2389,8 @@ function noTargetKpiCol(cur,prev,dir){
 }
 function empActiveInZielMonth(e,monthKey){
   var b=monthBoundsUTC(monthKey+'-01',0);
-  if(e.endDate)return e.endDate>=b.from&&(!e.startDate||e.startDate<=b.to);
-  if(e.active===false)return false;
   if(e.startDate&&e.startDate>b.to)return false;
+  if(e.endDate&&e.endDate<b.from)return false;
   return true;
 }
 // ── Zielvereinbarung — Jahresverlauf: Ziel NL (gestrichelte Referenzlinie) vs. Ziel/Erzielte Marge (Balken) ──
