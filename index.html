@@ -721,14 +721,10 @@ function filterOverviewEmpList(q){
   var wrap=document.getElementById('overviewEmpDropdownWrap');
   if(!wrap)return;
   var anyVisible=false;
-  wrap.querySelectorAll('.emp-opt-group').forEach(function(grp){
-    var groupHasVisible=false;
-    grp.querySelectorAll('.emp-opt-row').forEach(function(row){
-      var match=!q||row.dataset.search.indexOf(q)>=0;
-      row.style.display=match?'flex':'none';
-      if(match){groupHasVisible=true;anyVisible=true;}
-    });
-    grp.style.display=groupHasVisible?'block':'none';
+  wrap.querySelectorAll('.emp-opt-row').forEach(function(row){
+    var match=!q||row.dataset.search.indexOf(q)>=0;
+    row.style.display=match?'grid':'none';
+    if(match)anyVisible=true;
   });
   var noRes=document.getElementById('overviewEmpNoResults');
   if(noRes)noRes.style.display=anyVisible?'none':'block';
@@ -3415,19 +3411,17 @@ function buildOverviewTab(liste){
     h+='</div></div>';
     h+='<div style="max-height:220px;overflow-y:auto;padding:6px 0">';
     var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
-    var byRole={};
-    visible.forEach(function(e){(byRole[e.role]=byRole[e.role]||[]).push(e);});
-    Object.keys(byRole).sort(function(a,b){return(ROLE_ORDER[a]!=null?ROLE_ORDER[a]:99)-(ROLE_ORDER[b]!=null?ROLE_ORDER[b]:99);}).forEach(function(role){
-      h+='<div class="emp-opt-group" data-role-group="'+role+'">';
-      h+='<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:6px 12px 2px">'+role+'</div>';
-      byRole[role].forEach(function(e){
-        var checked=overviewSelectedIds.indexOf(e.id)>=0;
-        h+='<label class="emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
-          +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleOverviewEmpId(\''+e.id+'\')" style="cursor:pointer">'
-          +'<span>'+esc(e.name)+'</span>'
-          +'</label>';
-      });
-      h+='</div>';
+    var sortedVisible=visible.slice().sort(function(a,b){
+      var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
+      return ra-rb||a.name.localeCompare(b.name);
+    });
+    sortedVisible.forEach(function(e){
+      var checked=overviewSelectedIds.indexOf(e.id)>=0;
+      h+='<label class="emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
+        +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleOverviewEmpId(\''+e.id+'\')" style="cursor:pointer;margin:0">'
+        +'<span style="font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.02em">'+e.role+'</span>'
+        +'<span>'+esc(e.name)+'</span>'
+        +'</label>';
     });
     h+='<div id="overviewEmpNoResults" style="display:none;padding:14px 12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div>';
     h+='</div>';
