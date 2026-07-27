@@ -2088,7 +2088,7 @@ function isoWeekOf(d){
   return {year:dt.getUTCFullYear(),week:week};
 }
 function groupPerfRows(rows,mode){
-  if(mode==='day')return rows.map(function(r){return {label:fd(r.date),count:1,row:r};});
+  if(mode==='day')return rows.map(function(r){return {label:fd(r.date),key:r.date,count:1,row:r};});
   var groups={},order=[];
   rows.forEach(function(r){
     var d=new Date(r.date+'T00:00:00'),key,label;
@@ -2113,7 +2113,7 @@ function groupPerfRows(rows,mode){
       var vals=g.items.map(function(x){return x[f];}).filter(function(v){return v!==undefined&&v!==null;});
       agg[f]=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0;
     });
-    return {label:g.label,count:g.items.length,row:agg};
+    return {label:g.label,key:key,count:g.items.length,row:agg};
   });
 }
 var perfCustomFrom=null, perfCustomTo=null;
@@ -3459,12 +3459,13 @@ function buildOverviewTab(liste){
       var optGes=row.optGesamt||(convOEM+ups+wka)||0;
       var marge=row.margeGesamt||row.margin||0;
       var crOEM=Math.round(row.crOEM||0),crTW=Math.round(row.crTeilweise||0),crSY=Math.round(row.crSuperYes||0),crMY=Math.round(row.crMegaYes||0);
-      return {item:item,rowEmp:rowEmp,rowEmpT:rowEmpT,g:g,name:rowEmp.name,period:g.label,akt:akt,notR:notR,notP:notP,notS:notS,
+      return {item:item,rowEmp:rowEmp,rowEmpT:rowEmpT,g:g,name:rowEmp.name,period:g.label,periodKey:g.key,akt:akt,notR:notR,notP:notP,notS:notS,
         convOEM:convOEM,tw:tw,yes:yes,sy:sy,my:my,crOEM:crOEM,crTW:crTW,crSY:crSY,crMY:crMY,ups:ups,wka:wka,optGes:optGes,marge:marge};
     });
     if(overviewPerfSortKey){
+      var sortField=overviewPerfSortKey==='period'?'periodKey':overviewPerfSortKey;
       sortableRows.sort(function(a,b){
-        var av=a[overviewPerfSortKey],bv=b[overviewPerfSortKey];
+        var av=a[sortField],bv=b[sortField];
         var cmp=(typeof av==='string'||typeof bv==='string')?(''+av).localeCompare(''+bv,'de'):((av||0)-(bv||0));
         return overviewPerfSortDir==='asc'?cmp:-cmp;
       });
