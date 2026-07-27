@@ -132,7 +132,7 @@ label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bot
 /* TABLES */
 .tbl{background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px;box-shadow:0 12px 30px rgba(15,61,66,0.06);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap;}
+th{background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap;}
 td{padding:10px 14px;border-bottom:1px solid var(--border);}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:var(--bg2);}
@@ -1306,16 +1306,16 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
     +'<div style="background:rgba(50,168,180,0.12);border:1px solid #32A8B4;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:10.5px;font-weight:700;color:#206A72">SIMULATIONEN</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSim+'</div></div>'
     +'</div>';
   h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
-    +'<th style="background:var(--bg2);padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Mitarbeiter</th>'
-    +'<th style="background:var(--bg2);padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">QA-Calls</th>'
-    +'<th style="background:var(--bg2);padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Sessions</th>'
-    +'<th style="background:var(--bg2);padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Simulationen</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Mitarbeiter</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">QA-Calls</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Sessions</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Simulationen</th>'
     +'</tr></thead><tbody>';
   visible.slice().sort(function(a,b){return a.name.localeCompare(b.name);}).forEach(function(e,idx){
     var q=(callRatings[e.id]||[]).length;
     var s=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).length;
     var sim=(solidroadData[e.id]&&solidroadData[e.id].simulations)?solidroadData[e.id].simulations.length:0;
-    h+='<tr style="'+(idx%2===1?'background:rgba(0,0,0,0.03);':'')+'cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'
+    h+='<tr style="'+(idx%2===1?'background:rgba(32,106,114,0.07);':'')+'cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);font-weight:500">'+esc(e.name)+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);text-align:right">'+q+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);text-align:right">'+s+'</td>'
@@ -1620,19 +1620,19 @@ function renderCoachingAnsicht(){
     h+='<div style="text-align:center;color:var(--text3);padding:28px"><i class="ti ti-history" style="font-size:28px;display:block;margin-bottom:8px"></i>Noch keine Sessions</div>';
   } else {
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;table-layout:fixed;border-collapse:collapse"><thead><tr>'
-      +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:14%">Mitarbeiter</th>'
-      +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:11%">Datum</th>'
-      +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:11%">Inhalt</th>'
-      +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Start</th>'
-      +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Stop</th>'
-      +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--amber-dark);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Continue</th>'
-      +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Notizen</th>'
+      +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:14%">Mitarbeiter</th>'
+      +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:11%">Datum</th>'
+      +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:11%">Inhalt</th>'
+      +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#7ED2DB;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Start</th>'
+      +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#F4A6A6;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Stop</th>'
+      +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#FBD38D;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Continue</th>'
+      +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Notizen</th>'
       +'</tr></thead><tbody>';
     var clampStyleT='display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;height:34px';
     let7.forEach(function(x,idx){
       var c=ec(x.eid),r2=x.r?RS[x.r]:null;
       var _dur=sessionDuration(x.uhrzeit,x.endUhrzeit);
-      var rowBg=idx%2===1?'background:rgba(0,0,0,0.03);':'';
+      var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
       var tdStyle='padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:top;height:1px';
       h+='<tr style="'+rowBg+'">';
       h+='<td style="'+tdStyle+'"><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="selectEmp(\''+x.eid+'\')"><div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.en)+'</div><span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.en+'</span></div>'
@@ -2637,7 +2637,7 @@ function zielvereinbarungHtml(){
     var mNl=zielNlTargets[mk]!=null?zielNlTargets[mk]:0;
     yearDaysSum+=mDaysSum;yearNlSum+=mNl;yearTargetSum+=mTargetSum;
     var isCurrent=mk===zielMonth;
-    var rowBg=isCurrent?'background:var(--purple-bg);':(m%2===0?'background:rgba(0,0,0,0.03);':'');
+    var rowBg=isCurrent?'background:var(--purple-bg);':(m%2===0?'background:rgba(32,106,114,0.07);':'');
     monthRows.push('<div style="display:grid;grid-template-columns:'+yearGridTemplate+';cursor:pointer;'+rowBg+(isCurrent?'border-left:3px solid var(--purple);':'')+'" onclick="toggleZielMonth(\''+mk+'\')">'
       +'<div style="'+GD+';font-weight:'+(isCurrent?'700':'600')+'"><i class="ti ti-chevron-'+(isCurrent?'down':'right')+'" style="font-size:12px;margin-right:6px;color:var(--text3)"></i>'+MONTH_NAMES_ZIEL[m-1]+'</div>'
       +'<div style="'+GD+';justify-content:center;font-weight:600">'+mDaysSum+'</div>'
@@ -3502,7 +3502,7 @@ function buildOverviewTab(liste){
     function sortTh(label,key,extraStyle){
       var active=overviewPerfSortKey===key;
       var arrow=active?(overviewPerfSortDir==='asc'?' ▲':' ▼'):'';
-      return '<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:'+(active?'var(--purple)':'var(--text2)')+';text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none'+(extraStyle||'')+'" onclick="setOverviewPerfSort(\''+key+'\')">'+label+arrow+'</th>';
+      return '<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:'+(active?'#7ED2DB':'#fff')+';text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none'+(extraStyle||'')+'" onclick="setOverviewPerfSort(\''+key+'\')">'+label+arrow+'</th>';
     }
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
       +sortTh('Mitarbeiter','name')
@@ -3515,7 +3515,7 @@ function buildOverviewTab(liste){
       var rowEmp=sr.rowEmp,rowEmpT=sr.rowEmpT,g=sr.g;
       var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,ups=sr.ups,wka=sr.wka,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crSY=sr.crSY,crMY=sr.crMY;
       function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--teal-dark)':'color:var(--red)';}
-      var rowBg=ridx%2===1?'background:rgba(0,0,0,0.03);':'';
+      var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
       h+='<tr style="'+rowBg+'">'
         +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+rowEmp.name+'</td>'
         +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+g.label+(overviewPerfGroup!=='day'?' <span style="font-weight:400;color:var(--text3);font-size:10.5px">('+g.count+' Tage)</span>':'')+'</td>'
@@ -3736,7 +3736,7 @@ function renderTeam(){
     var lsType=_ls?(_ls.type||'—'):'—';
     var lsTopics=_ls&&_ls.topics&&_ls.topics.length?_ls.topics.slice(0,2).join(', '):'—';
 
-    rows+='<tr style="cursor:pointer;'+(rowIdx%2===1?'background:rgba(0,0,0,0.03);':'')+'" onclick="selectEmp(\''+e.id+'\')">'
+    rows+='<tr style="cursor:pointer;'+(rowIdx%2===1?'background:rgba(32,106,114,0.07);':'')+'" onclick="selectEmp(\''+e.id+'\')">'
       // Mitarbeiter
       +'<td style="padding:10px 14px;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;align-items:center;gap:9px">'
@@ -4009,20 +4009,20 @@ function renderTeam(){
     +'<div class="card">'
     +'<div class="card-title"><i class="ti ti-table"></i> SFP Performance <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· CR als % aller Gespräche · Gut ≥ '+CR_GOOD+'%'+(showTrend?' · Pfeil = Trend vs. 7-Tage-Ø':'')+'</span></div>'
     +'<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);min-width:160px">Mitarbeiter</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:105px;min-width:105px">CR OEM</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">TW</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">Yes</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">SY</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">MY</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Marge</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Opt./h</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Alerts</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Sessions</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Letzte Session</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Art des Coachings</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Inhalt des Coachings</th>'
-    +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Aktion</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);min-width:160px">Mitarbeiter</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:105px;min-width:105px">CR OEM</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">TW</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">Yes</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">SY</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);width:95px;min-width:95px">MY</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Marge</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Opt./h</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Alerts</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Sessions</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Letzte Session</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Art des Coachings</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Inhalt des Coachings</th>'
+    +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Aktion</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
     +'</div>'
     ):(wiegandView==='ziel'?zielvereinbarungHtml():buildOverviewTab(allVisible)))
@@ -4384,7 +4384,7 @@ function renderTab(){
       html+='<div style="position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,var(--border2),var(--border))"></div>';
       filteredEvents.forEach(function(ev){
         var isRecord=ev.kind==='record';
-        var rowBg=isRecord?'rgba(126,210,219,0.28)':'rgba(0,0,0,0.03)';
+        var rowBg=isRecord?'rgba(126,210,219,0.28)':'rgba(32,106,114,0.07)';
         var rowBorder=isRecord?'#7ED2DB':'var(--border2)';
         html+='<div style="position:relative;margin-bottom:8px">';
         html+='<div style="position:absolute;left:-22px;top:13px;width:11px;height:11px;border-radius:50%;background:'+ev.col+';border:2px solid var(--bg-solid);box-shadow:0 0 0 2px '+(isRecord?'#7ED2DB':'transparent')+'"></div>';
@@ -4499,9 +4499,9 @@ function renderTab(){
       var groupedRows=groupPerfRows(perfAll,perfTableGroup);
       var firstColLabel=perfTableGroup==='day'?'Datum':perfTableGroup==='week'?'Woche':'Monat';
       html+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">'+firstColLabel+'</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">'+firstColLabel+'</th>'
         +['Aktivitäten','NE','NM','NErr','Conv. OEM','TW','Yes','SY','MY','CR OEM%','CR TW%','CR SY%','CR MY%','Upsells','WKA','Opt. Ges.','Marge Ges.'].map(function(h){
-          return '<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">'+h+'</th>';
+          return '<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">'+h+'</th>';
         }).join('')
         +'</tr></thead><tbody>';
       groupedRows.forEach(function(g,ridx){
@@ -4515,7 +4515,7 @@ function renderTab(){
         var marge=row.margeGesamt||row.margin||0;
         var crOEM=Math.round(row.crOEM||0),crTW=Math.round(row.crTeilweise||0),crSY=Math.round(row.crSuperYes||0),crMY=Math.round(row.crMegaYes||0);
         function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--teal-dark)':'color:var(--red)';}
-        var rowBg=ridx%2===1?'background:rgba(0,0,0,0.03);':'';
+        var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
         html+='<tr style="'+rowBg+'">'
           +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+g.label+(perfTableGroup!=='day'?' <span style="font-weight:400;color:var(--text3);font-size:10.5px">('+g.count+' Tage)</span>':'')+'</td>'
           +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">'+akt+'</td>'
@@ -5165,13 +5165,13 @@ function renderTab(){
       html+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-calendar-off" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Coachings erfasst<div style="margin-top:10px"><button class="btn btn-sm btn-primary" data-eid="'+emp.id+'" onclick="openNeuesCoachingModal(this.dataset.eid)"><i class="ti ti-plus"></i> Jetzt erfassen</button></div></div>';
     } else {
       html+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;table-layout:fixed;border-collapse:collapse"><thead><tr>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:12%">Datum</th>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:12%">Inhalt</th>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:11%">Impact</th>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Start</th>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Stop</th>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--amber-dark);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Continue</th>'
-        +'<th style="background:var(--bg2);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Notizen</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:12%">Datum</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:12%">Inhalt</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:11%">Impact</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#7ED2DB;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Start</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#F4A6A6;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Stop</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#FBD38D;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Continue</th>'
+        +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Notizen</th>'
         +'</tr></thead><tbody>';
       var _fullPerfHist=(performance[emp.id]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
       var empT=empTargets(emp);
@@ -5186,7 +5186,7 @@ function renderTab(){
         var RM={Teilweise:{c:'var(--amber)'},Yes:{c:'var(--teal)'},'Super Yes':{c:'var(--purple)'},'Mega Yes':{c:'var(--blue)'}};
         var rm=s.rating?RM[s.rating]:null;
         var _dur=sessionDuration(s.uhrzeit,s.endUhrzeit);
-        var rowBg=idx%2===1?'background:rgba(0,0,0,0.03);':'';
+        var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
         var tdStyle='padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:top;height:1px';
         html+='<tr style="'+rowBg+'">';
         html+='<td style="'+tdStyle+';white-space:nowrap">';
