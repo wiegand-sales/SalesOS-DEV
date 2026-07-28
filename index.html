@@ -6294,7 +6294,7 @@ function openCoachingEval(empId){
     {key:'crSY',label:'SY',cat:'result'},
     {key:'crMY',label:'MY',cat:'result'}
   ];
-  var CC={skill:{col:'#534AB7',bg:'#EEEDFE',l:'Skill'},will:{col:'#BA7517',bg:'#FBEAE0',l:'Will'},result:{col:'#085041',bg:'#E1F5EE',l:'Result'}};
+  var CC={skill:{col:'#0c3b40',bg:'rgba(12,59,64,0.08)',l:'Skill'},will:{col:'#164e54',bg:'rgba(22,78,84,0.12)',l:'Will'},result:{col:'#1d6169',bg:'rgba(29,97,105,0.16)',l:'Result'}};
   var existing=(reviews[empId]||[]).filter(function(r){return r.einwand!==undefined;});
   var last=existing.length?existing.sort(function(a,b){return b.date.localeCompare(a.date);})[0]:null;
 
