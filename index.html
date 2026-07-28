@@ -411,10 +411,17 @@ tr:hover td{background:var(--bg2);}
 
 
 <!-- SESSION PLANEN MODAL -->
-<div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal">
+<div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal" style="width:640px">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Session planen</div>
   <div class="f2" style="margin-bottom:10px">
-    <div><label>Mitarbeiter</label><select id="sessionEmpSel" onchange="renderLastContinueBox(this.value)"></select></div>
+    <div style="position:relative">
+      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
+      <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleSessionEmpDropdown()">
+        <span id="sessionEmpSelLabel">— Mitarbeiter wählen —</span>
+        <i class="ti ti-chevron-down" style="font-size:11px"></i>
+      </button>
+      <div id="sessionEmpDropdownWrap"></div>
+    </div>
     <div class="f3" style="gap:8px">
       <div><label>Datum</label><input type="date" id="sessionDatum"></div>
       <div><label>Start</label><input type="time" id="sessionUhrzeit" value="09:00"></div>
@@ -460,6 +467,16 @@ tr:hover td{background:var(--bg2);}
   <div class="modal-actions">
     <button class="btn" onclick="closeModal('sessionPlanenModal')">Abbrechen</button>
     <button class="btn btn-primary" onclick="sessionSpeichernNeu()"><i class="ti ti-check"></i> Session planen</button>
+  </div>
+</div></div>
+
+<!-- GRUPPENSESSION ABARBEITEN MODAL -->
+<div class="modal-ov hidden" id="groupSessionModal"><div class="modal" style="width:520px">
+  <div class="modal-title" style="display:flex;align-items:center;gap:8px"><i class="ti ti-users-group" style="color:var(--purple)"></i> Gruppensession abarbeiten</div>
+  <div id="groupSessionModalBody"></div>
+  <div class="modal-actions">
+    <button class="btn" onclick="closeModal('groupSessionModal')">Abbrechen</button>
+    <button class="btn btn-primary" onclick="saveGroupSession()"><i class="ti ti-check"></i> Als durchgeführt markieren</button>
   </div>
 </div></div>
 
@@ -2094,6 +2111,9 @@ var perfMetric='crOEM', perfRange=7;
 var perfTableGroup='day'; // 'day' | 'week' | 'month'
 var tlFilter='all'; // 'all' | 'session' | 'review' | 'milestone' | 'record'
 var _editingSessionId=null; // gesetzt, wenn eine geplante Session im Neue-Session-Modal bearbeitet wird (statt neu anzulegen)
+var sessionSelectedEmpIds=[]; // Mehrfachauswahl im Session-planen-Modal (fuer Gruppencoachings)
+var sessionEmpDropdownOpen=false;
+var sessionEmpSearchQuery='';
 function setTlFilter(f){tlFilter=f;renderTab();}
 function setPerfTableGroup(g){perfTableGroup=g;renderTab();}
 function isoWeekOf(d){
@@ -7003,13 +7023,15 @@ function saveSRKey(){
 
 
 function openPlannedSession(empId, sessionId, typ, fokus, datum, uhrzeit){
+  var proto0=null;
+  if(sessionId&&protocols[empId]){
+    proto0=protocols[empId].find(function(p){return String(p.id)===String(sessionId);});
+  }
+  if(proto0&&proto0.groupId){openGroupSessionModal(proto0.groupId);return;}
   selectedEmp=empId;
   activeTab='session';
   // Find the protocol entry for notiz
-  var proto=null;
-  if(sessionId&&protocols[empId]){
-    proto=protocols[empId].find(function(p){return String(p.id)===String(sessionId);});
-  }
+  var proto=proto0;
   renderEmpDetail();
   setTimeout(function(){
     openNeuesCoachingModal(empId);
@@ -7036,9 +7058,60 @@ function openPlannedSession(empId, sessionId, typ, fokus, datum, uhrzeit){
     if(noteEl&&proto&&proto.note) noteEl.value=proto.note;
   },100);
 }
+// ── Gruppensession: gemeinsame Abarbeitung fuer alle Teilnehmer auf einmal ──
+function findGroupSessionMembers(groupId){
+  var members=[];
+  employees.forEach(function(e){
+    (protocols[e.id]||[]).forEach(function(p){
+      if(p.groupId===groupId)members.push({emp:e,proto:p});
+    });
+  });
+  return members;
+}
+function openGroupSessionModal(groupId){
+  var members=findGroupSessionMembers(groupId);
+  if(!members.length){alert('Gruppensession nicht gefunden.');return;}
+  var first=members[0].proto;
+  var wrap=document.getElementById('groupSessionModalBody');
+  if(!wrap)return;
+  var namesHtml=members.map(function(m){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border-radius:8px;margin-bottom:6px">'
+      +'<div class="av" style="width:26px;height:26px;font-size:10px">'+ini(m.emp.name)+'</div>'
+      +'<div style="font-size:13px;font-weight:600">'+esc(m.emp.name)+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+m.emp.role+'</div>'
+      +'</div>';
+  }).join('');
+  wrap.innerHTML=
+    '<div style="margin-bottom:12px"><label>Teilnehmer ('+members.length+')</label>'+namesHtml+'</div>'
+    +'<div style="margin-bottom:10px;font-size:12px;color:var(--text3)">'+(first.type||'')+' · '+fd(first.date)+(first.uhrzeit?' · '+first.uhrzeit:'')+(first.focus?' · '+first.focus:'')+'</div>'
+    +'<div style="margin-bottom:10px"><label>Bewertung</label><select id="groupSessRating"><option value="">— Keine Bewertung —</option><option value="1">1 – Schwach</option><option value="2">2 – Ausbaufähig</option><option value="3">3 – Solide</option><option value="4">4 – Gut</option><option value="5">5 – Sehr gut</option></select></div>'
+    +'<div><label>Gemeinsames Protokoll / Notiz</label><textarea id="groupSessNote" rows="4" placeholder="Was wurde besprochen, was hat die Gruppe erarbeitet?">'+esc(first.note||'')+'</textarea></div>';
+  document.getElementById('groupSessionModal').dataset.groupId=groupId;
+  openModal('groupSessionModal');
+}
+function saveGroupSession(){
+  var groupId=document.getElementById('groupSessionModal').dataset.groupId;
+  var members=findGroupSessionMembers(groupId);
+  if(!members.length)return;
+  var ratingEl=document.getElementById('groupSessRating');
+  var rating=ratingEl&&ratingEl.value?parseInt(ratingEl.value):null;
+  var note=document.getElementById('groupSessNote').value.trim();
+  sb.from('protocols').update({status:'durchgeführt',rating:rating,note:note}).eq('group_id',groupId).then(function(res){
+    if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
+    members.forEach(function(m){
+      m.proto.status='durchgeführt';m.proto.rating=rating;m.proto.note=note;m.proto.notes=note;
+    });
+    var namesTxt=members.map(function(m){return m.emp.name;}).join(', ');
+    logActivity('session','updated','Gruppensession durchgeführt ('+members.length+' Mitarbeiter)',null,namesTxt);
+    closeModal('groupSessionModal');
+    renderSidebar();
+    renderMain();
+  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+}
+
 
 function sessionSpeichernNeu(){
-  var empId=document.getElementById('sessionEmpSel').value;
+  var empIds=sessionSelectedEmpIds.slice();
   var datum=document.getElementById('sessionDatum').value;
   var uhrzeit=document.getElementById('sessionUhrzeit').value||'';
   var endUhrzeit=document.getElementById('sessionEndUhrzeit').value||'';
@@ -7047,32 +7120,42 @@ function sessionSpeichernNeu(){
   var fmEl=document.getElementById('sessionFocusMetric');
   var focusMetric=fmEl?fmEl.value:'';
   var notiz=document.getElementById('sessionNotiz').value.trim();
-  if(!empId||!datum)return alert('Bitte Mitarbeiter und Datum auswählen.');
+  if(!empIds.length||!datum)return alert('Bitte mindestens einen Mitarbeiter und ein Datum auswählen.');
   if(uhrzeit&&endUhrzeit&&endUhrzeit<=uhrzeit)return alert('Die Endzeit muss nach der Startzeit liegen.');
-  var payload={
-    employee_id:empId,date:datum,uhrzeit:uhrzeit||null,end_uhrzeit:endUhrzeit||null,art:typ,rating:null,
-    note:notiz||'',focus:thema,status:'geplant',
-    coach_id:currentCoach?currentCoach.id:null,
-    focus_metric:focusMetric||null
-  };
-  sb.from('protocols').insert(payload).select().single().then(function(res){
+  var groupId=empIds.length>1?('grp_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)):null;
+  var rows=empIds.map(function(empId){
+    return {
+      employee_id:empId,date:datum,uhrzeit:uhrzeit||null,end_uhrzeit:endUhrzeit||null,art:typ,rating:null,
+      note:notiz||'',focus:thema,status:'geplant',
+      coach_id:currentCoach?currentCoach.id:null,
+      focus_metric:focusMetric||null,group_id:groupId
+    };
+  });
+  sb.from('protocols').insert(rows).select().then(function(res){
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
-    var r=res.data;
-    if(!protocols[empId])protocols[empId]=[];
-    protocols[empId].unshift({
-      id:r.id,date:datum,uhrzeit:uhrzeit,endUhrzeit:endUhrzeit,rating:null,
-      note:notiz||'',notes:notiz||'',focus:thema,type:typ,
-      status:'geplant',topics:thema?[thema]:[],
-      coachId:r.coach_id||null,focusMetric:r.focus_metric||null
+    (res.data||[]).forEach(function(r){
+      var eId=r.employee_id;
+      if(!protocols[eId])protocols[eId]=[];
+      protocols[eId].unshift({
+        id:r.id,date:datum,uhrzeit:uhrzeit,endUhrzeit:endUhrzeit,rating:null,
+        note:notiz||'',notes:notiz||'',focus:thema,type:typ,
+        status:'geplant',topics:thema?[thema]:[],
+        coachId:r.coach_id||null,focusMetric:r.focus_metric||null,groupId:groupId
+      });
     });
-    var empForLog2=employees.find(function(e){return e.id===empId;});
-    logActivity('session','created','Session geplant: '+(typ||'Session'),empId,(empForLog2?empForLog2.name:'')+' · '+fd(datum)+(uhrzeit?' · '+uhrzeit:''));
+    var namesTxt=empIds.map(function(id){var e=employees.find(function(x){return x.id===id;});return e?e.name:id;}).join(', ');
+    if(groupId){
+      logActivity('session','created','Gruppensession geplant ('+empIds.length+' Mitarbeiter): '+(typ||'Session'),null,namesTxt+' · '+fd(datum)+(uhrzeit?' · '+uhrzeit:''));
+    } else {
+      logActivity('session','created','Session geplant: '+(typ||'Session'),empIds[0],namesTxt+' · '+fd(datum)+(uhrzeit?' · '+uhrzeit:''));
+    }
     document.getElementById('sessionThema').value='';
     if(fmEl)fmEl.value='';
     document.getElementById('sessionNotiz').value='';
     document.getElementById('sessionDatum').value='';
     document.getElementById('sessionUhrzeit').value='09:00';
     document.getElementById('sessionEndUhrzeit').value='';
+    sessionSelectedEmpIds=[];
     closeModal('sessionPlanenModal');
     renderSidebar();
     renderMain();
@@ -7396,12 +7479,9 @@ function openSessionModalWithFocus(empId,focusText){
 }
 function openSessionModal(empId){
   if(empId)selectedEmp=empId;
-  var sel=document.getElementById('sessionEmpSel');
-  if(sel){
-    sel.innerHTML=employees.filter(function(e){return e.active!==false;}).map(function(e){
-      return '<option value="'+e.id+'"'+(e.id===selectedEmp?' selected':'')+'>'+esc(e.name)+'</option>';
-    }).join('');
-  }
+  sessionSelectedEmpIds=empId?[empId]:[];
+  sessionEmpDropdownOpen=false;sessionEmpSearchQuery='';
+  renderSessionEmpDropdown();
   var fmSel=document.getElementById('sessionFocusMetric');
   if(fmSel&&fmSel.options.length<=1){
     FOCUS_METRICS.forEach(function(m){
@@ -7413,6 +7493,71 @@ function openSessionModal(empId){
   renderLastContinueBox(selectedEmp);
   openModal('sessionPlanenModal');
 }
+function renderSessionEmpDropdown(){
+  var wrap=document.getElementById('sessionEmpDropdownWrap');
+  if(!wrap)return;
+  var labelEl=document.getElementById('sessionEmpSelLabel');
+  var visible=employees.filter(function(e){return e.active!==false&&!e.isPureCoach;});
+  if(labelEl){
+    labelEl.textContent=sessionSelectedEmpIds.length===0?'— Mitarbeiter wählen —':
+      sessionSelectedEmpIds.length===1?(employees.find(function(e){return e.id===sessionSelectedEmpIds[0];})||{}).name||'1 Mitarbeiter':
+      sessionSelectedEmpIds.length+' Mitarbeiter ausgewählt (Gruppencoaching)';
+  }
+  if(!sessionEmpDropdownOpen){wrap.innerHTML='';return;}
+  var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+  var sorted=visible.slice().sort(function(a,b){
+    var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
+    return ra-rb||a.name.localeCompare(b.name);
+  });
+  var h='<div style="position:absolute;top:64px;left:0;z-index:30;background:var(--bg-solid);border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(15,61,66,0.14);width:100%;display:flex;flex-direction:column">';
+  h+='<div style="padding:8px;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
+    +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
+    +'<input id="sessionEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(sessionEmpSearchQuery)+'" oninput="sessionEmpSearchQuery=this.value;filterSessionEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
+    +'</div></div>';
+  h+='<div style="max-height:220px;overflow-y:auto;padding:6px 0">';
+  sorted.forEach(function(e){
+    var checked=sessionSelectedEmpIds.indexOf(e.id)>=0;
+    h+='<label class="sess-emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
+      +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleSessionEmpId(\''+e.id+'\')" style="cursor:pointer">'
+      +'<span style="font-size:10.5px;font-weight:700;color:var(--text3)">'+e.role+'</span>'
+      +'<span>'+esc(e.name)+'</span>'
+      +'</label>';
+  });
+  h+='<div id="sessionEmpNoResults" style="display:none;padding:14px 12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:6px;padding:8px;border-top:1px solid var(--border)">'
+    +'<button type="button" class="btn btn-sm" style="flex:1;font-size:11px" onclick="sessionSelectedEmpIds=['+visible.map(function(e){return "'"+e.id+"'";}).join(',')+'];renderSessionEmpDropdown();renderLastContinueBox(sessionSelectedEmpIds.length===1?sessionSelectedEmpIds[0]:null)">Alle</button>'
+    +'<button type="button" class="btn btn-sm" style="flex:1;font-size:11px" onclick="sessionSelectedEmpIds=[];renderSessionEmpDropdown();renderLastContinueBox(null)">Keine</button>'
+    +'</div>';
+  h+='</div>';
+  wrap.innerHTML=h;
+  if(sessionEmpSearchQuery)filterSessionEmpList(sessionEmpSearchQuery);
+}
+function toggleSessionEmpDropdown(){sessionEmpDropdownOpen=!sessionEmpDropdownOpen;if(!sessionEmpDropdownOpen)sessionEmpSearchQuery='';renderSessionEmpDropdown();}
+function toggleSessionEmpId(id){
+  var idx=sessionSelectedEmpIds.indexOf(id);
+  if(idx>=0)sessionSelectedEmpIds.splice(idx,1);else sessionSelectedEmpIds.push(id);
+  renderSessionEmpDropdown();
+  renderLastContinueBox(sessionSelectedEmpIds.length===1?sessionSelectedEmpIds[0]:null);
+}
+function filterSessionEmpList(q){
+  q=(q||'').toLowerCase().trim();
+  var wrap=document.getElementById('sessionEmpDropdownWrap');
+  if(!wrap)return;
+  var anyVisible=false;
+  wrap.querySelectorAll('.sess-emp-opt-row').forEach(function(row){
+    var match=!q||row.dataset.search.indexOf(q)>=0;
+    row.style.display=match?'grid':'none';
+    if(match)anyVisible=true;
+  });
+  var noRes=document.getElementById('sessionEmpNoResults');
+  if(noRes)noRes.style.display=anyVisible?'none':'block';
+}
+document.addEventListener('click',function(e){
+  if(!sessionEmpDropdownOpen)return;
+  if(e.target.closest&&(e.target.closest('#sessionEmpDropdownWrap')||e.target.closest('#sessionPlanenModal button[onclick="toggleSessionEmpDropdown()"]')))return;
+  sessionEmpDropdownOpen=false;sessionEmpSearchQuery='';renderSessionEmpDropdown();
+});
 function renderLastContinueBox(empId,boxId){
   var box=document.getElementById(boxId||'lastContinueBox');
   if(!box)return;
