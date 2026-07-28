@@ -732,6 +732,8 @@ function toggleOverviewEmpId(id){
   if(!overviewSelectedIds)overviewSelectedIds=[];
   var idx=overviewSelectedIds.indexOf(id);
   if(idx>=0)overviewSelectedIds.splice(idx,1);else overviewSelectedIds.push(id);
+  var scrollEl=document.getElementById('overviewEmpScrollList');
+  window._overviewEmpScrollTop=scrollEl?scrollEl.scrollTop:null;
   renderTeam();
 }
 function setOverviewSelectAll(allIds){overviewSelectedIds=allIds.slice();renderTeam();}
@@ -3472,7 +3474,7 @@ function buildOverviewTab(liste){
     h+='<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>';
     h+='<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">';
     h+='</div></div>';
-    h+='<div style="max-height:220px;overflow-y:auto;padding:6px 0">';
+    h+='<div id="overviewEmpScrollList" style="max-height:220px;overflow-y:auto;padding:6px 0">';
     var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
     var sortedVisible=visible.slice().sort(function(a,b){
       var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
@@ -4178,6 +4180,11 @@ function renderTeam(){
       var nextEl=document.getElementById(window._zielFocusNextId);
       if(nextEl){nextEl.focus();nextEl.select();}
       window._zielFocusNextId=null;
+    }
+    if(window._overviewEmpScrollTop!=null){
+      var scrollElAfter=document.getElementById('overviewEmpScrollList');
+      if(scrollElAfter)scrollElAfter.scrollTop=window._overviewEmpScrollTop;
+      window._overviewEmpScrollTop=null;
     }
   },150);
 }
