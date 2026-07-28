@@ -412,9 +412,11 @@ tr:hover td{background:var(--bg2);}
 
 <!-- SESSION PLANEN MODAL -->
 <div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal" style="width:640px">
-  <div class="modal-title" style="display:flex;align-items:center;gap:8px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Session planen</div>
-  <div class="f2" style="margin-bottom:10px">
-    <div style="position:relative">
+  <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Session planen</div>
+
+  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wer & wann</div>
+  <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
+    <div style="position:relative;margin-bottom:10px">
       <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
       <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleSessionEmpDropdown()">
         <span id="sessionEmpSelLabel">— Mitarbeiter wählen —</span>
@@ -428,35 +430,44 @@ tr:hover td{background:var(--bg2);}
       <div><label>Ende</label><input type="time" id="sessionEndUhrzeit"></div>
     </div>
   </div>
-  <div class="f2" style="margin-bottom:10px">
-    <div><label>Kategorie</label><select id="sessionKategorie" onchange="onCoachingCategoryChange('sessionKategorie','sessionTyp')"></select></div>
-    <div><label>Art des Coachings</label><select id="sessionTyp"></select></div>
+
+  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Was für ein Coaching</div>
+  <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
+    <div class="f2" style="margin-bottom:10px">
+      <div><label>Kategorie</label><select id="sessionKategorie" onchange="onCoachingCategoryChange('sessionKategorie','sessionTyp')"></select></div>
+      <div><label>Art des Coachings</label><select id="sessionTyp"></select></div>
+    </div>
+    <div class="f2">
+      <div><label>Inhalt des Coachings</label><select id="sessionThema">
+        <option value="">— Bitte wählen —</option>
+        <option>Einwandsbehandlung</option>
+        <option>Bedarfsanalyse</option>
+        <option>Produktwissen</option>
+        <option>Gesprächsführung</option>
+        <option>Motivation</option>
+        <option>Coachability</option>
+        <option>Zuverlässigkeit</option>
+        <option>Teamfähigkeit</option>
+        <option>CR OEM</option>
+        <option>TW</option>
+        <option>SY</option>
+        <option>MY</option>
+        <option>Sonstiges</option>
+      </select></div>
+      <div><label>Ziel-KPI <span style="font-weight:400;color:var(--text3);font-size:11px">(worauf einzahlen?)</span></label>
+        <select id="sessionFocusMetric">
+          <option value="">— Kein spezifisches KPI —</option>
+        </select>
+      </div>
+    </div>
   </div>
-  <div class="f2" style="margin-bottom:10px">
-    <div><label>Inhalt des Coachings</label><select id="sessionThema">
-      <option value="">— Bitte wählen —</option>
-      <option>Einwandsbehandlung</option>
-      <option>Bedarfsanalyse</option>
-      <option>Produktwissen</option>
-      <option>Gesprächsführung</option>
-      <option>Motivation</option>
-      <option>Coachability</option>
-      <option>Zuverlässigkeit</option>
-      <option>Teamfähigkeit</option>
-      <option>CR OEM</option>
-      <option>TW</option>
-      <option>SY</option>
-      <option>MY</option>
-      <option>Sonstiges</option>
-    </select></div>
+
+  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Kontext</div>
+  <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:14px">
+    <div id="lastContinueBox"></div>
+    <div><label>Anlass / Notiz für den Coach</label><textarea id="sessionNotiz" placeholder="Warum wird diese Session eingeplant? Was soll der Coach beachten..."></textarea></div>
   </div>
-  <div style="margin-bottom:10px"><label>Ziel-KPI <span style="font-weight:400;color:var(--text3);font-size:11px">(worauf soll dieses Coaching einzahlen?)</span></label>
-    <select id="sessionFocusMetric">
-      <option value="">— Kein spezifisches KPI —</option>
-    </select>
-  </div>
-  <div id="lastContinueBox"></div>
-  <div style="margin-bottom:14px"><label>Anlass / Notiz für den Coach</label><textarea id="sessionNotiz" placeholder="Warum wird diese Session eingeplant? Was soll der Coach beachten..."></textarea></div>
+
   <div class="modal-actions">
     <button class="btn" onclick="closeModal('sessionPlanenModal')">Abbrechen</button>
     <button class="btn btn-primary" onclick="sessionSpeichernNeu()"><i class="ti ti-check"></i> Session planen</button>
@@ -7611,11 +7622,11 @@ function renderLastContinueBox(empId,boxId){
   if(!box)return;
   var last=(protocols[empId]||[]).filter(function(s){return s.status!=='geplant'&&s.cont&&s.cont.trim();}).sort(function(a,b){return b.date.localeCompare(a.date);})[0];
   if(!last){box.innerHTML='';return;}
-  box.innerHTML='<div class="alert alert-warn" style="margin-bottom:12px;padding:10px 12px">'
-    +'<i class="ti ti-repeat" style="font-size:16px;color:var(--amber-dark);flex-shrink:0"></i>'
-    +'<div><div style="font-size:12px;font-weight:700;color:var(--amber-dark)">Aus dem letzten Coaching ('+fd(last.date)+') – Continue</div>'
-    +'<div style="font-size:12px;color:var(--text);margin-top:2px">'+last.cont+'</div>'
-    +'<div style="font-size:11px;color:var(--text3);margin-top:3px">Wurde daran gearbeitet?</div></div></div>';
+  box.innerHTML='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);border-radius:var(--r-md);padding:10px 12px;margin-bottom:12px;display:flex;gap:8px">'
+    +'<i class="ti ti-repeat" style="font-size:16px;color:#7ED2DB;flex-shrink:0;margin-top:1px"></i>'
+    +'<div><div style="font-size:12px;font-weight:700;color:#fff">Aus dem letzten Coaching ('+fd(last.date)+') – Continue</div>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px">'+last.cont+'</div>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:3px">Wurde daran gearbeitet?</div></div></div>';
 }
 function openQaBewertungModal(empId){
   if(empId)selectedEmp=empId;
