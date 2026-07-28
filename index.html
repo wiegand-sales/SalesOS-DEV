@@ -429,17 +429,10 @@ tr:hover td{background:var(--bg2);}
     </div>
   </div>
   <div class="f2" style="margin-bottom:10px">
-    <div><label>Art des Coachings</label><select id="sessionTyp">
-      <option>Call Shadowing Aktiv</option>
-      <option>Call Shadowing Passiv</option>
-      <option>1:1 Coaching</option>
-      <option>Calls Review</option>
-      <option>Gruppencoaching</option>
-      <option>Quiz</option>
-      <option>SolidRoad</option>
-      <option>Bemerkung</option>
-      <option>Sonstiges</option>
-    </select></div>
+    <div><label>Kategorie</label><select id="sessionKategorie" onchange="onCoachingCategoryChange('sessionKategorie','sessionTyp')"></select></div>
+    <div><label>Art des Coachings</label><select id="sessionTyp"></select></div>
+  </div>
+  <div class="f2" style="margin-bottom:10px">
     <div><label>Inhalt des Coachings</label><select id="sessionThema">
       <option value="">— Bitte wählen —</option>
       <option>Einwandsbehandlung</option>
@@ -490,11 +483,14 @@ tr:hover td{background:var(--bg2);}
     <div><label>Ende</label><input type="time" id="sess-end-time" value=""></div>
   </div>
   <div class="f2" style="margin-bottom:10px">
+    <div><label>Kategorie</label><select id="sess-category" onchange="onCoachingCategoryChange('sess-category','sess-type')"></select></div>
     <div><label>Art des Coachings</label><select id="sess-type"></select></div>
-    <div><label>Inhalt des Coachings</label><select id="sess-topic-sel" onchange="syncSessFocusMetric()"><option value="">— Bitte wählen —</option></select></div>
   </div>
-  <div style="margin-bottom:10px"><label>Ziel-KPI <span style="font-weight:400;color:var(--text3);font-size:11px">(worauf soll dieses Coaching einzahlen?)</span></label>
-    <select id="sess-focus-metric"><option value="">— Kein spezifisches KPI —</option></select>
+  <div class="f2" style="margin-bottom:10px">
+    <div><label>Inhalt des Coachings</label><select id="sess-topic-sel" onchange="syncSessFocusMetric()"><option value="">— Bitte wählen —</option></select></div>
+    <div><label>Ziel-KPI <span style="font-weight:400;color:var(--text3);font-size:11px">(worauf soll dieses Coaching einzahlen?)</span></label>
+      <select id="sess-focus-metric"><option value="">— Kein spezifisches KPI —</option></select>
+    </div>
   </div>
   <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
     <div style="border-radius:var(--r-md);overflow:hidden">
@@ -811,7 +807,54 @@ function setCoachCalMonth(delta){
   coachCalYear=d.getFullYear();coachCalMonthIdx=d.getMonth();
   renderCoachingAnsicht();
 }
-var SESSION_TYPES=['Call Shadowing Aktiv','Call Shadowing Passiv','1:1 Coaching','Calls Review','Gruppencoaching','Quiz','SolidRoad','Bemerkung','Sonstiges'];
+var COACHING_CATEGORIES={
+  'Coaching':['Einzelcoaching','Gruppencoaching','Call Shadowing (Aktiv)','Call Shadowing (Passiv)','Live Coaching','Call Review','Rollenspiel','Feedbackgespräch'],
+  'Training':['Produkttraining','Pitch-Training','Einwandtraining','Systemtraining','SolidRoad-Training','Wissens-Quiz','Nachschulung'],
+  'Performance':['KPI Review','Performance Review','Zielvereinbarung','Tagesziel','Wochenziel','Monatsziel'],
+  'Power Hour':['Call Blitz','Mega YES','Cross Selling','Neukunden','Bestandskunden','Follow-up','Angebotsnachverfolgung','Einwandtraining','Abschlusstraining','Lead-Abarbeitung','Fokuszeit'],
+  'Motivation & Organisation':['Motivation','Teammeeting','Daily','Weekly','Kick-off'],
+  'Entwicklung':['Onboarding','Mentoring','Karrieregespräch','Entwicklungsplan']
+};
+function findCoachingCategoryForType(typeValue){
+  var cats=Object.keys(COACHING_CATEGORIES);
+  for(var i=0;i<cats.length;i++){
+    if(COACHING_CATEGORIES[cats[i]].indexOf(typeValue)>=0)return cats[i];
+  }
+  return cats[0];
+}
+function populateCoachingCategorySelect(catSelId){
+  var catEl=document.getElementById(catSelId);
+  if(!catEl||catEl.options.length)return;
+  Object.keys(COACHING_CATEGORIES).forEach(function(cat){
+    var o=document.createElement('option');o.textContent=cat;catEl.appendChild(o);
+  });
+}
+function populateCoachingTypeSelect(catSelId,typeSelId,preselectType){
+  var catEl=document.getElementById(catSelId),typeEl=document.getElementById(typeSelId);
+  if(!catEl||!typeEl)return;
+  var cat=catEl.value||Object.keys(COACHING_CATEGORIES)[0];
+  typeEl.innerHTML='';
+  (COACHING_CATEGORIES[cat]||[]).forEach(function(t){
+    var o=document.createElement('option');o.textContent=t;typeEl.appendChild(o);
+  });
+  if(preselectType){
+    for(var i=0;i<typeEl.options.length;i++){
+      if(typeEl.options[i].value===preselectType||typeEl.options[i].text===preselectType){typeEl.selectedIndex=i;break;}
+    }
+  }
+}
+function onCoachingCategoryChange(catSelId,typeSelId){
+  populateCoachingTypeSelect(catSelId,typeSelId,null);
+}
+function setCoachingTypeSelection(catSelId,typeSelId,typeValue){
+  var catEl=document.getElementById(catSelId);
+  if(!catEl)return;
+  var cat=findCoachingCategoryForType(typeValue);
+  for(var i=0;i<catEl.options.length;i++){
+    if(catEl.options[i].text===cat){catEl.selectedIndex=i;break;}
+  }
+  populateCoachingTypeSelect(catSelId,typeSelId,typeValue);
+}
 var SESSION_TOPICS=['Einwandsbehandlung','Bedarfsanalyse','Produktwissen','Gesprächsführung','Motivation','Coachability','Zuverlässigkeit','Teamfähigkeit','CR OEM','CR TW','CR SY','CR MY','Sonstiges'];
 var FOCUS_METRICS=[
   {key:'aktivitaeten',label:'Aktivitäten'},
@@ -7052,11 +7095,7 @@ function openPlannedSession(empId, sessionId, typ, fokus, datum, uhrzeit){
     if(dateEl&&datum) dateEl.value=datum;
     if(timeEl&&uhrzeit) timeEl.value=uhrzeit;
     if(endTimeEl&&proto&&proto.endUhrzeit) endTimeEl.value=proto.endUhrzeit;
-    if(typeEl&&typ){
-      for(var i=0;i<typeEl.options.length;i++){
-        if(typeEl.options[i].value===typ||typeEl.options[i].text===typ){typeEl.selectedIndex=i;break;}
-      }
-    }
+    if(typ)setCoachingTypeSelection('sess-category','sess-type',typ);
     if(topicEl&&fokus){
       for(var j=0;j<topicEl.options.length;j++){
         if(topicEl.options[j].value===fokus||topicEl.options[j].text===fokus){topicEl.selectedIndex=j;break;}
@@ -7489,6 +7528,8 @@ function openSessionModal(empId){
   sessionSelectedEmpIds=empId?[empId]:[];
   sessionEmpDropdownOpen=false;sessionEmpSearchQuery='';
   renderSessionEmpDropdown();
+  populateCoachingCategorySelect('sessionKategorie');
+  populateCoachingTypeSelect('sessionKategorie','sessionTyp',null);
   var fmSel=document.getElementById('sessionFocusMetric');
   if(fmSel&&fmSel.options.length<=1){
     FOCUS_METRICS.forEach(function(m){
@@ -7616,10 +7657,8 @@ function openQaBewertungModal(empId){
 function openNeuesCoachingModal(empId){
   if(empId)selectedEmp=empId;
   _editingSessionId=null;
-  var typeEl=document.getElementById('sess-type');
-  if(typeEl&&!typeEl.options.length){
-    SESSION_TYPES.forEach(function(t){var o=document.createElement('option');o.textContent=t;typeEl.appendChild(o);});
-  }
+  populateCoachingCategorySelect('sess-category');
+  populateCoachingTypeSelect('sess-category','sess-type',null);
   var topicEl=document.getElementById('sess-topic-sel');
   if(topicEl&&topicEl.options.length<=1){
     SESSION_TOPICS.forEach(function(t){var o=document.createElement('option');o.value=t;o.textContent=t;topicEl.appendChild(o);});
