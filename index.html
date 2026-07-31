@@ -485,11 +485,19 @@ tr:hover td{background:var(--bg2);}
 </div></div>
 
 <!-- NEUES COACHING ERFASSEN (ehem. "Neue Session erfassen", jetzt Pop-up) -->
-<div class="modal-ov hidden" id="neuesCoachingModal"><div class="modal" style="width:560px;max-width:95vw;max-height:88vh;overflow-y:auto">
+<div class="modal-ov hidden" id="neuesCoachingModal"><div class="modal" style="width:640px;max-width:95vw;max-height:88vh;overflow-y:auto">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Neue Session erfassen</div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wann</div>
+  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wer & wann</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
+    <div style="position:relative;margin-bottom:10px">
+      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
+      <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleNcEmpDropdown()">
+        <span id="ncEmpSelLabel">— Mitarbeiter wählen —</span>
+        <i class="ti ti-chevron-down" style="font-size:11px"></i>
+      </button>
+      <div id="ncEmpDropdownWrap"></div>
+    </div>
     <div class="f3" style="gap:8px">
       <div><label>Datum</label><input type="date" id="sess-date" value=""></div>
       <div><label>Start</label><input type="time" id="sess-time" value=""></div>
@@ -541,7 +549,7 @@ tr:hover td{background:var(--bg2);}
 </div></div>
 
 <!-- NEUEN CALL BEWERTEN -->
-<div class="modal-ov hidden" id="qaBewertungModal"><div class="modal" style="width:600px;max-width:95vw;max-height:88vh;overflow-y:auto">
+<div class="modal-ov hidden" id="qaBewertungModal"><div class="modal" style="width:640px;max-width:95vw;max-height:88vh;overflow-y:auto">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-phone-plus" style="color:var(--purple)"></i> Neuen Call bewerten</div>
 
   <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Call-Details</div>
@@ -2195,6 +2203,9 @@ var _editingSessionId=null; // gesetzt, wenn eine geplante Session im Neue-Sessi
 var sessionSelectedEmpIds=[]; // Mehrfachauswahl im Session-planen-Modal (fuer Gruppencoachings)
 var sessionEmpDropdownOpen=false;
 var sessionEmpSearchQuery='';
+var ncSelectedEmpIds=[]; // Mehrfachauswahl im Neue-Session-erfassen-Modal (fuer Gruppencoachings)
+var ncEmpDropdownOpen=false;
+var ncEmpSearchQuery='';
 function setTlFilter(f){tlFilter=f;renderTab();}
 function setPerfTableGroup(g){perfTableGroup=g;renderTab();}
 function isoWeekOf(d){
@@ -6379,7 +6390,7 @@ function openCoachingEval(empId){
   overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
 
   var box=document.createElement('div');
-  box.style.cssText='background:rgba(255,255,255,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:14px;padding:24px 28px;width:100%;max-width:540px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18)';
+  box.style.cssText='background:rgba(255,255,255,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:14px;padding:24px 28px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18)';
 
   // Header
   var hdr=document.createElement('div');
@@ -6578,14 +6589,49 @@ function saveSession(empId){
   var focus=topics.join(', ');
   var fmEl=document.getElementById('sess-focus-metric');
   var focusMetric=fmEl?fmEl.value:'';
+  var editId=_editingSessionId;
+  var empIds=(!editId&&ncSelectedEmpIds.length)?ncSelectedEmpIds.slice():[empId];
+
+  if(!editId&&empIds.length>1){
+    // Gruppencoaching: eine verknuepfte Session je Mitarbeiter anlegen
+    var groupId='grp_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    var rows=empIds.map(function(eid){
+      return {
+        employee_id:eid,date:date,uhrzeit:uhrzeit||null,end_uhrzeit:endUhrzeit||null,art:type,rating:null,
+        note:notes,focus:focus,status:'abgeschlossen',
+        start_note:start,stop_note:stop,continue_note:cont,
+        coach_id:currentCoach?currentCoach.id:null,
+        focus_metric:focusMetric||null,group_id:groupId
+      };
+    });
+    sb.from('protocols').insert(rows).select().then(function(res){
+      if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
+      (res.data||[]).forEach(function(r){
+        var eid=r.employee_id;
+        if(!protocols[eid])protocols[eid]=[];
+        protocols[eid].unshift({
+          id:r.id,date:date,uhrzeit:uhrzeit,endUhrzeit:endUhrzeit,type:type,rating:null,
+          topics:topics,start:start,stop:stop,cont:cont,notes:notes,note:notes,focus:focus,status:'abgeschlossen',
+          coachId:r.coach_id||null,focusMetric:r.focus_metric||null,groupId:groupId
+        });
+      });
+      var namesTxt=empIds.map(function(id){var e=employees.find(function(x){return x.id===id;});return e?e.name:id;}).join(', ');
+      logActivity('session','created','Gruppensession erfasst ('+empIds.length+' Mitarbeiter): '+(type||'Session'),null,namesTxt+(focus?' · '+focus:'')+' · '+fd(date));
+      resetSessionFormFields();
+      closeModal('neuesCoachingModal');
+      renderTab();
+    }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+    return;
+  }
+
+  var singleEmpId=empIds[0]||empId;
   var payload={
-    employee_id:empId,date:date,uhrzeit:uhrzeit||null,end_uhrzeit:endUhrzeit||null,art:type,rating:null,
+    employee_id:singleEmpId,date:date,uhrzeit:uhrzeit||null,end_uhrzeit:endUhrzeit||null,art:type,rating:null,
     note:notes,focus:focus,status:'abgeschlossen',
     start_note:start,stop_note:stop,continue_note:cont,
     coach_id:currentCoach?currentCoach.id:null,
     focus_metric:focusMetric||null
   };
-  var editId=_editingSessionId;
   var dbCall=editId
     ? sb.from('protocols').update(payload).eq('id',editId).select().single()
     : sb.from('protocols').insert(payload).select().single();
@@ -6597,32 +6643,36 @@ function saveSession(empId){
       topics:topics,start:start,stop:stop,cont:cont,notes:notes,note:notes,focus:focus,status:'abgeschlossen',
       coachId:r.coach_id||null,focusMetric:r.focus_metric||null
     };
-    if(!protocols[empId])protocols[empId]=[];
+    if(!protocols[singleEmpId])protocols[singleEmpId]=[];
     if(editId){
-      var idx=protocols[empId].findIndex(function(p){return String(p.id)===String(editId);});
-      if(idx>=0){protocols[empId][idx]=entry;}else{protocols[empId].unshift(entry);}
+      var idx=protocols[singleEmpId].findIndex(function(p){return String(p.id)===String(editId);});
+      if(idx>=0){protocols[singleEmpId][idx]=entry;}else{protocols[singleEmpId].unshift(entry);}
     } else {
-      protocols[empId].unshift(entry);
+      protocols[singleEmpId].unshift(entry);
     }
-    var empForLog=employees.find(function(e){return e.id===empId;});
-    logActivity('session',editId?'updated':'created',(editId?'Session bearbeitet':'Neue Session erfasst')+': '+(type||'Session'),empId,(empForLog?empForLog.name:'')+(focus?' · '+focus:'')+' · '+fd(date));
+    var empForLog=employees.find(function(e){return e.id===singleEmpId;});
+    logActivity('session',editId?'updated':'created',(editId?'Session bearbeitet':'Neue Session erfasst')+': '+(type||'Session'),singleEmpId,(empForLog?empForLog.name:'')+(focus?' · '+focus:'')+' · '+fd(date));
     _editingSessionId=null;
-    ['sess-start','sess-stop','sess-cont','sess-note'].forEach(function(id){
-      var el=document.getElementById(id);if(el)el.value='';
-    });
-    var tsel=document.getElementById('sess-topic-sel');
-    if(tsel)tsel.value='';
-    var fmsel=document.getElementById('sess-focus-metric');
-    if(fmsel)fmsel.value='';
-    var tel=document.getElementById('sess-time');
-    if(tel)tel.value='';
-    var etel=document.getElementById('sess-end-time');
-    if(etel)etel.value='';
+    resetSessionFormFields();
     closeModal('neuesCoachingModal');
     renderTab();
   }).catch(function(err){
     alert('Unerwarteter Fehler: '+err.message);
   });
+}
+function resetSessionFormFields(){
+  ['sess-start','sess-stop','sess-cont','sess-note'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  var tsel=document.getElementById('sess-topic-sel');
+  if(tsel)tsel.value='';
+  var fmsel=document.getElementById('sess-focus-metric');
+  if(fmsel)fmsel.value='';
+  var tel=document.getElementById('sess-time');
+  if(tel)tel.value='';
+  var etel=document.getElementById('sess-end-time');
+  if(etel)etel.value='';
+  ncSelectedEmpIds=[];
 }
 
 function setMetric(m){perfMetric=m;renderTab();}
@@ -7674,6 +7724,77 @@ function openSessionModal(empId){
   renderLastContinueBox(selectedEmp);
   openModal('sessionPlanenModal');
 }
+function renderNcEmpDropdown(){
+  var wrap=document.getElementById('ncEmpDropdownWrap');
+  if(!wrap)return;
+  var labelEl=document.getElementById('ncEmpSelLabel');
+  var visible=employees.filter(function(e){return e.active!==false&&!e.isPureCoach;});
+  if(labelEl){
+    labelEl.textContent=ncSelectedEmpIds.length===0?'— Mitarbeiter wählen —':
+      ncSelectedEmpIds.length===1?(employees.find(function(e){return e.id===ncSelectedEmpIds[0];})||{}).name||'1 Mitarbeiter':
+      ncSelectedEmpIds.length+' Mitarbeiter ausgewählt (Gruppencoaching)';
+  }
+  if(!ncEmpDropdownOpen){wrap.innerHTML='';return;}
+  var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+  var sorted=visible.slice().sort(function(a,b){
+    var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
+    return ra-rb||a.name.localeCompare(b.name);
+  });
+  var h='<div style="position:absolute;top:64px;left:0;z-index:30;background:var(--bg-solid);border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(15,61,66,0.14);width:100%;display:flex;flex-direction:column">';
+  h+='<div style="padding:8px;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
+    +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
+    +'<input id="ncEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(ncEmpSearchQuery)+'" oninput="ncEmpSearchQuery=this.value;filterNcEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
+    +'</div></div>';
+  h+='<div style="max-height:220px;overflow-y:auto;padding:6px 0">';
+  sorted.forEach(function(e){
+    var checked=ncSelectedEmpIds.indexOf(e.id)>=0;
+    h+='<label class="nc-emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
+      +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleNcEmpId(\''+e.id+'\')" style="cursor:pointer">'
+      +'<span style="font-size:10.5px;font-weight:700;color:var(--text3)">'+e.role+'</span>'
+      +'<span>'+esc(e.name)+'</span>'
+      +'</label>';
+  });
+  h+='<div id="ncEmpNoResults" style="display:none;padding:14px 12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:6px;padding:8px;border-top:1px solid var(--border)">'
+    +'<button type="button" class="btn btn-sm" style="flex:1;font-size:11px" onclick="ncSelectedEmpIds=['+visible.map(function(e){return "'"+e.id+"'";}).join(',')+'];onNcSelectionChanged();">Alle</button>'
+    +'<button type="button" class="btn btn-sm" style="flex:1;font-size:11px" onclick="ncSelectedEmpIds=[];onNcSelectionChanged();">Keine</button>'
+    +'</div>';
+  h+='</div>';
+  wrap.innerHTML=h;
+  if(ncEmpSearchQuery)filterNcEmpList(ncEmpSearchQuery);
+}
+function toggleNcEmpDropdown(){ncEmpDropdownOpen=!ncEmpDropdownOpen;if(!ncEmpDropdownOpen)ncEmpSearchQuery='';renderNcEmpDropdown();}
+function toggleNcEmpId(id){
+  var idx=ncSelectedEmpIds.indexOf(id);
+  if(idx>=0)ncSelectedEmpIds.splice(idx,1);else ncSelectedEmpIds.push(id);
+  onNcSelectionChanged();
+}
+// Sobald mehr als eine Person ausgewaehlt ist, automatisch auf Kategorie "Coaching" /
+// Art "Gruppencoaching" umschalten - Gruppencoachings sollen nicht versehentlich als
+// Einzelcoaching o.ae. gespeichert werden.
+function onNcSelectionChanged(){
+  renderNcEmpDropdown();
+  if(ncSelectedEmpIds.length>1)setCoachingTypeSelection('sess-category','sess-type','Gruppencoaching');
+}
+function filterNcEmpList(q){
+  q=(q||'').toLowerCase().trim();
+  var wrap=document.getElementById('ncEmpDropdownWrap');
+  if(!wrap)return;
+  var anyVisible=false;
+  wrap.querySelectorAll('.nc-emp-opt-row').forEach(function(row){
+    var match=!q||row.dataset.search.indexOf(q)>=0;
+    row.style.display=match?'grid':'none';
+    if(match)anyVisible=true;
+  });
+  var noRes=document.getElementById('ncEmpNoResults');
+  if(noRes)noRes.style.display=anyVisible?'none':'block';
+}
+document.addEventListener('click',function(e){
+  if(!ncEmpDropdownOpen)return;
+  if(e.target.closest&&(e.target.closest('#ncEmpDropdownWrap')||e.target.closest('#neuesCoachingModal button[onclick="toggleNcEmpDropdown()"]')))return;
+  ncEmpDropdownOpen=false;ncEmpSearchQuery='';renderNcEmpDropdown();
+});
 function renderSessionEmpDropdown(){
   var wrap=document.getElementById('sessionEmpDropdownWrap');
   if(!wrap)return;
@@ -7790,6 +7911,9 @@ function openQaBewertungModal(empId){
 function openNeuesCoachingModal(empId){
   if(empId)selectedEmp=empId;
   _editingSessionId=null;
+  ncSelectedEmpIds=empId?[empId]:[];
+  ncEmpDropdownOpen=false;ncEmpSearchQuery='';
+  renderNcEmpDropdown();
   populateCoachingCategorySelect('sess-category');
   populateCoachingTypeSelect('sess-category','sess-type',null);
   var topicEl=document.getElementById('sess-topic-sel');
