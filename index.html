@@ -3851,6 +3851,7 @@ function buildOverviewTab(liste){
       data:{labels:d.labels,datasets:d.datasets},
       options:{
         responsive:true,
+        resizeDelay:200,
         maintainAspectRatio:false,
         animation:CHART_DRAWIN_ANIMATION,
         interaction:{mode:'index',intersect:false},
@@ -4308,6 +4309,7 @@ function renderTeam(){
       data:{labels:d.labels,datasets:d.datasets},
       options:{
         responsive:true,
+        resizeDelay:200,
         maintainAspectRatio:false,
         animation:CHART_DRAWIN_ANIMATION,
         interaction:{mode:'index',intersect:false},
@@ -5998,6 +6000,7 @@ function renderTab(){
         plugins:[coachLinePlugin],
         options:{
           responsive:true,
+          resizeDelay:200,
           maintainAspectRatio:false,
           layout:{padding:{top:14}},
           animation:CHART_DRAWIN_ANIMATION,
