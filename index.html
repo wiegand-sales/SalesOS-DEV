@@ -2538,7 +2538,7 @@ function wochenzielKachelnHtml(){
       var pct=target>0?Math.round(ist/target*100):(ist>0?100:0);
       var isCur=wm.kw===curKw;
       if(isFuture){
-        out+='<div style="flex:1 1 120px;min-width:0;border:1px dashed var(--border2);border-radius:12px;padding:12px;opacity:0.6">'
+        out+='<div style="flex:1 1 120px;min-width:0;border:1px dashed var(--border2);background:rgba(32,106,114,0.04);border-radius:12px;padding:12px;opacity:0.6">'
           +'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">KW '+wm.kw+'</div>'
           +'<div style="font-size:16px;font-weight:700;color:var(--text3)">–</div>'
           +'<div style="font-size:10.5px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
@@ -2547,7 +2547,7 @@ function wochenzielKachelnHtml(){
           +'</div>';
       } else {
         var barColor=pct>=100?'#206A72':'#B23A3A';
-        out+='<div style="flex:1 1 120px;min-width:0;border:'+(isCur?'2px solid #206A72;background:rgba(32,106,114,0.05)':'1px solid var(--border2)')+';border-radius:12px;padding:12px">'
+        out+='<div style="flex:1 1 120px;min-width:0;border:'+(isCur?'2px solid #206A72;background:rgba(32,106,114,0.1)':'1px solid var(--border2);background:rgba(32,106,114,0.06)')+';border-radius:12px;padding:12px">'
           +'<div style="font-size:11px;color:'+(isCur?'#206A72;font-weight:700':'var(--text3)')+';margin-bottom:6px">KW '+wm.kw+(isCur?' · Heute':'')+'</div>'
           +'<div style="font-size:16px;font-weight:700;color:#0c3b40">€ '+Math.round(ist).toLocaleString('de-DE')+'</div>'
           +'<div style="font-size:10.5px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
