@@ -2625,7 +2625,7 @@ function zielverlaufJahrChartHtml(){
   for(var i=0;i<12;i++){barsHtml+='<div style="flex:1;text-align:center;font-size:10.5px;color:var(--text3)">'+MONTH_SHORT_DE[i]+'</div>';}
   barsHtml+='</div>';
   var h='<div class="card">';
-  h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar" style="color:var(--purple)"></i> Monatliche Zielvereinbarung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+yr+'</span></div>';
+  h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar" style="color:var(--purple)"></i> Monatliche Zielvereinbarung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+yr+'</span></div>';
   h+=barsHtml;
   h+='</div>';
   return h;
@@ -3592,11 +3592,11 @@ function buildOverviewTab(liste){
 
     h+='<div class="g2" style="margin-bottom:22px">';
     h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="section-hdr" style="margin-top:0;justify-content:flex-start"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> Conversion-Mix</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
+    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> Conversion-Mix</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
     h+='<div class="funnel-wrap">'+donutSvg(mixEntries,mixTotal,'Gesamt')+'</div>';
     h+='</div>';
     h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="section-hdr" style="margin-top:0;justify-content:flex-start"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> CR-Verteilung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
+    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> CR-Verteilung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
     h+='<div class="funnel-wrap">'+donutSvg(crRaw,crSumRaw,'Ø Verteilung')+'</div>';
     h+='</div>';
     h+='</div>';
@@ -3647,7 +3647,7 @@ function buildOverviewTab(liste){
     h+='<div class="g2" style="margin-bottom:22px">';
 
     h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-trophy" style="color:var(--purple)"></i> Top 3</span></div>';
+    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-trophy" style="color:var(--purple)"></i> Top 3</span></div>';
     if(!topRows.length){
       h+='<div style="font-size:12px;color:var(--text3);padding:8px 0">Noch keine Performance-Daten in diesem Monat.</div>';
     } else {
@@ -3665,7 +3665,7 @@ function buildOverviewTab(liste){
     h+='</div>';
 
     h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="section-hdr" style="margin-top:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle" style="color:var(--red)"></i> Worst 3</span></div>';
+    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle" style="color:var(--red)"></i> Worst 3</span></div>';
     if(!worstRows.length){
       h+='<div style="font-size:12px;color:var(--text3);padding:8px 0">Noch keine Performance-Daten in diesem Monat.</div>';
     } else {
