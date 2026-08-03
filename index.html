@@ -2515,7 +2515,7 @@ function wochenzielKachelnHtml(){
   prevDate.setUTCMonth(prevDate.getUTCMonth()-1);
   var prevMk=prevDate.toISOString().slice(0,7);
   var todayStr=today();
-  var curKw=isoWeekNum(new Date(todayStr+'T00:00:00'));
+  var curKw=isoWeekNum(new Date(todayStr+'T00:00:00Z'));
 
   function tileFor(mk,seenKw){
     var weeks=getMonthWeeksZiel(mk);
