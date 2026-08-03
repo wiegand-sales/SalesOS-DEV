@@ -2435,7 +2435,7 @@ function getMonthWeeksZiel(monthKey){
         else days++;
       }
     }
-    weeks.push({kw:isoWeekNum(weekStart),defaultDays:days,holidayNames:holidayNames});
+    weeks.push({kw:isoWeekNum(weekStart),defaultDays:days,holidayNames:holidayNames,from:weekStart.toISOString().slice(0,10),to:(function(){var e=new Date(weekStart);e.setUTCDate(e.getUTCDate()+4);return e.toISOString().slice(0,10);})()});
     d.setUTCDate(d.getUTCDate()+7);
   }
   return weeks;
@@ -2504,6 +2504,55 @@ function empActiveInZielMonth(e,monthKey){
   if(e.startDate&&e.startDate>b.to)return false;
   if(e.endDate&&e.endDate<b.from)return false;
   return true;
+}
+// ── Wochenziel-Kacheln: automatisch berechnetes Ziel pro Woche (Tage x Opt./Tag x Marge/Opt.),
+// aus denselben Werten, die ohnehin schon in der Zielvereinbarung hinterlegt sind - keine
+// zusaetzliche Eingabe noetig. Zeigt den aktuellen Monat, vergangene Wochen mit echtem Ist,
+// kommende Wochen als offen/blass.
+function wochenzielKachelnHtml(){
+  var mk=today().slice(0,7);
+  var weeks=getMonthWeeksZiel(mk);
+  var rec=zielStore[mk]||{};
+  var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
+  var todayStr=today();
+  var curKw=isoWeekNum(new Date(todayStr+'T00:00:00'));
+  var html='<div class="card card-static" style="margin-bottom:16px">'
+    +'<div class="card-title" style="margin-bottom:12px"><i class="ti ti-calendar-stats"></i> Wochenziel · '+MONTH_NAMES_ZIEL[+mk.slice(5,7)-1]+' '+mk.slice(0,4)+' <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">(automatisch aus Tage × Opt./Tag × Marge/Opt.)</span></div>'
+    +'<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">';
+  weeks.forEach(function(wm,wi){
+    var target=0,ist=0;
+    var isFuture=wm.from>todayStr;
+    visible.forEach(function(e){
+      var r=rec[e.id]||{};
+      var days=(r.weeks&&r.weeks[wi]!=null)?r.weeks[wi]:wm.defaultDays;
+      var optTag=r.optTag!=null?r.optTag:0;
+      var margeOpt=r.margeOpt!=null?r.margeOpt:0;
+      target+=days*optTag*margeOpt;
+      if(!isFuture)ist+=istForEmpWeek(e.id,wm.from,wm.to);
+    });
+    var pct=target>0?Math.round(ist/target*100):(ist>0?100:0);
+    var isCur=wm.kw===curKw;
+    if(isFuture){
+      html+='<div style="min-width:130px;border:1px dashed var(--border2);border-radius:12px;padding:12px;opacity:0.6">'
+        +'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">KW '+wm.kw+'</div>'
+        +'<div style="font-size:16px;font-weight:700;color:var(--text3)">–</div>'
+        +'<div style="font-size:10.5px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
+        +'<div style="height:5px;background:var(--bg2);border-radius:3px"></div>'
+        +'<div style="font-size:11px;color:var(--text3);margin-top:6px">Noch offen</div>'
+        +'</div>';
+    } else {
+      var barColor=pct>=100?'#206A72':'#B23A3A';
+      html+='<div style="min-width:130px;border:'+(isCur?'2px solid #206A72;background:rgba(32,106,114,0.05)':'1px solid var(--border2)')+';border-radius:12px;padding:12px">'
+        +'<div style="font-size:11px;color:'+(isCur?'#206A72;font-weight:700':'var(--text3)')+';margin-bottom:6px">KW '+wm.kw+(isCur?' · Heute':'')+'</div>'
+        +'<div style="font-size:16px;font-weight:700;color:#0c3b40">€ '+Math.round(ist).toLocaleString('de-DE')+'</div>'
+        +'<div style="font-size:10.5px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
+        +'<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden"><div style="width:'+Math.min(pct,100)+'%;height:100%;background:'+barColor+'"></div></div>'
+        +'<div style="font-size:11px;font-weight:700;color:'+barColor+';margin-top:6px">'+pct+'%</div>'
+        +'</div>';
+    }
+  });
+  html+='</div></div>';
+  return html;
 }
 // ── Zielvereinbarung — Jahresverlauf: Ziel NL (gestrichelte Referenzlinie) vs. Ziel/Erzielte Marge (Balken) ──
 // Eigenstaendige Funktion, damit dasselbe Diagramm sowohl in Overview als auch in Zielvereinbarung genutzt werden kann.
@@ -2602,6 +2651,14 @@ function istForEmpMonth(empId,mkey){
   var sum=0;
   (performance[empId]||[]).forEach(function(x){
     if((x.date||'').slice(0,7)!==mkey)return;
+    sum+=x.margeGesamt||x.margin||0;
+  });
+  return sum;
+}
+function istForEmpWeek(empId,from,to){
+  var sum=0;
+  (performance[empId]||[]).forEach(function(x){
+    if(!x.date||x.date<from||x.date>to)return;
     sum+=x.margeGesamt||x.margin||0;
   });
   return sum;
@@ -2808,6 +2865,7 @@ function zielvereinbarungHtml(){
     +'<div style="font-weight:800;color:#7ED2DB;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+(yearTargetSum>0?Math.round(yearIstSum/yearTargetSum*100):(yearIstSum>0?100:0))+'%</div>'
     +'</div>';
   return zielInfoBoxHtml()
+    +wochenzielKachelnHtml()
     +zielverlaufJahrChartHtml()
     +'<div class="card card-static">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
