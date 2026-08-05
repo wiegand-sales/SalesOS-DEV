@@ -2008,92 +2008,6 @@ function exportEmpSummary(empId){
   w.document.close();
   setTimeout(function(){w.print();},350);
 }
-function exportTeamReport(){
-  var HIDDEN=[];
-  var list=activeEmployees().filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
-  var customActive=!!(teamCustomFrom&&teamCustomTo);
-  var days=teamRange||7;
-  var fromBound,toBound;
-  if(customActive){fromBound=teamCustomFrom;toBound=teamCustomTo;}
-  else{fromBound=addDaysUTC(today(),-days);toBound=today();}
-  var periodLabel=customActive?(fd(fromBound)+' – '+fd(toBound)):(days+' Tage');
-
-  function perfInRange(id){
-    var p=performance[id]||[];
-    return p.filter(function(x){return x.date>=fromBound&&x.date<=toBound;});
-  }
-  var allP=list.map(function(e){return perfInRange(e.id);}).reduce(function(a,b){return a.concat(b);},[]);
-  function tAvg(key){if(!allP.length)return null;return allP.reduce(function(a,x){return a+(x[key]||0);},0)/allP.length;}
-  var teamOem=tAvg('crOEM'),teamSy=tAvg('crSuperYes'),teamMy=tAvg('crMegaYes');
-  var totalAlerts=list.reduce(function(a,e){return a+checkAlerts(e.id).length;},0);
-
-  var ueberfaellig=list.filter(function(e){var t=tageSeitLetzterSession(e.id);return t===null||t>30;});
-  var coachCounts={},noCoachCount=0;
-  list.forEach(function(e){
-    (protocols[e.id]||[]).forEach(function(p){
-      if(p.status==='geplant')return;
-      if(p.date<fromBound||p.date>toBound)return;
-      if(p.coachId)coachCounts[p.coachId]=(coachCounts[p.coachId]||0)+1;else noCoachCount++;
-    });
-  });
-  var coachEmps=employees.filter(function(e){return e.role==='SDM'||e.role==='SC';});
-  var coachDistTxt=coachEmps.map(function(c){return c.name+': '+(coachCounts[c.id]||0);}).concat(noCoachCount?['Ohne Zuordnung: '+noCoachCount]:[]).join(' · ')||'Keine Coachings im Zeitraum';
-
-  var empRows=list.map(function(e){
-    var ep=perfInRange(e.id);
-    function ea(key){return ep.length?ep.reduce(function(a,x){return a+(x[key]||0);},0)/ep.length:null;}
-    var sCount=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).length;
-    var tage=tageSeitLetzterSession(e.id);
-    var al=checkAlerts(e.id).length;
-    return '<tr><td>'+esc(e.name)+'</td><td>'+e.role+'</td><td>'+(ea('crOEM')!==null?Math.round(ea('crOEM'))+'%':'—')+'</td>'
-      +'<td>'+(ea('crSuperYes')!==null?Math.round(ea('crSuperYes'))+'%':'—')+'</td>'
-      +'<td>'+sCount+'</td><td>'+(tage===null?'nie':tage+'d')+'</td><td>'+(al>0?al+' ⚠':'✓')+'</td></tr>';
-  }).join('');
-
-  var totQA=0,totSess=0,totSim=0;
-  list.forEach(function(e){
-    totQA+=(callRatings[e.id]||[]).length;
-    totSess+=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).length;
-    totSim+=(solidroadData[e.id]&&solidroadData[e.id].simulations)?solidroadData[e.id].simulations.length:0;
-  });
-
-  var html='<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Team-Report – Wiegand & Partner</title>'
-    +'<style>'
-    +'body{font-family:Arial,Helvetica,sans-serif;color:#1a1a18;margin:0;padding:32px;font-size:13px;line-height:1.5}'
-    +'h1{font-size:20px;margin:0 0 4px}'
-    +'h2{font-size:14px;margin:24px 0 8px;border-bottom:2px solid #206A72;padding-bottom:4px;color:#174C52}'
-    +'.meta{color:#666;font-size:12px;margin-bottom:16px}'
-    +'table{width:100%;border-collapse:collapse;margin-bottom:8px}'
-    +'th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #ddd;font-size:12px}'
-    +'th{background:#f2f3f0;font-weight:700}'
-    +'.kpi-grid{display:flex;gap:16px;margin-bottom:8px}'
-    +'.kpi-box{border:1px solid #ddd;border-radius:6px;padding:10px 14px;flex:1}'
-    +'.kpi-box .val{font-size:22px;font-weight:700;color:#174C52}'
-    +'.kpi-box .lbl{font-size:11px;color:#666;text-transform:uppercase}'
-    +'@media print{body{padding:16px}}'
-    +'</style></head><body>'
-    +'<h1>Team-Report – SFP Vertrieb</h1>'
-    +'<div class="meta">Wiegand & Partner · Zeitraum: '+periodLabel+' · erstellt am '+fd(today())+'</div>'
-    +'<div class="kpi-grid">'
-    +'<div class="kpi-box"><div class="lbl">CR OEM</div><div class="val">'+(teamOem!==null?Math.round(teamOem)+'%':'—')+'</div></div>'
-    +'<div class="kpi-box"><div class="lbl">CR Super Yes</div><div class="val">'+(teamSy!==null?Math.round(teamSy)+'%':'—')+'</div></div>'
-    +'<div class="kpi-box"><div class="lbl">CR Mega Yes</div><div class="val">'+(teamMy!==null?Math.round(teamMy)+'%':'—')+'</div></div>'
-    +'<div class="kpi-box"><div class="lbl">Offene Alerts</div><div class="val">'+totalAlerts+'</div></div>'
-    +'</div>'
-    +'<h2>Coaching-Abdeckung</h2>'
-    +'<div style="margin-bottom:6px"><strong>Überfällig (>30 Tage kein Coaching):</strong> '+(ueberfaellig.length?ueberfaellig.map(function(e){return e.name;}).join(', '):'Niemand')+'</div>'
-    +'<div style="margin-bottom:6px"><strong>Verteilung über Coaches:</strong> '+coachDistTxt+'</div>'
-    +'<div><strong>QA-Calls · Sessions · Simulationen (gesamt):</strong> '+totQA+' · '+totSess+' · '+totSim+'</div>'
-    +'<h2>Mitarbeiter-Übersicht</h2>'
-    +'<table><tr><th>Name</th><th>Rolle</th><th>CR OEM</th><th>CR SY</th><th>Sessions</th><th>Letztes Coaching</th><th>Alerts</th></tr>'+empRows+'</table>'
-    +'</body></html>';
-
-  var w=window.open('','_blank');
-  if(!w){alert('Popup wurde vom Browser blockiert. Bitte Popups für diese Seite erlauben.');return;}
-  w.document.write(html);
-  w.document.close();
-  setTimeout(function(){w.print();},350);
-}
 function exportDaten(){
   var d={exportiert:new Date().toISOString(),version:'sfp-v1',employees:employees,protocols:protocols,performance:performance,solidroadData:solidroadData,tasks:tasks,reviews:reviews,KPI_TARGETS:KPI_TARGETS,settings:settings,ratingCriteria:ratingCriteria};
   var a=document.createElement('a');
@@ -4342,7 +4256,6 @@ function renderTeam(){
   ma.innerHTML=''
     +'<div class="content">'
     +(wiegandView==='team'?(''
-    +'<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-primary" onclick="exportTeamReport()"><i class="ti ti-file-description"></i> Team-Report (PDF)</button></div>'
     +zielInfoBoxHtml()
     // KPI Kacheln (reiches Format wie Coaching Sessions: Trend-Pfeil + Sparkline)
     +(function(){
