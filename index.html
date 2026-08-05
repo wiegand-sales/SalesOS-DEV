@@ -335,6 +335,7 @@ tr:hover td{background:var(--bg2);}
     </div>
     <div class="sb-item" id="nav-settings" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="settingsSubNav" class="wiegand-subnav">
+      <div class="sb-item sb-navsub" id="nav-settings-users" onclick="selectSettingsSub('users')">Mitarbeiterübersicht</div>
       <div class="sb-item sb-navsub" id="nav-settings-integrations" onclick="selectSettingsSub('integrations')">Integrationen</div>
       <div class="sb-item sb-navsub" id="nav-settings-data" onclick="selectSettingsSub('data')">Daten & Backup</div>
     </div>
@@ -685,7 +686,51 @@ tr:hover td{background:var(--bg2);}
 // ══ SUPABASE SETUP ══
 var SUPABASE_URL = 'https://kjlkneodyvfqgaukdjvb.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
-var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var _sbRaw = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var currentUserRole = null; // 'coach' | 'admin' | 'viewer' | null (unbekannt/nicht eingeloggt)
+
+// Zeigt einen kurzen Hinweis, wenn ein Viewer versucht etwas zu speichern/löschen
+function showViewerBlockedToast(){
+  var el = document.getElementById('viewerToast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'viewerToast';
+    el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--teal-dark);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 10px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .3s ease;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<i class="ti ti-eye" style="margin-right:6px"></i>Nur Ansicht – Änderungen werden nicht gespeichert';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.style.opacity = '0'; }, 2600);
+}
+// Simuliert eine erfolgreiche, aber wirkungslose Supabase-Antwort (kein Netzwerk-Aufruf)
+function _viewerBlockedQuery(){
+  var noop = {
+    select:function(){return noop;}, eq:function(){return noop;}, neq:function(){return noop;},
+    order:function(){return noop;}, range:function(){return noop;}, single:function(){return noop;},
+    maybeSingle:function(){return noop;}, in:function(){return noop;},
+    then:function(res,rej){ return Promise.resolve({data:null,error:null}).then(res,rej); },
+    catch:function(){return noop;}
+  };
+  return noop;
+}
+// sb: wie der rohe Supabase-Client, blockiert aber Insert/Update/Upsert/Delete zentral,
+// wenn die eingeloggte Person Rolle 'viewer' hat. Betrifft dadurch automatisch JEDE
+// Speicherfunktion im Code, ohne dass einzelne Stellen angepasst werden müssen.
+var sb = {
+  auth: _sbRaw.auth,
+  storage: _sbRaw.storage,
+  from: function(table){
+    var real = _sbRaw.from(table);
+    if(currentUserRole !== 'viewer') return real;
+    ['insert','update','upsert','delete'].forEach(function(m){
+      if(typeof real[m]==='function'){
+        real[m] = function(){ showViewerBlockedToast(); return _viewerBlockedQuery(); };
+      }
+    });
+    return real;
+  }
+};
 
 // Staging-Banner nur einblenden, wenn dies die DEV-Datenbank ist (nicht Live)
 if(SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0){
@@ -813,6 +858,75 @@ function toggleSettingsNav(){
   var chev=document.getElementById('settingsNavChevron');if(chev)chev.className='ti ti-chevron-'+(settingsNavOpen?'up':'down');
   if(settingsNavOpen){closeWiegandSubnav();closeCoachingSubnav();}
   selectSettingsSub(settingsView);
+}
+function buildUserOverviewHtml(){
+  var coaches=employees.filter(function(e){return e.role==='SC'||e.role==='SDM';});
+  var roleLabel={admin:'Admin',viewer:'Betrachter (nur Ansicht)'};
+  var h='<div class="card-title" style="margin-bottom:2px"><i class="ti ti-users-group"></i> Coaches</div>';
+  h+='<div class="t-meta" style="margin-bottom:12px">Mitarbeiter mit Coach-Funktion (SC/SDM) — Anlage über "Mitarbeiter hinzufügen"</div>';
+  h+='<div class="card" style="margin-bottom:24px;padding:0"><table style="width:100%;border-collapse:collapse">';
+  h+='<thead><tr><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">Name</th><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">Rolle</th><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">Sichtbar als Mitarbeiter</th><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">Status</th></tr></thead><tbody>';
+  coaches.forEach(function(c){
+    h+='<tr><td style="padding:10px 16px;font-size:12.5px">'+c.name+'</td><td style="padding:10px 16px;font-size:12.5px">'+c.role+'</td>'
+      +'<td style="padding:10px 16px;font-size:12.5px">'+(c.isPureCoach?'Nein (reiner Coach)':'Ja')+'</td>'
+      +'<td style="padding:10px 16px;font-size:12.5px">'+(c.active===false?'Inaktiv':'Aktiv')+'</td></tr>';
+  });
+  if(!coaches.length)h+='<tr><td colspan="4" style="padding:14px 16px;font-size:12.5px;color:var(--text3)">Noch keine Coaches angelegt.</td></tr>';
+  h+='</tbody></table></div>';
+
+  h+='<div class="card-title" style="margin-bottom:2px"><i class="ti ti-shield-lock"></i> Admins &amp; Betrachter</div>';
+  h+='<div class="t-meta" style="margin-bottom:12px">Zugriff ohne eigenes Mitarbeiter-Tracking — Admin (voller Zugriff) oder Betrachter (nur Ansicht, Speichern wirkungslos)</div>';
+  h+='<div class="card" style="margin-bottom:20px;padding:0"><table style="width:100%;border-collapse:collapse">';
+  h+='<thead><tr><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">Name</th><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">E-Mail</th><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">Rolle</th><th style="text-align:left;padding:10px 16px;font-size:10.5px;color:var(--text2);border-bottom:1px solid var(--border2)">Login verknüpft</th><th style="padding:10px 16px"></th></tr></thead><tbody>';
+  appUsers.forEach(function(u){
+    h+='<tr><td style="padding:10px 16px;font-size:12.5px">'+u.name+'</td><td style="padding:10px 16px;font-size:12.5px;color:var(--text2)">'+u.email+'</td>'
+      +'<td style="padding:10px 16px;font-size:12.5px"><select data-uid="'+u.id+'" onchange="updateAppUserRole(this)" style="height:30px;border-radius:6px;border:1px solid var(--border2);font-size:12px;padding:0 6px">'
+      +'<option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option>'
+      +'<option value="viewer"'+(u.role==='viewer'?' selected':'')+'>Betrachter</option></select></td>'
+      +'<td style="padding:10px 16px;font-size:12.5px">'+(u.authUserId?'Ja':'<span style="color:var(--text3)">Nein — Einladung ausstehend</span>')+'</td>'
+      +'<td style="padding:10px 16px;text-align:right"><button class="btn btn-sm" onclick="deleteAppUser(\''+u.id+'\',\''+u.name.replace(/'/g,"\\'")+'\')"><i class="ti ti-trash"></i></button></td></tr>';
+  });
+  if(!appUsers.length)h+='<tr><td colspan="5" style="padding:14px 16px;font-size:12.5px;color:var(--text3)">Noch keine Admins/Betrachter angelegt.</td></tr>';
+  h+='</tbody></table></div>';
+
+  h+='<div class="card" style="padding:18px 20px;max-width:480px">';
+  h+='<div class="card-title" style="padding:0 0 12px">Neu hinzufügen</div>';
+  h+='<div style="margin-bottom:12px"><label>Name</label><input type="text" id="newAppUserName" placeholder="Vor- und Nachname"></div>';
+  h+='<div style="margin-bottom:12px"><label>E-Mail</label><input type="email" id="newAppUserEmail" placeholder="name@firma.de"></div>';
+  h+='<div style="margin-bottom:16px"><label>Rolle</label><select id="newAppUserRole" style="width:100%"><option value="viewer">Betrachter (nur Ansicht)</option><option value="admin">Admin (voller Zugriff)</option></select></div>';
+  h+='<button class="btn btn-primary" onclick="saveNewAppUser()"><i class="ti ti-plus"></i> Hinzufügen</button>';
+  h+='<div style="font-size:11px;color:var(--text3);margin-top:10px">Hinweis: Der eigentliche Login (Magic-Link-Einladung) muss weiterhin separat über Supabase → Authentication → Users eingerichtet werden. Diese Liste verwaltet nur die Berechtigung.</div>';
+  h+='</div>';
+  return h;
+}
+function saveNewAppUser(){
+  var name=document.getElementById('newAppUserName').value.trim();
+  var email=document.getElementById('newAppUserEmail').value.trim();
+  var role=document.getElementById('newAppUserRole').value;
+  if(!name||!email){alert('Bitte Name und E-Mail ausfüllen.');return;}
+  sb.from('app_users').insert({name:name,email:email,role:role}).select().single().then(function(res){
+    if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
+    appUsers.push({id:res.data.id,authUserId:res.data.auth_user_id,email:res.data.email,name:res.data.name,role:res.data.role});
+    logActivity('employee','created','Neuer '+(role==='admin'?'Admin':'Betrachter')+' angelegt: '+name);
+    renderMain();
+  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+}
+function updateAppUserRole(sel){
+  var uid=sel.dataset.uid, newRole=sel.value;
+  sb.from('app_users').update({role:newRole}).eq('id',uid).then(function(res){
+    if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
+    var u=appUsers.find(function(x){return x.id===uid;});
+    if(u){u.role=newRole;logActivity('employee','updated','Rolle geändert: '+u.name+' → '+(newRole==='admin'?'Admin':'Betrachter'));}
+  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+}
+function deleteAppUser(uid,name){
+  if(!confirm(name+' wirklich entfernen? Die Person kann sich danach nicht mehr sinnvoll einloggen (kein Admin-/Betrachter-Zugriff mehr).'))return;
+  sb.from('app_users').delete().eq('id',uid).then(function(res){
+    if(res.error){alert('Fehler beim Löschen: '+res.error.message);return;}
+    appUsers=appUsers.filter(function(u){return u.id!==uid;});
+    logActivity('employee','deleted','Admin/Betrachter entfernt: '+name);
+    renderMain();
+  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
 }
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
@@ -982,26 +1096,42 @@ function formatDuration(min){
   return h+' Std'+(m?' '+m+' Min.':'');
 }
 var currentAuthUser=null; // {id,email} des eingeloggten Auth-Users, unabhängig davon ob er ein employees-Match hat
-var ADMIN_NAME_MAP={ // bekannte Admin-Logins ohne employees-Eintrag -> Anzeigename fürs Aktivitätsprotokoll
+var ADMIN_NAME_MAP={ // Fallback für Admin-Logins, falls app_users (noch) nicht geladen ist
   'p.rode@wiegand-gmbh.de':'Peter Rode',
   'n.hojdem@wiegand-gmbh.de':'Niklas Hojdem'
 };
+var appUsers=[]; // [{id,authUserId,email,name,role}] aus app_users (Admins & Viewer ohne employees-Eintrag)
+function loadAppUsersFromSupabase(){
+  return sb.from('app_users').select('*').then(function(res){
+    if(res.error){console.warn('app_users load failed:',res.error);return false;}
+    appUsers=(res.data||[]).map(function(r){return {id:r.id,authUserId:r.auth_user_id,email:r.email,name:r.name,role:r.role};});
+    return true;
+  });
+}
 function resolveCurrentCoach(){
   return sb.auth.getUser().then(function(res){
     var uid = res.data && res.data.user ? res.data.user.id : null;
     var email = res.data && res.data.user ? res.data.user.email : null;
     currentAuthUser = uid ? {id:uid,email:email} : null;
-    if(!uid){currentCoach=null;return;}
+    if(!uid){currentCoach=null;currentUserRole=null;return;}
     var match = employees.find(function(e){return e.auth_user_id===uid;});
     currentCoach = match || null;
     coachFilterView = currentCoach ? currentCoach.id : 'overview';
-  }).catch(function(){currentCoach=null;currentAuthUser=null;});
+    if(currentCoach){
+      currentUserRole='coach';
+    } else {
+      var au=appUsers.find(function(u){return u.authUserId===uid;})||appUsers.find(function(u){return u.email===email;});
+      currentUserRole = au ? au.role : 'admin'; // unbekannter Login ohne Eintrag: sicherheitshalber wie Admin behandeln, nicht wie Viewer
+    }
+  }).catch(function(){currentCoach=null;currentAuthUser=null;currentUserRole=null;});
 }
 function initAppAfterLogin(){
   if(_appInitStarted)return;   // verhindert doppelten Init durch ueberlappende Auth-Events
   _appInitStarted = true;
   document.getElementById('auth-gate').style.display = 'none';
   loadEmployeesFromSupabase().then(function(){
+    return loadAppUsersFromSupabase();
+  }).then(function(){
     return resolveCurrentCoach();
   }).then(function(){
     Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase()]).then(function(){
@@ -2360,11 +2490,16 @@ function loadActivityLogFromSupabase(){
     return true;
   });
 }
+function resolveNonEmployeeName(email){
+  if(!email)return null;
+  var au=appUsers.find(function(u){return u.email===email;});
+  return (au&&au.name)||ADMIN_NAME_MAP[email]||email;
+}
 // Zentrale Protokollierungsfunktion – von allen mutierenden Aktionen aufgerufen.
 // Feuert asynchron (kein await nötig), fügt lokal sofort ein optimistisches Eintrag hinzu.
 function logActivity(category,action,description,targetEmployeeId,targetLabel){
   var actorId=currentCoach?currentCoach.id:null;
-  var actorName=currentCoach?null:(currentAuthUser&&currentAuthUser.email?(ADMIN_NAME_MAP[currentAuthUser.email]||currentAuthUser.email):null);
+  var actorName=currentCoach?null:(currentAuthUser?resolveNonEmployeeName(currentAuthUser.email):null);
   var payload={actor_id:actorId,actor_name:actorName,category:category,action:action,description:description,target_employee_id:targetEmployeeId||null,target_label:targetLabel||null};
   sb.from('activity_log').insert(payload).select().single().then(function(res){
     if(res.error){console.warn('activity_log insert failed:',res.error);return;}
@@ -3131,7 +3266,7 @@ function renderSidebar(){
       nameEl.textContent=currentCoach.name;
       roleEl.textContent=currentCoach.role==='SDM'?'Coach':'Coach';
     } else if(currentAuthUser){
-      var adminName=ADMIN_NAME_MAP[currentAuthUser.email]||currentAuthUser.email||'Admin';
+      var adminName=resolveNonEmployeeName(currentAuthUser.email)||'Admin';
       avatarEl.style.background='var(--purple-bg)';avatarEl.style.color='var(--purple)';
       avatarEl.textContent=ini(adminName);
       nameEl.textContent=adminName;
@@ -3147,7 +3282,7 @@ function renderSidebar(){
   var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
   var na=document.getElementById('nav-coaching-activity');if(na)na.classList.toggle('active',view==='activity');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
-  ['integrations','data'].forEach(function(sv){
+  ['users','integrations','data'].forEach(function(sv){
     var el=document.getElementById('nav-settings-'+sv);if(el)el.classList.toggle('active',view==='settings'&&settingsView===sv);
   });
   // Dynamische Coach-Untermenüpunkte (SDM/SC), ersetzt die frühere horizontale Tab-Leiste in SFP Coaching
@@ -6351,6 +6486,9 @@ function renderEinstellungen(){
     // ══ KPI-ZIELE (verschoben nach SFP Wiegand > Zielvereinbarung, siehe kpiZieleHtml()) ══
 
     // ══ ZIELVEREINBARUNG (verschoben nach SFP Wiegand > Zielvereinbarung, siehe zielvereinbarungHtml()) ══
+
+    // ══ MITARBEITERÜBERSICHT (Coaches + Admins/Betrachter, alles außer normale Sales Agents) ══
+    +(settingsView==='users'?buildUserOverviewHtml():'')
 
     // ══ INTEGRATIONEN ══
     +(settingsView==='integrations'?(
