@@ -931,12 +931,16 @@ function buildUserOverviewHtml(){
   h+='</div></div></div></div>';
   return h;
 }
+var _savingNewAppUser=false;
 function saveNewAppUser(){
+  if(_savingNewAppUser)return;
   var name=document.getElementById('newAppUserName').value.trim();
   var email=document.getElementById('newAppUserEmail').value.trim();
   var role=document.getElementById('newAppUserRole').value;
   if(!name||!email){alert('Bitte Name und E-Mail ausfüllen.');return;}
+  _savingNewAppUser=true;
   sb.from('app_users').insert({name:name,email:email,role:role}).select().single().then(function(res){
+    _savingNewAppUser=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     appUsers.push({id:res.data.id,authUserId:res.data.auth_user_id,email:res.data.email,name:res.data.name,role:res.data.role});
     logActivity('employee','created','Neuer '+(role==='admin'?'Admin':'Betrachter')+' angelegt: '+name);
@@ -945,7 +949,7 @@ function saveNewAppUser(){
     document.getElementById('newAppUserRole').value='viewer';
     closeModal('addAppUserModal');
     renderMain();
-  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+  }).catch(function(err){_savingNewAppUser=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 function updateAppUserRole(sel){
   var uid=sel.dataset.uid, newRole=sel.value;
@@ -6676,7 +6680,9 @@ function openCoachingEval(empId){
   document.body.appendChild(overlay);
 }
 
+var _savingCoachEval=false;
 function saveCoachEval(empId){
+  if(_savingCoachEval)return;
   var KEYS=['einwand','bedarf','produkt','gespraech','motivation','coach','zuverl','team','crOEM','crTW','crSY','crMY'];
   var dateEl=document.getElementById('cev-date');
   var noteEl=document.getElementById('cev-note');
@@ -6689,18 +6695,20 @@ function saveCoachEval(empId){
     var el=document.getElementById('cev-'+k);
     entry[k]=el?parseInt(el.value):5;
   });
+  _savingCoachEval=true;
   sb.from('reviews').select('id').eq('employee_id',empId).eq('type','Mitarbeiterentwicklung').eq('date',date).maybeSingle().then(function(existRes){
-    if(existRes.error){alert('Fehler beim Speichern: '+existRes.error.message);return;}
+    if(existRes.error){_savingCoachEval=false;alert('Fehler beim Speichern: '+existRes.error.message);return;}
     var existingId=existRes.data?existRes.data.id:null;
     var payload={employee_id:empId,type:'Mitarbeiterentwicklung',date:date,status:'abgeschlossen',notes:note};
     var upsert=existingId
       ? sb.from('reviews').update(payload).eq('id',existingId).select().single()
       : sb.from('reviews').insert(payload).select().single();
     upsert.then(function(res){
-      if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
+      if(res.error){_savingCoachEval=false;alert('Fehler beim Speichern: '+res.error.message);return;}
       var reviewId=res.data.id;
       var kpiRows=KEYS.map(function(k){return {review_id:reviewId,metric_key:k,value:entry[k]};});
       sb.from('review_kpis').upsert(kpiRows,{onConflict:'review_id,metric_key'}).then(function(res2){
+        _savingCoachEval=false;
         if(res2.error)alert('Bewertung gespeichert, aber die Einzel-Werte (12 Dimensionen) konnten NICHT gespeichert werden: '+res2.error.message);
         if(!reviews[empId])reviews[empId]=[];
         reviews[empId]=reviews[empId].filter(function(r){return !(r.date===date&&r.einwand!==undefined);});
@@ -6713,9 +6721,11 @@ function saveCoachEval(empId){
         renderTab();
       });
     }).catch(function(err){
+      _savingCoachEval=false;
       alert('Unerwarteter Fehler: '+err.message);
     });
   }).catch(function(err){
+    _savingCoachEval=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
@@ -6866,14 +6876,18 @@ function clearPerfCustomRange(){perfCustomFrom=null;perfCustomTo=null;renderTab(
 
 
 
+var _savingSRSim=false;
 function saveSRSim(){
+  if(_savingSRSim)return;
   var name=document.getElementById('srName').value.trim();
   var date=document.getElementById('srDate').value;
   var score=parseInt(document.getElementById('srScore').value)||0;
   var tags=(document.getElementById('srTags').value||'').split(',').map(function(t){return t.trim();}).filter(Boolean);
   if(!name||!score)return;
   var payload={employee_id:selectedEmp,date:date,name:name,score:score,status:'passed',tags:tags};
+  _savingSRSim=true;
   sb.from('solidroad_simulations').insert(payload).select().single().then(function(res){
+    _savingSRSim=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     if(!solidroadData[selectedEmp])solidroadData[selectedEmp]={simulations:[]};
@@ -6882,17 +6896,22 @@ function saveSRSim(){
     logActivity('solidroad','created','SolidRoad-Simulation erfasst: "'+name+'" (Score '+score+')',selectedEmp,e0?e0.name:'');
     renderTab();
   }).catch(function(err){
+    _savingSRSim=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
 
+var _savingRatingCriterion=false;
 function saveRatingCriterion(){
+  if(_savingRatingCriterion)return;
   var name=document.getElementById('rcName').value.trim();
   var cat=document.getElementById('rcCat').value;
   var target=parseInt(document.getElementById('rcTarget').value)||80;
   var desc=document.getElementById('rcDesc').value.trim();
   if(!name)return;
+  _savingRatingCriterion=true;
   sb.from('rating_criteria').insert({name:name,category:cat,target:target,description:desc,sort_order:ratingCriteria.length}).select().single().then(function(res){
+    _savingRatingCriterion=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     ratingCriteria.push({id:r.id,name:r.name,cat:r.category,target:r.target,desc:r.description||''});
@@ -6900,6 +6919,7 @@ function saveRatingCriterion(){
     closeModal('ratingModal');
     renderTab();
   }).catch(function(err){
+    _savingRatingCriterion=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
@@ -6950,7 +6970,9 @@ function deleteTask(id){
     else{var e0=employees.find(function(x){return x.id===selectedEmp;});logActivity('task','deleted','Aufgabe gelöscht: "'+(t0?t0.text:'')+'"',selectedEmp,e0?e0.name:'');}
   });
 }
+var _savingNewTask=false;
 function saveNewTask(){
+  if(_savingNewTask)return;
   var text=document.getElementById('taskText').value.trim();
   var desc=document.getElementById('taskDesc').value.trim();
   var prio=document.getElementById('taskPrio').value;
@@ -6961,7 +6983,9 @@ function saveNewTask(){
     employee_id:selectedEmp,text:text,description:desc,done:false,status:'open',
     priority:prio,due_date:due||null,source:source
   };
+  _savingNewTask=true;
   sb.from('tasks').insert(payload).select().single().then(function(res){
+    _savingNewTask=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     if(!tasks[selectedEmp])tasks[selectedEmp]=[];
@@ -6978,10 +7002,13 @@ function saveNewTask(){
     closeModal('addTaskModal');
     renderTab();
   }).catch(function(err){
+    _savingNewTask=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
+var _savingNewEmp=false;
 function saveNewEmp(){
+  if(_savingNewEmp)return;
   var name=document.getElementById('newName').value.trim();
   var role=document.getElementById('newRole').value;
   var phase=document.getElementById('newPhase').value;
@@ -6996,7 +7023,9 @@ function saveNewEmp(){
     team:team,contract:contract,hours:hours,active:true,
     color_index:employees.length%COLORS.length
   };
+  _savingNewEmp=true;
   sb.from('employees').insert(payload).select().single().then(function(res){
+    _savingNewEmp=false;
     if(res.error){alert('Fehler beim Speichern in Supabase: '+res.error.message);return;}
     var e=res.data;
     logActivity('employee','created','Neuer Mitarbeiter angelegt: '+name,e.id,role+' · '+phase);
@@ -7025,6 +7054,7 @@ function saveNewEmp(){
     closeModal('addEmpModal');
     renderSidebar();renderMain();
   }).catch(function(err){
+    _savingNewEmp=false;
     alert('Unerwarteter Fehler beim Speichern: '+err.message);
   });
 }
@@ -7496,14 +7526,18 @@ function openGroupSessionModal(groupId){
   document.getElementById('groupSessionModal').dataset.groupId=groupId;
   openModal('groupSessionModal');
 }
+var _savingGroupSession=false;
 function saveGroupSession(){
+  if(_savingGroupSession)return;
   var groupId=document.getElementById('groupSessionModal').dataset.groupId;
   var members=findGroupSessionMembers(groupId);
   if(!members.length)return;
   var ratingEl=document.getElementById('groupSessRating');
   var rating=ratingEl&&ratingEl.value?parseInt(ratingEl.value):null;
   var note=document.getElementById('groupSessNote').value.trim();
+  _savingGroupSession=true;
   sb.from('protocols').update({status:'durchgeführt',rating:rating,note:note}).eq('group_id',groupId).then(function(res){
+    _savingGroupSession=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     members.forEach(function(m){
       m.proto.status='durchgeführt';m.proto.rating=rating;m.proto.note=note;m.proto.notes=note;
@@ -7513,11 +7547,13 @@ function saveGroupSession(){
     closeModal('groupSessionModal');
     renderSidebar();
     renderMain();
-  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+  }).catch(function(err){_savingGroupSession=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 
 
+var _savingSessionPlanen=false;
 function sessionSpeichernNeu(){
+  if(_savingSessionPlanen)return;
   var empIds=sessionSelectedEmpIds.slice();
   var datum=document.getElementById('sessionDatum').value;
   var uhrzeit=document.getElementById('sessionUhrzeit').value||'';
@@ -7538,7 +7574,9 @@ function sessionSpeichernNeu(){
       focus_metric:focusMetric||null,group_id:groupId
     };
   });
+  _savingSessionPlanen=true;
   sb.from('protocols').insert(rows).select().then(function(res){
+    _savingSessionPlanen=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     (res.data||[]).forEach(function(r){
       var eId=r.employee_id;
@@ -7567,6 +7605,7 @@ function sessionSpeichernNeu(){
     renderSidebar();
     renderMain();
   }).catch(function(err){
+    _savingSessionPlanen=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
@@ -7585,7 +7624,9 @@ function openGoalModal(empId){
   var saveBtn=document.getElementById('goalSaveBtn');if(saveBtn)saveBtn.dataset.eid=selectedEmp;
   openModal('goalModal');
 }
+var _savingNewGoal=false;
 function saveNewGoal(empId){
+  if(_savingNewGoal)return;
   var desc=document.getElementById('goal-desc').value.trim();
   if(!desc){alert('Bitte eine Zielbeschreibung eingeben.');return;}
   var metricEl=document.getElementById('goal-metric');
@@ -7599,8 +7640,9 @@ function saveNewGoal(empId){
     employee_id:empId,description:desc,metric_key:metricKey||null,target_value:targetValue,
     target_date:targetDate,status:'offen',created_by:currentCoach?currentCoach.id:null
   };
+  _savingNewGoal=true;
   sb.from('goals').insert(payload).select().single().then(function(res){
-    if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
+    if(res.error){_savingNewGoal=false;alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     if(!goals[empId])goals[empId]=[];
     goals[empId].unshift({id:r.id,description:r.description,metricKey:r.metric_key,targetValue:r.target_value,targetDate:r.target_date,status:r.status,createdAt:r.created_at,createdBy:r.created_by});
@@ -7619,8 +7661,9 @@ function saveNewGoal(empId){
       }
       closeModal('goalModal');
       renderTab();
+      _savingNewGoal=false;
     });
-  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+  }).catch(function(err){_savingNewGoal=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 function updateGoalStatus(goalId,newStatus){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
@@ -7647,21 +7690,25 @@ function deleteGoal(goalId){
     renderTab();
   }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
 }
+var _uploadingDoc=false;
 function uploadEmpDocument(file){
-  if(!file)return;
+  if(!file||_uploadingDoc)return;
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
   var statusEl=document.getElementById('doc-upload-status');
   if(statusEl)statusEl.textContent='Lade hoch...';
   var path=emp.id+'/'+Date.now()+'_'+file.name;
+  _uploadingDoc=true;
   sb.storage.from('employee-documents').upload(path,file).then(function(res){
     if(res.error){
+      _uploadingDoc=false;
       if(statusEl)statusEl.textContent='';
       alert('Fehler beim Hochladen: '+res.error.message);
       return;
     }
     var payload={employee_id:emp.id,filename:file.name,storage_path:path,description:'',uploaded_by:currentCoach?currentCoach.id:null};
     return sb.from('employee_documents').insert(payload).select().single().then(function(res2){
+      _uploadingDoc=false;
       if(res2.error){alert('Datei hochgeladen, aber Metadaten konnten nicht gespeichert werden: '+res2.error.message);return;}
       var r=res2.data;
       if(!employeeDocuments[emp.id])employeeDocuments[emp.id]=[];
@@ -7671,6 +7718,7 @@ function uploadEmpDocument(file){
       renderTab();
     });
   }).catch(function(err){
+    _uploadingDoc=false;
     if(statusEl)statusEl.textContent='';
     alert('Unerwarteter Fehler: '+err.message);
   });
@@ -7821,7 +7869,9 @@ function setCbScore(key,val){
   });
 }
 
+var _savingCallBewertung=false;
 function saveInlineCallBewertung(empId){
+  if(_savingCallBewertung)return;
   if(empId)selectedEmp=empId;
   var datum=document.getElementById('cb-date');
   var auftrag=document.getElementById('cb-auftrag');
@@ -7843,8 +7893,9 @@ function saveInlineCallBewertung(empId){
     einwand:einwand?einwand.value.trim():'',
     hinweis:hinweis?hinweis.value.trim():''
   };
+  _savingCallBewertung=true;
   sb.from('call_ratings').insert(payload).select().single().then(function(res){
-    if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
+    if(res.error){_savingCallBewertung=false;alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     var scoreRows=Object.keys(scores).map(function(k){
       return {call_rating_id:r.id,item_key:k,value:scores[k]};
@@ -7865,13 +7916,16 @@ function saveInlineCallBewertung(empId){
     };
     if(scoreRows.length){
       sb.from('call_rating_scores').insert(scoreRows).then(function(res2){
+        _savingCallBewertung=false;
         if(res2.error)alert('Bewertung gespeichert, aber die Einzel-Scores konnten NICHT gespeichert werden: '+res2.error.message);
         afterScores();
       });
     } else {
+      _savingCallBewertung=false;
       afterScores();
     }
   }).catch(function(err){
+    _savingCallBewertung=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
