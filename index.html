@@ -952,21 +952,28 @@ function saveNewAppUser(){
   }).catch(function(err){_savingNewAppUser=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 function updateAppUserRole(sel){
+  if(sel.disabled)return;
   var uid=sel.dataset.uid, newRole=sel.value;
+  sel.disabled=true;
   sb.from('app_users').update({role:newRole}).eq('id',uid).then(function(res){
+    sel.disabled=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     var u=appUsers.find(function(x){return x.id===uid;});
     if(u){u.role=newRole;logActivity('employee','updated','Rolle geändert: '+u.name+' → '+(newRole==='admin'?'Admin':'Betrachter'));}
-  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+  }).catch(function(err){sel.disabled=false;alert('Unerwarteter Fehler: '+err.message);});
 }
+var _deletingAppUser=false;
 function deleteAppUser(uid,name){
+  if(_deletingAppUser)return;
   if(!confirm(name+' wirklich entfernen? Die Person kann sich danach nicht mehr sinnvoll einloggen (kein Admin-/Betrachter-Zugriff mehr).'))return;
+  _deletingAppUser=true;
   sb.from('app_users').delete().eq('id',uid).then(function(res){
+    _deletingAppUser=false;
     if(res.error){alert('Fehler beim Löschen: '+res.error.message);return;}
     appUsers=appUsers.filter(function(u){return u.id!==uid;});
     logActivity('employee','deleted','Admin/Betrachter entfernt: '+name);
     renderMain();
-  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+  }).catch(function(err){_deletingAppUser=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
@@ -2039,15 +2046,19 @@ function exportDaten(){
   a.download='sfp-backup-'+today()+'.json';a.click();
 }
 
+var _restoringBackup=false;
 function importDaten(file){
+  if(_restoringBackup)return;
   if(!confirm('Backup wiederherstellen?\n\nDie Daten aus der Datei werden in die Datenbank zurückgeschrieben (bestehende Einträge mit gleicher ID werden überschrieben, nichts wird gelöscht).'))return;
+  _restoringBackup=true;
   var reader=new FileReader();
   reader.onload=function(e){
     try{
       var d=JSON.parse(e.target.result);
       restoreBackupToSupabase(d);
-    }catch(ex){alert('Fehler beim Lesen der Datei: '+ex.message);}
+    }catch(ex){_restoringBackup=false;alert('Fehler beim Lesen der Datei: '+ex.message);}
   };
+  reader.onerror=function(){_restoringBackup=false;alert('Datei konnte nicht gelesen werden.');};
   reader.readAsText(file);
 }
 
@@ -2233,6 +2244,7 @@ function restoreBackupToSupabase(d){
     status('✓ Wiederherstellung abgeschlossen. Lade neu…');
     setTimeout(function(){location.reload();},1500);
   }).catch(function(err){
+    _restoringBackup=false;
     status('');
     alert('Fehler bei der Wiederherstellung: '+err.message+'\n\nEinige Tabellen wurden evtl. schon geschrieben (Reihenfolge siehe Statusanzeige), bitte Datenbank pruefen bevor du es erneut versuchst.');
   });
@@ -3003,7 +3015,9 @@ function zielvereinbarungHtml(){
     +'</div>'
     +kpiZieleHtml();
 }
+var _savingZielvereinbarung=false;
 function saveZielvereinbarung(){
+  if(_savingZielvereinbarung)return;
   var st=document.getElementById('ziel-status');
   if(st)st.textContent='Speichere...';
   var weeksMeta=getMonthWeeksZiel(zielMonth);
@@ -3019,7 +3033,9 @@ function saveZielvereinbarung(){
       marge_per_opt:r.margeOpt!=null?r.margeOpt:0
     };
   });
+  _savingZielvereinbarung=true;
   sb.from('zielvereinbarung').upsert(rows,{onConflict:'employee_id,month'}).then(function(res){
+    _savingZielvereinbarung=false;
     if(res.error){console.warn('zielvereinbarung save failed:',res.error);if(st)st.textContent='Fehler beim Speichern — siehe Konsole';return;}
     if(st)st.textContent='Gespeichert · '+new Date().toLocaleTimeString('de-DE');
   });
@@ -7360,8 +7376,10 @@ function parseDateDE(v){
   return v;
 }
 
+var _importingCSV=false;
 function importCSV(file){
-  if(!file)return;
+  if(!file||_importingCSV)return;
+  _importingCSV=true;
   var statusEl=document.getElementById('csv-status');
   if(statusEl){statusEl.style.color='var(--text2)';statusEl.textContent='Lese Datei…';}
   var reader=new FileReader();
@@ -7373,7 +7391,7 @@ function importCSV(file){
       var hasBom=bytes.length>=3&&bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF;
       var text=new TextDecoder(hasBom?'utf-8':'windows-1252').decode(hasBom?bytes.subarray(3):bytes);
       var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
-      if(lines.length<2){if(statusEl)statusEl.textContent='Keine Datenzeilen gefunden.';return;}
+      if(lines.length<2){if(statusEl)statusEl.textContent='Keine Datenzeilen gefunden.';_importingCSV=false;return;}
       // Trennzeichen automatisch erkennen: deutsches Excel exportiert bei Komma-Dezimalzahlen oft mit Semikolon
       var delim=(lines[0].split(';').length>lines[0].split(',').length)?';':',';
       var rawHeader=lines[0].split(delim).map(function(h){return h.trim();});
@@ -7408,6 +7426,7 @@ function importCSV(file){
       });
       if(!payload.length){
         if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Keine gültigen Zeilen. Unbekannte Mitarbeiter: '+(notFound.join(', ')||'-');}
+        _importingCSV=false;
         return;
       }
       // Große Importe in 300er-Päckchen aufteilen, damit keine Zeilen an einem
@@ -7422,6 +7441,7 @@ function importCSV(file){
           if(failedChunks.length)msg=' ⚠ '+imported+' von '+payload.length+' Zeile(n) importiert. Fehlgeschlagene Päckchen: '+failedChunks.join(', ');
           if(notFound.length)msg+=' · Unbekannte Mitarbeiter übersprungen: '+notFound.join(', ');
           if(statusEl){statusEl.style.color=failedChunks.length?'#b91c1c':'var(--teal)';statusEl.textContent=msg;}
+          _importingCSV=false;
           loadPerformanceFromSupabase().then(function(){renderTab();});
           return;
         }
@@ -7437,26 +7457,39 @@ function importCSV(file){
       }
       importNextChunk(0);
     }catch(ex){
+      _importingCSV=false;
       if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Fehler beim Verarbeiten: '+ex.message;}
     }
+  };
+  reader.onerror=function(){
+    _importingCSV=false;
+    if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Datei konnte nicht gelesen werden.';}
   };
   reader.readAsArrayBuffer(file);
 }
 
+var _savingFTP=false;
 function saveFTP(){
+  if(_savingFTP)return;
   var url=document.getElementById('ftpInput').value.trim();
   settings.ftpUrl=url;
+  _savingFTP=true;
   sb.from('settings').upsert({key:'ftpUrl',value:url},{onConflict:'key'}).then(function(res){
+    _savingFTP=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     alert('FTP-URL gespeichert.');
   });
 }
+var _savingSRKey=false;
 function saveSRKey(){
+  if(_savingSRKey)return;
   var key=document.getElementById('srKeyInput').value.trim();
   var org=document.getElementById('srOrgInput').value.trim();
   if(!key)return;
   settings.srApiKey=key;settings.srOrgId=org;
+  _savingSRKey=true;
   sb.from('admin_secrets').upsert([{key:'srApiKey',value:key},{key:'srOrgId',value:org}],{onConflict:'key'}).then(function(res){
+    _savingSRKey=false;
     if(res.error){alert('Fehler beim Speichern (nur Admin darf das): '+res.error.message);return;}
     closeModal('srModal');renderSettings();
   });
@@ -7733,22 +7766,28 @@ function downloadEmpDocument(docId){
     window.open(res.data.signedUrl,'_blank');
   });
 }
+var _deletingEmpDoc=false;
 function deleteEmpDocument(docId){
+  if(_deletingEmpDoc)return;
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
   var doc=(employeeDocuments[emp.id]||[]).find(function(d){return String(d.id)===String(docId);});
   if(!doc)return;
   if(!confirm('Dokument "'+doc.filename+'" wirklich löschen?'))return;
+  _deletingEmpDoc=true;
   sb.storage.from('employee-documents').remove([doc.storagePath]).then(function(){
     return sb.from('employee_documents').delete().eq('id',docId);
   }).then(function(res){
+    _deletingEmpDoc=false;
     if(res&&res.error){alert('Fehler beim Löschen: '+res.error.message);return;}
     employeeDocuments[emp.id]=(employeeDocuments[emp.id]||[]).filter(function(d){return String(d.id)!==String(docId);});
     logActivity('document','deleted','Dokument gelöscht: "'+doc.filename+'"',emp.id,emp.name);
     renderTab();
-  }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+  }).catch(function(err){_deletingEmpDoc=false;alert('Unerwarteter Fehler: '+err.message);});
 }
+var _savingEmpEinstellungen=false;
 function saveEmpEinstellungen(){
+  if(_savingEmpEinstellungen)return;
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
   var teamEl=document.getElementById('es-team');
@@ -7772,11 +7811,13 @@ function saveEmpEinstellungen(){
   var notesEl=document.getElementById('es-notes');
   if(notesEl)emp.notes=notesEl.value;
   renderSidebar();renderEmpDetail();  lsSave();
+  _savingEmpEinstellungen=true;
   sb.from('employees').update({
     name:emp.name,role:emp.role,phase:emp.phase,team:emp.team,active:emp.active,
     start_date:emp.startDate||null,end_date:emp.endDate||null,
     contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color
   }).eq('id',emp.id).then(function(res){
+    _savingEmpEinstellungen=false;
     if(res.error){alert('Fehler beim Speichern in Supabase: '+res.error.message+'\n\nDie Änderung ist lokal sichtbar, aber NICHT gespeichert -- bitte nochmal versuchen.');return;}
     var stammChanges=[];
     if(oldSnapshot.name!==emp.name)stammChanges.push('Name: '+oldSnapshot.name+' → '+emp.name);
@@ -7801,7 +7842,9 @@ function saveEmpEinstellungen(){
   }
   // Hinweis: "location" wird aktuell nur lokal gehalten (kein Feld in employees-Tabelle)
 }
+var _savingEmpZiele=false;
 function saveEmpZiele(){
+  if(_savingEmpZiele)return;
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
   if(!emp.targets)emp.targets={};
@@ -7823,6 +7866,7 @@ function saveEmpZiele(){
     }
     if(dl)emp.targets[f.dk]=dl.value;
   });
+  _savingEmpZiele=true;
   var chain=Promise.resolve();
   if(deletes.length){
     chain=chain.then(function(){
@@ -7835,11 +7879,13 @@ function saveEmpZiele(){
     });
   }
   chain.then(function(res){
+    _savingEmpZiele=false;
     if(res&&res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     if(changes.length){logAdminAction('kpi_target_employee','Mitarbeiter: '+emp.name+' · '+changes.join(' · '));logActivity('kpi_target','updated','Individuelle KPI-Ziele geändert: '+changes.join(' · '),emp.id,emp.name);}
     alert('Ziele gespeichert für '+emp.name+'.');
     renderTab();
   }).catch(function(err){
+    _savingEmpZiele=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
@@ -8237,7 +8283,9 @@ function setEmpColor(colorIdx){
 
 
 
+var _savingZieleGlobal=false;
 function zieleSpeichern(){
+  if(_savingZieleGlobal)return;
   var keys=['crOEM','crTeilweise','crSuperYes','crMegaYes','optPerH'];
   var updates=[];
   var changes=[];
@@ -8258,7 +8306,9 @@ function zieleSpeichern(){
   });
   CR_GOOD=KPI_TARGETS.crOEM.val;
   renderTeam();
+  _savingZieleGlobal=true;
   sb.from('kpi_targets').upsert(updates,{onConflict:'metric_key'}).then(function(res){
+    _savingZieleGlobal=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     if(changes.length){logAdminAction('kpi_target_global',changes.join(' · '));logActivity('kpi_target','updated','Globale KPI-Ziele geändert: '+changes.join(' · '),null,null);}
     var zs=document.getElementById('ziele-status');if(zs){zs.textContent='✓ Gespeichert';setTimeout(function(){zs.textContent='';},3000);}
@@ -8272,6 +8322,7 @@ function zieleSpeichern(){
     },2000);
   }
   }).catch(function(err){
+    _savingZieleGlobal=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
