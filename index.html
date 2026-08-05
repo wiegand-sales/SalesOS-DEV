@@ -3268,6 +3268,12 @@ function renderSidebar(){
   el.innerHTML='';
   document.querySelectorAll('.sb-item').forEach(function(x){x.classList.remove('active');});
   (function(){
+    var settingsNavEl=document.getElementById('nav-settings'),settingsSubEl=document.getElementById('settingsSubNav');
+    var showSettings=currentUserRole==='admin';
+    if(settingsNavEl)settingsNavEl.style.display=showSettings?'':'none';
+    if(settingsSubEl&&!showSettings)settingsSubEl.classList.add('hidden');
+  })();
+  (function(){
     var avatarEl=document.getElementById('sbProfileAvatar'),nameEl=document.getElementById('sbProfileName'),roleEl=document.getElementById('sbProfileRole');
     if(!avatarEl)return;
     if(currentCoach){
@@ -6487,6 +6493,7 @@ function renderActivity(){
 
 function renderEinstellungen(){
   var ma=document.getElementById('mainArea');if(!ma)return;
+  if(currentUserRole!=='admin'){ view='team'; wiegandView='overview'; renderSidebar(); renderTeam(); return; }
 
   ma.innerHTML='<div class="topbar"><div class="tb-left">'
     +'<div style="width:40px;height:40px;border-radius:9px;background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:16px"><i class="ti ti-settings"></i></div>'
