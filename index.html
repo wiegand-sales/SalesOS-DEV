@@ -333,7 +333,7 @@ tr:hover td{background:var(--bg2);}
       <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivitäten</div>
       <div id="coachingCoachSubItems"></div>
     </div>
-    <div class="sb-item" id="nav-settings" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
+    <div class="sb-item" id="nav-settings" style="display:none" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="settingsSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-settings-users" onclick="selectSettingsSub('users')">Mitarbeiterübersicht</div>
       <div class="sb-item sb-navsub" id="nav-settings-integrations" onclick="selectSettingsSub('integrations')">Integrationen</div>
@@ -1536,7 +1536,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
       var pct=maxCoachN?Math.round(r.n/maxCoachN*100):0;
       var share=totalCoached?Math.round(r.n/totalCoached*100):0;
       h+='<div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="font-weight:600">'+r.name+'</span><span><strong>'+r.n+'</strong> <span style="color:var(--text3);font-weight:400">('+share+'%)</span></span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="font-weight:600">'+esc(r.name)+'</span><span><strong>'+r.n+'</strong> <span style="color:var(--text3);font-weight:400">('+share+'%)</span></span></div>'
         +'<div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#206A72;border-radius:4px"></div></div>'
         +'</div>';
     });
@@ -1610,7 +1610,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
       var col=x.cnt===0?'var(--red)':'var(--amber-dark)';
       h+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(0,0,0,0.03);border:1px solid var(--border2);border-radius:var(--r-md)">'
         +'<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.e.name)+'</div>'
-        +'<div style="flex:1;min-width:0;cursor:pointer" onclick="selectEmp(\''+x.e.id+'\')"><div style="font-weight:600;font-size:13px">'+x.e.name+'</div><div style="font-size:11px;color:var(--text2)">'+x.e.role+'</div></div>'
+        +'<div style="flex:1;min-width:0;cursor:pointer" onclick="selectEmp(\''+x.e.id+'\')"><div style="font-weight:600;font-size:13px">'+esc(x.e.name)+'</div><div style="font-size:11px;color:var(--text2)">'+x.e.role+'</div></div>'
         +'<span style="font-size:14px;font-weight:700;color:'+col+'">'+x.cnt+'/5</span>'
         +'<button class="btn btn-sm btn-primary" data-eid="'+x.e.id+'" onclick="event.stopPropagation();selectEmp(this.dataset.eid);setTimeout(function(){switchTab(\'call-performance\');},50)"><i class="ti ti-phone-plus"></i> Bewerten</button>'
         +'</div>';
@@ -1967,7 +1967,7 @@ function exportEmpSummary(empId){
   var milestones=kpiMilestones(emp.id);
   var empGoalsExp=(goals[emp.id]||[]).slice().sort(function(a,b){return (b.createdAt||'').localeCompare(a.createdAt||'');});
   var goalsExpHtml=empGoalsExp.length?empGoalsExp.map(function(g){
-    return '<tr><td>'+g.description+'</td><td>'+(g.metricKey?focusMetricLabel(g.metricKey)+' ≥ '+g.targetValue+'%':'—')+'</td><td>'+(g.targetDate?fd(g.targetDate):'—')+'</td><td>'+g.status+'</td></tr>';
+    return '<tr><td>'+esc(g.description)+'</td><td>'+(g.metricKey?focusMetricLabel(g.metricKey)+' ≥ '+g.targetValue+'%':'—')+'</td><td>'+(g.targetDate?fd(g.targetDate):'—')+'</td><td>'+g.status+'</td></tr>';
   }).join(''):'';
   var milestonesHtml=milestones.length?milestones.map(function(m){return '<li>'+fd(m.date)+' – '+m.label+'</li>';}).join(''):'<li>Noch keine Meilensteine erreicht</li>';
 
@@ -2117,7 +2117,6 @@ function restoreBackupToSupabase(d){
   var status=function(msg){
     var el=document.getElementById('restore-status');
     if(el)el.textContent=msg;
-    console.log('[Restore]',msg);
   };
   function checkErr(res,label){
     if(res&&res.error){throw new Error(label+': '+res.error.message);}
@@ -3527,7 +3526,7 @@ function monthAvg(empId,metricKey,monthsAgo){
 function tageSeitLetzterSession(id){
   var ls=letzteSessionMA(id);
   if(!ls)return null;
-  var diff=new Date(today())-new Date(ls.date+'T00:00:00');
+  var diff=new Date(today()+'T00:00:00Z')-new Date(ls.date+'T00:00:00Z');
   return Math.floor(diff/86400000);
 }
 function aufmerksamkeitFarbe(tage){
@@ -3811,7 +3810,7 @@ function buildOverviewTab(liste){
       topRows.forEach(function(r,idx){
         h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;'+(idx<topRows.length-1?'border-bottom:1px solid var(--border);':'')+'">'
           +'<div style="width:30px;height:30px;border-radius:9px;background:var(--purple-bg);color:var(--purple-dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(r.e.name)+'</div>'
-          +'<div><div style="font-weight:600;font-size:12.5px">'+r.e.name+'</div><div style="font-size:10px;color:var(--text3)">'+r.e.role+'</div></div>'
+          +'<div><div style="font-weight:600;font-size:12.5px">'+esc(r.e.name)+'</div><div style="font-size:10px;color:var(--text3)">'+r.e.role+'</div></div>'
           +'<div style="margin-left:auto;display:flex;flex-direction:column;gap:3px;width:150px">'
           +metricRow('Gesamt',r.pctMonat,'€ '+Math.round(r.total).toLocaleString('de-DE'),'p')
           +metricRow('Ø/Tag',r.pctTag,'€ '+Math.round(r.proTag).toLocaleString('de-DE'),'p')
@@ -3829,7 +3828,7 @@ function buildOverviewTab(liste){
       worstRows.forEach(function(r,idx){
         h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;'+(idx<worstRows.length-1?'border-bottom:1px solid var(--border);':'')+'">'
           +'<div style="width:30px;height:30px;border-radius:9px;background:var(--red-bg);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(r.e.name)+'</div>'
-          +'<div><div style="font-weight:600;font-size:12.5px">'+r.e.name+'</div><div style="font-size:10px;color:var(--text3)">'+r.e.role+'</div></div>'
+          +'<div><div style="font-weight:600;font-size:12.5px">'+esc(r.e.name)+'</div><div style="font-size:10px;color:var(--text3)">'+r.e.role+'</div></div>'
           +'<div style="margin-left:auto;display:flex;flex-direction:column;gap:3px;width:150px">'
           +metricRow('CR OEM',Math.round(r.crOEM),Math.round(r.crOEM)+'%','r')
           +metricRow('CR MY',Math.round(r.crMY),Math.round(r.crMY)+'%','r')
@@ -4270,7 +4269,7 @@ function renderTeam(){
     coachDistRows.forEach(function(r){
       var pct=maxCoachN?Math.round(r.n/maxCoachN*100):0;
       coverageHtml+='<div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>'+r.name+'</span><span style="font-weight:700">'+r.n+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>'+esc(r.name)+'</span><span style="font-weight:700">'+r.n+'</span></div>'
         +'<div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--purple);border-radius:3px"></div></div>'
         +'</div>';
     });
@@ -4343,6 +4342,7 @@ function renderTeam(){
   ma.innerHTML=''
     +'<div class="content">'
     +(wiegandView==='team'?(''
+    +'<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-primary" onclick="exportTeamReport()"><i class="ti ti-file-description"></i> Team-Report (PDF)</button></div>'
     +zielInfoBoxHtml()
     // KPI Kacheln (reiches Format wie Coaching Sessions: Trend-Pfeil + Sparkline)
     +(function(){
@@ -4750,7 +4750,7 @@ function renderTab(){
     });
     (goals[emp.id]||[]).forEach(function(g){
       tlEvents.push({date:g.createdAt?g.createdAt.slice(0,10):'',kind:'milestone',icon:'ti-flag',col:'#206A72',
-        title:'Ziel vereinbart',sub:g.description+(g.targetDate?' (bis '+fd(g.targetDate)+')':'')});
+        title:'Ziel vereinbart',sub:esc(g.description)+(g.targetDate?' (bis '+fd(g.targetDate)+')':'')});
     });
     tlEvents.sort(function(a,b){return b.date.localeCompare(a.date);});
 
@@ -5370,7 +5370,7 @@ function renderTab(){
           }
           html+='<div style="background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md);padding:12px 14px">'
             +'<div style="display:flex;align-items:center;gap:10px">'
-            +'<div style="flex:1;font-size:13px;font-weight:600">'+g.description+'</div>'
+            +'<div style="flex:1;font-size:13px;font-weight:600">'+esc(g.description)+'</div>'
             +'<select data-id="'+g.id+'" onchange="updateGoalStatus(this.dataset.id,this.value)" style="width:auto;flex-shrink:0;font-size:11px;font-weight:600;padding:4px 8px;border:none;border-radius:20px;background:'+statusBg+';color:'+statusCol+'">'
             +['offen','in Arbeit','erreicht','verfehlt'].map(function(s){return '<option'+(g.status===s?' selected':'')+'>'+s+'</option>';}).join('')
             +'</select>'
@@ -5678,7 +5678,7 @@ function renderTab(){
         html+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyle+'">'+(s.start&&s.start.trim()?s.start:'<span style="color:var(--text3)">—</span>')+'</div></td>';
         html+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyle+'">'+(s.stop&&s.stop.trim()?s.stop:'<span style="color:var(--text3)">—</span>')+'</div></td>';
         html+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyle+'">'+(s.cont&&s.cont.trim()?s.cont:'<span style="color:var(--text3)">—</span>')+'</div></td>';
-        html+='<td style="'+tdStyle+';color:var(--text2);font-style:italic"><div style="'+clampStyle+'">'+(s.notes&&s.notes.trim()?s.notes:'<span style="color:var(--text3);font-style:normal">—</span>')+'</div></td>';
+        html+='<td style="'+tdStyle+';color:var(--text2);font-style:italic"><div style="'+clampStyle+'">'+(s.notes&&s.notes.trim()?esc(s.notes):'<span style="color:var(--text3);font-style:normal">—</span>')+'</div></td>';
         html+='</tr>';
       });
       html+='</tbody></table></div>';
@@ -5756,7 +5756,7 @@ function renderTab(){
       sims.forEach(function(s){
         var col=scoreColor(s.score);
         html+='<div class="sr-sim"><div class="sr-ring" style="border-color:'+col+';color:'+col+'">'+s.score+'%</div>'
-          +'<div style="flex:1"><div style="font-size:13px;font-weight:500">'+s.name+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px">'+fd(s.date)+'</div>'
+          +'<div style="flex:1"><div style="font-size:13px;font-weight:500">'+esc(s.name)+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px">'+fd(s.date)+'</div>'
           +'<div class="sr-tags">'+s.tags.map(function(t){return '<span class="sr-tag">'+t+'</span>';}).join('')+'</div></div></div>';
       });
     } else if(settings.srApiKey){html+='<div class="empty">No simulations completed yet.</div>';}
@@ -5868,7 +5868,7 @@ function renderTab(){
       return '<div class="task-item'+(od?' overdue':'')+(t.done?' done-item':'')+'" id="task-'+t.id+'">'
         +'<div class="task-row" onclick="toggleTaskDetail(\''+t.id+'\')">'
         +'<div class="task-check'+(t.done?' done':'')+'" onclick="event.stopPropagation();toggleTask(\''+t.id+'\')">'+(t.done?'<i class="ti ti-check" style="font-size:11px"></i>':'')+'</div>'
-        +'<div style="flex:1;min-width:0"><div class="task-title'+(t.done?' done':'')+'">'+(od?'<i class="ti ti-alert-circle" style="font-size:13px;color:var(--red);margin-right:4px"></i>':'')+t.text+statusBadge+'</div>'
+        +'<div style="flex:1;min-width:0"><div class="task-title'+(t.done?' done':'')+'">'+(od?'<i class="ti ti-alert-circle" style="font-size:13px;color:var(--red);margin-right:4px"></i>':'')+esc(t.text)+statusBadge+'</div>'
         +'<div class="task-meta">'+(t.source?'<span>'+t.source+'</span>':'')+( dueLabel?'<span style="color:'+dueColor+'">'+dueLabel+'</span>':'')+'</div></div>'
         +'<span class="task-prio" style="background:'+ps.bg+';color:'+ps.color+'">'+t.priority+'</span>'
         +'<button class="task-del" onclick="event.stopPropagation();deleteTask(\''+t.id+'\')"><i class="ti ti-x"></i></button>'
@@ -6436,7 +6436,7 @@ function renderActivity(){
   coachList.forEach(function(c){h+='<option value="'+c.id+'"'+(activityFilterPerson===c.id?' selected':'')+'>'+esc(c.name)+'</option>';});
   var adminNames=[];
   activityLog.forEach(function(a){if(!a.actorId&&a.actorName&&adminNames.indexOf(a.actorName)<0)adminNames.push(a.actorName);});
-  adminNames.forEach(function(nm){var val='NAME:'+nm;h+='<option value="'+val+'"'+(activityFilterPerson===val?' selected':'')+'>'+nm+'</option>';});
+  adminNames.forEach(function(nm){var val='NAME:'+nm;h+='<option value="'+esc(val)+'"'+(activityFilterPerson===val?' selected':'')+'>'+esc(nm)+'</option>';});
   h+='</select>';
   h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
   [7,30,90].forEach(function(d){
@@ -6479,14 +6479,14 @@ function renderActivity(){
       var isToday=a.createdAt&&a.createdAt.slice(0,10)===today();
       h+='<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:rgba(0,0,0,0.03);border:1px solid var(--border2);border-radius:var(--r-md)">';
       h+='<div style="width:70px;flex-shrink:0;font-size:11px;color:var(--text3);padding-top:2px">'+(isToday?timeStr:dateStr)+'</div>';
-      h+='<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0" title="'+(displayName||'Unbekannt')+'">'+(displayName?ini(displayName):'?')+'</div>';
+      h+='<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0" title="'+esc(displayName||'Unbekannt')+'">'+(displayName?ini(displayName):'?')+'</div>';
       h+='<div style="flex:1;min-width:0">';
       h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px">';
-      h+='<span style="font-size:12px;font-weight:600">'+(displayName||'Unbekannt')+'</span>';
+      h+='<span style="font-size:12px;font-weight:600">'+esc(displayName||'Unbekannt')+'</span>';
       h+='<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+meta.bg+';color:'+meta.col+'">'+meta.label+'</span>';
-      h+='<span style="font-size:12px;color:var(--text2)">'+a.description+'</span>';
+      h+='<span style="font-size:12px;color:var(--text2)">'+esc(a.description)+'</span>';
       h+='</div>';
-      if(a.targetLabel)h+='<div style="font-size:11px;color:var(--text3)">'+a.targetLabel+'</div>';
+      if(a.targetLabel)h+='<div style="font-size:11px;color:var(--text3)">'+esc(a.targetLabel)+'</div>';
       h+='</div></div>';
     });
     h+='</div>';
@@ -7112,12 +7112,13 @@ function downloadCSVVorlage(){
 
 // Lädt eine komplette Tabelle unabhängig von der Standard-1000-Zeilen-Grenze von Supabase.
 // orderCol optional (für stabile Reihenfolge über Seiten hinweg empfohlen, aber nicht zwingend).
-function selectAllPaginated(table,orderCol,ascending){
+function selectAllPaginated(table,orderCol,ascending,eqFilter){
   var PAGE=1000;
   var allRows=[];
   function fetchPage(from){
     var q=sb.from(table).select('*');
     if(orderCol)q=q.order(orderCol,{ascending:ascending!==false});
+    if(eqFilter)q=q.eq(eqFilter.col,eqFilter.val);
     return q.range(from,from+PAGE-1).then(function(res){
       if(res.error)return res;
       allRows=allRows.concat(res.data||[]);
@@ -7168,9 +7169,9 @@ function loadProtocolsFromSupabase(){
 }
 
 function loadEmployeeKpiTargetsFromSupabase(){
-  return sb.from('employee_kpi_targets').select('*').then(function(res){
+  return selectAllPaginated('employee_kpi_targets').then(function(res){
     if(res.error){console.warn('employee_kpi_targets load failed:',res.error);return false;}
-    res.data.forEach(function(r){
+    (res.data||[]).forEach(function(r){
       var emp=employees.find(function(e){return e.id===r.employee_id;});
       if(!emp)return;
       if(!emp.targets)emp.targets={};
@@ -7182,10 +7183,10 @@ function loadEmployeeKpiTargetsFromSupabase(){
 }
 
 function loadSolidroadFromSupabase(){
-  return sb.from('solidroad_simulations').select('*').then(function(res){
+  return selectAllPaginated('solidroad_simulations').then(function(res){
     if(res.error){console.warn('solidroad_simulations load failed:',res.error);return false;}
     var byEmp={};
-    res.data.forEach(function(r){
+    (res.data||[]).forEach(function(r){
       if(!byEmp[r.employee_id])byEmp[r.employee_id]={simulations:[]};
       byEmp[r.employee_id].simulations.push({
         id:r.id,date:r.date,name:r.name,score:r.score,status:r.status||'passed',tags:r.tags||[]
@@ -7242,8 +7243,8 @@ function loadAdminSecretsFromSupabase(){
 
 function loadReviewsFromSupabase(){
   return Promise.all([
-    sb.from('reviews').select('*').eq('type','Mitarbeiterentwicklung'),
-    sb.from('review_kpis').select('*')
+    selectAllPaginated('reviews',null,true,{col:'type',val:'Mitarbeiterentwicklung'}),
+    selectAllPaginated('review_kpis')
   ]).then(function(results){
     var reviewsRes=results[0],kpisRes=results[1];
     if(reviewsRes.error){console.warn('reviews load failed:',reviewsRes.error);return false;}
@@ -7254,7 +7255,7 @@ function loadReviewsFromSupabase(){
       kpisByReview[k.review_id][k.metric_key]=k.value;
     });
     var byEmp={};
-    reviewsRes.data.forEach(function(r){
+    (reviewsRes.data||[]).forEach(function(r){
       if(!byEmp[r.employee_id])byEmp[r.employee_id]=[];
       var entry={id:r.id,date:r.date,note:r.notes||'',einwand:0};
       var kpis=kpisByReview[r.id]||{};
