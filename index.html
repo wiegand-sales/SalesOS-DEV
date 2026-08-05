@@ -712,13 +712,17 @@ function showViewerBlockedToast(){
   clearTimeout(el._t);
   el._t = setTimeout(function(){ el.style.opacity = '0'; }, 2600);
 }
-// Simuliert eine erfolgreiche, aber wirkungslose Supabase-Antwort (kein Netzwerk-Aufruf)
+// Simuliert eine erfolgreiche, aber wirkungslose Supabase-Antwort (kein Netzwerk-Aufruf).
+// Gibt bei .single()/.maybeSingle() ein LEERES OBJEKT zurück (nicht null!), da aufrufender
+// Code danach oft res.data.irgendfeld ausliest (z.B. r.id) - null wuerde dort abstuerzen.
+// Ohne .single() wird ein leeres ARRAY zurückgegeben (passt zu .forEach()/.map()-Mustern).
 function _viewerBlockedQuery(){
+  var usedSingle=false;
   var noop = {
     select:function(){return noop;}, eq:function(){return noop;}, neq:function(){return noop;},
-    order:function(){return noop;}, range:function(){return noop;}, single:function(){return noop;},
-    maybeSingle:function(){return noop;}, in:function(){return noop;},
-    then:function(res,rej){ return Promise.resolve({data:null,error:null}).then(res,rej); },
+    order:function(){return noop;}, range:function(){return noop;}, in:function(){return noop;},
+    single:function(){usedSingle=true;return noop;}, maybeSingle:function(){usedSingle=true;return noop;},
+    then:function(res,rej){ return Promise.resolve({data:usedSingle?{}:[],error:null}).then(res,rej); },
     catch:function(){return noop;}
   };
   return noop;
@@ -726,9 +730,25 @@ function _viewerBlockedQuery(){
 // sb: wie der rohe Supabase-Client, blockiert aber Insert/Update/Upsert/Delete zentral,
 // wenn die eingeloggte Person Rolle 'viewer' hat. Betrifft dadurch automatisch JEDE
 // Speicherfunktion im Code, ohne dass einzelne Stellen angepasst werden müssen.
+// storageFrom() sichert genauso den Datei-Upload/-Löschen (sb.storage.from(bucket).upload/remove/...) ab -
+// sonst könnte ein Viewer über die Storage-API die Datenbank-Sperre umgehen.
+function _viewerBlockedStorage(){
+  return { data:null, error:null };
+}
 var sb = {
   auth: _sbRaw.auth,
-  storage: _sbRaw.storage,
+  storage: {
+    from: function(bucket){
+      var real = _sbRaw.storage.from(bucket);
+      if(currentUserRole !== 'viewer') return real;
+      ['upload','update','remove','move','copy'].forEach(function(m){
+        if(typeof real[m]==='function'){
+          real[m] = function(){ showViewerBlockedToast(); return Promise.resolve(_viewerBlockedStorage()); };
+        }
+      });
+      return real;
+    }
+  },
   from: function(table){
     var real = _sbRaw.from(table);
     if(currentUserRole !== 'viewer') return real;
@@ -6720,7 +6740,9 @@ function syncSessFocusMetric(){
   var mapped=TOPIC_TO_METRIC[topicEl.value];
   fmEl.value=mapped||'';
 }
+var _savingSession=false;
 function saveSession(empId){
+  if(_savingSession)return; // verhindert doppeltes Anlegen bei ungeduldigem Doppelklick
   var date=document.getElementById('sess-date').value;
   if(!date){alert('Bitte Datum eingeben.');return;}
   var timeEl=document.getElementById('sess-time');
@@ -6754,7 +6776,9 @@ function saveSession(empId){
         focus_metric:focusMetric||null,group_id:groupId
       };
     });
+    _savingSession=true;
     sb.from('protocols').insert(rows).select().then(function(res){
+      _savingSession=false;
       if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
       (res.data||[]).forEach(function(r){
         var eid=r.employee_id;
@@ -6770,7 +6794,7 @@ function saveSession(empId){
       resetSessionFormFields();
       closeModal('neuesCoachingModal');
       renderTab();
-    }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
+    }).catch(function(err){_savingSession=false;alert('Unerwarteter Fehler: '+err.message);});
     return;
   }
 
@@ -6785,7 +6809,9 @@ function saveSession(empId){
   var dbCall=editId
     ? sb.from('protocols').update(payload).eq('id',editId).select().single()
     : sb.from('protocols').insert(payload).select().single();
+  _savingSession=true;
   dbCall.then(function(res){
+    _savingSession=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     var entry={
@@ -6807,6 +6833,7 @@ function saveSession(empId){
     closeModal('neuesCoachingModal');
     renderTab();
   }).catch(function(err){
+    _savingSession=false;
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
