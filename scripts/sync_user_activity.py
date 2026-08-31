@@ -144,6 +144,7 @@ def row_to_payload(row, employee_id):
     return {
         "employee_id": employee_id,
         "date": parse_de_date(g("datum")),
+        "wochentag": row[1].strip() if len(row) > 1 else None,
         # bestehende Felder (OEM-Bereich, 1:1 kompatibel mit dem manuellen CSV-Import)
         "aktivitaeten": parse_de_int(g("oem_akt")),
         "not_reached": parse_de_int(g("oem_ne")),
