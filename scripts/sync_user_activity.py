@@ -156,7 +156,7 @@ def row_to_payload(row, employee_id):
         "oem_sy": parse_de_int(g("oem_sy")),
         "oem_my": parse_de_int(g("oem_my")),
         "ups_yes": parse_de_int(g("ups_yes")),
-        "wka": wka_gesamt,
+        "wka_gesamt_yes": wka_gesamt,
         "opt_gesamt": opt_gesamt,
         "oem_margenerhoehung": marge_oem,
         "ups_margenerhoehung": marge_upsell,
