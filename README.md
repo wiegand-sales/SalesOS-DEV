@@ -1,2 +1,2 @@
-# coaching-dashboard-dev
-SFP Coaching – Staging/Test Umgebung
+# SalesOS-DEV
+SalesOS – Staging/Test Umgebung
