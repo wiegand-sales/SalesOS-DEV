@@ -1,2 +1,6 @@
-paramiko>=3.4
+# paramiko bewusst auf 2.12.0 fixiert: neuere Versionen (3.3+) haben den
+# aelteren ssh-rsa/ssh-dss Host-Key-Support komplett entfernt. Der
+# AmperTec-SFTP-Server bietet offenbar nur diese aelteren Typen an
+# ("Incompatible ssh peer (no acceptable host key)" mit neueren Versionen).
+paramiko==2.12.0
 requests>=2.31
