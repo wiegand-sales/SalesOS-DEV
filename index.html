@@ -1062,7 +1062,7 @@ function setCoachingTypeSelection(catSelId,typeSelId,typeValue){
 }
 var SESSION_TOPICS=['Einwandsbehandlung','Bedarfsanalyse','Produktwissen','Gesprächsführung','Motivation','Coachability','Zuverlässigkeit','Teamfähigkeit','CR OEM','CR TW','CR SY','CR MY','Sonstiges'];
 var FOCUS_METRICS=[
-  {key:'aktivitaeten',label:'Aktivitäten'},
+  {key:'oem_aktivitaeten',label:'Aktivitäten'},
   {key:'convOEM',label:'Conv. OEM'},
   {key:'optGesamt',label:'Opt. Gesamt'},
   {key:'crOEM',label:'CR OEM %'},
@@ -2107,12 +2107,12 @@ function restoreBackupToSupabase(d){
   var perfRows=[];
   Object.keys(d.performance||{}).forEach(function(empId){
     (d.performance[empId]||[]).forEach(function(p){
-      perfRows.push({employee_id:empId,date:p.date,not_reached:p.notReached||0,not_possible:p.notPossible||0,
-        not_successful:p.notSuccessful||0,conv_tw:p.convTW||0,conv_yes:p.convYes||0,conv_sy:p.convSY||0,
-        conv_my:p.convMY||0,upsells:p.upsells||0,wka:p.wka||0,marge_oem:p.margeOEM||0,marge_upsell:p.margeUpsell||0,
-        marge_wka:p.margeWKA||0,opt_per_h:p.optPerH||0,conv_oem:p.convOEM||0,aktivitaeten:p.aktivitaeten||0,
-        opt_gesamt:p.optGesamt||0,marge_gesamt:p.margeGesamt||0,cr_oem:p.crOEM,cr_teilweise:p.crTeilweise,
-        cr_yes:p.crYes,cr_super_yes:p.crSuperYes,cr_mega_yes:p.crMegaYes});
+      perfRows.push({employee_id:empId,date:p.date,oem_nicht_erreicht:p.notReached||0,oem_nicht_moeglich:p.notPossible||0,
+        oem_nicht_erfolgreich:p.notSuccessful||0,oem_tw:p.convTW||0,oem_yes:p.convYes||0,oem_sy:p.convSY||0,
+        oem_my:p.convMY||0,ups_yes:p.ups_yes||0,wka:p.wka||0,oem_margenerhoehung:p.margeOEM||0,ups_margenerhoehung:p.margeUpsell||0,
+        marge_wka:p.margeWKA||0,opt_per_h:p.optPerH||0,oem_gesamt:p.convOEM||0,oem_aktivitaeten:p.oem_aktivitaeten||0,
+        opt_gesamt:p.optGesamt||0,marge_gesamt:p.margeGesamt||0,oem_cr:p.crOEM,oem_tw_cr:p.crTeilweise,
+        oem_yes_cr:p.crYes,oem_sy_cr:p.crSuperYes,oem_my_cr:p.crMegaYes});
     });
   });
   if(perfRows.length){
@@ -2328,7 +2328,7 @@ function groupPerfRows(rows,mode){
     if(!groups[key]){groups[key]={label:label,items:[]};order.push(key);}
     groups[key].items.push(r);
   });
-  var sumFields=['aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','upsells','wka','optGesamt','margeGesamt','margin'];
+  var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka','optGesamt','margeGesamt','margin'];
   var avgFields=['crOEM','crTeilweise','crSuperYes','crMegaYes'];
   return order.sort().reverse().map(function(key){
     var g=groups[key],agg={};
@@ -3015,7 +3015,7 @@ function vGradient(canvas,color,a1,a2,y0,y1){
 }
 // ── Chart-Interaktion (Aufbau-Animation + Hover-Crosshair), gilt fuer alle Liniendiagramme im Board ──
 // Formatiert einen Metrik-Wert passend zur Einheit (Marge=€, CR*=%, sonst Stueck/Zahl), anhand des
-// Metrik-Keys (gleiche Namenskonvention ueberall im Board: margeGesamt, crOEM, aktivitaeten, ...).
+// Metrik-Keys (gleiche Namenskonvention ueberall im Board: margeGesamt, crOEM, oem_aktivitaeten, ...).
 function formatMetricValue(metricKey,value){
   if(value===null||value===undefined||isNaN(value))return '–';
   var k=(metricKey||'').toLowerCase();
@@ -3162,7 +3162,7 @@ function empTargets(emp){
     optPerH:     {val:val('optPerH',2.0),         dir:dir('optPerHDir','optPerH','gte')},
     optPerDay:   {val:val('optPerDay',16),          dir:dir('optPerDayDir','optPerDay','gte')},
     crYes:       {val:val('crYes',null),             dir:dir('crYesDir','crYes','gte')},
-    aktivitaeten:{val:val('aktivitaeten',null),       dir:dir('aktivDir','aktivitaeten','gte')},
+    oem_aktivitaeten:{val:val('oem_aktivitaeten',null),       dir:dir('aktivDir','oem_aktivitaeten','gte')},
     convOEM:     {val:val('convOEM',null),            dir:dir('convOEMDir','convOEM','gte')},
     optGesamt:   {val:val('optGesamt',null)!=null?val('optGesamt',null):val('optPerDay',null), dir:dir('optGesamtDir','optGesamt','gte')},
     margeGesamt: {val:val('margeGesamt',null),        dir:dir('margeDir','margeGesamt','gte')}
@@ -3364,7 +3364,7 @@ function personalBestEvents(empId){
   var rows=(performance[empId]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
   var fields=[
     {key:'optGesamt',label:'Optimierungen gesamt',fmt:function(v){return Math.round(v);}},
-    {key:'aktivitaeten',label:'Aktivitäten',fmt:function(v){return Math.round(v);}},
+    {key:'oem_aktivitaeten',label:'Aktivitäten',fmt:function(v){return Math.round(v);}},
     {key:'crOEM',label:'CR OEM',fmt:function(v){return Math.round(v)+'%';}},
     {key:'margeGesamt',label:'Marge Gesamt',fmt:function(v){return '€'+Math.round(v).toLocaleString('de-DE');}},
     {key:'convOEM',label:'Conv. OEM',fmt:function(v){return Math.round(v);}}
@@ -3446,17 +3446,17 @@ function setTeamFilter(k){teamFilter=k;renderMain();}
 var MONTH_NAMES_DE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 function buildMonthBar(liste){
   var mk=today().slice(0,7);
-  var sums={convOEM:0,margeOEM:0,upsells:0,margeUpsell:0,wka:0,margeWKA:0,margeGesamt:0};
+  var sums={convOEM:0,margeOEM:0,ups_yes:0,margeUpsell:0,wka:0,margeWKA:0,margeGesamt:0};
   liste.forEach(function(e){
     (performance[e.id]||[]).forEach(function(x){
       if((x.date||'').slice(0,7)!==mk)return;
       sums.convOEM+=x.convOEM||0; sums.margeOEM+=x.margeOEM||0;
-      sums.upsells+=x.upsells||0; sums.margeUpsell+=x.margeUpsell||0;
+      sums.ups_yes+=x.ups_yes||0; sums.margeUpsell+=x.margeUpsell||0;
       sums.wka+=x.wka||0; sums.margeWKA+=x.margeWKA||0;
       sums.margeGesamt+=x.margeGesamt||x.margin||0;
     });
   });
-  var gesamtAnzahl=sums.convOEM+sums.upsells+sums.wka;
+  var gesamtAnzahl=sums.convOEM+sums.ups_yes+sums.wka;
   // Ziel Marge/Mon. team-weit fuer den aktuellen Kalendermonat (gleiche Berechnung wie Zielvereinbarung-Jahresverlauf)
   var wMeta=getMonthWeeksZiel(mk);
   var mRec=zielStore[mk]||{};
@@ -3475,7 +3475,7 @@ function buildMonthBar(liste){
   return '<div class="month-bar">'
     +'<div class="mb-month"><div class="l">Zeitraum</div><div class="v">'+monthLabel+'</div></div>'
     +'<div class="mb-stat"><div class="l">Conv. OEM</div><div class="row"><span class="n">'+sums.convOEM+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeOEM)+' Marge</div></div>'
-    +'<div class="mb-stat"><div class="l">Upsells</div><div class="row"><span class="n">'+sums.upsells+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeUpsell)+' Marge</div></div>'
+    +'<div class="mb-stat"><div class="l">Upsells</div><div class="row"><span class="n">'+sums.ups_yes+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeUpsell)+' Marge</div></div>'
     +'<div class="mb-stat"><div class="l">WKA</div><div class="row"><span class="n">'+sums.wka+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeWKA)+' Marge</div></div>'
     +'<div class="mb-stat mb-total"><div class="l">Gesamt</div><div class="row"><span class="n">'+gesamtAnzahl+'</span><span class="n-unit">Stk.</span></div><div class="m">'+eur(sums.margeGesamt)+' Marge</div></div>'
     +'<div class="mb-stat mb-margin"><div class="l">Margenerhöhung</div><div class="row"><span class="n">'+eur(sums.margeGesamt)+'</span></div><div class="m">Ziel: '+eur(zielMargeSum)+'/Mon.</div></div>'
@@ -3624,7 +3624,7 @@ function buildOverviewTab(liste){
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
   h+='<div class="card-title" style="margin:0">Performance Trend <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+selLabel+'</span></div>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
-  [{k:'margeGesamt',l:'Marge Gesamt'},{k:'aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Gesamt'},{k:'convOEM',l:'Opt. OEM'},{k:'upsells',l:'Opt. Upsell'},{k:'wka',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
+  [{k:'margeGesamt',l:'Marge Gesamt'},{k:'oem_aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Gesamt'},{k:'convOEM',l:'Opt. OEM'},{k:'ups_yes',l:'Opt. Upsell'},{k:'wka',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
   h+='</select>';
@@ -3636,7 +3636,7 @@ function buildOverviewTab(liste){
   (function(){
     var oemSum=0,upsSum=0,wkaSum=0,crTWs=[],crYess=[],crSYs=[],crMYs=[];
     chartRows.forEach(function(x){
-      oemSum+=x.convOEM||0; upsSum+=x.upsells||0; wkaSum+=x.wka||0;
+      oemSum+=x.convOEM||0; upsSum+=x.ups_yes||0; wkaSum+=x.wka||0;
       if(x.crTeilweise!=null)crTWs.push(x.crTeilweise);
       if(x.crYes!=null)crYess.push(x.crYes);
       if(x.crSuperYes!=null)crSYs.push(x.crSuperYes);
@@ -3827,11 +3827,11 @@ function buildOverviewTab(liste){
     var sortableRows=rowsToRender.map(function(item){
       var g=item.g,rowEmp=item.emp,rowEmpT=item.empT;
       var row=g.row;
-      var akt=row.aktivitaeten||row.calls||0;
+      var akt=row.oem_aktivitaeten||row.calls||0;
       var convOEM=row.convOEM||0;
       var tw=row.convTW||0,yes=row.convYes||0,sy=row.convSY||0,my=row.convMY||0;
       var notR=row.notReached||0,notP=row.notPossible||0,notS=row.notSuccessful||0;
-      var ups=row.upsells||0,wka=row.wka||0;
+      var ups=row.ups_yes||0,wka=row.wka||0;
       var optGes=row.optGesamt||(convOEM+ups+wka)||0;
       var marge=row.margeGesamt||row.margin||0;
       var crOEM=Math.round(row.crOEM||0),crTW=Math.round(row.crTeilweise||0),crSY=Math.round(row.crSuperYes||0),crMY=Math.round(row.crMegaYes||0);
@@ -3897,17 +3897,17 @@ function buildOverviewTab(liste){
       crYes:      {f:'crYes',      l:'CR Yes %', c:'#206A72'},
       crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#206A72'},
       crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#206A72'},
-      aktivitaeten:{f:'aktivitaeten',l:'Aktivitäten',c:'#206A72'},
+      oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',c:'#206A72'},
       optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#206A72'},
       convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#206A72'},
-      upsells:    {f:'upsells',    l:'Opt. Upsell',c:'#206A72'},
+      ups_yes:    {f:'ups_yes',    l:'Opt. Upsell',c:'#206A72'},
       wka:        {f:'wka',        l:'Opt. WKA', c:'#206A72'},
       margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#206A72'}
     };
     var m=mMap[metric]||mMap.crOEM;
     window._overviewChartData=null;
     if(!allRows||!allRows.length)return;
-    var sumMetrics=['aktivitaeten','margeGesamt','optGesamt','convOEM','upsells','wka'];
+    var sumMetrics=['oem_aktivitaeten','margeGesamt','optGesamt','convOEM','ups_yes','wka'];
     var useSum=sumMetrics.indexOf(metric)>=0;
     // Stufe 1: pro Kalendertag zusammenfassen (bei "Alle" über Mitarbeiter kombiniert)
     var byDate={};
@@ -4311,10 +4311,10 @@ function renderTeam(){
     +(function(){
       var TMETRICS=[
         {k:'margeGesamt',l:'Marge Gesamt',c:'#206A72'},
-        {k:'aktivitaeten',l:'Aktivitäten',c:'#206A72'},
+        {k:'oem_aktivitaeten',l:'Aktivitäten',c:'#206A72'},
         {k:'optGesamt',  l:'Opt. Gesamt', c:'#206A72'},
         {k:'convOEM',    l:'Opt. OEM',    c:'#206A72'},
-        {k:'upsells',    l:'Opt. Upsell', c:'#206A72'},
+        {k:'ups_yes',    l:'Opt. Upsell', c:'#206A72'},
         {k:'wka',        l:'Opt. WKA',    c:'#206A72'},
         {k:'crOEM',      l:'CR OEM',      c:'#206A72'},
         {k:'crTeilweise',l:'CR TW',       c:'#206A72'},
@@ -4391,10 +4391,10 @@ function renderTeam(){
       crYes:      {f:'crYes',      l:'CR Yes %', c:'#206A72'},
       crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#206A72'},
       crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#206A72'},
-      aktivitaeten:{f:'aktivitaeten',l:'Aktivitäten',c:'#206A72'},
+      oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',c:'#206A72'},
       optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#206A72'},
       convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#206A72'},
-      upsells:    {f:'upsells',    l:'Opt. Upsell',c:'#206A72'},
+      ups_yes:    {f:'ups_yes',    l:'Opt. Upsell',c:'#206A72'},
       wka:        {f:'wka',        l:'Opt. WKA', c:'#206A72'},
       margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#206A72'}
     };
@@ -4420,9 +4420,9 @@ function renderTeam(){
     var yScales={
       crOEM:{min:0,max:100,step:20},crTeilweise:{min:0,max:100,step:20},
       crYes:{min:0,max:100,step:20},crSuperYes:{min:0,max:100,step:20},
-      crMegaYes:{min:0,max:100,step:20},aktivitaeten:{min:0,max:300,step:50},
+      crMegaYes:{min:0,max:100,step:20},oem_aktivitaeten:{min:0,max:300,step:50},
       optGesamt:{min:0,max:50,step:10},convOEM:{min:0,max:50,step:10},
-      upsells:{min:0,max:30,step:5},wka:{min:0,max:15,step:5},
+      ups_yes:{min:0,max:30,step:5},wka:{min:0,max:15,step:5},
       margeGesamt:{min:0,max:5000,step:1000}
     };
     var yS=yScales[metric]||{min:0,max:100,step:20};
@@ -4831,7 +4831,7 @@ function renderTab(){
       +'<div class="card-title" style="margin:0">Performance Trend</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
       +'<div class="chart-toggle">';
-    [{k:'margeGesamt',l:'Marge Gesamt'},{k:'aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges.'},{k:'convOEM',l:'Opt. OEM'},{k:'upsells',l:'Opt. Upsells'},{k:'wka',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
+    [{k:'margeGesamt',l:'Marge Gesamt'},{k:'oem_aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges.'},{k:'convOEM',l:'Opt. OEM'},{k:'ups_yes',l:'Opt. Upsells'},{k:'wka',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
       html+='<button class="'+(perfMetric===it.k?'active':'')+'" data-m="'+it.k+'" onclick="setMetric(this.dataset.m)">'+it.l+'</button>';
     });
     html+='</div><div class="chart-toggle">';
@@ -4877,11 +4877,11 @@ function renderTab(){
         +'</tr></thead><tbody>';
       groupedRows.forEach(function(g,ridx){
         var row=g.row;
-        var akt=row.aktivitaeten||row.calls||0;
+        var akt=row.oem_aktivitaeten||row.calls||0;
         var convOEM=row.convOEM||0;
         var tw=row.convTW||0,yes=row.convYes||0,sy=row.convSY||0,my=row.convMY||0;
         var notR=row.notReached||0,notP=row.notPossible||0,notS=row.notSuccessful||0;
-        var ups=row.upsells||0,wka=row.wka||0;
+        var ups=row.ups_yes||0,wka=row.wka||0;
         var optGes=row.optGesamt||(convOEM+ups+wka)||0;
         var marge=row.margeGesamt||row.margin||0;
         var crOEM=Math.round(row.crOEM||0),crTW=Math.round(row.crTeilweise||0),crSY=Math.round(row.crSuperYes||0),crMY=Math.round(row.crMegaYes||0);
@@ -5896,7 +5896,7 @@ function renderTab(){
       // ── Zahlen Kategorie ──
       html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">TAGESWERTE</div>';
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">';
-      [{lbl:'Aktivitäten/Tag',id:'aktiv',did:'aktivDir',fv:_tr.aktivitaeten!=null?_tr.aktivitaeten:(t.aktivitaeten&&t.aktivitaeten.val!=null?t.aktivitaeten.val:''),fd:_tr.aktivDir||(t.aktivitaeten?t.aktivitaeten.dir:'gte'),unit:''},
+      [{lbl:'Aktivitäten/Tag',id:'aktiv',did:'aktivDir',fv:_tr.oem_aktivitaeten!=null?_tr.oem_aktivitaeten:(t.oem_aktivitaeten&&t.oem_aktivitaeten.val!=null?t.oem_aktivitaeten.val:''),fd:_tr.aktivDir||(t.oem_aktivitaeten?t.oem_aktivitaeten.dir:'gte'),unit:''},
        {lbl:'Conv. OEM/Tag',id:'convOEM',did:'convOEMDir',fv:_tr.convOEM!=null?_tr.convOEM:(t.convOEM&&t.convOEM.val!=null?t.convOEM.val:''),fd:_tr.convOEMDir||(t.convOEM?t.convOEM.dir:'gte'),unit:''},
        {lbl:'Opt. Gesamt/Tag',id:'optDay',did:'optPerDayDir',fv:_tr.optGesamt!=null?_tr.optGesamt:(t.optGesamt&&t.optGesamt.val!=null?t.optGesamt.val:''),fd:_tr.optGesamtDir||(t.optGesamt?t.optGesamt.dir:'gte'),unit:''},
        {lbl:'Opt. / Stunde',id:'opt',did:'optPerHDir',fv:_tr.optPerH!=null?_tr.optPerH:t.optPerH.val,fd:_tr.optPerHDir||t.optPerH.dir,unit:'',step:0.1}
@@ -5990,9 +5990,9 @@ function renderTab(){
       var data=empGetPerf(selectedEmp);
       var labels=data.map(function(d){return fd(d.date);});
       var mMap={
-        aktivitaeten:{f:'aktivitaeten',l:'Aktivitäten',    c:'#206A72'},
+        oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',    c:'#206A72'},
         convOEM:     {f:'convOEM',     l:'Opt. OEM',       c:'#206A72'},
-        upsells:     {f:'upsells',     l:'Opt. Upsells',   c:'#206A72'},
+        ups_yes:     {f:'ups_yes',     l:'Opt. Upsells',   c:'#206A72'},
         wka:         {f:'wka',         l:'Opt. WKA',       c:'#206A72'},
         optGesamt:   {f:'optGesamt',   l:'Opt. Gesamt',    c:'#206A72'},
         crOEM:       {f:'crOEM',       l:'CR OEM %',       c:'#206A72'},
@@ -6006,7 +6006,7 @@ function renderTab(){
       var vals=data.map(function(d){return d[m.f]||0;});
       var empObj=employees.find(function(x){return x.id===selectedEmp;});
       var empT=empTargets(empObj||{});
-      var tMap={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes',optPerH:'optPerH',aktivitaeten:'aktivitaeten',convOEM:'convOEM',optGesamt:'optGesamt',margeGesamt:'margeGesamt'};
+      var tMap={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes',optPerH:'optPerH',oem_aktivitaeten:'oem_aktivitaeten',convOEM:'convOEM',optGesamt:'optGesamt',margeGesamt:'margeGesamt'};
       var tk=tMap[perfMetric];
       var target=tk&&empT[tk]?empT[tk].val:null;
 
@@ -6025,7 +6025,7 @@ function renderTab(){
 
       // Feste Y-Achsen-Skalen
       var yScales={
-        aktivitaeten:{min:0,max:300,step:50},
+        oem_aktivitaeten:{min:0,max:300,step:50},
         convOEM:     {min:0,max:50,step:10},
         optGesamt:   {min:0,max:50,step:10},
         crOEM:       {min:0,max:100,step:20},
@@ -7012,7 +7012,7 @@ function saveNewEmp(){
       {rk:'crYes',val:40,dir:'lte'},
       {rk:'crSuperYes',val:40,dir:'gte'},
       {rk:'crMegaYes',val:20,dir:'gte'},
-      {rk:'aktivitaeten',val:100,dir:'gte'},
+      {rk:'oem_aktivitaeten',val:100,dir:'gte'},
       {rk:'convOEM',val:24,dir:'gte'},
       {rk:'optGesamt',val:28,dir:'gte'},
       {rk:'optPerH',val:3.0,dir:'gte'},
@@ -7038,12 +7038,12 @@ function saveNewEmp(){
 
 // Deutsche Spaltennamen (CSV) <-> interne Feldnamen (Supabase-Tabelle "performance")
 var CSV_COLS=[
-  ['Datum','datum'],['Mitarbeiter','mitarbeiter_name'],['Aktivitäten','aktivitaeten'],
-  ['Nicht Erreicht','not_reached'],['Nicht Möglich','not_possible'],['Nicht Erfolgreich','not_successful'],
-  ['Conv. OEM','conv_oem'],['Conv. TW','conv_tw'],['Conv. Yes','conv_yes'],['Conv. SY','conv_sy'],['Conv. MY','conv_my'],
-  ['Upsells','upsells'],['WKA','wka'],['Opt./Std.','opt_per_h'],['Opt. Gesamt','opt_gesamt'],
-  ['Marge OEM','marge_oem'],['Marge Upsells','marge_upsell'],['Marge WKA','marge_wka'],['Marge Gesamt','marge_gesamt'],
-  ['CR OEM %','cr_oem'],['CR TW %','cr_teilweise'],['CR Yes %','cr_yes'],['CR SY %','cr_super_yes'],['CR MY %','cr_mega_yes']
+  ['Datum','datum'],['Mitarbeiter','mitarbeiter_name'],['Aktivitäten','oem_aktivitaeten'],
+  ['Nicht Erreicht','oem_nicht_erreicht'],['Nicht Möglich','oem_nicht_moeglich'],['Nicht Erfolgreich','oem_nicht_erfolgreich'],
+  ['Conv. OEM','oem_gesamt'],['Conv. TW','oem_tw'],['Conv. Yes','oem_yes'],['Conv. SY','oem_sy'],['Conv. MY','oem_my'],
+  ['Upsells','ups_yes'],['WKA','wka'],['Opt./Std.','opt_per_h'],['Opt. Gesamt','opt_gesamt'],
+  ['Marge OEM','oem_margenerhoehung'],['Marge Upsells','ups_margenerhoehung'],['Marge WKA','marge_wka'],['Marge Gesamt','marge_gesamt'],
+  ['CR OEM %','oem_cr'],['CR TW %','oem_tw_cr'],['CR Yes %','oem_yes_cr'],['CR SY %','oem_sy_cr'],['CR MY %','oem_my_cr']
 ];
 
 function downloadCSVVorlage(){
@@ -7083,11 +7083,11 @@ function loadPerformanceFromSupabase(){
     (res.data||[]).forEach(function(r){
       if(!byEmp[r.employee_id])byEmp[r.employee_id]=[];
       byEmp[r.employee_id].push({
-        date:r.date,notReached:r.not_reached,notPossible:r.not_possible,notSuccessful:r.not_successful,
-        convTW:r.conv_tw,convYes:r.conv_yes,convSY:r.conv_sy,convMY:r.conv_my,upsells:r.upsells,wka:r.wka,
-        margeOEM:r.marge_oem,margeUpsell:r.marge_upsell,margeWKA:r.marge_wka,optPerH:r.opt_per_h,
-        convOEM:r.conv_oem,aktivitaeten:r.aktivitaeten,optGesamt:r.opt_gesamt,margeGesamt:r.marge_gesamt,
-        crOEM:r.cr_oem,crTeilweise:r.cr_teilweise,crYes:r.cr_yes,crSuperYes:r.cr_super_yes,crMegaYes:r.cr_mega_yes
+        date:r.date,notReached:r.oem_nicht_erreicht,notPossible:r.oem_nicht_moeglich,notSuccessful:r.oem_nicht_erfolgreich,
+        convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka:r.wka,
+        margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.marge_wka,optPerH:r.opt_per_h,
+        convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.opt_gesamt,margeGesamt:r.marge_gesamt,
+        crOEM:r.oem_cr,crTeilweise:r.oem_tw_cr,crYes:r.oem_yes_cr,crSuperYes:r.oem_sy_cr,crMegaYes:r.oem_my_cr
       });
     });
     Object.keys(byEmp).forEach(function(k){byEmp[k].sort(function(a,b){return b.date.localeCompare(a.date);});});
@@ -7379,15 +7379,15 @@ function importCSV(file){
         if(!emp){if(row.mitarbeiter_name)notFound.push(row.mitarbeiter_name);return;}
         payload.push({
           employee_id:emp.id,date:parseDateDE(row.datum),
-          aktivitaeten:parseIntNum(row.aktivitaeten),not_reached:parseIntNum(row.not_reached),
-          not_possible:parseIntNum(row.not_possible),not_successful:parseIntNum(row.not_successful),
-          conv_oem:parseIntNum(row.conv_oem),conv_tw:parseIntNum(row.conv_tw),conv_yes:parseIntNum(row.conv_yes),
-          conv_sy:parseIntNum(row.conv_sy),conv_my:parseIntNum(row.conv_my),upsells:parseIntNum(row.upsells),
+          oem_aktivitaeten:parseIntNum(row.oem_aktivitaeten),oem_nicht_erreicht:parseIntNum(row.oem_nicht_erreicht),
+          oem_nicht_moeglich:parseIntNum(row.oem_nicht_moeglich),oem_nicht_erfolgreich:parseIntNum(row.oem_nicht_erfolgreich),
+          oem_gesamt:parseIntNum(row.oem_gesamt),oem_tw:parseIntNum(row.oem_tw),oem_yes:parseIntNum(row.oem_yes),
+          oem_sy:parseIntNum(row.oem_sy),oem_my:parseIntNum(row.oem_my),ups_yes:parseIntNum(row.ups_yes),
           wka:parseIntNum(row.wka),opt_per_h:parseNum(row.opt_per_h),opt_gesamt:parseIntNum(row.opt_gesamt),
-          marge_oem:parseNum(row.marge_oem),marge_upsell:parseNum(row.marge_upsell),
+          oem_margenerhoehung:parseNum(row.oem_margenerhoehung),ups_margenerhoehung:parseNum(row.ups_margenerhoehung),
           marge_wka:parseNum(row.marge_wka),marge_gesamt:parseNum(row.marge_gesamt),
-          cr_oem:parsePercent(row.cr_oem),cr_teilweise:parsePercent(row.cr_teilweise),cr_yes:parsePercent(row.cr_yes),
-          cr_super_yes:parsePercent(row.cr_super_yes),cr_mega_yes:parsePercent(row.cr_mega_yes)
+          oem_cr:parsePercent(row.oem_cr),oem_tw_cr:parsePercent(row.oem_tw_cr),oem_yes_cr:parsePercent(row.oem_yes_cr),
+          oem_sy_cr:parsePercent(row.oem_sy_cr),oem_my_cr:parsePercent(row.oem_my_cr)
         });
       });
       if(!payload.length){
@@ -7823,7 +7823,7 @@ function saveEmpZiele(){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
   if(!emp.targets)emp.targets={};
-  var fields=[{id:'crOEM',rk:'crOEM',dk:'crOEMDir'},{id:'crTW',rk:'crTW',dk:'crTWDir'},{id:'crYes',rk:'crYes',dk:'crYesDir'},{id:'crSY',rk:'crSuperYes',dk:'crSYDir'},{id:'crMY',rk:'crMegaYes',dk:'crMYDir'},{id:'convOEM',rk:'convOEM',dk:'convOEMDir'},{id:'opt',rk:'optPerH',dk:'optPerHDir'},{id:'optDay',rk:'optGesamt',dk:'optGesamtDir'},{id:'aktiv',rk:'aktivitaeten',dk:'aktivDir'},{id:'marge',rk:'margeGesamt',dk:'margeDir'}];
+  var fields=[{id:'crOEM',rk:'crOEM',dk:'crOEMDir'},{id:'crTW',rk:'crTW',dk:'crTWDir'},{id:'crYes',rk:'crYes',dk:'crYesDir'},{id:'crSY',rk:'crSuperYes',dk:'crSYDir'},{id:'crMY',rk:'crMegaYes',dk:'crMYDir'},{id:'convOEM',rk:'convOEM',dk:'convOEMDir'},{id:'opt',rk:'optPerH',dk:'optPerHDir'},{id:'optDay',rk:'optGesamt',dk:'optGesamtDir'},{id:'aktiv',rk:'oem_aktivitaeten',dk:'aktivDir'},{id:'marge',rk:'margeGesamt',dk:'margeDir'}];
   var upserts=[],deletes=[],changes=[];
   fields.forEach(function(f){
     var el=document.getElementById('es-'+f.id);
