@@ -6482,14 +6482,27 @@ function renderEinstellungen(){
     // FTP Sync
     +'<div class="card">'
     +'<div class="card-title"><i class="ti ti-refresh"></i> FTP Datensync</div>'
-    +'<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">'
+    +'<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">'
     +'<div class="set-icon" style="background:var(--teal-bg);color:var(--teal);width:44px;height:44px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0"><i class="ti ti-refresh"></i></div>'
-    +'<div style="flex:1"><div style="font-size:12px;color:var(--text2)">Performance-Daten automatisch per CSV importieren</div></div>'
-    +'<span style="background:var(--teal-bg);color:var(--teal);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Aktiv</span>'
+    +'<div style="flex:1"><div style="font-size:12px;color:var(--text2)">Performance-Daten automatisch per CSV importieren</div>'
+    +'<div style="font-size:11px;color:var(--text3);margin-top:2px">Läuft stündlich automatisch über GitHub Actions'+(settings.ftpLastSync?' · zuletzt synchronisiert: '+new Date(settings.ftpLastSync).toLocaleString('de-DE'):'')+'</div></div>'
+    +'<span style="background:var(--teal-bg);color:var(--teal);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0">Aktiv · stündlich</span>'
     +'</div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<input type="url" id="ftpInput" placeholder="ftp://server.com/performance/" value="'+settings.ftpUrl+'" style="flex:1;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
-    +'<button class="btn btn-sm btn-primary" onclick="saveFTP()" style="flex-shrink:0">Speichern</button>'
+    +'<div style="display:grid;grid-template-columns:1fr 100px;gap:10px;margin-bottom:10px">'
+    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">SFTP-Host</label><input type="text" id="ftpHost" placeholder="ftp.beispiel.de" value="'+esc(settings.ftpHost||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">Port</label><input type="text" id="ftpPort" placeholder="22" value="'+esc(settings.ftpPort||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">Benutzername</label><input type="text" id="ftpUser" placeholder="ftp-user" value="'+esc(settings.ftpUser||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">Dateiname</label><input type="text" id="ftpFile" placeholder="user_activity.csv" value="'+esc(settings.ftpFile||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'</div>'
+    +'<div style="background:var(--amber-bg,#FCEFD8);border-radius:var(--r-md);padding:10px 12px;display:flex;gap:9px;align-items:flex-start;margin-bottom:12px">'
+    +'<i class="ti ti-lock" style="font-size:15px;color:var(--amber-dark,#a15c05);flex-shrink:0;margin-top:1px"></i>'
+    +'<div style="font-size:11px;color:var(--amber-dark,#a15c05);line-height:1.5">Das Passwort wird <strong>nicht</strong> in dieser App gespeichert (aus Sicherheitsgründen für alle eingeloggten Nutzer einsehbar). Es liegt ausschließlich verschlüsselt in den <strong>GitHub Actions Secrets</strong> des Repos <code>SalesOS-DEV</code> (Settings → Secrets and variables → Actions → <code>SFTP_PASSWORD</code>).</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;justify-content:space-between;align-items:center">'
+    +'<a href="https://github.com/wiegand-sales/SalesOS-DEV/actions/workflows/ftp-sync.yml" target="_blank" style="font-size:12px;color:var(--teal-dark);text-decoration:underline">Sync-Protokoll ansehen ↗</a>'
+    +'<button class="btn btn-sm btn-primary" onclick="saveFTP()">Speichern</button>'
     +'</div></div>'
     +'</div>'
     ):'')
@@ -7210,6 +7223,11 @@ function loadSettingsFromSupabase(){
     if(res.error){console.warn('settings load failed:',res.error);return false;}
     res.data.forEach(function(r){
       if(r.key==='ftpUrl')settings.ftpUrl=r.value||'';
+      if(r.key==='ftpHost')settings.ftpHost=r.value||'';
+      if(r.key==='ftpPort')settings.ftpPort=r.value||'';
+      if(r.key==='ftpUser')settings.ftpUser=r.value||'';
+      if(r.key==='ftpFile')settings.ftpFile=r.value||'';
+      if(r.key==='ftpLastSync')settings.ftpLastSync=r.value||'';
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
     return true;
@@ -7471,13 +7489,22 @@ function importCSV(file){
 var _savingFTP=false;
 function saveFTP(){
   if(_savingFTP)return;
-  var url=document.getElementById('ftpInput').value.trim();
-  settings.ftpUrl=url;
+  var host=document.getElementById('ftpHost').value.trim();
+  var port=document.getElementById('ftpPort').value.trim();
+  var user=document.getElementById('ftpUser').value.trim();
+  var file=document.getElementById('ftpFile').value.trim();
+  settings.ftpHost=host;settings.ftpPort=port;settings.ftpUser=user;settings.ftpFile=file;
   _savingFTP=true;
-  sb.from('settings').upsert({key:'ftpUrl',value:url},{onConflict:'key'}).then(function(res){
+  sb.from('settings').upsert([
+    {key:'ftpHost',value:host},
+    {key:'ftpPort',value:port},
+    {key:'ftpUser',value:user},
+    {key:'ftpFile',value:file}
+  ],{onConflict:'key'}).then(function(res){
     _savingFTP=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
-    alert('FTP-URL gespeichert.');
+    logActivity('settings','updated','FTP-Datensync-Verbindungsinfo aktualisiert');
+    alert('Gespeichert.');
   });
 }
 var _savingSRKey=false;
