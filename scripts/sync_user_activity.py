@@ -136,10 +136,10 @@ COL = {
 def row_to_payload(row, employee_id):
     g = lambda key: row[COL[key]] if COL[key] < len(row) else ""
     wka_gesamt = parse_de_int(g("wo_gesamt")) + parse_de_int(g("wu_gesamt"))
-    marge_wka = parse_de_number(g("wo_marge")) + parse_de_number(g("wu_marge"))
+    wka_marge = parse_de_number(g("wo_marge")) + parse_de_number(g("wu_marge"))
     marge_oem = parse_de_number(g("oem_marge"))
     marge_upsell = parse_de_number(g("ups_marge"))
-    opt_gesamt = (parse_de_int(g("oem_gesamt")) + parse_de_int(g("ups_gesamt"))
+    gesamt_optimierungen = (parse_de_int(g("oem_gesamt")) + parse_de_int(g("ups_gesamt"))
                   + parse_de_int(g("wo_gesamt")) + parse_de_int(g("wu_gesamt")))
     return {
         "employee_id": employee_id,
@@ -157,11 +157,11 @@ def row_to_payload(row, employee_id):
         "oem_my": parse_de_int(g("oem_my")),
         "ups_yes": parse_de_int(g("ups_yes")),
         "wka_gesamt_yes": wka_gesamt,
-        "opt_gesamt": opt_gesamt,
+        "gesamt_optimierungen": gesamt_optimierungen,
         "oem_margenerhoehung": marge_oem,
         "ups_margenerhoehung": marge_upsell,
-        "marge_wka": marge_wka,
-        "marge_gesamt": marge_oem + marge_upsell + marge_wka,
+        "wka_margenerhoehung": wka_marge,
+        "gesamt_margenerhoehung": marge_oem + marge_upsell + wka_marge,
         "oem_cr": parse_de_number(g("oem_cr")),
         "oem_tw_cr": parse_de_number(g("oem_tw_cr")),
         "oem_yes_cr": parse_de_number(g("oem_yes_cr")),
@@ -221,6 +221,19 @@ def row_to_payload(row, employee_id):
         "wka_ups_rabatte_summe": parse_de_number(g("wu_rab_summe")),
         "wka_ups_rabatte_anzahl": parse_de_int(g("wu_rab_anzahl")),
         "wka_ups_widerrufen": parse_de_int(g("wu_widerrufen")),
+        # Gesamt-Bereich: OEM + UPS + WKA OEM + WKA UPS zusammengezaehlt
+        "gesamt_aktivitaeten": (parse_de_int(g("oem_akt")) + parse_de_int(g("ups_akt"))
+                                 + parse_de_int(g("wo_akt")) + parse_de_int(g("wu_akt"))),
+        "gesamt_nicht_erreicht": (parse_de_int(g("oem_ne")) + parse_de_int(g("ups_ne"))
+                                    + parse_de_int(g("wo_ne")) + parse_de_int(g("wu_ne"))),
+        "gesamt_nicht_erfolgreich": (parse_de_int(g("oem_nerf")) + parse_de_int(g("ups_nerf"))
+                                       + parse_de_int(g("wo_nerf")) + parse_de_int(g("wu_nerf"))),
+        # Gesamt-nicht-moeglich: nur OEM+UPS, WKA kennt kein "nicht moeglich"
+        "gesamt_nicht_moeglich": parse_de_int(g("oem_nm")) + parse_de_int(g("ups_nm")),
+        # Gesamt-storniert: nur OEM+UPS, WKA kennt "beendet" statt "storniert" (bewusst nicht mitgezaehlt)
+        "gesamt_storniert": parse_de_int(g("oem_storniert")) + parse_de_int(g("ups_storniert")),
+        "gesamt_widerrufen": (parse_de_int(g("oem_widerrufen")) + parse_de_int(g("ups_widerrufen"))
+                                + parse_de_int(g("wo_widerrufen")) + parse_de_int(g("wu_widerrufen"))),
     }
 
 
