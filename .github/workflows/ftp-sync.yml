@@ -20,7 +20,7 @@ jobs:
           python-version: '3.11'
 
       - name: Abhängigkeiten installieren
-        run: pip install paramiko requests
+        run: pip install -r scripts/requirements.txt
 
       - name: Sync ausführen
         env:
