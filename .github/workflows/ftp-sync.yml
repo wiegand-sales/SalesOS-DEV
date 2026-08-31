@@ -1,0 +1,33 @@
+name: FTP → Supabase Daten-Sync (DEV)
+
+on:
+  schedule:
+    # Täglich 05:00 Uhr MEZ/MESZ ≈ 04:00 UTC (Winterzeit) / 03:00 UTC (Sommerzeit)
+    # GitHub cron läuft in UTC - hier fest auf 04:00 UTC, also je nach Jahreszeit 05:00 oder 06:00 deutscher Zeit
+    - cron: '0 4 * * *'
+  workflow_dispatch: {}  # manueller Start über den "Run workflow"-Button
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Abhängigkeiten installieren
+        run: pip install paramiko requests
+
+      - name: Sync ausführen
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_PORT: ${{ secrets.SFTP_PORT }}
+          SFTP_USER: ${{ secrets.SFTP_USER }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/sync_user_activity.py
