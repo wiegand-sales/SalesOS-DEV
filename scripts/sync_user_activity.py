@@ -278,6 +278,19 @@ def main():
     written = upsert_batch(payload_rows)
     log(f"Fertig. {written} Zeilen erfolgreich synchronisiert.")
 
+    # Zeitstempel für die "zuletzt synchronisiert"-Anzeige in der App zurückschreiben
+    import datetime
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    r = requests.post(
+        f"{SUPABASE_URL}/rest/v1/settings?on_conflict=key",
+        headers=HEADERS,
+        json=[{"key": "ftpLastSync", "value": now_iso}],
+    )
+    if r.ok:
+        log(f"Zeitstempel aktualisiert: {now_iso}")
+    else:
+        log(f"Hinweis: Zeitstempel konnte nicht geschrieben werden: {r.status_code} {r.text[:200]}")
+
 
 if __name__ == "__main__":
     try:
