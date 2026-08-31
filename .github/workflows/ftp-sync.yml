@@ -2,9 +2,9 @@ name: FTP → Supabase Daten-Sync (DEV)
 
 on:
   schedule:
-    # Täglich 05:00 Uhr MEZ/MESZ ≈ 04:00 UTC (Winterzeit) / 03:00 UTC (Sommerzeit)
-    # GitHub cron läuft in UTC - hier fest auf 04:00 UTC, also je nach Jahreszeit 05:00 oder 06:00 deutscher Zeit
-    - cron: '0 4 * * *'
+    # Stündlich, jeweils 10 Minuten nach der vollen Stunde - vermeidet ein
+    # Auslesen mitten in einem laufenden stündlichen Update der Quelldatei
+    - cron: '10 * * * *'
   workflow_dispatch: {}  # manueller Start über den "Run workflow"-Button
 
 jobs:
