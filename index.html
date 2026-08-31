@@ -2110,8 +2110,8 @@ function restoreBackupToSupabase(d){
       perfRows.push({employee_id:empId,date:p.date,oem_nicht_erreicht:p.notReached||0,oem_nicht_moeglich:p.notPossible||0,
         oem_nicht_erfolgreich:p.notSuccessful||0,oem_tw:p.convTW||0,oem_yes:p.convYes||0,oem_sy:p.convSY||0,
         oem_my:p.convMY||0,ups_yes:p.ups_yes||0,wka_gesamt_yes:p.wka_gesamt_yes||0,oem_margenerhoehung:p.margeOEM||0,ups_margenerhoehung:p.margeUpsell||0,
-        marge_wka:p.margeWKA||0,opt_per_h:p.optPerH||0,oem_gesamt:p.convOEM||0,oem_aktivitaeten:p.oem_aktivitaeten||0,
-        opt_gesamt:p.optGesamt||0,marge_gesamt:p.margeGesamt||0,oem_cr:p.crOEM,oem_tw_cr:p.crTeilweise,
+        wka_margenerhoehung:p.margeWKA||0,opt_per_h:p.optPerH||0,oem_gesamt:p.convOEM||0,oem_aktivitaeten:p.oem_aktivitaeten||0,
+        gesamt_optimierungen:p.optGesamt||0,gesamt_margenerhoehung:p.margeGesamt||0,oem_cr:p.crOEM,oem_tw_cr:p.crTeilweise,
         oem_yes_cr:p.crYes,oem_sy_cr:p.crSuperYes,oem_my_cr:p.crMegaYes});
     });
   });
@@ -7041,8 +7041,8 @@ var CSV_COLS=[
   ['Datum','datum'],['Mitarbeiter','mitarbeiter_name'],['Aktivitäten','oem_aktivitaeten'],
   ['Nicht Erreicht','oem_nicht_erreicht'],['Nicht Möglich','oem_nicht_moeglich'],['Nicht Erfolgreich','oem_nicht_erfolgreich'],
   ['Conv. OEM','oem_gesamt'],['Conv. TW','oem_tw'],['Conv. Yes','oem_yes'],['Conv. SY','oem_sy'],['Conv. MY','oem_my'],
-  ['Upsells','ups_yes'],['WKA','wka_gesamt_yes'],['Opt./Std.','opt_per_h'],['Opt. Gesamt','opt_gesamt'],
-  ['Marge OEM','oem_margenerhoehung'],['Marge Upsells','ups_margenerhoehung'],['Marge WKA','marge_wka'],['Marge Gesamt','marge_gesamt'],
+  ['Upsells','ups_yes'],['WKA','wka_gesamt_yes'],['Opt./Std.','opt_per_h'],['Opt. Gesamt','gesamt_optimierungen'],
+  ['Marge OEM','oem_margenerhoehung'],['Marge Upsells','ups_margenerhoehung'],['Marge WKA','wka_margenerhoehung'],['Marge Gesamt','gesamt_margenerhoehung'],
   ['CR OEM %','oem_cr'],['CR TW %','oem_tw_cr'],['CR Yes %','oem_yes_cr'],['CR SY %','oem_sy_cr'],['CR MY %','oem_my_cr']
 ];
 
@@ -7085,8 +7085,8 @@ function loadPerformanceFromSupabase(){
       byEmp[r.employee_id].push({
         date:r.date,notReached:r.oem_nicht_erreicht,notPossible:r.oem_nicht_moeglich,notSuccessful:r.oem_nicht_erfolgreich,
         convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka_gesamt_yes:r.wka_gesamt_yes,
-        margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.marge_wka,optPerH:r.opt_per_h,
-        convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.opt_gesamt,margeGesamt:r.marge_gesamt,
+        margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,optPerH:r.opt_per_h,
+        convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
         crOEM:r.oem_cr,crTeilweise:r.oem_tw_cr,crYes:r.oem_yes_cr,crSuperYes:r.oem_sy_cr,crMegaYes:r.oem_my_cr
       });
     });
@@ -7383,9 +7383,9 @@ function importCSV(file){
           oem_nicht_moeglich:parseIntNum(row.oem_nicht_moeglich),oem_nicht_erfolgreich:parseIntNum(row.oem_nicht_erfolgreich),
           oem_gesamt:parseIntNum(row.oem_gesamt),oem_tw:parseIntNum(row.oem_tw),oem_yes:parseIntNum(row.oem_yes),
           oem_sy:parseIntNum(row.oem_sy),oem_my:parseIntNum(row.oem_my),ups_yes:parseIntNum(row.ups_yes),
-          wka_gesamt_yes:parseIntNum(row.wka_gesamt_yes),opt_per_h:parseNum(row.opt_per_h),opt_gesamt:parseIntNum(row.opt_gesamt),
+          wka_gesamt_yes:parseIntNum(row.wka_gesamt_yes),opt_per_h:parseNum(row.opt_per_h),gesamt_optimierungen:parseIntNum(row.gesamt_optimierungen),
           oem_margenerhoehung:parseNum(row.oem_margenerhoehung),ups_margenerhoehung:parseNum(row.ups_margenerhoehung),
-          marge_wka:parseNum(row.marge_wka),marge_gesamt:parseNum(row.marge_gesamt),
+          wka_margenerhoehung:parseNum(row.wka_margenerhoehung),gesamt_margenerhoehung:parseNum(row.gesamt_margenerhoehung),
           oem_cr:parsePercent(row.oem_cr),oem_tw_cr:parsePercent(row.oem_tw_cr),oem_yes_cr:parsePercent(row.oem_yes_cr),
           oem_sy_cr:parsePercent(row.oem_sy_cr),oem_my_cr:parsePercent(row.oem_my_cr)
         });
