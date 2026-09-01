@@ -2559,7 +2559,7 @@ function empActiveInZielMonth(e,monthKey){
 // kommende Wochen als offen/blass.
 function wochenzielKachelnHtml(){
   var curMk=today().slice(0,7);
-  var prevDate=new Date(curMk+'-01T00:00:00');
+  var prevDate=new Date(curMk+'-01T00:00:00Z');
   prevDate.setUTCMonth(prevDate.getUTCMonth()-1);
   var prevMk=prevDate.toISOString().slice(0,7);
   var todayStr=today();
