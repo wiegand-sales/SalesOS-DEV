@@ -868,7 +868,7 @@ function filterOverviewEmpList(q){
   var noRes=document.getElementById('overviewEmpNoResults');
   if(noRes)noRes.style.display=anyVisible?'none':'block';
 }
-var overviewPerfGroup='day'; // 'day' | 'week' | 'month' – eigener Zustand, unabhängig vom Mitarbeiter-Tab
+var overviewPerfGroup='month'; // 'day' | 'week' | 'month' – eigener Zustand, unabhängig vom Mitarbeiter-Tab
 var overviewPerfSortKey=null; // aktuell aktive Sortierspalte der Performance-Tabelle (Overview)
 var overviewPerfSortDir='asc'; // 'asc' | 'desc'
 function setOverviewPerfSort(key){
