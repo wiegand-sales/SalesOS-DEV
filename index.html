@@ -3867,7 +3867,7 @@ function buildOverviewTab(liste){
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
       +sortTh('Mitarbeiter','name')
       +sortTh(firstColLabel,'period')
-      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['TW','tw'],['Yes','yes'],['SY','sy'],['MY','my'],['CR OEM%','crOEM'],['CR TW%','crTW'],['CR SY%','crSY'],['CR MY%','crMY'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Marge Ges.','marge']].map(function(cc){
+      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['TW','tw'],['Yes','yes'],['SY','sy'],['MY','my'],['CR OEM%','crOEM'],['CR TW%','crTW'],['CR SY%','crSY'],['CR MY%','crMY'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Anteil OEM%','anteilOEM'],['Marge Ges.','marge']].map(function(cc){
         return sortTh(cc[0],cc[1]);
       }).join('')
       +'</tr></thead><tbody>';
@@ -3896,6 +3896,7 @@ function buildOverviewTab(liste){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--blue-dark)">'+ups+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--blue-dark)">'+wka_gesamt_yes+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">'+optGes+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--purple)">'+(convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
         +'</tr>';
       sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;
@@ -3918,20 +3919,21 @@ function buildOverviewTab(liste){
       var crTWcalc=divSafe(sumTw,sumTw+sumYes+sumSy+sumMy);
       var crSYcalc=divSafe(sumSy,sumYes+sumSy+sumMy);
       var crMYcalc=divSafe(sumMy,sumYes+sumSy+sumMy);
+      var anteilOEMcalc=divSafe(sumConvOEM,sumConvOEM+sumUps+sumWka);
       // Trennzeile: kleiner visueller Abstand zwischen Mitarbeiter-Zeilen und Summe/Durchschnitt
-      h+='<tr><td colspan="19" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
+      h+='<tr><td colspan="20" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
       h+='<tr class="perf-sum-row" style="background:#0c3b40">'
         +'<td style="padding:13px 14px;font-weight:700;color:#fff" colspan="2">Σ Summe</td>'
         +sumTd(sumAkt)+sumTd(sumNotR)+sumTd(sumNotP)+sumTd(sumNotS)+sumTd(sumConvOEM)+sumTd(sumTw)+sumTd(sumYes)+sumTd(sumSy)+sumTd(sumMy)
         +sumTd(crOEMcalc,pct)+sumTd(crTWcalc,pct)+sumTd(crSYcalc,pct)+sumTd(crMYcalc,pct)
-        +sumTd(sumUps)+sumTd(sumWka)+sumTd(sumOptGes)+sumTd(sumMarge,eur,'right')
+        +sumTd(sumUps)+sumTd(sumWka)+sumTd(sumOptGes)+sumTd(anteilOEMcalc,pct)+sumTd(sumMarge,eur,'right')
         +'</tr>';
       h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
         +'<td style="padding:13px 14px;font-weight:700;color:#0c3b40" colspan="2">Ø Durchschnitt</td>'
         +avgTd(sumAkt/rowCount,rnd1)+avgTd(sumNotR/rowCount,rnd1)+avgTd(sumNotP/rowCount,rnd1)+avgTd(sumNotS/rowCount,rnd1)
         +avgTd(sumConvOEM/rowCount,rnd1)+avgTd(sumTw/rowCount,rnd1)+avgTd(sumYes/rowCount,rnd1)+avgTd(sumSy/rowCount,rnd1)+avgTd(sumMy/rowCount,rnd1)
         +avgTd(crOEMcalc,pct)+avgTd(crTWcalc,pct)+avgTd(crSYcalc,pct)+avgTd(crMYcalc,pct)
-        +avgTd(sumUps/rowCount,rnd1)+avgTd(sumWka/rowCount,rnd1)+avgTd(sumOptGes/rowCount,rnd1)+avgTd(sumMarge/rowCount,eur,'right')
+        +avgTd(sumUps/rowCount,rnd1)+avgTd(sumWka/rowCount,rnd1)+avgTd(sumOptGes/rowCount,rnd1)+avgTd(anteilOEMcalc,pct)+avgTd(sumMarge/rowCount,eur,'right')
         +'</tr>';
     }
     h+='</tbody></table></div>';
