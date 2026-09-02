@@ -4343,7 +4343,7 @@ function buildOverviewTab(liste,section){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(aktPerHour.toFixed(1),akt)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notR/akt*100),rowEmpT.notReached.val,rowEmpT.notReached.dir):'color:var(--text2)')+'">'+stackCell((akt>0?Math.round(notR/akt*100)+'%':'—'),(akt>0?notR:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notP/akt*100),rowEmpT.notPossible.val,rowEmpT.notPossible.dir):'color:var(--text2)')+'">'+stackCell((akt>0?Math.round(notP/akt*100)+'%':'—'),(akt>0?notP:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notS/akt*100),rowEmpT.notSuccessful.val,rowEmpT.notSuccessful.dir):'color:var(--text2)')+'">'+stackCell((akt>0?Math.round(notS/akt*100)+'%':'—'),(akt>0?notS:'—'))+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+((notS+optGes)>0?fc(Math.round(notS/(notS+optGes)*100),rowEmpT.notSuccessful.val,rowEmpT.notSuccessful.dir):'color:var(--text2)')+'">'+stackCell(((notS+optGes)>0?Math.round(notS/(notS+optGes)*100)+'%':'—'),((notS+optGes)>0?notS:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(convOEM/optGes*100)+'%':'—'),(optGes>0?convOEM:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(wka_gesamt_yes/optGes*100)+'%':'—'),(optGes>0?wka_gesamt_yes:'—'))+'</td>'
@@ -4388,7 +4388,7 @@ function buildOverviewTab(liste,section){
       var anteilOEMcalc=divSafe(sumConvOEM,sumConvOEM+sumUps+sumWka);
       var anteilUpsCalc=divSafe(sumUps,sumConvOEM+sumUps+sumWka);
       var anteilWkaCalc=divSafe(sumWka,sumConvOEM+sumUps+sumWka);
-      var notRpct=divSafe(sumNotR,sumAkt),notPpct=divSafe(sumNotP,sumAkt),notSpct=divSafe(sumNotS,sumAkt);
+      var notRpct=divSafe(sumNotR,sumAkt),notPpct=divSafe(sumNotP,sumAkt),notSpct=divSafe(sumNotS,sumNotS+sumOptGes);
       var margeDurchCalc=sumOptGes>0?sumMarge/sumOptGes:0;
       var aktPerHourCalc=sumTotalHours>0?sumAkt/sumTotalHours:0;
       var optPerHourCalc=sumTotalHours>0?sumOptGes/sumTotalHours:0;
