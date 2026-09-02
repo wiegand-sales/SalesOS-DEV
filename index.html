@@ -3610,6 +3610,7 @@ function buildOverviewTab(liste,section){
   }
   var optOemZiel=avgOptTagZielvereinbarung();
   var h='';
+  if(section==='performance'){
   var mk=today().slice(0,7);
   var heroSums={optGesamt:0,margeGesamt:0};
   visible.forEach(function(e){
@@ -3627,20 +3628,20 @@ function buildOverviewTab(liste,section){
   var eurH=function(v){return '€ '+Math.round(v).toLocaleString('de-DE');};
 
   h+='<div style="background:linear-gradient(135deg,#0c3b40,#164e54);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px">';
-  h+='<div style="display:flex;gap:20px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
-  h+='<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">'
-    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GESAMT</div>'
-    +'<div style="font-size:26px;font-weight:700;margin-top:3px">'+heroSums.optGesamt+' <span style="font-size:14px;font-weight:500;color:#bcdadd">Stk.</span></div>'
+  h+='<div style="display:flex;gap:56px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
+  h+='<div style="display:flex;align-items:center;gap:18px">'
+    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+heroSums.optGesamt+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+optProTag.toFixed(1)+' Opt./Tag</div>'
     +'</div>'
-    +sparklineFilled(optSeries,'#7ED2DB',110,40)
+    +sparkline(optSeries,'#7ED2DB',90,34)
     +'</div>';
-  h+='<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">'
-    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">MARGENERHÖHUNG</div>'
-    +'<div style="font-size:26px;font-weight:700;margin-top:3px">'+eurH(heroSums.margeGesamt)+'</div>'
+  h+='<div style="display:flex;align-items:center;gap:18px">'
+    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurH(heroSums.margeGesamt)+'</div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+' Marge/Arbeitstag</div>'
     +'</div>'
-    +sparklineFilled(margeSeries,'#7ED2DB',110,40)
+    +sparkline(margeSeries,'#7ED2DB',90,34)
     +'</div>';
   h+='</div>'; // Ende Hero-Zeile
 
@@ -3716,6 +3717,109 @@ function buildOverviewTab(liste,section){
   }
   h+='</div>'; // Ende KPI-Zeile
   h+='</div>'; // Ende Hero-Panel
+  } else {
+  // ── Alte Darstellung (Overview): Banner + 5 weisse Kacheln, unveraendert ──
+  h+=buildMonthBar(visible);
+
+  if(isAll){
+    function teamMonthAvg(key,monthsAgo){
+      var ym=monthBoundsUTC(today(),monthsAgo).ym;
+      var vals=[];
+      selectedEmps.forEach(function(e){
+        (performance[e.id]||[]).forEach(function(x){
+          if(x.date.slice(0,7)===ym&&x[key]!==undefined&&x[key]!==null)vals.push(x[key]);
+        });
+      });
+      return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:null;
+    }
+    function teamDailySeries(key,n){
+      var byDate={};
+      selectedEmps.forEach(function(e){
+        (performance[e.id]||[]).forEach(function(x){
+          if(x[key]===undefined||x[key]===null)return;
+          if(!byDate[x.date])byDate[x.date]=[];
+          byDate[x.date].push(x[key]);
+        });
+      });
+      var dates=Object.keys(byDate).sort();
+      var series=dates.map(function(d){var arr=byDate[d];return arr.reduce(function(a,b){return a+b;},0)/arr.length;});
+      return series.slice(-(n||7));
+    }
+    var kpisAll=[
+      {label:'CR OEM', key:'crOEM',      target:CR_GOOD, dir:'gte', pct:true},
+      {label:'CR TW',  key:'crTeilweise', target:KPI_TARGETS.crTeilweise.val, dir:KPI_TARGETS.crTeilweise.dir, pct:true},
+      {label:'CR SY',  key:'crSuperYes',  target:KPI_TARGETS.crSuperYes.val,  dir:KPI_TARGETS.crSuperYes.dir,  pct:true},
+      {label:'CR MY',  key:'crMegaYes',   target:KPI_TARGETS.crMegaYes.val,   dir:KPI_TARGETS.crMegaYes.dir,   pct:true},
+      {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false},
+    ];
+    h+='<div class="g5" style="margin-bottom:22px">';
+    kpisAll.forEach(function(k){
+      var cur=teamMonthAvg(k.key,0);
+      var prev=teamMonthAvg(k.key,1);
+      var vR=cur!==null?(k.pct?Math.round(cur):+cur.toFixed(1)):null;
+      var hit=cur!==null&&k.target!==null&&(k.dir==='lte'?cur<=k.target:cur>=k.target);
+      var col=cur!==null?(k.target!==null?kpiCol(cur,k.target,k.dir):noTargetKpiCol(cur,prev,k.dir)):'var(--text3)';
+      var trend=(cur!==null&&prev!==null)?cur-prev:null;
+      var trendArrow=trend===null?'':(trend>0.5?'↑':trend<-0.5?'↓':'→');
+      var trendCol=trend===null?'var(--text3)':(trend>0.5?'var(--teal-dark)':trend<-0.5?'var(--red)':'var(--text2)');
+      var spark7K=teamDailySeries(k.key,7);
+      var targetTxt=k.target!==null?('Ziel '+(k.dir==='gte'?'≥':'≤')+k.target+(k.pct?'%':'')+' '+(cur!==null?(hit?'✓':'↓'):'')):'Team-Durchschnitt';
+      var targetCol=k.target!==null?(cur!==null?(hit?'var(--teal-dark)':'var(--red)'):'var(--text3)'):'var(--text3)';
+      h+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
+        +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">AUSWAHL '+k.label.toUpperCase()+'</div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
+        +'<div style="display:flex;align-items:baseline;gap:6px">'
+        +'<div style="font-size:20px;font-weight:700;color:'+col+'">'+(vR!==null?vR+(k.pct?'%':''):'—')+'</div>'
+        +'<div style="font-size:13px;font-weight:700;color:'+trendCol+'">'+trendArrow+'</div>'
+        +'</div>'
+        +sparkline(spark7K,col,54,26)
+        +'</div>'
+        +'<div style="font-size:10.5px;color:var(--text3)">Vormonat: '+(prev!==null?Math.round(prev)+(k.pct?'%':''):'—')+'</div>'
+        +'<div style="font-size:10.5px;color:'+targetCol+';margin-top:2px;font-weight:600">'+targetTxt+'</div>'
+        +'</div>';
+    });
+    h+='</div>';
+  } else {
+  var kpis=[
+    {label:'CR OEM', key:'crOEM',      target:empT.crOEM.val,      dir:empT.crOEM.dir,      pct:true},
+    {label:'CR TW',  key:'crTeilweise', target:empT.crTeilweise.val, dir:empT.crTeilweise.dir, pct:true},
+    {label:'CR SY',  key:'crSuperYes',  target:empT.crSuperYes.val,  dir:empT.crSuperYes.dir,  pct:true},
+    {label:'CR MY',  key:'crMegaYes',   target:empT.crMegaYes.val,   dir:empT.crMegaYes.dir,   pct:true},
+    {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false},
+  ];
+  h+='<div class="g5" style="margin-bottom:22px">';
+  kpis.forEach(function(k){
+    var cur=monthAvg(emp.id,k.key,0);
+    var prev=monthAvg(emp.id,k.key,1);
+    var vR=cur!==null?(k.pct?Math.round(cur):+cur.toFixed(1)):null;
+    var hit=cur!==null&&k.target!==null&&(k.dir==='lte'?cur<=k.target:cur>=k.target);
+    var col=cur!==null?(k.target!==null?kpiCol(cur,k.target,k.dir):noTargetKpiCol(cur,prev,k.dir)):'var(--text3)';
+    var trend=(cur!==null&&prev!==null)?cur-prev:null;
+    var trendArrow=trend===null?'':(trend>0.5?'↑':trend<-0.5?'↓':'→');
+    var trendCol=trend===null?'var(--text3)':(trend>0.5?'var(--teal-dark)':trend<-0.5?'var(--red)':'var(--text2)');
+    var _perfAllK=(performance[emp.id]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+    var _cutoff7K=addDaysUTC(today(),-7);
+    var _spark7srcK=_perfAllK.filter(function(x){return x.date>=_cutoff7K;});
+    if(_spark7srcK.length<2)_spark7srcK=_perfAllK.slice(-7);
+    var spark7K=_spark7srcK.map(function(x){return x[k.key];});
+    var targetTxt=k.target!==null?('Ziel '+(k.dir==='gte'?'≥':'≤')+k.target+(k.pct?'%':'')+' '+(cur!==null?(hit?'✓':'↓'):'')):'kein Zielwert';
+    var targetCol=k.target!==null?(cur!==null?(hit?'var(--teal-dark)':'var(--red)'):'var(--text3)'):'var(--text3)';
+    h+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
+      +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+k.label.toUpperCase()+'</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
+      +'<div style="display:flex;align-items:baseline;gap:6px">'
+      +'<div style="font-size:20px;font-weight:700;color:'+col+'">'+(vR!==null?vR+(k.pct?'%':''):'—')+'</div>'
+      +'<div style="font-size:13px;font-weight:700;color:'+trendCol+'">'+trendArrow+'</div>'
+      +'</div>'
+      +sparkline(spark7K,col,54,26)
+      +'</div>'
+      +'<div style="font-size:10.5px;color:var(--text3)">Vormonat: '+(prev!==null?Math.round(prev)+(k.pct?'%':''):'—')+'</div>'
+      +'<div style="font-size:10.5px;color:'+targetCol+';margin-top:2px;font-weight:600">'+targetTxt+'</div>'
+      +'</div>';
+  });
+  h+='</div>';
+  }
+  } // Ende else (Overview)
 
   var selLabel=selectedEmps.length===visible.length?'Alle Mitarbeiter':(isAll?selectedEmps.length+' Mitarbeiter ausgewählt':emp.name);
   if(showRest){
