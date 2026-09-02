@@ -3538,25 +3538,44 @@ function sparklineFilled(values,color,w,h){
     +'</svg>';
 }
 // Marge (Ist) und Ziel fuer die aktuelle Kalenderwoche - gleiche Berechnung wie die Wochenziel-Kacheln in der Zielvereinbarung
-function currentWeekMargin(){
-  var mk=today().slice(0,7);
+// Berechnet fuer einen Mitarbeiterkreis das Wochenziel-Tagekontingent eines bestimmten Monats-Anteils einer KW
+function weekTargetPortion(mk,curKw){
   var weeks=getMonthWeeksZiel(mk);
-  var rec=zielStore[mk]||{};
-  var todayStr=today();
-  var curKw=isoWeekNum(new Date(todayStr+'T00:00:00Z'));
   var wi=-1,wm=null;
   weeks.forEach(function(w,i){if(w.kw===curKw){wm=w;wi=i;}});
-  if(!wm)return {ist:0,target:0,kw:curKw};
+  if(!wm)return 0;
+  var rec=zielStore[mk]||{};
   var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
-  var target=0,ist=0;
+  var target=0;
   visible.forEach(function(e){
     var r=rec[e.id]||{};
     var days=(r.weeks&&r.weeks[wi]!=null)?r.weeks[wi]:wm.defaultDays;
     var optTag=r.optTag!=null?r.optTag:0;
     var margeOpt=r.margeOpt!=null?r.margeOpt:0;
     target+=days*optTag*margeOpt;
-    ist+=istForEmpWeek(e.id,wm.from,wm.to);
   });
+  return target;
+}
+function currentWeekMargin(){
+  var mk=today().slice(0,7);
+  var weeks=getMonthWeeksZiel(mk);
+  var todayStr=today();
+  var curKw=isoWeekNum(new Date(todayStr+'T00:00:00Z'));
+  var wi=-1,wm=null;
+  weeks.forEach(function(w,i){if(w.kw===curKw){wm=w;wi=i;}});
+  if(!wm)return {ist:0,target:0,kw:curKw};
+  // Sonderfall: die KW kann in den Vormonat (z.B. KW36 Ende August/Anfang September) oder in
+  // den Folgemonat hineinreichen. wm.from/wm.to spannen bereits die komplette Mo-Fr-Woche auf,
+  // daher ist "ist" (Performance-Daten) automatisch korrekt. Das Wochenziel wird jedoch pro
+  // Monat separat in der Zielvereinbarung gepflegt - daher hier die Anteile aus beiden Monaten
+  // zusammenzaehlen, falls die Woche ueber eine Monatsgrenze reicht.
+  var target=weekTargetPortion(mk,curKw);
+  var fromMk=wm.from.slice(0,7),toMk=wm.to.slice(0,7);
+  if(fromMk!==mk)target+=weekTargetPortion(fromMk,curKw);
+  if(toMk!==mk)target+=weekTargetPortion(toMk,curKw);
+  var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
+  var ist=0;
+  visible.forEach(function(e){ist+=istForEmpWeek(e.id,wm.from,wm.to);});
   return {ist:ist,target:target,kw:curKw};
 }
 function buildMonthBar(liste){
