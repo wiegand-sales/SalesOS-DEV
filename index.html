@@ -3692,11 +3692,11 @@ function buildOverviewTab(liste,section){
       +'<div style="font-size:10px;color:#8fb5b9;margin-top:3px">Vormonat '+(prev!==null?Math.round(prev)+(k.pct?'%':''):'—')+' · '+targetTxt+'</div>'
       +'</div>';
   }
-  if(isAll){
+  if(section==='performance'||isAll){
     function teamMonthAvg(key,monthsAgo){
       var ym=monthBoundsUTC(today(),monthsAgo).ym;
       var vals=[];
-      selectedEmps.forEach(function(e){
+      visible.forEach(function(e){
         (performance[e.id]||[]).forEach(function(x){
           if(x.date.slice(0,7)===ym&&x[key]!==undefined&&x[key]!==null)vals.push(x[key]);
         });
@@ -3705,7 +3705,7 @@ function buildOverviewTab(liste,section){
     }
     function teamDailySeries(key,n){
       var byDate={};
-      selectedEmps.forEach(function(e){
+      visible.forEach(function(e){
         (performance[e.id]||[]).forEach(function(x){
           if(x[key]===undefined||x[key]===null)return;
           if(!byDate[x.date])byDate[x.date]=[];
