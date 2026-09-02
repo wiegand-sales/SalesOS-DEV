@@ -3717,12 +3717,12 @@ function buildOverviewTab(liste,section){
   var elapsedWD=elapsedWorkDaysThisMonth();
   var optProTag=elapsedWD>0?heroSums.optGesamt/elapsedWD:0;
   var margeProTag=elapsedWD>0?heroSums.margeGesamt/elapsedWD:0;
-  // Letzte 7 Arbeitstage (Mo-Fr, ohne bayerische Feiertage) - Basis fuer ALLE Sparklines im Hero-Panel,
+  // Letzte N Arbeitstage (Mo-Fr, ohne bayerische Feiertage) - Basis fuer ALLE Sparklines im Hero-Panel,
   // live aus den Rohdaten berechnet statt aus importierten CR-Einzelwerten
-  function last7WorkdayDates(){
+  function lastNWorkdayDates(n){
     var dates=[],feiertageCache={};
     var d=new Date(today()+'T00:00:00Z');
-    while(dates.length<7){
+    while(dates.length<n){
       var dow=d.getUTCDay();
       var y=d.getUTCFullYear();
       if(!feiertageCache[y])feiertageCache[y]=bayernFeiertage(y);
@@ -3732,7 +3732,8 @@ function buildOverviewTab(liste,section){
     }
     return dates;
   }
-  var _last7WD=last7WorkdayDates();
+  var _last7WD=lastNWorkdayDates(7);
+  var _last14WD=lastNWorkdayDates(14); // fuer die drei oberen Balkendiagramme (Opt.Gesamt/Woche/Monat)
   function crSumsForDate(dateStr){
     var s={tw:0,yes:0,sy:0,my:0,oem:0,nerrOem:0,ups:0,wka:0,marge:0};
     visible.forEach(function(e){
@@ -3745,8 +3746,8 @@ function buildOverviewTab(liste,section){
     });
     return s;
   }
-  var optSeries=_last7WD.map(function(d){var s=crSumsForDate(d);return s.oem+s.ups+s.wka;});
-  var margeSeries=_last7WD.map(function(d){return crSumsForDate(d).marge;});
+  var optSeries=_last14WD.map(function(d){var s=crSumsForDate(d);return s.oem+s.ups+s.wka;});
+  var margeSeries=_last14WD.map(function(d){return crSumsForDate(d).marge;});
   var eurH=function(v){return '€ '+Math.round(v).toLocaleString('de-DE');};
   var eurUnit=function(v){return Math.round(v).toLocaleString('de-DE')+' <span style="font-size:15px;font-weight:500;color:#bcdadd">EUR</span>';};
   var optZielMonat=teamMonthZiel(visible,mk,false);
@@ -3760,7 +3761,7 @@ function buildOverviewTab(liste,section){
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+optProTag.toFixed(1)+' Opt./Tag</div>'
     +'<div style="font-size:11px;color:#8fb5b9">Ziel '+Math.round(optZielMonat).toLocaleString('de-DE')+' Stk./Mon.</div>'
     +'</div>'
-    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%">'+barsHighlightLast(optSeries,'#7ED2DB',110,34)+'</div>';
+    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(optSeries,'#7ED2DB',300,34)+'</div>';
   var weekMarge=currentWeekMargin();
   var weekElapsedWD=weekMarge.from?elapsedWorkDaysInRange(weekMarge.from,weekMarge.to):0;
   var weekProTag=weekElapsedWD>0?weekMarge.ist/weekElapsedWD:0;
@@ -3770,7 +3771,7 @@ function buildOverviewTab(liste,section){
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(weekProTag)+'/Arbeitstag</div>'
     +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(weekMarge.target)+'/Woche</div>'
     +'</div>'
-    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%">'+barsHighlightLast(margeSeries,'#7ED2DB',110,34)+'</div>';
+    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(margeSeries,'#7ED2DB',300,34)+'</div>';
   var monthLabelHero=MONTH_NAMES_DE[new Date(today()+'T00:00:00Z').getUTCMonth()].toUpperCase();
   h+='<div style="grid-column:span 1;padding-left:14px">'
     +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">'+monthLabelHero+'</div>'
@@ -3778,7 +3779,7 @@ function buildOverviewTab(liste,section){
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+'/Arbeitstag</div>'
     +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(margeZielMonat)+'/Mon.</div>'
     +'</div>'
-    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%">'+barsHighlightLast(margeSeries,'#7ED2DB',110,34)+'</div>';
+    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(margeSeries,'#7ED2DB',300,34)+'</div>';
   h+='</div>'; // Ende Hero-Zeile
 
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
