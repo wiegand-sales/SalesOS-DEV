@@ -3893,7 +3893,11 @@ function buildOverviewTab(liste){
       var ups=row.ups_yes||0,wka_gesamt_yes=row.wka_gesamt_yes||0;
       var optGes=row.optGesamt||(convOEM+ups+wka_gesamt_yes)||0;
       var marge=row.margeGesamt||row.margin||0;
-      var crOEM=Math.round(row.crOEM||0),crTW=Math.round(row.crTeilweise||0),crSY=Math.round(row.crSuperYes||0),crMY=Math.round(row.crMegaYes||0);
+      var oemDenom=notROem+notPOem+notSOem;
+      var crOEM=oemDenom>0?Math.round(convOEM/oemDenom*100):0;
+      var crTW=(tw+yes+sy+my)>0?Math.round(tw/(tw+yes+sy+my)*100):0;
+      var crSY=(yes+sy+my)>0?Math.round(sy/(yes+sy+my)*100):0;
+      var crMY=(yes+sy+my)>0?Math.round(my/(yes+sy+my)*100):0;
       var crYes=(yes+sy+my)>0?Math.round(yes/(yes+sy+my)*100):0;
       var crSyMy=(yes+sy+my)>0?Math.round((sy+my)/(yes+sy+my)*100):0;
       return {item:item,rowEmp:rowEmp,rowEmpT:rowEmpT,g:g,name:rowEmp.name,period:g.label,periodKey:g.key,akt:akt,notR:notR,notP:notP,notS:notS,notROem:notROem,notPOem:notPOem,notSOem:notSOem,
