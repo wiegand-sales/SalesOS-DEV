@@ -986,6 +986,13 @@ function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDat
 function setOverviewQuickRange(type){
   var t=today();
   if(type==='today'){setOverviewDateRange(t,t);}
+  else if(type==='week'){
+    var dToday=new Date(t+'T00:00:00Z');
+    var dow=dToday.getUTCDay()||7;
+    var monday=new Date(dToday);monday.setUTCDate(dToday.getUTCDate()-(dow-1));
+    var sunday=new Date(monday);sunday.setUTCDate(monday.getUTCDate()+6);
+    setOverviewDateRange(monday.toISOString().slice(0,10),sunday.toISOString().slice(0,10));
+  }
   else if(type==='month'){var mb=monthBoundsUTC(t,0);setOverviewDateRange(mb.from,mb.to);}
   else if(type==='year'){var y=t.slice(0,4);setOverviewDateRange(y+'-01-01',y+'-12-31');}
 }
@@ -4165,8 +4172,13 @@ function buildOverviewTab(liste,section){
     var tToday=today();
     var mb=monthBoundsUTC(tToday,0);
     var yFrom=tToday.slice(0,4)+'-01-01',yTo=tToday.slice(0,4)+'-12-31';
-    var quickRanges={today:{from:tToday,to:tToday},month:{from:mb.from,to:mb.to},year:{from:yFrom,to:yTo}};
-    [{k:'today',l:'Heute'},{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
+    var _dToday=new Date(tToday+'T00:00:00Z');
+    var _dow=_dToday.getUTCDay()||7; // Sonntag als 7 statt 0, damit Montag=1
+    var _monday=new Date(_dToday);_monday.setUTCDate(_dToday.getUTCDate()-(_dow-1));
+    var _sunday=new Date(_monday);_sunday.setUTCDate(_monday.getUTCDate()+6);
+    var weekFrom=_monday.toISOString().slice(0,10),weekTo=_sunday.toISOString().slice(0,10);
+    var quickRanges={today:{from:tToday,to:tToday},week:{from:weekFrom,to:weekTo},month:{from:mb.from,to:mb.to},year:{from:yFrom,to:yTo}};
+    [{k:'today',l:'Heute'},{k:'week',l:'Aktuelle Woche'},{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
       var qr=quickRanges[it.k];
       var isActive=(effFrom===qr.from&&effTo===qr.to);
       h+='<button class="'+(isActive?'active':'')+'" data-q="'+it.k+'" onclick="setOverviewQuickRange(this.dataset.q)">'+it.l+'</button>';
