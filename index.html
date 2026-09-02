@@ -4147,7 +4147,11 @@ function buildOverviewTab(liste,section){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text)">'+(optGes>0?Math.round(ups/optGes*100)+'%':'—')+(optGes>0?' <span style="font-size:11px;color:var(--text3)">('+ups+')</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text)">'+(optGes>0?Math.round(wka_gesamt_yes/optGes*100)+'%':'—')+(optGes>0?' <span style="font-size:11px;color:var(--text3)">('+wka_gesamt_yes+')</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+optGes+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:center">'+(rowTotalHours>0?(optGes/rowTotalHours).toFixed(1):'—')+'</td>'
+        +(function(){
+          var optPerHVal=rowTotalHours>0?optGes/rowTotalHours:0;
+          var colStyle=rowTotalHours>0?fc(Math.round(optPerHVal*10)/10,rowEmpT.optPerH.val,rowEmpT.optPerH.dir):'';
+          return '<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:center;'+colStyle+'">'+(rowTotalHours>0?optPerHVal.toFixed(1):'—')+'</td>';
+        })()
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:center;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+'">'+crOEM+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:center;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+'">'+crTW+'% <span style="font-size:11px;color:var(--text3)">('+tw+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:center;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+'">'+crYes+'% <span style="font-size:11px;color:var(--text3)">('+yes+')</span></td>'
