@@ -3018,6 +3018,24 @@ function fd(d){
   return wd+', '+p[2]+'.'+p[1]+'.'+p[0];
 }
 function today(){return new Date().toISOString().slice(0,10);}
+// Fuer "Akt./Std." am heutigen Tag: statt der vollen Tagesstunden nur die seit Arbeitsbeginn (8:30)
+// tatsaechlich verstrichene Zeit nutzen. Nutzt den letzten Sync-Zeitpunkt als Referenz, falls der
+// Sync heute schon gelaufen ist (Daten sind ohnehin nur so aktuell wie der letzte Sync), sonst die
+// aktuelle Uhrzeit. Untergrenze 0.5h, um absurde Werte kurz nach 8:30 zu vermeiden.
+function elapsedWorkHoursToday(){
+  var now=new Date();
+  var refTime=now;
+  if(settings.ftpLastSync){
+    var syncDate=new Date(settings.ftpLastSync);
+    if(!isNaN(syncDate.getTime())&&syncDate.toISOString().slice(0,10)===today()&&syncDate<now){
+      refTime=syncDate;
+    }
+  }
+  var startOfDay=new Date(refTime);
+  startOfDay.setHours(8,30,0,0);
+  var diffHours=(refTime-startOfDay)/3600000;
+  return Math.max(diffHours,0.5);
+}
 function hexToRgba(hex,alpha){
   hex=(hex||'#206A72').replace('#','');
   if(hex.length===3)hex=hex.split('').map(function(c){return c+c;}).join('');
@@ -3906,7 +3924,11 @@ function buildOverviewTab(liste){
       var rowEmp=sr.rowEmp,rowEmpT=sr.rowEmpT,g=sr.g;
       var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy;
       var hoursPerDay=(rowEmp.hours||40)/5;
-      var rowTotalHours=hoursPerDay*g.count;
+      var groupIncludesToday=false;
+      if(overviewPerfGroup==='day'){groupIncludesToday=(g.key===today());}
+      else if(overviewPerfGroup==='week'){var iwToday=isoWeekOf(new Date(today()+'T00:00:00'));groupIncludesToday=(g.key===iwToday.year+'-W'+(iwToday.week<10?'0':'')+iwToday.week);}
+      else {groupIncludesToday=(g.key===today().slice(0,7));}
+      var rowTotalHours=groupIncludesToday?(hoursPerDay*Math.max(g.count-1,0)+elapsedWorkHoursToday()):(hoursPerDay*g.count);
       var aktPerHour=rowTotalHours>0?akt/rowTotalHours:0;
       function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
       var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
