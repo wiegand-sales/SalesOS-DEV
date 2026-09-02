@@ -2337,7 +2337,7 @@ function groupPerfRows(rows,mode){
     if(!groups[key]){groups[key]={label:label,items:[]};order.push(key);}
     groups[key].items.push(r);
   });
-  var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka_gesamt_yes','optGesamt','margeGesamt','margin'];
+  var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka_gesamt_yes','optGesamt','margeGesamt','margin','gesamtAktivitaeten','gesamtNichtErreicht','gesamtNichtMoeglich','gesamtNichtErfolgreich'];
   var avgFields=['crOEM','crTeilweise','crSuperYes','crMegaYes'];
   return order.sort().reverse().map(function(key){
     var g=groups[key],agg={};
@@ -3883,17 +3883,20 @@ function buildOverviewTab(liste){
     var sortableRows=rowsToRender.map(function(item){
       var g=item.g,rowEmp=item.emp,rowEmpT=item.empT;
       var row=g.row;
-      var akt=row.oem_aktivitaeten||row.calls||0;
+      var akt=row.gesamtAktivitaeten!=null?row.gesamtAktivitaeten:(row.oem_aktivitaeten||row.calls||0);
       var convOEM=row.convOEM||0;
       var tw=row.convTW||0,yes=row.convYes||0,sy=row.convSY||0,my=row.convMY||0;
-      var notR=row.notReached||0,notP=row.notPossible||0,notS=row.notSuccessful||0;
+      var notR=row.gesamtNichtErreicht!=null?row.gesamtNichtErreicht:(row.notReached||0);
+      var notP=row.gesamtNichtMoeglich!=null?row.gesamtNichtMoeglich:(row.notPossible||0);
+      var notS=row.gesamtNichtErfolgreich!=null?row.gesamtNichtErfolgreich:(row.notSuccessful||0);
+      var notROem=row.notReached||0,notPOem=row.notPossible||0,notSOem=row.notSuccessful||0; // OEM-spezifisch, nur fuer CR-OEM-Formel (Ziel/(NE+NM+NErr))
       var ups=row.ups_yes||0,wka_gesamt_yes=row.wka_gesamt_yes||0;
       var optGes=row.optGesamt||(convOEM+ups+wka_gesamt_yes)||0;
       var marge=row.margeGesamt||row.margin||0;
       var crOEM=Math.round(row.crOEM||0),crTW=Math.round(row.crTeilweise||0),crSY=Math.round(row.crSuperYes||0),crMY=Math.round(row.crMegaYes||0);
       var crYes=(yes+sy+my)>0?Math.round(yes/(yes+sy+my)*100):0;
       var crSyMy=(yes+sy+my)>0?Math.round((sy+my)/(yes+sy+my)*100):0;
-      return {item:item,rowEmp:rowEmp,rowEmpT:rowEmpT,g:g,name:rowEmp.name,period:g.label,periodKey:g.key,akt:akt,notR:notR,notP:notP,notS:notS,
+      return {item:item,rowEmp:rowEmp,rowEmpT:rowEmpT,g:g,name:rowEmp.name,period:g.label,periodKey:g.key,akt:akt,notR:notR,notP:notP,notS:notS,notROem:notROem,notPOem:notPOem,notSOem:notSOem,
         convOEM:convOEM,tw:tw,yes:yes,sy:sy,my:my,crOEM:crOEM,crTW:crTW,crYes:crYes,crSY:crSY,crMY:crMY,crSyMy:crSyMy,ups:ups,wka_gesamt_yes:wka_gesamt_yes,optGes:optGes,marge:marge};
     });
     if(overviewPerfSortKey){
@@ -3919,10 +3922,10 @@ function buildOverviewTab(liste){
         return sortTh(cc[0],cc[1],';text-align:right');
       }).join('')
       +'</tr></thead><tbody>';
-    var sumAkt=0,sumNotR=0,sumNotP=0,sumNotS=0,sumConvOEM=0,sumTw=0,sumYes=0,sumSy=0,sumMy=0,sumUps=0,sumWka=0,sumOptGes=0,sumMarge=0,sumCrOEM=0,sumCrTW=0,sumCrSY=0,sumCrMY=0,sumTotalHours=0;
+    var sumAkt=0,sumNotR=0,sumNotP=0,sumNotS=0,sumNotROem=0,sumNotPOem=0,sumNotSOem=0,sumConvOEM=0,sumTw=0,sumYes=0,sumSy=0,sumMy=0,sumUps=0,sumWka=0,sumOptGes=0,sumMarge=0,sumCrOEM=0,sumCrTW=0,sumCrSY=0,sumCrMY=0,sumTotalHours=0;
     sortableRows.forEach(function(sr,ridx){
       var rowEmp=sr.rowEmp,rowEmpT=sr.rowEmpT,g=sr.g;
-      var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy;
+      var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,notROem=sr.notROem,notPOem=sr.notPOem,notSOem=sr.notSOem,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy;
       var hoursPerDay=(rowEmp.hours||40)/5;
       var groupIncludesToday=false;
       if(overviewPerfGroup==='day'){groupIncludesToday=(g.key===today());}
@@ -3953,7 +3956,7 @@ function buildOverviewTab(liste){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)">'+(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—')+'</td>'
         +'</tr>';
-      sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;sumTotalHours+=rowTotalHours;
+      sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumNotROem+=notROem;sumNotPOem+=notPOem;sumNotSOem+=notSOem;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;sumTotalHours+=rowTotalHours;
       sumUps+=ups;sumWka+=wka_gesamt_yes;sumOptGes+=optGes;sumMarge+=marge;
       sumCrOEM+=crOEM;sumCrTW+=crTW;sumCrSY+=crSY;sumCrMY+=crMY;
     });
@@ -3969,7 +3972,7 @@ function buildOverviewTab(liste){
       // berechnet (echte Gesamt-CR), nicht aus dem Mittelwert der einzelnen Zeilen-CRs -
       // sonst verzerren Zeilen mit wenigen Aktivitaeten das Bild unverhaeltnismaessig.
       var divSafe=function(a,b){return b>0?(a/b*100):0;};
-      var crOEMcalc=divSafe(sumConvOEM,sumNotR+sumNotP+sumNotS);
+      var crOEMcalc=divSafe(sumConvOEM,sumNotROem+sumNotPOem+sumNotSOem);
       var crTWcalc=divSafe(sumTw,sumTw+sumYes+sumSy+sumMy);
       var crYescalc=divSafe(sumYes,sumYes+sumSy+sumMy);
       var crSYcalc=divSafe(sumSy,sumYes+sumSy+sumMy);
@@ -7212,7 +7215,9 @@ function loadPerformanceFromSupabase(){
         convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka_gesamt_yes:r.wka_gesamt_yes,
         margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,optPerH:r.opt_per_h,
         convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
-        crOEM:r.oem_cr,crTeilweise:r.oem_tw_cr,crYes:r.oem_yes_cr,crSuperYes:r.oem_sy_cr,crMegaYes:r.oem_my_cr
+        crOEM:r.oem_cr,crTeilweise:r.oem_tw_cr,crYes:r.oem_yes_cr,crSuperYes:r.oem_sy_cr,crMegaYes:r.oem_my_cr,
+        gesamtAktivitaeten:r.gesamt_aktivitaeten,gesamtNichtErreicht:r.gesamt_nicht_erreicht,
+        gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich
       });
     });
     Object.keys(byEmp).forEach(function(k){byEmp[k].sort(function(a,b){return b.date.localeCompare(a.date);});});
