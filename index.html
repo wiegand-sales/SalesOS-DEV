@@ -836,7 +836,7 @@ function loadEmployeesFromSupabase(){
 var _appInitStarted = false;
 var currentCoach = null;      // {id,name,role} falls eingeloggter User ein Coach (SDM/SC) ist, sonst null (Admin/Overview)
 var coachFilterView = 'overview'; // 'overview' | employee-id des Coaches
-var wiegandView='overview'; // 'overview' | 'team' (SFP Wiegand Tab-Navigation)
+var wiegandView='performance'; // 'overview' | 'team' | 'performance' (SFP Wiegand Tab-Navigation) - Performance ist der Standard-Landing-Tab nach dem Login
 var overviewSelectedIds=null; // Array ausgewählter Mitarbeiter-IDs in SFP Wiegand > Overview (Mehrfachauswahl)
 var overviewEmpDropdownOpen=false;
 var overviewEmpSearchQuery='';
@@ -6735,7 +6735,7 @@ function renderActivity(){
 
 function renderEinstellungen(){
   var ma=document.getElementById('mainArea');if(!ma)return;
-  if(currentUserRole!=='admin'){ view='team'; wiegandView='overview'; renderSidebar(); renderTeam(); return; }
+  if(currentUserRole!=='admin'){ view='team'; wiegandView='performance'; renderSidebar(); renderTeam(); return; }
 
   ma.innerHTML='<div class="topbar"><div class="tb-left">'
     +'<div style="width:40px;height:40px;border-radius:9px;background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:16px"><i class="ti ti-settings"></i></div>'
