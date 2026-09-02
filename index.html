@@ -4159,7 +4159,7 @@ function buildOverviewTab(liste,section){
       +sortTh('Mitarbeiter','name')
       +sortTh(firstColLabel,'period')
       +[['Akt./Std.','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
-        return sortTh(cc[0],cc[1],';text-align:right');
+        return sortTh(cc[0],cc[1],';text-align:right;width:80px;min-width:80px');
       }).join('')
       +[['Marge Ges.','marge']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right');
