@@ -4101,7 +4101,7 @@ function buildOverviewTab(liste,section){
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
   h+='<div class="card-title" style="margin:0">Performance Trend <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+today().slice(0,4)+' · '+selLabel+'</span></div>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
-  [{k:'akt',l:'Aktivitäten'},{k:'ne',l:'Nicht Erreicht (Gesamt)'},{k:'nm',l:'Nicht Möglich (Gesamt)'},{k:'nerr',l:'Nicht Erfolgreich (Gesamt)'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
+  [{k:'akt',l:'Aktivitäten'},{k:'ne',l:'Nicht Erreicht (Gesamt)'},{k:'nm',l:'Nicht Möglich (Gesamt)'},{k:'nerr',l:'Nicht Erfolgreich (Gesamt)'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
   h+='</select>';
@@ -4518,10 +4518,17 @@ function buildOverviewTab(liste,section){
         seriesFor(function(s){return s.margeWka;},colors.wka,'WKA (Summe)')
       ];
     }
-    else if(['crOEM','crTeilweise','crYes','crSyMy','crSuperYes','crMegaYes'].indexOf(metric)>=0){
-      var crLabels={crOEM:'CR OEM',crTeilweise:'CR TW',crYes:'CR Yes',crSyMy:'CR SY/MY',crSuperYes:'CR SY',crMegaYes:'CR MY'};
+    else if(metric==='crSyMy'){
+      datasets=[
+        seriesFor(function(s){return chartCrFromSums('crSyMy',s);},colors.gesamt,'CR SY/MY',1),
+        seriesFor(function(s){return chartCrFromSums('crSuperYes',s);},colors.oem,'CR SY'),
+        seriesFor(function(s){return chartCrFromSums('crMegaYes',s);},colors.ups,'CR MY')
+      ];
+    }
+    else if(['crOEM','crTeilweise','crYes'].indexOf(metric)>=0){
+      var crLabels={crOEM:'CR OEM',crTeilweise:'CR TW',crYes:'CR Yes'};
       datasets=[seriesFor(function(s){return chartCrFromSums(metric,s);},colors.gesamt,crLabels[metric],1)];
-      var tKeys={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes'};
+      var tKeys={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes'};
       tk=tKeys[metric];
     }
 
