@@ -3175,6 +3175,8 @@ function empTargets(emp){
     optPerH:     {val:val('optPerH',2.0),         dir:dir('optPerHDir','optPerH','gte')},
     optPerDay:   {val:val('optPerDay',16),          dir:dir('optPerDayDir','optPerDay','gte')},
     crYes:       {val:val('crYes',null),             dir:dir('crYesDir','crYes','gte')},
+    crSyMy:      {val:val('crSyMy',null),             dir:dir('crSyMyDir','crSyMy','gte')},
+    anteilOEM:   {val:val('anteilOEM',null),          dir:dir('anteilOEMDir','anteilOEM','gte')},
     oem_aktivitaeten:{val:val('oem_aktivitaeten',null),       dir:dir('aktivDir','oem_aktivitaeten','gte')},
     convOEM:     {val:val('convOEM',null),            dir:dir('convOEMDir','convOEM','gte')},
     optGesamt:   {val:val('optGesamt',null)!=null?val('optGesamt',null):val('optPerDay',null), dir:dir('optGesamtDir','optGesamt','gte')},
@@ -3893,10 +3895,10 @@ function buildOverviewTab(liste){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+'">'+crOEM+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+'">'+crTW+'% <span style="font-size:11px;color:var(--text3)">('+tw+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+'">'+crYes+'% <span style="font-size:11px;color:var(--text3)">('+yes+')</span></td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+crSyMy+'% <span style="font-size:11px;color:var(--text3)">('+(sy+my)+')</span></td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crSyMy,rowEmpT.crSyMy.val,rowEmpT.crSyMy.dir)+'">'+crSyMy+'% <span style="font-size:11px;color:var(--text3)">('+(sy+my)+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+'">'+crSY+'% <span style="font-size:11px;color:var(--text3)">('+sy+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+'">'+crMY+'% <span style="font-size:11px;color:var(--text3)">('+my+')</span></td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+(convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(Math.round(convOEM+ups+wka_gesamt_yes>0?convOEM/(convOEM+ups+wka_gesamt_yes)*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+'">'+(convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)">'+(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—')+'</td>'
         +'</tr>';
@@ -5942,8 +5944,10 @@ function renderTab(){
       [{lbl:'CR OEM',id:'crOEM',did:'crOEMDir',fv:_tr.crOEM!=null?_tr.crOEM:t.crOEM.val,fd:_tr.crOEMDir||t.crOEM.dir},
        {lbl:'CR TW (Teilweise)',id:'crTW',did:'crTWDir',fv:_tr.crTW!=null?_tr.crTW:t.crTeilweise.val,fd:_tr.crTWDir||t.crTeilweise.dir},
        {lbl:'CR Yes',id:'crYes',did:'crYesDir',fv:_tr.crYes!=null?_tr.crYes:(t.crYes&&t.crYes.val!=null?t.crYes.val:''),fd:_tr.crYesDir||(t.crYes?t.crYes.dir:'gte')},
+       {lbl:'CR SY/MY',id:'crSyMy',did:'crSyMyDir',fv:_tr.crSyMy!=null?_tr.crSyMy:(t.crSyMy&&t.crSyMy.val!=null?t.crSyMy.val:''),fd:_tr.crSyMyDir||(t.crSyMy?t.crSyMy.dir:'gte')},
        {lbl:'CR Super Yes',id:'crSY',did:'crSYDir',fv:_tr.crSuperYes!=null?_tr.crSuperYes:t.crSuperYes.val,fd:_tr.crSYDir||t.crSuperYes.dir},
-       {lbl:'CR Mega Yes',id:'crMY',did:'crMYDir',fv:_tr.crMegaYes!=null?_tr.crMegaYes:t.crMegaYes.val,fd:_tr.crMYDir||t.crMegaYes.dir}
+       {lbl:'CR Mega Yes',id:'crMY',did:'crMYDir',fv:_tr.crMegaYes!=null?_tr.crMegaYes:t.crMegaYes.val,fd:_tr.crMYDir||t.crMegaYes.dir},
+       {lbl:'Anteil OEM',id:'anteilOEM',did:'anteilOEMDir',fv:_tr.anteilOEM!=null?_tr.anteilOEM:(t.anteilOEM&&t.anteilOEM.val!=null?t.anteilOEM.val:''),fd:_tr.anteilOEMDir||(t.anteilOEM?t.anteilOEM.dir:'gte')}
       ].forEach(function(f){
         html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
         html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">'+f.lbl+'</div>';
@@ -7885,7 +7889,7 @@ function saveEmpZiele(){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
   if(!emp.targets)emp.targets={};
-  var fields=[{id:'crOEM',rk:'crOEM',dk:'crOEMDir'},{id:'crTW',rk:'crTW',dk:'crTWDir'},{id:'crYes',rk:'crYes',dk:'crYesDir'},{id:'crSY',rk:'crSuperYes',dk:'crSYDir'},{id:'crMY',rk:'crMegaYes',dk:'crMYDir'},{id:'convOEM',rk:'convOEM',dk:'convOEMDir'},{id:'opt',rk:'optPerH',dk:'optPerHDir'},{id:'optDay',rk:'optGesamt',dk:'optGesamtDir'},{id:'aktiv',rk:'oem_aktivitaeten',dk:'aktivDir'},{id:'marge',rk:'margeGesamt',dk:'margeDir'}];
+  var fields=[{id:'crOEM',rk:'crOEM',dk:'crOEMDir'},{id:'crTW',rk:'crTW',dk:'crTWDir'},{id:'crYes',rk:'crYes',dk:'crYesDir'},{id:'crSyMy',rk:'crSyMy',dk:'crSyMyDir'},{id:'crSY',rk:'crSuperYes',dk:'crSYDir'},{id:'crMY',rk:'crMegaYes',dk:'crMYDir'},{id:'anteilOEM',rk:'anteilOEM',dk:'anteilOEMDir'},{id:'convOEM',rk:'convOEM',dk:'convOEMDir'},{id:'opt',rk:'optPerH',dk:'optPerHDir'},{id:'optDay',rk:'optGesamt',dk:'optGesamtDir'},{id:'aktiv',rk:'oem_aktivitaeten',dk:'aktivDir'},{id:'marge',rk:'margeGesamt',dk:'margeDir'}];
   var upserts=[],deletes=[],changes=[];
   fields.forEach(function(f){
     var el=document.getElementById('es-'+f.id);
