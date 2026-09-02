@@ -880,6 +880,7 @@ function setOverviewPerfSort(key){
 var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = Standard (Monatsanfang)
 var overviewChartMetric='margeGesamt';
 var overviewChartEmpId=null; // null = Team (alle aktiven Mitarbeiter), sonst employee-id
+var bannerViewMode=null; // null = Standard je Reiter, sonst 'performance'|'overview' explizit ueberschrieben
 var settingsView='integrations'; // 'integrations' | 'data'
 var activityFilterPerson='ALL'; // 'ALL' | employee-id (Coach)
 var activityFilterDays=7;
@@ -983,6 +984,7 @@ function deleteAppUser(uid,name){
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
 function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
+function setBannerViewMode(m){bannerViewMode=m;renderTeam();}
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
 function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDate=to||null;renderTeam();}
 function setOverviewQuickRange(type){
@@ -3799,7 +3801,7 @@ function buildOverviewTab(liste,section){
   var optOemZiel=avgOptTagZielvereinbarung();
   var h='';
 
-  if(section==='performance'){
+  if((bannerViewMode||section)==='performance'){
   var mk=today().slice(0,7);
   var heroSums={optGesamt:0,margeGesamt:0};
   visible.forEach(function(e){
@@ -3973,6 +3975,10 @@ function buildOverviewTab(liste,section){
     });
   }
   h+='</div>'; // Ende KPI-Zeile
+  h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:18px">'
+    +'<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
+    +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
+    +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } else {
   // ── NEUE, eigenstaendige Overview-Hero-Panel-Version (gleiche Optik wie Performance, andere Kennzahlen) ──
@@ -4091,6 +4097,10 @@ function buildOverviewTab(liste,section){
   h+=ovRingTile('Opt. Ges. (Monat)',ovOptGesamtNeu,ovOptZielMonatNeu,moSollFrac,'Stk.');
   h+=ovRingTile('Margenerhöhung (Monat)',ovMargeGesamtNeu,ovMargeZielMonatNeu,moSollFrac,'€');
   h+='</div>'; // Ende KPI-Zeile
+  h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:18px">'
+    +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
+    +'<div onclick="setBannerViewMode(\'overview\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Overview"></div>'
+    +'</div>';
   h+='</div>'; // Ende Hero-Panel
   // ── Performance Trend Chart (unter dem Banner) ──
   var chartRows=isAll
