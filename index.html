@@ -3629,14 +3629,14 @@ function buildOverviewTab(liste,section){
 
   h+='<div style="background:linear-gradient(135deg,#0c3b40,#164e54);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:120px">';
   h+='<div style="display:flex;gap:56px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
-  h+='<div style="display:flex;align-items:center;gap:18px">'
+  h+='<div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:18px">'
     +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+heroSums.optGesamt+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+optProTag.toFixed(1)+' Opt./Tag</div>'
     +'</div>'
     +sparkline(optSeries,'#7ED2DB',90,34)
     +'</div>';
-  h+='<div style="display:flex;align-items:center;gap:18px">'
+  h+='<div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:18px">'
     +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurH(heroSums.margeGesamt)+'</div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+' Marge/Arbeitstag</div>'
