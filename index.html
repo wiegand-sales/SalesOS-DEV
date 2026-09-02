@@ -3867,7 +3867,7 @@ function buildOverviewTab(liste){
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
       +sortTh('Mitarbeiter','name')
       +sortTh(firstColLabel,'period')
-      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['Conv. OEM','convOEM'],['TW','tw'],['Yes','yes'],['SY','sy'],['MY','my'],['CR OEM%','crOEM'],['CR TW%','crTW'],['CR SY%','crSY'],['CR MY%','crMY'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Marge Ges.','marge']].map(function(cc){
+      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['TW','tw'],['Yes','yes'],['SY','sy'],['MY','my'],['CR OEM%','crOEM'],['CR TW%','crTW'],['CR SY%','crSY'],['CR MY%','crMY'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Marge Ges.','marge']].map(function(cc){
         return sortTh(cc[0],cc[1]);
       }).join('')
       +'</tr></thead><tbody>';
@@ -3910,19 +3910,27 @@ function buildOverviewTab(liste){
       var eur=function(v){return '€'+Math.round(v).toLocaleString('de-DE');};
       var pct=function(v){return Math.round(v)+'%';};
       var rnd1=function(v){return (Math.round(v*10)/10).toLocaleString('de-DE');};
+      // CR-Werte fuer die Summe/Durchschnitt-Zeile werden aus den summierten Rohzahlen
+      // berechnet (echte Gesamt-CR), nicht aus dem Mittelwert der einzelnen Zeilen-CRs -
+      // sonst verzerren Zeilen mit wenigen Aktivitaeten das Bild unverhaeltnismaessig.
+      var divSafe=function(a,b){return b>0?(a/b*100):0;};
+      var crOEMcalc=divSafe(sumConvOEM,sumNotR+sumNotP+sumNotS);
+      var crTWcalc=divSafe(sumTw,sumTw+sumYes+sumSy+sumMy);
+      var crSYcalc=divSafe(sumSy,sumYes+sumSy+sumMy);
+      var crMYcalc=divSafe(sumMy,sumYes+sumSy+sumMy);
       // Trennzeile: kleiner visueller Abstand zwischen Mitarbeiter-Zeilen und Summe/Durchschnitt
       h+='<tr><td colspan="19" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
       h+='<tr class="perf-sum-row" style="background:#0c3b40">'
         +'<td style="padding:13px 14px;font-weight:700;color:#fff" colspan="2">Σ Summe</td>'
         +sumTd(sumAkt)+sumTd(sumNotR)+sumTd(sumNotP)+sumTd(sumNotS)+sumTd(sumConvOEM)+sumTd(sumTw)+sumTd(sumYes)+sumTd(sumSy)+sumTd(sumMy)
-        +'<td style="padding:13px 14px;text-align:center;color:rgba(255,255,255,0.4)" colspan="4">—</td>'
+        +sumTd(crOEMcalc,pct)+sumTd(crTWcalc,pct)+sumTd(crSYcalc,pct)+sumTd(crMYcalc,pct)
         +sumTd(sumUps)+sumTd(sumWka)+sumTd(sumOptGes)+sumTd(sumMarge,eur,'right')
         +'</tr>';
       h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
         +'<td style="padding:13px 14px;font-weight:700;color:#0c3b40" colspan="2">Ø Durchschnitt</td>'
         +avgTd(sumAkt/rowCount,rnd1)+avgTd(sumNotR/rowCount,rnd1)+avgTd(sumNotP/rowCount,rnd1)+avgTd(sumNotS/rowCount,rnd1)
         +avgTd(sumConvOEM/rowCount,rnd1)+avgTd(sumTw/rowCount,rnd1)+avgTd(sumYes/rowCount,rnd1)+avgTd(sumSy/rowCount,rnd1)+avgTd(sumMy/rowCount,rnd1)
-        +avgTd(sumCrOEM/rowCount,pct)+avgTd(sumCrTW/rowCount,pct)+avgTd(sumCrSY/rowCount,pct)+avgTd(sumCrMY/rowCount,pct)
+        +avgTd(crOEMcalc,pct)+avgTd(crTWcalc,pct)+avgTd(crSYcalc,pct)+avgTd(crMYcalc,pct)
         +avgTd(sumUps/rowCount,rnd1)+avgTd(sumWka/rowCount,rnd1)+avgTd(sumOptGes/rowCount,rnd1)+avgTd(sumMarge/rowCount,eur,'right')
         +'</tr>';
     }
