@@ -2328,6 +2328,52 @@ function isoWeekOf(d){
   var week=1+Math.round(((dt-firstThursday)/86400000-3+((firstThursday.getUTCDay()+6)%7))/7);
   return {year:dt.getUTCFullYear(),week:week};
 }
+// Alle ISO-Kalenderwochen eines Jahres (Mo-So), inkl. korrekter Randbehandlung an Jahresgrenzen
+function buildYearWeeksForChart(year){
+  var jan4=new Date(Date.UTC(year,0,4)); // 4. Januar liegt laut ISO 8601 immer in KW1
+  var dow=jan4.getUTCDay()||7;
+  var monday=new Date(jan4);monday.setUTCDate(jan4.getUTCDate()-(dow-1));
+  var weeks=[];
+  var cur=new Date(monday);
+  for(var i=0;i<54;i++){
+    var iw=isoWeekOf(cur);
+    if(iw.year!==year)break;
+    var sunday=new Date(cur);sunday.setUTCDate(cur.getUTCDate()+6);
+    weeks.push({kw:iw.week,from:cur.toISOString().slice(0,10),to:sunday.toISOString().slice(0,10)});
+    cur.setUTCDate(cur.getUTCDate()+7);
+  }
+  return weeks;
+}
+// Rohzahlen-Summen (ueber eine Mitarbeiterliste) fuer einen Datumsbereich - Basis fuer den Jahres-Trendchart
+function chartSumsForRange(liste,from,to){
+  var s={akt:0,ne:0,nm:0,nerr:0,oem:0,ups:0,wka:0,margeOEM:0,margeUps:0,margeWka:0,margeGes:0,
+         tw:0,yes:0,sy:0,my:0,nerrOem:0};
+  liste.forEach(function(e){
+    (performance[e.id]||[]).forEach(function(x){
+      if(!x.date||x.date<from||x.date>to)return;
+      s.akt+=x.gesamtAktivitaeten!=null?x.gesamtAktivitaeten:0;
+      s.ne+=x.gesamtNichtErreicht!=null?x.gesamtNichtErreicht:0;
+      s.nm+=x.gesamtNichtMoeglich!=null?x.gesamtNichtMoeglich:0;
+      s.nerr+=x.gesamtNichtErfolgreich!=null?x.gesamtNichtErfolgreich:0;
+      s.oem+=x.convOEM||0; s.ups+=x.ups_yes||0; s.wka+=x.wka_gesamt_yes||0;
+      s.margeOEM+=x.margeOEM||0; s.margeUps+=x.margeUpsell||0; s.margeWka+=x.margeWKA||0;
+      s.margeGes+=x.margeGesamt||x.margin||0;
+      s.tw+=x.convTW||0; s.yes+=x.convYes||0; s.sy+=x.convSY||0; s.my+=x.convMY||0;
+      s.nerrOem+=x.notSuccessful||0;
+    });
+  });
+  return s;
+}
+function chartCrFromSums(kind,s){
+  var denomOEM=s.oem+s.nerrOem, denomRest=s.yes+s.sy+s.my;
+  if(kind==='crOEM')return denomOEM>0?s.oem/denomOEM*100:null;
+  if(kind==='crTeilweise')return (s.tw+denomRest)>0?s.tw/(s.tw+denomRest)*100:null;
+  if(kind==='crYes')return denomRest>0?s.yes/denomRest*100:null;
+  if(kind==='crSyMy')return denomRest>0?(s.sy+s.my)/denomRest*100:null;
+  if(kind==='crSuperYes')return denomRest>0?s.sy/denomRest*100:null;
+  if(kind==='crMegaYes')return denomRest>0?s.my/denomRest*100:null;
+  return null;
+}
 function groupPerfRows(rows,mode){
   if(mode==='day')return rows.map(function(r){return {label:fd(r.date),key:r.date,count:1,row:r};});
   var groups={},order=[];
@@ -4053,9 +4099,9 @@ function buildOverviewTab(liste,section){
     : (performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;});
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-  h+='<div class="card-title" style="margin:0">Performance Trend <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+selLabel+'</span></div>';
+  h+='<div class="card-title" style="margin:0">Performance Trend <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+today().slice(0,4)+' · '+selLabel+'</span></div>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
-  [{k:'margeGesamt',l:'Marge Gesamt'},{k:'oem_aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Gesamt'},{k:'convOEM',l:'Opt. OEM'},{k:'ups_yes',l:'Opt. Upsell'},{k:'wka_gesamt_yes',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
+  [{k:'akt',l:'Aktivitäten'},{k:'ne',l:'Nicht Erreicht (Gesamt)'},{k:'nm',l:'Nicht Möglich (Gesamt)'},{k:'nerr',l:'Nicht Erfolgreich (Gesamt)'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
   h+='</select>';
@@ -4430,100 +4476,78 @@ function buildOverviewTab(liste,section){
   }
   h+='</div>'; // Ende Performance-Karte
 
-  // Chart.js Init (gleiches Muster wie Team Performance Trend)
-  (function(allRows,metric,groupMode){
-    var mMap={
-      crOEM:      {f:'crOEM',      l:'CR OEM %', c:'#206A72'},
-      crTeilweise:{f:'crTeilweise',l:'CR TW %',  c:'#206A72'},
-      crYes:      {f:'crYes',      l:'CR Yes %', c:'#206A72'},
-      crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#206A72'},
-      crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#206A72'},
-      oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',c:'#206A72'},
-      optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#206A72'},
-      convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#206A72'},
-      ups_yes:    {f:'ups_yes',    l:'Opt. Upsell',c:'#206A72'},
-      wka_gesamt_yes:        {f:'wka_gesamt_yes',        l:'Opt. WKA', c:'#206A72'},
-      margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#206A72'}
-    };
-    var m=mMap[metric]||mMap.crOEM;
+  // Chart.js Init - immer aktuelles Jahr, X-Achse = alle 52/53 KWs, Zukunft = offene Punkte (null)
+  (function(metric){
     window._overviewChartData=null;
-    if(!allRows||!allRows.length)return;
-    var sumMetrics=['oem_aktivitaeten','margeGesamt','optGesamt','convOEM','ups_yes','wka_gesamt_yes'];
-    var useSum=sumMetrics.indexOf(metric)>=0;
-    // Stufe 1: pro Kalendertag zusammenfassen (bei "Alle" über Mitarbeiter kombiniert)
-    var byDate={};
-    allRows.forEach(function(row){
-      if(!byDate[row.date])byDate[row.date]=[];
-      var v=row[m.f];
-      if(v!==undefined&&v!==null)byDate[row.date].push(v);
-    });
-    var dates=Object.keys(byDate).sort();
-    if(!dates.length)return;
-    var dailyVals=dates.map(function(d){
-      var arr=byDate[d];
-      if(!arr.length)return null;
-      var total=arr.reduce(function(a,b){return a+b;},0);
-      return useSum?total:total/arr.length;
-    });
-    // Stufe 2: je nach Tabellen-Gruppierung (Tag/Woche/Monat) weiter zusammenfassen
-    var labels,vals;
-    if(groupMode==='day'){
-      labels=dates.map(function(d){return fd(d);});
-      vals=dailyVals.map(function(v){return v===null?null:+v.toFixed(1);});
-    } else {
-      var monthNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-      var buckets={},order=[];
-      dates.forEach(function(d,i){
-        var dt=new Date(d+'T00:00:00'),key,label;
-        if(groupMode==='week'){
-          var iw=isoWeekOf(dt);
-          key=iw.year+'-W'+iw.week;label='KW '+iw.week;
-        } else {
-          key=d.slice(0,7);label=monthNamesShort[dt.getMonth()]+' '+dt.getFullYear();
-        }
-        if(!buckets[key]){buckets[key]={label:label,vals:[]};order.push(key);}
-        if(dailyVals[i]!==null)buckets[key].vals.push(dailyVals[i]);
+    var year=+today().slice(0,4);
+    var weeks=buildYearWeeksForChart(year);
+    var todayStr=today();
+    var liste=isAll?selectedEmps:[emp];
+    var labels=weeks.map(function(w){return 'KW '+w.kw;});
+    var colors={gesamt:'#206A72',oem:'#7ED2DB',ups:'#e0a13a',wka:'#8a6fd4'};
+
+    function seriesFor(valFn,color,label,fillOrder){
+      var data=weeks.map(function(w){
+        if(w.from>todayStr)return null; // Zukunft: offener Punkt
+        return valFn(chartSumsForRange(liste,w.from,w.to));
       });
-      var keys=order.sort();
-      labels=keys.map(function(k){return buckets[k].label;});
-      vals=keys.map(function(k){
-        var arr=buckets[k].vals;
-        if(!arr.length)return null;
-        var total=arr.reduce(function(a,b){return a+b;},0);
-        return +(useSum?total:total/arr.length).toFixed(1);
-      });
+      return {label:label,data:data,borderColor:color,backgroundColor:color+'22',
+        fill:!!fillOrder,tension:0.35,pointRadius:labels.length<=16?3:0,
+        pointBackgroundColor:color,borderWidth:2,spanGaps:false,order:fillOrder||2};
     }
-    var tKeys={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes'};
-    var tk=tKeys[metric];
+
+    var datasets=[];
+    var tk=null;
+    if(metric==='akt')datasets=[seriesFor(function(s){return s.akt;},colors.gesamt,'Aktivitäten',1)];
+    else if(metric==='ne')datasets=[seriesFor(function(s){return s.ne;},colors.gesamt,'Nicht Erreicht (Gesamt)',1)];
+    else if(metric==='nm')datasets=[seriesFor(function(s){return s.nm;},colors.gesamt,'Nicht Möglich (Gesamt)',1)];
+    else if(metric==='nerr')datasets=[seriesFor(function(s){return s.nerr;},colors.gesamt,'Nicht Erfolgreich (Gesamt)',1)];
+    else if(metric==='optGesamt'){
+      datasets=[
+        seriesFor(function(s){return s.oem+s.ups+s.wka;},colors.gesamt,'Opt. Ges. (Gesamt)',1),
+        seriesFor(function(s){return s.oem;},colors.oem,'OEM (Anzahl)'),
+        seriesFor(function(s){return s.ups;},colors.ups,'Upsells (Anzahl)'),
+        seriesFor(function(s){return s.wka;},colors.wka,'WKA (Anzahl)')
+      ];
+    }
+    else if(metric==='margeGesamt'){
+      datasets=[
+        seriesFor(function(s){return s.margeGes;},colors.gesamt,'Margenerhöhung (Gesamt)',1),
+        seriesFor(function(s){return s.margeOEM;},colors.oem,'OEM (Summe)'),
+        seriesFor(function(s){return s.margeUps;},colors.ups,'Upsells (Summe)'),
+        seriesFor(function(s){return s.margeWka;},colors.wka,'WKA (Summe)')
+      ];
+    }
+    else if(['crOEM','crTeilweise','crYes','crSyMy','crSuperYes','crMegaYes'].indexOf(metric)>=0){
+      var crLabels={crOEM:'CR OEM',crTeilweise:'CR TW',crYes:'CR Yes',crSyMy:'CR SY/MY',crSuperYes:'CR SY',crMegaYes:'CR MY'};
+      datasets=[seriesFor(function(s){return chartCrFromSums(metric,s);},colors.gesamt,crLabels[metric],1)];
+      var tKeys={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes'};
+      tk=tKeys[metric];
+    }
+
+    var allVals=[];
+    datasets.forEach(function(ds){ds.data.forEach(function(v){if(v!==null&&v!==undefined)allVals.push(v);});});
     var target=(tk&&KPI_TARGETS[tk])?KPI_TARGETS[tk].val:null;
-    var validVals=vals.filter(function(v){return v!==null&&v!==undefined;});
     var yS;
-    if(!validVals.length){
+    if(!allVals.length){
       yS={min:0};
     } else {
-      var dataMin=Math.min.apply(null,validVals),dataMax=Math.max.apply(null,validVals);
+      var dataMin=Math.min.apply(null,allVals),dataMax=Math.max.apply(null,allVals);
       var range=dataMax-dataMin;
-      if(range<=0)range=dataMax>0?dataMax:1; // flache Linie: künstliche Spanne, damit Polsterung greift
-      var pad=range*0.6;
-      var yMin=Math.max(0,dataMin-pad);
-      var yMax=dataMax+pad;
-      yS={min:yMin,max:yMax};
+      if(range<=0)range=dataMax>0?dataMax:1;
+      var pad=range*0.4;
+      yS={min:Math.max(0,dataMin-pad),max:dataMax+pad};
     }
-    var datasets=[{
-      label:m.l,data:vals,borderColor:m.c,backgroundColor:m.c+'22',
-      fill:true,tension:0.35,pointRadius:labels.length<=10?4:2,
-      pointBackgroundColor:m.c,borderWidth:2,order:1
-    }];
     if(target!==null){
       datasets.push({
         label:'Ziel ('+target+')',
         data:labels.map(function(){return target;}),
         borderColor:'#BD2D29',borderDash:[5,4],borderWidth:2,
-        pointRadius:0,fill:false,order:2
+        pointRadius:0,fill:false,order:99
       });
     }
     window._overviewChartData={labels:labels,datasets:datasets,yS:yS};
-  })(chartRows,overviewChartMetric,overviewPerfGroup);
+  })(overviewChartMetric);
 
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     if(!window._overviewChartData)return;
