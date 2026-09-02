@@ -3874,8 +3874,11 @@ function buildOverviewTab(liste){
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
       +sortTh('Mitarbeiter','name')
       +sortTh(firstColLabel,'period')
-      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM'],['Marge Ges.','marge'],['Marge Durch.','margeDurch']].map(function(cc){
-        return sortTh(cc[0],cc[1]);
+      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
+        return sortTh(cc[0],cc[1],';text-align:center');
+      }).join('')
+      +[['Marge Ges.','marge'],['Marge Durch.','margeDurch']].map(function(cc){
+        return sortTh(cc[0],cc[1],';text-align:right');
       }).join('')
       +'</tr></thead><tbody>';
     var sumAkt=0,sumNotR=0,sumNotP=0,sumNotS=0,sumConvOEM=0,sumTw=0,sumYes=0,sumSy=0,sumMy=0,sumUps=0,sumWka=0,sumOptGes=0,sumMarge=0,sumCrOEM=0,sumCrTW=0,sumCrSY=0,sumCrMY=0;
