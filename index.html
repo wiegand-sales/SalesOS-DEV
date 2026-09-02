@@ -3537,6 +3537,28 @@ function sparklineFilled(values,color,w,h){
     +'<polyline points="'+line+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
     +'</svg>';
 }
+// Marge (Ist) und Ziel fuer die aktuelle Kalenderwoche - gleiche Berechnung wie die Wochenziel-Kacheln in der Zielvereinbarung
+function currentWeekMargin(){
+  var mk=today().slice(0,7);
+  var weeks=getMonthWeeksZiel(mk);
+  var rec=zielStore[mk]||{};
+  var todayStr=today();
+  var curKw=isoWeekNum(new Date(todayStr+'T00:00:00Z'));
+  var wi=-1,wm=null;
+  weeks.forEach(function(w,i){if(w.kw===curKw){wm=w;wi=i;}});
+  if(!wm)return {ist:0,target:0,kw:curKw};
+  var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
+  var target=0,ist=0;
+  visible.forEach(function(e){
+    var r=rec[e.id]||{};
+    var days=(r.weeks&&r.weeks[wi]!=null)?r.weeks[wi]:wm.defaultDays;
+    var optTag=r.optTag!=null?r.optTag:0;
+    var margeOpt=r.margeOpt!=null?r.margeOpt:0;
+    target+=days*optTag*margeOpt;
+    ist+=istForEmpWeek(e.id,wm.from,wm.to);
+  });
+  return {ist:ist,target:target,kw:curKw};
+}
 function buildMonthBar(liste){
   var mk=today().slice(0,7);
   var sums={convOEM:0,margeOEM:0,ups_yes:0,margeUpsell:0,wka_gesamt_yes:0,margeWKA:0,margeGesamt:0};
@@ -3642,6 +3664,15 @@ function buildOverviewTab(liste,section){
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+' Marge/Arbeitstag</div>'
     +'</div>'
     +sparkline(margeSeries,'#7ED2DB',90,34)
+    +'</div>';
+  var weekMarge=currentWeekMargin();
+  var weekPct=weekMarge.target>0?Math.round(weekMarge.ist/weekMarge.target*100):(weekMarge.ist>0?100:0);
+  var weekCol=weekPct>=100?'#7ED2DB':'#e57373';
+  h+='<div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:18px">'
+    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG WOCHE (KW '+weekMarge.kw+')</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1;color:'+weekCol+'">'+eurH(weekMarge.ist)+'</div>'
+    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ziel '+eurH(weekMarge.target)+' · '+weekPct+'%</div>'
+    +'</div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Zeile
 
