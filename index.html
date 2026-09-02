@@ -4156,10 +4156,10 @@ function buildOverviewTab(liste,section){
       return '<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:'+(active?'#7ED2DB':'#fff')+';text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none'+(extraStyle||'')+'" onclick="setOverviewPerfSort(\''+key+'\')">'+label+arrow+'</th>';
     }
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
-      +sortTh('Mitarbeiter','name')
+      +sortTh('Mitarbeiter','name',';width:190px;min-width:190px')
       +sortTh(firstColLabel,'period',';width:120px;min-width:120px')
       +[['Akt./Std.','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
-        return sortTh(cc[0],cc[1],';text-align:right;width:82px;min-width:82px');
+        return sortTh(cc[0],cc[1],';text-align:right;width:92px;min-width:92px');
       }).join('')
       +[['Marge Ges.','marge']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right');
