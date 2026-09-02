@@ -3710,30 +3710,30 @@ function buildOverviewTab(liste,section){
   h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
   h+='<div style="grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:18px">'
-    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
+    +'<div style="flex-shrink:0;width:150px"><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+heroSums.optGesamt+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+optProTag.toFixed(1)+' Opt./Tag</div>'
     +'<div style="font-size:11px;color:#8fb5b9">Ziel '+Math.round(optZielMonat).toLocaleString('de-DE')+' Stk./Mon.</div>'
     +'</div>'
-    +sparkline(optSeries,'#7ED2DB',110,34)
+    +'<div style="flex:1;display:flex;justify-content:flex-end">'+sparkline(optSeries,'#7ED2DB',220,34)+'</div>'
     +'</div>';
   var weekMarge=currentWeekMargin();
   var weekElapsedWD=weekMarge.from?elapsedWorkDaysInRange(weekMarge.from,weekMarge.to):0;
   var weekProTag=weekElapsedWD>0?weekMarge.ist/weekElapsedWD:0;
   h+='<div style="grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:18px">'
-    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG WOCHE (KW '+weekMarge.kw+')</div>'
+    +'<div style="flex-shrink:0;width:150px"><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG WOCHE (KW '+weekMarge.kw+')</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(weekMarge.ist)+'</div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(weekProTag)+'/Arbeitstag</div>'
     +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(weekMarge.target)+'/Woche</div>'
     +'</div>'
     +'</div>';
   h+='<div style="grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:18px">'
-    +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG</div>'
+    +'<div style="flex-shrink:0;width:150px"><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(heroSums.margeGesamt)+'</div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+'/Arbeitstag</div>'
     +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(margeZielMonat)+'/Mon.</div>'
     +'</div>'
-    +sparkline(margeSeries,'#7ED2DB',110,34)
+    +'<div style="flex:1;display:flex;justify-content:flex-end">'+sparkline(margeSeries,'#7ED2DB',220,34)+'</div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Zeile
 
