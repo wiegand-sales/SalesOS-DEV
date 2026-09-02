@@ -3177,6 +3177,9 @@ function empTargets(emp){
     crYes:       {val:val('crYes',null),             dir:dir('crYesDir','crYes','gte')},
     crSyMy:      {val:val('crSyMy',null),             dir:dir('crSyMyDir','crSyMy','gte')},
     anteilOEM:   {val:val('anteilOEM',null),          dir:dir('anteilOEMDir','anteilOEM','gte')},
+    notReached:  {val:val('notReached',null),         dir:dir('notReachedDir','notReached','lte')},
+    notPossible: {val:val('notPossible',null),        dir:dir('notPossibleDir','notPossible','lte')},
+    notSuccessful:{val:val('notSuccessful',null),     dir:dir('notSuccessfulDir','notSuccessful','lte')},
     oem_aktivitaeten:{val:val('oem_aktivitaeten',null),       dir:dir('aktivDir','oem_aktivitaeten','gte')},
     convOEM:     {val:val('convOEM',null),            dir:dir('convOEMDir','convOEM','gte')},
     optGesamt:   {val:val('optGesamt',null)!=null?val('optGesamt',null):val('optPerDay',null), dir:dir('optGesamtDir','optGesamt','gte')},
@@ -3885,9 +3888,9 @@ function buildOverviewTab(liste){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+rowEmp.name+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+g.label+(overviewPerfGroup!=='day'?' <span style="font-weight:400;color:var(--text3);font-size:10.5px">('+g.count+' Tage)</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">'+akt+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(akt>0?Math.round(notR/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notR+')</span>':'')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(akt>0?Math.round(notP/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notP+')</span>':'')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(akt>0?Math.round(notS/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notS+')</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+(akt>0?fc(Math.round(notR/akt*100),rowEmpT.notReached.val,rowEmpT.notReached.dir):'color:var(--text2)')+'">'+(akt>0?Math.round(notR/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notR+')</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+(akt>0?fc(Math.round(notP/akt*100),rowEmpT.notPossible.val,rowEmpT.notPossible.dir):'color:var(--text2)')+'">'+(akt>0?Math.round(notP/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notP+')</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+(akt>0?fc(Math.round(notS/akt*100),rowEmpT.notSuccessful.val,rowEmpT.notSuccessful.dir):'color:var(--text2)')+'">'+(akt>0?Math.round(notS/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notS+')</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(optGes>0?Math.round(convOEM/optGes*100)+'%':'—')+(optGes>0?' <span style="font-size:11px;color:var(--text3)">('+convOEM+')</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(optGes>0?Math.round(ups/optGes*100)+'%':'—')+(optGes>0?' <span style="font-size:11px;color:var(--text3)">('+ups+')</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(optGes>0?Math.round(wka_gesamt_yes/optGes*100)+'%':'—')+(optGes>0?' <span style="font-size:11px;color:var(--text3)">('+wka_gesamt_yes+')</span>':'')+'</td>'
@@ -5947,7 +5950,10 @@ function renderTab(){
        {lbl:'CR SY/MY',id:'crSyMy',did:'crSyMyDir',fv:_tr.crSyMy!=null?_tr.crSyMy:(t.crSyMy&&t.crSyMy.val!=null?t.crSyMy.val:''),fd:_tr.crSyMyDir||(t.crSyMy?t.crSyMy.dir:'gte')},
        {lbl:'CR Super Yes',id:'crSY',did:'crSYDir',fv:_tr.crSuperYes!=null?_tr.crSuperYes:t.crSuperYes.val,fd:_tr.crSYDir||t.crSuperYes.dir},
        {lbl:'CR Mega Yes',id:'crMY',did:'crMYDir',fv:_tr.crMegaYes!=null?_tr.crMegaYes:t.crMegaYes.val,fd:_tr.crMYDir||t.crMegaYes.dir},
-       {lbl:'Anteil OEM',id:'anteilOEM',did:'anteilOEMDir',fv:_tr.anteilOEM!=null?_tr.anteilOEM:(t.anteilOEM&&t.anteilOEM.val!=null?t.anteilOEM.val:''),fd:_tr.anteilOEMDir||(t.anteilOEM?t.anteilOEM.dir:'gte')}
+       {lbl:'Anteil OEM',id:'anteilOEM',did:'anteilOEMDir',fv:_tr.anteilOEM!=null?_tr.anteilOEM:(t.anteilOEM&&t.anteilOEM.val!=null?t.anteilOEM.val:''),fd:_tr.anteilOEMDir||(t.anteilOEM?t.anteilOEM.dir:'gte')},
+       {lbl:'NE (nicht erreicht)',id:'notReached',did:'notReachedDir',fv:_tr.notReached!=null?_tr.notReached:(t.notReached&&t.notReached.val!=null?t.notReached.val:''),fd:_tr.notReachedDir||(t.notReached?t.notReached.dir:'lte')},
+       {lbl:'NM (nicht möglich)',id:'notPossible',did:'notPossibleDir',fv:_tr.notPossible!=null?_tr.notPossible:(t.notPossible&&t.notPossible.val!=null?t.notPossible.val:''),fd:_tr.notPossibleDir||(t.notPossible?t.notPossible.dir:'lte')},
+       {lbl:'NErr (nicht erfolgreich)',id:'notSuccessful',did:'notSuccessfulDir',fv:_tr.notSuccessful!=null?_tr.notSuccessful:(t.notSuccessful&&t.notSuccessful.val!=null?t.notSuccessful.val:''),fd:_tr.notSuccessfulDir||(t.notSuccessful?t.notSuccessful.dir:'lte')}
       ].forEach(function(f){
         html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
         html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">'+f.lbl+'</div>';
@@ -7889,7 +7895,7 @@ function saveEmpZiele(){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
   if(!emp.targets)emp.targets={};
-  var fields=[{id:'crOEM',rk:'crOEM',dk:'crOEMDir'},{id:'crTW',rk:'crTW',dk:'crTWDir'},{id:'crYes',rk:'crYes',dk:'crYesDir'},{id:'crSyMy',rk:'crSyMy',dk:'crSyMyDir'},{id:'crSY',rk:'crSuperYes',dk:'crSYDir'},{id:'crMY',rk:'crMegaYes',dk:'crMYDir'},{id:'anteilOEM',rk:'anteilOEM',dk:'anteilOEMDir'},{id:'convOEM',rk:'convOEM',dk:'convOEMDir'},{id:'opt',rk:'optPerH',dk:'optPerHDir'},{id:'optDay',rk:'optGesamt',dk:'optGesamtDir'},{id:'aktiv',rk:'oem_aktivitaeten',dk:'aktivDir'},{id:'marge',rk:'margeGesamt',dk:'margeDir'}];
+  var fields=[{id:'crOEM',rk:'crOEM',dk:'crOEMDir'},{id:'crTW',rk:'crTW',dk:'crTWDir'},{id:'crYes',rk:'crYes',dk:'crYesDir'},{id:'crSyMy',rk:'crSyMy',dk:'crSyMyDir'},{id:'crSY',rk:'crSuperYes',dk:'crSYDir'},{id:'crMY',rk:'crMegaYes',dk:'crMYDir'},{id:'anteilOEM',rk:'anteilOEM',dk:'anteilOEMDir'},{id:'notReached',rk:'notReached',dk:'notReachedDir'},{id:'notPossible',rk:'notPossible',dk:'notPossibleDir'},{id:'notSuccessful',rk:'notSuccessful',dk:'notSuccessfulDir'},{id:'convOEM',rk:'convOEM',dk:'convOEMDir'},{id:'opt',rk:'optPerH',dk:'optPerHDir'},{id:'optDay',rk:'optGesamt',dk:'optGesamtDir'},{id:'aktiv',rk:'oem_aktivitaeten',dk:'aktivDir'},{id:'marge',rk:'margeGesamt',dk:'margeDir'}];
   var upserts=[],deletes=[],changes=[];
   fields.forEach(function(f){
     var el=document.getElementById('es-'+f.id);
