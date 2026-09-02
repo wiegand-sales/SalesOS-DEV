@@ -4088,7 +4088,7 @@ function buildOverviewTab(liste,section){
       var ups=row.ups_yes||0,wka_gesamt_yes=row.wka_gesamt_yes||0;
       var optGes=row.optGesamt||(convOEM+ups+wka_gesamt_yes)||0;
       var marge=row.margeGesamt||row.margin||0;
-      var oemDenom=notSOem+convOEM;
+      var oemDenom=notS+convOEM;
       var crOEM=oemDenom>0?Math.round(convOEM/oemDenom*100):0;
       var crTW=(tw+yes+sy+my)>0?Math.round(tw/(tw+yes+sy+my)*100):0;
       var crSY=(yes+sy+my)>0?Math.round(sy/(yes+sy+my)*100):0;
@@ -4177,7 +4177,7 @@ function buildOverviewTab(liste,section){
       // berechnet (echte Gesamt-CR), nicht aus dem Mittelwert der einzelnen Zeilen-CRs -
       // sonst verzerren Zeilen mit wenigen Aktivitaeten das Bild unverhaeltnismaessig.
       var divSafe=function(a,b){return b>0?(a/b*100):0;};
-      var crOEMcalc=divSafe(sumConvOEM,sumNotSOem+sumConvOEM);
+      var crOEMcalc=divSafe(sumConvOEM,sumNotS+sumConvOEM);
       var crTWcalc=divSafe(sumTw,sumTw+sumYes+sumSy+sumMy);
       var crYescalc=divSafe(sumYes,sumYes+sumSy+sumMy);
       var crSYcalc=divSafe(sumSy,sumYes+sumSy+sumMy);
