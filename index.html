@@ -3922,7 +3922,7 @@ function buildOverviewTab(liste){
       +[['Akt./Std.','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:center');
       }).join('')
-      +[['Marge Ges.','marge'],['Marge Durch.','margeDurch']].map(function(cc){
+      +[['Marge Ges.','marge']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right');
       }).join('')
       +'</tr></thead><tbody>';
@@ -3960,8 +3960,7 @@ function buildOverviewTab(liste){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:center;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+'">'+crSY+'% <span style="font-size:11px;color:var(--text3)">('+sy+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:center;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+'">'+crMY+'% <span style="font-size:11px;color:var(--text3)">('+my+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:center;'+fc(Math.round(convOEM+ups+wka_gesamt_yes>0?convOEM/(convOEM+ups+wka_gesamt_yes)*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+'">'+(convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)">'+(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+(optGes>0?' <span style="font-size:11px;color:var(--text3);font-weight:400">(€'+Math.round(marge/optGes).toLocaleString('de-DE')+')</span>':'')+'</td>'
         +'</tr>';
       sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumNotROem+=notROem;sumNotPOem+=notPOem;sumNotSOem+=notSOem;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;sumTotalHours+=rowTotalHours;
       sumUps+=ups;sumWka+=wka_gesamt_yes;sumOptGes+=optGes;sumMarge+=marge;
@@ -3999,14 +3998,14 @@ function buildOverviewTab(liste){
       function sumTdH(v,fmt,align,edge){return '<td style="padding:13px 14px;text-align:'+(align||'center')+';font-weight:700;color:#fff;background:rgba(255,255,255,0.06)'+(edge==='l'?';border-left:2px solid rgba(255,255,255,0.3)':'')+(edge==='r'?';border-right:2px solid rgba(255,255,255,0.3)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
       function avgTdH(v,fmt,align,edge){return '<td style="padding:13px 14px;text-align:'+(align||'center')+';font-weight:700;color:#0c3b40;background:rgba(32,106,114,0.1)'+(edge==='l'?';border-left:2px solid var(--border2)':'')+(edge==='r'?';border-right:2px solid var(--border2)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
       // Trennzeile: kleiner visueller Abstand zwischen Mitarbeiter-Zeilen und Summe/Durchschnitt
-      h+='<tr><td colspan="20" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
+      h+='<tr><td colspan="19" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
       h+='<tr class="perf-sum-row" style="background:#0c3b40">'
         +'<td style="padding:13px 14px;font-weight:700;color:#fff" colspan="2">Σ Summe</td>'
         +sumTd(decCnt(aktPerHourCalc,sumAkt))+sumTd(cntPct(sumNotR,notRpct))+sumTd(cntPct(sumNotP,notPpct))+sumTd(cntPct(sumNotS,notSpct))+sumTd(cntPct(sumConvOEM,anteilOEMcalc))
         +sumTd(cntPct(sumUps,anteilUpsCalc))+sumTd(cntPct(sumWka,anteilWkaCalc))+sumTdH(sumOptGes,null,'center','l')
         +sumTdH(optPerHourCalc.toFixed(1))
         +sumTdH(crOEMcalc,pct)+sumTdH(cntPct(sumTw,crTWcalc))+sumTdH(cntPct(sumYes,crYescalc))+sumTdH(cntPct(sumSy+sumMy,crSyMycalc))+sumTdH(cntPct(sumSy,crSYcalc))+sumTdH(cntPct(sumMy,crMYcalc))
-        +sumTdH(anteilOEMcalc,pct,'center','r')+sumTd(sumMarge,eur,'right')+sumTd(eur(margeDurchCalc),null,'right')
+        +sumTdH(anteilOEMcalc,pct,'center','r')+sumTd(eur(sumMarge)+' <span style="font-size:11px;opacity:.75">(€'+Math.round(margeDurchCalc).toLocaleString('de-DE')+')</span>',null,'right')
         +'</tr>';
       h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
         +'<td style="padding:13px 14px;font-weight:700;color:#0c3b40" colspan="2">Ø Durchschnitt</td>'
@@ -4015,7 +4014,7 @@ function buildOverviewTab(liste){
         +avgTd(cntPct(rnd1(sumUps/rowCount),anteilUpsCalc))+avgTd(cntPct(rnd1(sumWka/rowCount),anteilWkaCalc))+avgTdH(sumOptGes/rowCount,rnd1,'center','l')
         +avgTdH(optPerHourCalc.toFixed(1))
         +avgTdH(crOEMcalc,pct)+avgTdH(cntPct(rnd1(sumTw/rowCount),crTWcalc))+avgTdH(cntPct(rnd1(sumYes/rowCount),crYescalc))+avgTdH(cntPct(rnd1((sumSy+sumMy)/rowCount),crSyMycalc))+avgTdH(cntPct(rnd1(sumSy/rowCount),crSYcalc))+avgTdH(cntPct(rnd1(sumMy/rowCount),crMYcalc))
-        +avgTdH(anteilOEMcalc,pct,'center','r')+avgTd(sumMarge/rowCount,eur,'right')+avgTd(eur(margeDurchCalc),null,'right')
+        +avgTdH(anteilOEMcalc,pct,'center','r')+avgTd(eur(sumMarge/rowCount)+' <span style="font-size:11px;opacity:.75">(€'+Math.round(margeDurchCalc).toLocaleString('de-DE')+')</span>',null,'right')
         +'</tr>';
     }
     h+='</tbody></table></div>';
