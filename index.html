@@ -4099,66 +4099,21 @@ function buildOverviewTab(liste,section){
   var chartRows=isAll
     ? selectedEmps.reduce(function(acc,e){return acc.concat((performance[e.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;}));},[])
     : (performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;});
-  h+='<div class="card" style="margin-bottom:22px">';
-  h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-  h+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
-  h+='<div class="card-title" style="margin:0">Overview <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+today().slice(0,4)+'</span></div>';
-  h+='<div id="overviewChartLegend" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>';
-  h+='</div>';
-  h+='<div style="display:flex;align-items:center;gap:8px">';
-  h+='<select onchange="setOverviewChartEmp(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
-  h+='<option value=""'+(!overviewChartEmpId?' selected':'')+'>Team (alle)</option>';
-  h+='<optgroup label="Teams">';
-  [['group:Onboarding','Onboarding'],['group:VLC','VLC'],['group:SR','SR'],['group:SE','SE']].forEach(function(g){
-    h+='<option value="'+g[0]+'"'+(overviewChartEmpId===g[0]?' selected':'')+'>'+g[1]+'</option>';
-  });
-  h+='</optgroup>';
-  h+='<optgroup label="Mitarbeiter">';
-  visible.filter(function(e){return e.active;}).forEach(function(e){
-    h+='<option value="'+e.id+'"'+(overviewChartEmpId===e.id?' selected':'')+'>'+e.name+'</option>';
-  });
-  h+='</optgroup>';
-  h+='</select>';
-  h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
-  [{k:'akt',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
-    h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
-  });
-  h+='</select>';
-  h+='</div>';
-  h+='</div>';
-  h+='<div style="height:280px;position:relative"><canvas id="overviewPerfChart"></canvas></div>';
-  h+='</div>';
 
-  // ── Conversion-Mix (OEM/Upsells/WKA) & CR-Verteilung (TW/Yes/SY/MY) — SVG-Donut analog "Wo/Warum wir Kunden verlieren" (SalesOS) ──
+  // ── Conversion-Mix (OEM/Upsells/WKA) — SVG-Donut analog "Wo/Warum wir Kunden verlieren" (SalesOS) ──
   (function(){
-    var oemSum=0,upsSum=0,wkaSum=0,crTWs=[],crYess=[],crSYs=[],crMYs=[];
+    var oemSum=0,upsSum=0,wkaSum=0;
     chartRows.forEach(function(x){
       oemSum+=x.convOEM||0; upsSum+=x.ups_yes||0; wkaSum+=x.wka_gesamt_yes||0;
-      if(x.crTeilweise!=null)crTWs.push(x.crTeilweise);
-      if(x.crYes!=null)crYess.push(x.crYes);
-      if(x.crSuperYes!=null)crSYs.push(x.crSuperYes);
-      if(x.crMegaYes!=null)crMYs.push(x.crMegaYes);
     });
-    function avg(arr){return arr.length?Math.round(arr.reduce(function(a,b){return a+b;},0)/arr.length):0;}
     var mixEntries=[{label:'OEM',count:oemSum},{label:'Upsells',count:upsSum},{label:'WKA',count:wkaSum}].filter(function(e){return e.count>0;});
     var mixTotal=oemSum+upsSum+wkaSum;
-    var crRaw=[{label:'TW',count:avg(crTWs)},{label:'Yes',count:avg(crYess)},{label:'SY',count:avg(crSYs)},{label:'MY',count:avg(crMYs)}].filter(function(e){return e.count>0;});
-    var crSumRaw=crRaw.reduce(function(a,b){return a+b.count;},0);
 
-    h+='<div class="g2" style="margin-bottom:22px">';
-    h+='<div class="card" style="margin-bottom:0">';
+    h+='<div class="card" style="margin-bottom:22px">';
     h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> Conversion-Mix</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
     h+='<div class="funnel-wrap">'+donutSvg(mixEntries,mixTotal,'Gesamt')+'</div>';
     h+='</div>';
-    h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> CR-Verteilung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
-    h+='<div class="funnel-wrap">'+donutSvg(crRaw,crSumRaw,'Ø Verteilung')+'</div>';
-    h+='</div>';
-    h+='</div>';
   })();
-
-  // ── Zielvereinbarung — Jahresverlauf (Entwurf C: Ziel NL als gestrichelte Referenzlinie, Ziel/Erzielt als Balken mit Farbverlauf) ──
-  h+=zielverlaufJahrChartHtml();
 
   // ── Top 3 (höchste Margenerhöhung) & Worst 3 (schwächste CR OEM/CR MY) im aktuellen Kalendermonat ──
   (function(){
@@ -4495,145 +4450,6 @@ function buildOverviewTab(liste,section){
     h+='</tbody></table></div>';
   }
   h+='</div>'; // Ende Performance-Karte
-
-  // Chart.js Init - immer aktuelles Jahr, X-Achse = alle 52/53 KWs, Zukunft = offene Punkte (null)
-  (function(metric){
-    window._overviewChartData=null;
-    var year=+today().slice(0,4);
-    var weeks=buildYearWeeksForChart(year);
-    var todayStr=today();
-    var liste;
-    if(!overviewChartEmpId){
-      liste=visible.filter(function(e){return e.active;});
-    } else if(overviewChartEmpId.indexOf('group:')===0){
-      var grp=overviewChartEmpId.slice(6);
-      liste=visible.filter(function(e){return e.active&&(e.role===grp||e.phase===grp);});
-    } else {
-      liste=visible.filter(function(e){return e.id===overviewChartEmpId;});
-    }
-    var labels=weeks.map(function(w){return 'KW '+w.kw;});
-    var colors={gesamt:'#206A72',oem:'#7ED2DB',ups:'#e0a13a',wka:'#8a6fd4'};
-
-    function seriesFor(valFn,color,label,fillOrder){
-      var data=weeks.map(function(w){
-        if(w.from>todayStr)return null; // Zukunft: offener Punkt
-        return valFn(chartSumsForRange(liste,w.from,w.to));
-      });
-      return {label:label,data:data,borderColor:color,backgroundColor:color+'22',
-        fill:!!fillOrder,tension:0.35,pointRadius:labels.length<=16?3:0,
-        pointBackgroundColor:color,borderWidth:2,spanGaps:false,order:fillOrder||2};
-    }
-
-    var datasets=[];
-    var tk=null;
-    if(metric==='akt'){
-      datasets=[
-        seriesFor(function(s){return s.akt;},colors.gesamt,'Aktivitäten (Gesamt)',1),
-        seriesFor(function(s){return s.ne;},colors.oem,'Nicht Erreicht (Gesamt)'),
-        seriesFor(function(s){return s.nm;},colors.ups,'Nicht Möglich (Gesamt)'),
-        seriesFor(function(s){return s.nerr;},colors.wka,'Nicht Erfolgreich (Gesamt)')
-      ];
-    }
-    else if(metric==='optGesamt'){
-      datasets=[
-        seriesFor(function(s){return s.oem+s.ups+s.wka;},colors.gesamt,'Opt. Ges. (Gesamt)',1),
-        seriesFor(function(s){return s.oem;},colors.oem,'OEM (Anzahl)'),
-        seriesFor(function(s){return s.ups;},colors.ups,'Upsells (Anzahl)'),
-        seriesFor(function(s){return s.wka;},colors.wka,'WKA (Anzahl)')
-      ];
-    }
-    else if(metric==='margeGesamt'){
-      datasets=[
-        seriesFor(function(s){return s.margeGes;},colors.gesamt,'Margenerhöhung (Gesamt)',1),
-        seriesFor(function(s){return s.margeOEM;},colors.oem,'OEM (Summe)'),
-        seriesFor(function(s){return s.margeUps;},colors.ups,'Upsells (Summe)'),
-        seriesFor(function(s){return s.margeWka;},colors.wka,'WKA (Summe)')
-      ];
-    }
-    else if(metric==='crSyMy'){
-      datasets=[
-        seriesFor(function(s){return chartCrFromSums('crSyMy',s);},colors.gesamt,'CR SY/MY',1),
-        seriesFor(function(s){return chartCrFromSums('crSuperYes',s);},colors.oem,'CR SY'),
-        seriesFor(function(s){return chartCrFromSums('crMegaYes',s);},colors.ups,'CR MY')
-      ];
-    }
-    else if(['crOEM','crTeilweise','crYes'].indexOf(metric)>=0){
-      var crLabels={crOEM:'CR OEM',crTeilweise:'CR TW',crYes:'CR Yes'};
-      datasets=[seriesFor(function(s){return chartCrFromSums(metric,s);},colors.gesamt,crLabels[metric],1)];
-      var tKeys={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes'};
-      tk=tKeys[metric];
-    }
-
-    var allVals=[];
-    datasets.forEach(function(ds){ds.data.forEach(function(v){if(v!==null&&v!==undefined)allVals.push(v);});});
-    var target=(tk&&KPI_TARGETS[tk])?KPI_TARGETS[tk].val:null;
-    var yS;
-    if(!allVals.length){
-      yS={min:0};
-    } else {
-      var dataMin=Math.min.apply(null,allVals),dataMax=Math.max.apply(null,allVals);
-      var range=dataMax-dataMin;
-      if(range<=0)range=dataMax>0?dataMax:1;
-      var pad=range*0.4;
-      yS={min:Math.max(0,dataMin-pad),max:dataMax+pad};
-    }
-    if(target!==null){
-      datasets.push({
-        label:'Ziel ('+target+')',
-        data:labels.map(function(){return target;}),
-        borderColor:'#BD2D29',borderDash:[5,4],borderWidth:2,
-        pointRadius:0,fill:false,order:99
-      });
-    }
-    window._overviewChartData={labels:labels,datasets:datasets,yS:yS};
-  })(overviewChartMetric);
-
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
-    if(!window._overviewChartData)return;
-    var d=window._overviewChartData;
-    var canvas=document.getElementById('overviewPerfChart');
-    if(!canvas)return;
-    if(canvas._ci){try{canvas._ci.destroy();}catch(e){}}
-    if(d.datasets[0])d.datasets[0].backgroundColor=vGradient(canvas,d.datasets[0].borderColor,0.55,0.05);
-    canvas._ci=new Chart(canvas,{
-      type:'line',
-      data:{labels:d.labels,datasets:d.datasets},
-      options:{
-        responsive:true,
-        resizeDelay:200,
-        maintainAspectRatio:false,
-        animation:CHART_DRAWIN_ANIMATION,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{display:false},
-          tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+formatMetricValue(overviewChartMetric,ctx.parsed.y);}}}
-        },
-        scales:{
-          x:{ticks:{font:{size:11},maxTicksLimit:12},grid:{display:false}},
-          y:{min:d.yS.min,max:d.yS.max,ticks:{font:{size:11},stepSize:d.yS.step},grid:{color:'rgba(0,0,0,0.05)'}}
-        }
-      }
-    });
-    reapplyChartGradient(canvas._ci,canvas,0.55,0.05);
-    // Eigene, linksbuendige klickbare Legende direkt neben dem Titel statt der nativen Chart.js-Legende
-    var legendEl=document.getElementById('overviewChartLegend');
-    if(legendEl){
-      legendEl.innerHTML='';
-      canvas._ci.data.datasets.forEach(function(ds,i){
-        var item=document.createElement('span');
-        var meta=canvas._ci.getDatasetMeta(i);
-        item.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;cursor:pointer;user-select:none;color:'+(meta.hidden?'var(--text3)':'var(--text2)')+';opacity:'+(meta.hidden?'0.5':'1');
-        item.innerHTML='<span style="width:9px;height:9px;border-radius:2px;background:'+ds.borderColor+';display:inline-block"></span>'+ds.label;
-        item.onclick=function(){
-          meta.hidden=meta.hidden===null?!canvas._ci.data.datasets[i].hidden:!meta.hidden;
-          canvas._ci.update();
-          item.style.opacity=meta.hidden?'0.5':'1';
-          item.style.color=meta.hidden?'var(--text3)':'var(--text2)';
-        };
-        legendEl.appendChild(item);
-      });
-    }
-  });});
 
   return h;
 }
