@@ -4157,7 +4157,7 @@ function buildOverviewTab(liste,section){
     }
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
       +sortTh('Mitarbeiter','name')
-      +sortTh(firstColLabel,'period')
+      +sortTh(firstColLabel,'period',';width:150px;min-width:150px')
       +[['Akt./Std.','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right;width:80px;min-width:80px');
       }).join('')
