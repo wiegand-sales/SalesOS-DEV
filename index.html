@@ -4108,12 +4108,19 @@ function buildOverviewTab(liste,section){
   h+='<div style="display:flex;align-items:center;gap:8px">';
   h+='<select onchange="setOverviewChartEmp(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
   h+='<option value=""'+(!overviewChartEmpId?' selected':'')+'>Team (alle)</option>';
+  h+='<optgroup label="Teams">';
+  [['group:Onboarding','Onboarding'],['group:VLC','VLC'],['group:SR','SR'],['group:SE','SE']].forEach(function(g){
+    h+='<option value="'+g[0]+'"'+(overviewChartEmpId===g[0]?' selected':'')+'>'+g[1]+'</option>';
+  });
+  h+='</optgroup>';
+  h+='<optgroup label="Mitarbeiter">';
   visible.filter(function(e){return e.active;}).forEach(function(e){
     h+='<option value="'+e.id+'"'+(overviewChartEmpId===e.id?' selected':'')+'>'+e.name+'</option>';
   });
+  h+='</optgroup>';
   h+='</select>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
-  [{k:'akt',l:'Aktivitäten'},{k:'ne',l:'Nicht Erreicht (Gesamt)'},{k:'nm',l:'Nicht Möglich (Gesamt)'},{k:'nerr',l:'Nicht Erfolgreich (Gesamt)'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
+  [{k:'akt',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
   h+='</select>';
@@ -4495,7 +4502,15 @@ function buildOverviewTab(liste,section){
     var year=+today().slice(0,4);
     var weeks=buildYearWeeksForChart(year);
     var todayStr=today();
-    var liste=overviewChartEmpId?visible.filter(function(e){return e.id===overviewChartEmpId;}):visible.filter(function(e){return e.active;});
+    var liste;
+    if(!overviewChartEmpId){
+      liste=visible.filter(function(e){return e.active;});
+    } else if(overviewChartEmpId.indexOf('group:')===0){
+      var grp=overviewChartEmpId.slice(6);
+      liste=visible.filter(function(e){return e.active&&(e.role===grp||e.phase===grp);});
+    } else {
+      liste=visible.filter(function(e){return e.id===overviewChartEmpId;});
+    }
     var labels=weeks.map(function(w){return 'KW '+w.kw;});
     var colors={gesamt:'#206A72',oem:'#7ED2DB',ups:'#e0a13a',wka:'#8a6fd4'};
 
@@ -4511,10 +4526,14 @@ function buildOverviewTab(liste,section){
 
     var datasets=[];
     var tk=null;
-    if(metric==='akt')datasets=[seriesFor(function(s){return s.akt;},colors.gesamt,'Aktivitäten',1)];
-    else if(metric==='ne')datasets=[seriesFor(function(s){return s.ne;},colors.gesamt,'Nicht Erreicht (Gesamt)',1)];
-    else if(metric==='nm')datasets=[seriesFor(function(s){return s.nm;},colors.gesamt,'Nicht Möglich (Gesamt)',1)];
-    else if(metric==='nerr')datasets=[seriesFor(function(s){return s.nerr;},colors.gesamt,'Nicht Erfolgreich (Gesamt)',1)];
+    if(metric==='akt'){
+      datasets=[
+        seriesFor(function(s){return s.akt;},colors.gesamt,'Aktivitäten (Gesamt)',1),
+        seriesFor(function(s){return s.ne;},colors.oem,'Nicht Erreicht (Gesamt)'),
+        seriesFor(function(s){return s.nm;},colors.ups,'Nicht Möglich (Gesamt)'),
+        seriesFor(function(s){return s.nerr;},colors.wka,'Nicht Erfolgreich (Gesamt)')
+      ];
+    }
     else if(metric==='optGesamt'){
       datasets=[
         seriesFor(function(s){return s.oem+s.ups+s.wka;},colors.gesamt,'Opt. Ges. (Gesamt)',1),
