@@ -879,6 +879,7 @@ function setOverviewPerfSort(key){
 }
 var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = Standard (Monatsanfang)
 var overviewChartMetric='margeGesamt';
+var overviewChartEmpId=null; // null = Team (alle aktiven Mitarbeiter), sonst employee-id
 var settingsView='integrations'; // 'integrations' | 'data'
 var activityFilterPerson='ALL'; // 'ALL' | employee-id (Coach)
 var activityFilterDays=7;
@@ -981,6 +982,7 @@ function deleteAppUser(uid,name){
 }
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
+function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
 function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDate=to||null;renderTeam();}
 function setOverviewQuickRange(type){
@@ -4099,12 +4101,23 @@ function buildOverviewTab(liste,section){
     : (performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;});
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-  h+='<div class="card-title" style="margin:0">Performance Trend <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+today().slice(0,4)+' · '+selLabel+'</span></div>';
+  h+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
+  h+='<div class="card-title" style="margin:0">Overview <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+today().slice(0,4)+'</span></div>';
+  h+='<div id="overviewChartLegend" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>';
+  h+='</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px">';
+  h+='<select onchange="setOverviewChartEmp(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
+  h+='<option value=""'+(!overviewChartEmpId?' selected':'')+'>Team (alle)</option>';
+  visible.filter(function(e){return e.active;}).forEach(function(e){
+    h+='<option value="'+e.id+'"'+(overviewChartEmpId===e.id?' selected':'')+'>'+e.name+'</option>';
+  });
+  h+='</select>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
   [{k:'akt',l:'Aktivitäten'},{k:'ne',l:'Nicht Erreicht (Gesamt)'},{k:'nm',l:'Nicht Möglich (Gesamt)'},{k:'nerr',l:'Nicht Erfolgreich (Gesamt)'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
   h+='</select>';
+  h+='</div>';
   h+='</div>';
   h+='<div style="height:280px;position:relative"><canvas id="overviewPerfChart"></canvas></div>';
   h+='</div>';
@@ -4482,7 +4495,7 @@ function buildOverviewTab(liste,section){
     var year=+today().slice(0,4);
     var weeks=buildYearWeeksForChart(year);
     var todayStr=today();
-    var liste=isAll?selectedEmps:[emp];
+    var liste=overviewChartEmpId?visible.filter(function(e){return e.id===overviewChartEmpId;}):visible.filter(function(e){return e.active;});
     var labels=weeks.map(function(w){return 'KW '+w.kw;});
     var colors={gesamt:'#206A72',oem:'#7ED2DB',ups:'#e0a13a',wka:'#8a6fd4'};
 
@@ -4573,7 +4586,7 @@ function buildOverviewTab(liste,section){
         animation:CHART_DRAWIN_ANIMATION,
         interaction:{mode:'index',intersect:false},
         plugins:{
-          legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:20,padding:12}},
+          legend:{display:false},
           tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+formatMetricValue(overviewChartMetric,ctx.parsed.y);}}}
         },
         scales:{
@@ -4583,6 +4596,24 @@ function buildOverviewTab(liste,section){
       }
     });
     reapplyChartGradient(canvas._ci,canvas,0.55,0.05);
+    // Eigene, linksbuendige klickbare Legende direkt neben dem Titel statt der nativen Chart.js-Legende
+    var legendEl=document.getElementById('overviewChartLegend');
+    if(legendEl){
+      legendEl.innerHTML='';
+      canvas._ci.data.datasets.forEach(function(ds,i){
+        var item=document.createElement('span');
+        var meta=canvas._ci.getDatasetMeta(i);
+        item.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;cursor:pointer;user-select:none;color:'+(meta.hidden?'var(--text3)':'var(--text2)')+';opacity:'+(meta.hidden?'0.5':'1');
+        item.innerHTML='<span style="width:9px;height:9px;border-radius:2px;background:'+ds.borderColor+';display:inline-block"></span>'+ds.label;
+        item.onclick=function(){
+          meta.hidden=meta.hidden===null?!canvas._ci.data.datasets[i].hidden:!meta.hidden;
+          canvas._ci.update();
+          item.style.opacity=meta.hidden?'0.5':'1';
+          item.style.color=meta.hidden?'var(--text3)':'var(--text2)';
+        };
+        legendEl.appendChild(item);
+      });
+    }
   });});
 
   return h;
