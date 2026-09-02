@@ -3812,9 +3812,17 @@ function buildOverviewTab(liste){
   });
   h+='</div>';
   h+='<div class="chart-toggle">';
-  [{k:'today',l:'Heute'},{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
-    h+='<button data-q="'+it.k+'" onclick="setOverviewQuickRange(this.dataset.q)">'+it.l+'</button>';
-  });
+  (function(){
+    var tToday=today();
+    var mb=monthBoundsUTC(tToday,0);
+    var yFrom=tToday.slice(0,4)+'-01-01',yTo=tToday.slice(0,4)+'-12-31';
+    var quickRanges={today:{from:tToday,to:tToday},month:{from:mb.from,to:mb.to},year:{from:yFrom,to:yTo}};
+    [{k:'today',l:'Heute'},{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
+      var qr=quickRanges[it.k];
+      var isActive=(effFrom===qr.from&&effTo===qr.to);
+      h+='<button class="'+(isActive?'active':'')+'" data-q="'+it.k+'" onclick="setOverviewQuickRange(this.dataset.q)">'+it.l+'</button>';
+    });
+  })();
   h+='</div>';
   h+='<div style="display:flex;align-items:center;gap:6px;padding:0 10px;height:34px;border:1px solid var(--border2);border-radius:var(--r-md)">';
   h+='<span style="font-size:11px;color:var(--text2)">Von</span>';
