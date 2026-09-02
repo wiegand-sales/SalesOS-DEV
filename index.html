@@ -3489,6 +3489,25 @@ function aufmerksamkeitFarbe(tage){
 function setTeamFilter(k){teamFilter=k;renderMain();}
 // ── Petrol-Monatsbalken: Conv. OEM / Upsells / WKA / Gesamt für den aktuellen Kalendermonat, teamweit ──
 var MONTH_NAMES_DE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+// Anzahl der bereits verstrichenen Arbeitstage in einem beliebigen Datumsbereich (Mo-Fr, ohne
+// bayerische Feiertage), begrenzt auf "heute" falls das Range-Ende in der Zukunft liegt
+function elapsedWorkDaysInRange(from,to){
+  var t=today();
+  var effTo=to<t?to:t;
+  if(effTo<from)return 0;
+  var d0=new Date(from+'T00:00:00Z'),d1=new Date(effTo+'T00:00:00Z');
+  var count=0;
+  var feiertageCache={};
+  for(var d=new Date(d0);d<=d1;d.setUTCDate(d.getUTCDate()+1)){
+    var dow=d.getUTCDay();
+    if(dow===0||dow===6)continue;
+    var y=d.getUTCFullYear();
+    if(!feiertageCache[y])feiertageCache[y]=bayernFeiertage(y);
+    if(feiertageCache[y][d.toISOString().slice(0,10)])continue;
+    count++;
+  }
+  return count;
+}
 // Anzahl der bereits verstrichenen Arbeitstage im aktuellen Monat (Mo-Fr, ohne bayerische Feiertage), inkl. heute
 function elapsedWorkDaysThisMonth(){
   var t=today();
@@ -3503,6 +3522,23 @@ function elapsedWorkDaysThisMonth(){
     count++;
   }
   return count;
+}
+// Team-Ziel (Optimierungen bzw. Margenerhoehung) fuer einen Kalendermonat, gleiche Berechnung
+// wie die Zielvereinbarung (Einsatztage x Opt./Tag [x Marge/Opt.]), ueber alle aktiven Mitarbeiter summiert
+function teamMonthZiel(liste,mk,withMarge){
+  var wMeta=getMonthWeeksZiel(mk);
+  var rec=zielStore[mk]||{};
+  var vis=liste.filter(function(e){return empActiveInZielMonth(e,mk);});
+  var sum=0;
+  vis.forEach(function(e){
+    var r=rec[e.id]||{};
+    var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
+    var monthSum=weeks.reduce(function(a,b){return a+b;},0);
+    var optTag=r.optTag!=null?r.optTag:0;
+    var margeOpt=r.margeOpt!=null?r.margeOpt:0;
+    sum+=withMarge?monthSum*optTag*margeOpt:monthSum*optTag;
+  });
+  return sum;
 }
 // Taegliche Summenreihe (ueber alle Mitarbeiter in liste) fuer den aktuellen Monat, z.B. fuer Sparklines im Hero-Bereich
 function monthDailySumSeries(liste,keyFn){
@@ -3563,7 +3599,7 @@ function currentWeekMargin(){
   var curKw=isoWeekNum(new Date(todayStr+'T00:00:00Z'));
   var wi=-1,wm=null;
   weeks.forEach(function(w,i){if(w.kw===curKw){wm=w;wi=i;}});
-  if(!wm)return {ist:0,target:0,kw:curKw};
+  if(!wm)return {ist:0,target:0,kw:curKw,from:null,to:null};
   // Sonderfall: die KW kann in den Vormonat (z.B. KW36 Ende August/Anfang September) oder in
   // den Folgemonat hineinreichen. wm.from/wm.to spannen bereits die komplette Mo-Fr-Woche auf,
   // daher ist "ist" (Performance-Daten) automatisch korrekt. Das Wochenziel wird jedoch pro
@@ -3576,7 +3612,7 @@ function currentWeekMargin(){
   var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
   var ist=0;
   visible.forEach(function(e){ist+=istForEmpWeek(e.id,wm.from,wm.to);});
-  return {ist:ist,target:target,kw:curKw};
+  return {ist:ist,target:target,kw:curKw,from:wm.from,to:wm.to};
 }
 function buildMonthBar(liste){
   var mk=today().slice(0,7);
@@ -3667,30 +3703,37 @@ function buildOverviewTab(liste,section){
   var optSeries=monthDailySumSeries(visible,function(x){return(x.convOEM||0)+(x.ups_yes||0)+(x.wka_gesamt_yes||0);});
   var margeSeries=monthDailySumSeries(visible,function(x){return x.margeGesamt||x.margin||0;});
   var eurH=function(v){return '€ '+Math.round(v).toLocaleString('de-DE');};
+  var eurUnit=function(v){return Math.round(v).toLocaleString('de-DE')+' <span style="font-size:15px;font-weight:500;color:#bcdadd">€</span>';};
+  var optZielMonat=teamMonthZiel(visible,mk,false);
+  var margeZielMonat=teamMonthZiel(visible,mk,true);
 
   h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
-  h+='<div style="display:flex;gap:56px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
-  h+='<div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:18px">'
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
+  h+='<div style="grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:18px">'
     +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+heroSums.optGesamt+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+optProTag.toFixed(1)+' Opt./Tag</div>'
+    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+Math.round(optZielMonat).toLocaleString('de-DE')+' Stk./Mon.</div>'
     +'</div>'
-    +sparkline(optSeries,'#7ED2DB',160,34)
+    +sparkline(optSeries,'#7ED2DB',110,34)
     +'</div>';
   var weekMarge=currentWeekMargin();
-  var weekPct=weekMarge.target>0?Math.round(weekMarge.ist/weekMarge.target*100):(weekMarge.ist>0?100:0);
-  h+='<div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:18px">'
+  var weekElapsedWD=weekMarge.from?elapsedWorkDaysInRange(weekMarge.from,weekMarge.to):0;
+  var weekProTag=weekElapsedWD>0?weekMarge.ist/weekElapsedWD:0;
+  h+='<div style="grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:18px">'
     +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG WOCHE (KW '+weekMarge.kw+')</div>'
-    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurH(weekMarge.ist)+'</div>'
-    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ziel '+eurH(weekMarge.target)+' · '+weekPct+'%</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(weekMarge.ist)+'</div>'
+    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(weekProTag)+'/Arbeitstag</div>'
+    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(weekMarge.target)+'/Woche</div>'
     +'</div>'
     +'</div>';
-  h+='<div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:18px">'
+  h+='<div style="grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:18px">'
     +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">MARGENERHÖHUNG</div>'
-    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurH(heroSums.margeGesamt)+'</div>'
-    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+' Marge/Arbeitstag</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(heroSums.margeGesamt)+'</div>'
+    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+'/Arbeitstag</div>'
+    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(margeZielMonat)+'/Mon.</div>'
     +'</div>'
-    +sparkline(margeSeries,'#7ED2DB',160,34)
+    +sparkline(margeSeries,'#7ED2DB',110,34)
     +'</div>';
   h+='</div>'; // Ende Hero-Zeile
 
