@@ -4101,6 +4101,8 @@ function buildOverviewTab(liste,section){
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Overview"></div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
+  } // Ende else (Overview)
+
   // ── Performance Trend Chart (unter dem Banner) ──
   var chartRows=isAll
     ? selectedEmps.reduce(function(acc,e){return acc.concat((performance[e.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;}));},[])
@@ -4274,7 +4276,6 @@ function buildOverviewTab(liste,section){
     }
   });});
 
-  } // Ende else (Overview)
 
   var selLabel=selectedEmps.length===visible.length?'Alle Mitarbeiter':(isAll?selectedEmps.length+' Mitarbeiter ausgewählt':emp.name);
   if(showRest){
