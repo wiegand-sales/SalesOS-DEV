@@ -3869,7 +3869,7 @@ function buildOverviewTab(liste){
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
       +sortTh('Mitarbeiter','name')
       +sortTh(firstColLabel,'period')
-      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['CR OEM%','crOEM'],['CR TW%','crTW'],['CR Yes%','crYes'],['CR SY/MY%','crSyMy'],['CR SY%','crSY'],['CR MY%','crMY'],['Anteil OEM%','anteilOEM'],['Marge Ges.','marge'],['Marge Durch.','margeDurch']].map(function(cc){
+      +[['Aktivitäten','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM'],['Marge Ges.','marge'],['Marge Durch.','margeDurch']].map(function(cc){
         return sortTh(cc[0],cc[1]);
       }).join('')
       +'</tr></thead><tbody>';
@@ -3877,7 +3877,7 @@ function buildOverviewTab(liste){
     sortableRows.forEach(function(sr,ridx){
       var rowEmp=sr.rowEmp,rowEmpT=sr.rowEmpT,g=sr.g;
       var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy;
-      function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--teal-dark)':'color:var(--red)';}
+      function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red)';}
       var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
       h+='<tr style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+rowEmp.name+'</td>'
@@ -3892,11 +3892,11 @@ function buildOverviewTab(liste){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">'+optGes+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+'">'+crOEM+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+'">'+crTW+'% <span style="font-size:11px;color:var(--text3)">('+tw+')</span></td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--blue-dark)">'+crYes+'% <span style="font-size:11px;color:var(--text3)">('+yes+')</span></td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--teal-dark)">'+crSyMy+'% <span style="font-size:11px;color:var(--text3)">('+(sy+my)+')</span></td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+'">'+crYes+'% <span style="font-size:11px;color:var(--text3)">('+yes+')</span></td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+crSyMy+'% <span style="font-size:11px;color:var(--text3)">('+(sy+my)+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+'">'+crSY+'% <span style="font-size:11px;color:var(--text3)">('+sy+')</span></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+'">'+crMY+'% <span style="font-size:11px;color:var(--text3)">('+my+')</span></td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--purple)">'+(convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+(convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)">'+(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—')+'</td>'
         +'</tr>';
