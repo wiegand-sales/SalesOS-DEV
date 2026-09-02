@@ -3694,7 +3694,7 @@ function buildOverviewTab(liste,section){
     +'</div>';
   h+='</div>'; // Ende Hero-Zeile
 
-  h+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
   function heroKpiCell(k,cur,prev,spark7K){
     var vR=cur!==null?(k.pct?Math.round(cur):+cur.toFixed(1)):null;
     var hit=cur!==null&&k.target!==null&&(k.dir==='lte'?cur<=k.target:cur>=k.target);
@@ -3741,6 +3741,7 @@ function buildOverviewTab(liste,section){
       var denomOEM=s.oem+s.nerrOem, denomRest=s.yes+s.sy+s.my;
       if(kind==='crOEM')return denomOEM>0?s.oem/denomOEM*100:null;
       if(kind==='crTeilweise')return (s.tw+denomRest)>0?s.tw/(s.tw+denomRest)*100:null;
+      if(kind==='crSyMy')return denomRest>0?(s.sy+s.my)/denomRest*100:null;
       if(kind==='crSuperYes')return denomRest>0?s.sy/denomRest*100:null;
       if(kind==='crMegaYes')return denomRest>0?s.my/denomRest*100:null;
       return null;
@@ -3761,6 +3762,7 @@ function buildOverviewTab(liste,section){
     var kpisAll=[
       {label:'CR OEM', key:'crOEM',      target:CR_GOOD, dir:'gte', pct:true, cr:true},
       {label:'CR TW',  key:'crTeilweise', target:KPI_TARGETS.crTeilweise.val, dir:KPI_TARGETS.crTeilweise.dir, pct:true, cr:true},
+      {label:'CR SY/MY',key:'crSyMy',     target:KPI_TARGETS.crSyMy?KPI_TARGETS.crSyMy.val:null, dir:KPI_TARGETS.crSyMy?KPI_TARGETS.crSyMy.dir:'gte', pct:true, cr:true},
       {label:'CR SY',  key:'crSuperYes',  target:KPI_TARGETS.crSuperYes.val,  dir:KPI_TARGETS.crSuperYes.dir,  pct:true, cr:true},
       {label:'CR MY',  key:'crMegaYes',   target:KPI_TARGETS.crMegaYes.val,   dir:KPI_TARGETS.crMegaYes.dir,   pct:true, cr:true},
       {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false},
