@@ -3975,14 +3975,131 @@ function buildOverviewTab(liste,section){
   h+='</div>'; // Ende KPI-Zeile
   h+='</div>'; // Ende Hero-Panel
   } else {
-  // ── Overview Trend Chart (jetzt VOR dem Banner platziert) ──
+  // ── NEUE, eigenstaendige Overview-Hero-Panel-Version (gleiche Optik wie Performance, andere Kennzahlen) ──
+  var ovMk=today().slice(0,7);
+  function ovMonthSums(kind){
+    // kind: 'oem' | 'ups' | 'wka'
+    var count=0,marge=0;
+    visible.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if((x.date||'').slice(0,7)!==ovMk)return;
+        if(kind==='oem'){count+=x.convOEM||0;marge+=x.margeOEM||0;}
+        else if(kind==='ups'){count+=x.ups_yes||0;marge+=x.margeUpsell||0;}
+        else if(kind==='wka'){count+=x.wka_gesamt_yes||0;marge+=x.margeWKA||0;}
+      });
+    });
+    return {count:count,marge:marge};
+  }
+  function ovLastNWorkdayDates(n){
+    var dates=[],feiertageCache={};
+    var d=new Date(today()+'T00:00:00Z');
+    while(dates.length<n){
+      var dow=d.getUTCDay();
+      var y=d.getUTCFullYear();
+      if(!feiertageCache[y])feiertageCache[y]=bayernFeiertage(y);
+      var ds=d.toISOString().slice(0,10);
+      if(dow!==0&&dow!==6&&!feiertageCache[y][ds])dates.unshift(ds);
+      d.setUTCDate(d.getUTCDate()-1);
+    }
+    return dates;
+  }
+  var ovLast14WD=ovLastNWorkdayDates(14);
+  var ovLast7WD=ovLastNWorkdayDates(7);
+  function ovCountsForDate(dateStr,kind){
+    var count=0;
+    visible.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if(x.date!==dateStr)return;
+        if(kind==='oem')count+=x.convOEM||0;
+        else if(kind==='ups')count+=x.ups_yes||0;
+        else if(kind==='wka')count+=x.wka_gesamt_yes||0;
+      });
+    });
+    return count;
+  }
+  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
+  [['oem','OEM'],['ups','UPSELLS'],['wka','WKA']].forEach(function(kk){
+    var kind=kk[0],label=kk[1];
+    var s=ovMonthSums(kind);
+    var proLead=s.count>0?s.marge/s.count:0;
+    var series=ovLast14WD.map(function(d){return ovCountsForDate(d,kind);});
+    h+='<div style="grid-column:span 1;padding-left:14px">'
+      +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">'+label+'</div>'
+      +'<div style="font-size:30px;font-weight:700;line-height:1">'+s.count+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
+      +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Margenerhöhung '+Math.round(s.marge).toLocaleString('de-DE')+' EUR</div>'
+      +'<div style="font-size:11px;color:#8fb5b9">Ø '+Math.round(proLead).toLocaleString('de-DE')+' EUR/Lead</div>'
+      +'</div>'
+      +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(series,'#7ED2DB',300,34,ovLast14WD,function(v){return Math.round(v).toLocaleString('de-DE')+' Stk.';})+'</div>';
+  });
+  h+='</div>'; // Ende Hero-Zeile
+
+  var ovOptGesamtNeu=0, ovMargeGesamtNeu=0;
+  visible.forEach(function(e){
+    (performance[e.id]||[]).forEach(function(x){
+      if((x.date||'').slice(0,7)!==ovMk)return;
+      ovOptGesamtNeu+=(x.convOEM||0)+(x.ups_yes||0)+(x.wka_gesamt_yes||0);
+      ovMargeGesamtNeu+=x.margeGesamt||x.margin||0;
+    });
+  });
+  var ovOptZielMonatNeu=teamMonthZiel(visible,ovMk,false);
+  var ovMargeZielMonatNeu=teamMonthZiel(visible,ovMk,true);
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
+  // Ring-Kachel: Ist/Ziel als Donut-Ring, optional mit weissem "Soll heute"-Strich (Woche/Monat)
+  function ovRingTile(label,ist,ziel,sollFrac,unitSuffix,fmtFn){
+    var fmt=fmtFn||function(v){return Math.round(v).toLocaleString('de-DE');};
+    var pct=ziel>0?ist/ziel:(ist>0?1:0);
+    var pctShown=Math.round(pct*100);
+    var circumference=94.2;
+    var offset=circumference*(1-Math.min(pct,1));
+    var color=(ziel>0&&pct>=1)?'#7ED2DB':(ziel>0&&pct<1&&sollFrac!=null&&pct<sollFrac?'#e57373':'#7ED2DB');
+    var diff=ist-(ziel*(sollFrac!=null?sollFrac:1));
+    var diffTxt=(diff>=0?'+':'')+fmt(diff);
+    var restTxt=fmt(Math.max(0,ziel-ist));
+    var sollMarker='';
+    if(sollFrac!=null){
+      var angle=230+sollFrac*360*0.766; // grober Bogenversatz passend zur dasharray-Geometrie (siehe Entwurf)
+      sollMarker='<line x1="19" y1="4" x2="19" y2="7.5" stroke="#fff" stroke-width="1.6" transform="rotate('+(sollFrac*288)+' 19 19)"/>';
+    }
+    return '<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div>'
+      +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">'+label.toUpperCase()+'</div>'
+      +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+fmt(ist)+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+fmt(ziel)+(unitSuffix?' '+unitSuffix:'')+'</span></div>'
+      +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">'+(sollFrac!=null?('Abw. <span style="color:'+(diff<0?'#e57373':'#7ED2DB')+';font-weight:600">'+diffTxt+'</span> · Rest '+restTxt):('Abw. <span style="color:'+(diff<0?'#e57373':'#7ED2DB')+';font-weight:600">'+diffTxt+'</span>'))+'</div>'
+      +'</div>'
+      +'<svg width="38" height="38" viewBox="0 0 38 38" style="flex-shrink:0">'
+      +'<circle cx="19" cy="19" r="15" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="5"/>'
+      +'<circle cx="19" cy="19" r="15" fill="none" stroke="'+color+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+circumference+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 19 19)"/>'
+      +sollMarker
+      +'</svg>'
+      +'</div>';
+  }
+  var todayWD=elapsedWorkDaysInRange(today(),today())>0; // ist heute ein Arbeitstag?
+  var optHeuteIst=todayActualStat('opt',visible), optHeuteZiel=todayTargetStat('opt');
+  var margeHeuteIst=todayActualStat('marge',visible), margeHeuteZiel=todayTargetStat('marge');
+  h+=ovRingTile('Opt. Ges. (Heute)',optHeuteIst,optHeuteZiel,null,'Stk.');
+  h+=ovRingTile('Margenerhöhung (Heute)',margeHeuteIst,margeHeuteZiel,null,'€',function(v){return Math.round(v).toLocaleString('de-DE');});
+  var woOpt=currentWeekStat('opt'), woMarge=currentWeekStat('marge');
+  var woElapsedWD=woOpt.from?elapsedWorkDaysInRange(woOpt.from,today()):0;
+  var woTotalWD=woOpt.from?elapsedWorkDaysInRange(woOpt.from,woOpt.to):1;
+  var woSollFrac=woTotalWD>0?woElapsedWD/woTotalWD:null;
+  h+=ovRingTile('Opt. Ges. (Woche)',woOpt.ist,woOpt.target,woSollFrac,'Stk.');
+  h+=ovRingTile('Margenerhöhung (Woche)',woMarge.ist,woMarge.target,woSollFrac,'€');
+  var moElapsedWD=elapsedWorkDaysThisMonth();
+  var moTotalWD=elapsedWorkDaysInRange(ovMk+'-01',monthBoundsUTC(today(),0).to);
+  var moSollFrac=moTotalWD>0?moElapsedWD/moTotalWD:null;
+  h+=ovRingTile('Opt. Ges. (Monat)',ovOptGesamtNeu,ovOptZielMonatNeu,moSollFrac,'Stk.');
+  h+=ovRingTile('Margenerhöhung (Monat)',ovMargeGesamtNeu,ovMargeZielMonatNeu,moSollFrac,'€');
+  h+='</div>'; // Ende KPI-Zeile
+  h+='</div>'; // Ende Hero-Panel
+  // ── Performance Trend Chart (unter dem Banner) ──
   var chartRows=isAll
     ? selectedEmps.reduce(function(acc,e){return acc.concat((performance[e.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;}));},[])
     : (performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;});
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
   h+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
-  h+='<div class="card-title" style="margin:0">Overview <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+today().slice(0,4)+'</span></div>';
+  h+='<div class="card-title" style="margin:0">Performance <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+today().slice(0,4)+'</span></div>';
   h+='<div id="overviewChartLegend" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>';
   h+='</div>';
   h+='<div style="display:flex;align-items:center;gap:8px">';
@@ -4148,221 +4265,10 @@ function buildOverviewTab(liste,section){
     }
   });});
 
-  // ── NEUE, eigenstaendige Overview-Hero-Panel-Version (gleiche Optik wie Performance, andere Kennzahlen) ──
-  var ovMk=today().slice(0,7);
-  function ovMonthSums(kind){
-    // kind: 'oem' | 'ups' | 'wka'
-    var count=0,marge=0;
-    visible.forEach(function(e){
-      (performance[e.id]||[]).forEach(function(x){
-        if((x.date||'').slice(0,7)!==ovMk)return;
-        if(kind==='oem'){count+=x.convOEM||0;marge+=x.margeOEM||0;}
-        else if(kind==='ups'){count+=x.ups_yes||0;marge+=x.margeUpsell||0;}
-        else if(kind==='wka'){count+=x.wka_gesamt_yes||0;marge+=x.margeWKA||0;}
-      });
-    });
-    return {count:count,marge:marge};
-  }
-  function ovLastNWorkdayDates(n){
-    var dates=[],feiertageCache={};
-    var d=new Date(today()+'T00:00:00Z');
-    while(dates.length<n){
-      var dow=d.getUTCDay();
-      var y=d.getUTCFullYear();
-      if(!feiertageCache[y])feiertageCache[y]=bayernFeiertage(y);
-      var ds=d.toISOString().slice(0,10);
-      if(dow!==0&&dow!==6&&!feiertageCache[y][ds])dates.unshift(ds);
-      d.setUTCDate(d.getUTCDate()-1);
-    }
-    return dates;
-  }
-  var ovLast14WD=ovLastNWorkdayDates(14);
-  var ovLast7WD=ovLastNWorkdayDates(7);
-  function ovCountsForDate(dateStr,kind){
-    var count=0;
-    visible.forEach(function(e){
-      (performance[e.id]||[]).forEach(function(x){
-        if(x.date!==dateStr)return;
-        if(kind==='oem')count+=x.convOEM||0;
-        else if(kind==='ups')count+=x.ups_yes||0;
-        else if(kind==='wka')count+=x.wka_gesamt_yes||0;
-      });
-    });
-    return count;
-  }
-  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
-  [['oem','OEM'],['ups','UPSELLS'],['wka','WKA']].forEach(function(kk){
-    var kind=kk[0],label=kk[1];
-    var s=ovMonthSums(kind);
-    var proLead=s.count>0?s.marge/s.count:0;
-    var series=ovLast14WD.map(function(d){return ovCountsForDate(d,kind);});
-    h+='<div style="grid-column:span 1;padding-left:14px">'
-      +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">'+label+'</div>'
-      +'<div style="font-size:30px;font-weight:700;line-height:1">'+s.count+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
-      +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Margenerhöhung '+Math.round(s.marge).toLocaleString('de-DE')+' EUR</div>'
-      +'<div style="font-size:11px;color:#8fb5b9">Ø '+Math.round(proLead).toLocaleString('de-DE')+' EUR/Lead</div>'
-      +'</div>'
-      +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(series,'#7ED2DB',300,34,ovLast14WD,function(v){return Math.round(v).toLocaleString('de-DE')+' Stk.';})+'</div>';
-  });
-  h+='</div>'; // Ende Hero-Zeile
-
-  var ovOptGesamtNeu=0, ovMargeGesamtNeu=0;
-  visible.forEach(function(e){
-    (performance[e.id]||[]).forEach(function(x){
-      if((x.date||'').slice(0,7)!==ovMk)return;
-      ovOptGesamtNeu+=(x.convOEM||0)+(x.ups_yes||0)+(x.wka_gesamt_yes||0);
-      ovMargeGesamtNeu+=x.margeGesamt||x.margin||0;
-    });
-  });
-  var ovOptZielMonatNeu=teamMonthZiel(visible,ovMk,false);
-  var ovMargeZielMonatNeu=teamMonthZiel(visible,ovMk,true);
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
-  // Ring-Kachel: Ist/Ziel als Donut-Ring, optional mit weissem "Soll heute"-Strich (Woche/Monat)
-  function ovRingTile(label,ist,ziel,sollFrac,unitSuffix,fmtFn){
-    var fmt=fmtFn||function(v){return Math.round(v).toLocaleString('de-DE');};
-    var pct=ziel>0?ist/ziel:(ist>0?1:0);
-    var pctShown=Math.round(pct*100);
-    var circumference=94.2;
-    var offset=circumference*(1-Math.min(pct,1));
-    var color=(ziel>0&&pct>=1)?'#7ED2DB':(ziel>0&&pct<1&&sollFrac!=null&&pct<sollFrac?'#e57373':'#7ED2DB');
-    var diff=ist-(ziel*(sollFrac!=null?sollFrac:1));
-    var diffTxt=(diff>=0?'+':'')+fmt(diff);
-    var restTxt=fmt(Math.max(0,ziel-ist));
-    var sollMarker='';
-    if(sollFrac!=null){
-      var angle=230+sollFrac*360*0.766; // grober Bogenversatz passend zur dasharray-Geometrie (siehe Entwurf)
-      sollMarker='<line x1="19" y1="4" x2="19" y2="7.5" stroke="#fff" stroke-width="1.6" transform="rotate('+(sollFrac*288)+' 19 19)"/>';
-    }
-    return '<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center">'
-      +'<div>'
-      +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">'+label.toUpperCase()+'</div>'
-      +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+fmt(ist)+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+fmt(ziel)+(unitSuffix?' '+unitSuffix:'')+'</span></div>'
-      +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">'+(sollFrac!=null?('Abw. <span style="color:'+(diff<0?'#e57373':'#7ED2DB')+';font-weight:600">'+diffTxt+'</span> · Rest '+restTxt):('Abw. <span style="color:'+(diff<0?'#e57373':'#7ED2DB')+';font-weight:600">'+diffTxt+'</span>'))+'</div>'
-      +'</div>'
-      +'<svg width="38" height="38" viewBox="0 0 38 38" style="flex-shrink:0">'
-      +'<circle cx="19" cy="19" r="15" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="5"/>'
-      +'<circle cx="19" cy="19" r="15" fill="none" stroke="'+color+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+circumference+'" stroke-dashoffset="'+offset.toFixed(1)+'" transform="rotate(-90 19 19)"/>'
-      +sollMarker
-      +'</svg>'
-      +'</div>';
-  }
-  var todayWD=elapsedWorkDaysInRange(today(),today())>0; // ist heute ein Arbeitstag?
-  var optHeuteIst=todayActualStat('opt',visible), optHeuteZiel=todayTargetStat('opt');
-  var margeHeuteIst=todayActualStat('marge',visible), margeHeuteZiel=todayTargetStat('marge');
-  h+=ovRingTile('Opt. Ges. (Heute)',optHeuteIst,optHeuteZiel,null,'Stk.');
-  h+=ovRingTile('Margenerhöhung (Heute)',margeHeuteIst,margeHeuteZiel,null,'€',function(v){return Math.round(v).toLocaleString('de-DE');});
-  var woOpt=currentWeekStat('opt'), woMarge=currentWeekStat('marge');
-  var woElapsedWD=woOpt.from?elapsedWorkDaysInRange(woOpt.from,today()):0;
-  var woTotalWD=woOpt.from?elapsedWorkDaysInRange(woOpt.from,woOpt.to):1;
-  var woSollFrac=woTotalWD>0?woElapsedWD/woTotalWD:null;
-  h+=ovRingTile('Opt. Ges. (Woche)',woOpt.ist,woOpt.target,woSollFrac,'Stk.');
-  h+=ovRingTile('Margenerhöhung (Woche)',woMarge.ist,woMarge.target,woSollFrac,'€');
-  var moElapsedWD=elapsedWorkDaysThisMonth();
-  var moTotalWD=elapsedWorkDaysInRange(ovMk+'-01',monthBoundsUTC(today(),0).to);
-  var moSollFrac=moTotalWD>0?moElapsedWD/moTotalWD:null;
-  h+=ovRingTile('Opt. Ges. (Monat)',ovOptGesamtNeu,ovOptZielMonatNeu,moSollFrac,'Stk.');
-  h+=ovRingTile('Margenerhöhung (Monat)',ovMargeGesamtNeu,ovMargeZielMonatNeu,moSollFrac,'€');
-  h+='</div>'; // Ende KPI-Zeile
-  h+='</div>'; // Ende Hero-Panel
   } // Ende else (Overview)
 
   var selLabel=selectedEmps.length===visible.length?'Alle Mitarbeiter':(isAll?selectedEmps.length+' Mitarbeiter ausgewählt':emp.name);
   if(showRest){
-  // ── Conversion-Mix (OEM/Upsells/WKA) — SVG-Donut analog "Wo/Warum wir Kunden verlieren" (SalesOS) ──
-  (function(){
-    var oemSum=0,upsSum=0,wkaSum=0;
-    chartRows.forEach(function(x){
-      oemSum+=x.convOEM||0; upsSum+=x.ups_yes||0; wkaSum+=x.wka_gesamt_yes||0;
-    });
-    var mixEntries=[{label:'OEM',count:oemSum},{label:'Upsells',count:upsSum},{label:'WKA',count:wkaSum}].filter(function(e){return e.count>0;});
-    var mixTotal=oemSum+upsSum+wkaSum;
-
-    h+='<div class="card" style="margin-bottom:22px">';
-    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-donut" style="color:var(--purple)"></i> Conversion-Mix</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+selLabel+'</span></div>';
-    h+='<div class="funnel-wrap">'+donutSvg(mixEntries,mixTotal,'Gesamt')+'</div>';
-    h+='</div>';
-  })();
-
-  // ── Top 3 (höchste Margenerhöhung) & Worst 3 (schwächste CR OEM/CR MY) im aktuellen Kalendermonat ──
-  (function(){
-    var mk=today().slice(0,7);
-    var wMeta=getMonthWeeksZiel(mk);
-    var mRec=zielStore[mk]||{};
-    var pool=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
-
-    var topRows=pool.map(function(e){
-      var total=0;
-      (performance[e.id]||[]).forEach(function(x){
-        if((x.date||'').slice(0,7)!==mk)return;
-        total+=x.margeGesamt||x.margin||0;
-      });
-      var r=mRec[e.id]||{};
-      var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
-      var einsatztage=weeks.reduce(function(a,b){return a+b;},0);
-      var optTag=r.optTag!=null?r.optTag:0;
-      var margeOpt=r.margeOpt!=null?r.margeOpt:0;
-      var zielMonat=einsatztage*optTag*margeOpt;
-      var zielTag=einsatztage>0?zielMonat/einsatztage:0;
-      var proTag=einsatztage>0?total/einsatztage:0;
-      return {e:e,total:total,proTag:proTag,pctMonat:zielMonat>0?Math.min(100,Math.round(total/zielMonat*100)):(total>0?100:0),pctTag:zielTag>0?Math.min(100,Math.round(proTag/zielTag*100)):(proTag>0?100:0)};
-    }).filter(function(r){return r.total>0;}).sort(function(a,b){return b.total-a.total;}).slice(0,3);
-
-    var worstRows=pool.map(function(e){
-      var crOEM=monthAvg(e.id,'crOEM',0);
-      var crMY=monthAvg(e.id,'crMegaYes',0);
-      return {e:e,crOEM:crOEM,crMY:crMY,score:(crOEM!=null&&crMY!=null)?(crOEM+crMY):null};
-    }).filter(function(r){return r.score!=null;}).sort(function(a,b){return a.score-b.score;}).slice(0,3);
-
-    function initials(nm){return nm.split(' ').map(function(x){return x[0];}).join('').toUpperCase().slice(0,2);}
-    function metricRow(label,pct,valTxt,cls){
-      return '<div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">'
-        +'<span style="width:52px;flex-shrink:0">'+label+'</span>'
-        +'<div style="flex:1;height:5px;border-radius:3px;overflow:hidden;background:'+(cls==='p'?'rgba(32,106,114,0.12)':'rgba(189,45,41,0.12)')+'"><div style="height:100%;border-radius:3px;width:'+Math.max(2,pct)+'%;background:'+(cls==='p'?'var(--purple)':'var(--red)')+'"></div></div>'
-        +'<span style="width:52px;text-align:right;font-weight:700;color:'+(cls==='p'?'var(--purple-dark)':'var(--red)')+'">'+valTxt+'</span>'
-        +'</div>';
-    }
-
-    h+='<div class="g2" style="margin-bottom:22px">';
-
-    h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-trophy" style="color:var(--purple)"></i> Top 3</span></div>';
-    if(!topRows.length){
-      h+='<div style="font-size:12px;color:var(--text3);padding:8px 0">Noch keine Performance-Daten in diesem Monat.</div>';
-    } else {
-      topRows.forEach(function(r,idx){
-        h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;'+(idx<topRows.length-1?'border-bottom:1px solid var(--border);':'')+'">'
-          +'<div style="width:30px;height:30px;border-radius:9px;background:var(--purple-bg);color:var(--purple-dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(r.e.name)+'</div>'
-          +'<div><div style="font-weight:600;font-size:12.5px">'+esc(r.e.name)+'</div><div style="font-size:10px;color:var(--text3)">'+r.e.role+'</div></div>'
-          +'<div style="margin-left:auto;display:flex;flex-direction:column;gap:3px;width:150px">'
-          +metricRow('Gesamt',r.pctMonat,'€ '+Math.round(r.total).toLocaleString('de-DE'),'p')
-          +metricRow('Ø/Tag',r.pctTag,'€ '+Math.round(r.proTag).toLocaleString('de-DE'),'p')
-          +'</div>'
-          +'</div>';
-      });
-    }
-    h+='</div>';
-
-    h+='<div class="card" style="margin-bottom:0">';
-    h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle" style="color:var(--red)"></i> Worst 3</span></div>';
-    if(!worstRows.length){
-      h+='<div style="font-size:12px;color:var(--text3);padding:8px 0">Noch keine Performance-Daten in diesem Monat.</div>';
-    } else {
-      worstRows.forEach(function(r,idx){
-        h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;'+(idx<worstRows.length-1?'border-bottom:1px solid var(--border);':'')+'">'
-          +'<div style="width:30px;height:30px;border-radius:9px;background:var(--red-bg);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(r.e.name)+'</div>'
-          +'<div><div style="font-weight:600;font-size:12.5px">'+esc(r.e.name)+'</div><div style="font-size:10px;color:var(--text3)">'+r.e.role+'</div></div>'
-          +'<div style="margin-left:auto;display:flex;flex-direction:column;gap:3px;width:150px">'
-          +metricRow('CR OEM',Math.round(r.crOEM),Math.round(r.crOEM)+'%','r')
-          +metricRow('CR MY',Math.round(r.crMY),Math.round(r.crMY)+'%','r')
-          +'</div>'
-          +'</div>';
-      });
-    }
-    h+='</div>';
-
-    h+='</div>';
-  })();
   } // Ende if(showRest)
 
   // Performance-Tabelle (Tag/Woche/Monat) für den gewählten Mitarbeiter
