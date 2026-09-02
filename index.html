@@ -3881,9 +3881,9 @@ function buildOverviewTab(liste){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+rowEmp.name+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+g.label+(overviewPerfGroup!=='day'?' <span style="font-weight:400;color:var(--text3);font-size:10.5px">('+g.count+' Tage)</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">'+akt+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+notR+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+Math.round(notR/akt*100)+'%)</span>':'')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+notP+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+Math.round(notP/akt*100)+'%)</span>':'')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+notS+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+Math.round(notS/akt*100)+'%)</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(akt>0?Math.round(notR/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notR+')</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(akt>0?Math.round(notP/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notP+')</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--text2)">'+(akt>0?Math.round(notS/akt*100)+'%':'—')+(akt>0?' <span style="font-size:11px;color:var(--text3)">('+notS+')</span>':'')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;color:var(--purple)">'+convOEM+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--amber-dark)">'+tw+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--blue-dark)">'+yes+'</td>'
@@ -3921,7 +3921,7 @@ function buildOverviewTab(liste){
       var crMYcalc=divSafe(sumMy,sumYes+sumSy+sumMy);
       var anteilOEMcalc=divSafe(sumConvOEM,sumConvOEM+sumUps+sumWka);
       var notRpct=divSafe(sumNotR,sumAkt),notPpct=divSafe(sumNotP,sumAkt),notSpct=divSafe(sumNotS,sumAkt);
-      function cntPct(v,p){return v+' <span style="font-size:11px;opacity:.75">('+Math.round(p)+'%)</span>';}
+      function cntPct(v,p){return Math.round(p)+'% <span style="font-size:11px;opacity:.75">('+v+')</span>';}
       // Trennzeile: kleiner visueller Abstand zwischen Mitarbeiter-Zeilen und Summe/Durchschnitt
       h+='<tr><td colspan="20" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
       h+='<tr class="perf-sum-row" style="background:#0c3b40">'
