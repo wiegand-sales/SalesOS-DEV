@@ -3809,7 +3809,7 @@ function buildGlobalBannerHtml(visible){
       erzieltArr.push(hasData2?Math.round(erzieltSum2):null);
     }
     var maxV2=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
-    var CH2=150;
+    var CH2=195;
     function pct2(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV2*100));}
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px">';
     h+='<div style="display:flex;align-items:flex-end;gap:10px;height:'+CH2+'px;padding:0 4px">';
@@ -3888,7 +3888,7 @@ function buildGlobalBannerHtml(visible){
   var margeZielMonat=teamMonthZiel(visible,mk,true);
 
   h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   h+='<div style="grid-column:span 1;padding-left:14px">'
     +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+heroSums.optGesamt+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
@@ -3916,7 +3916,7 @@ function buildGlobalBannerHtml(visible){
     +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(margeSeries,'#7ED2DB',300,34,_last14WD,function(v){return '€ '+Math.round(v).toLocaleString('de-DE');})+'</div>';
   h+='</div>'; // Ende Hero-Zeile
 
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;min-height:60px;align-items:center">';
   function heroKpiCell(k,cur,prev,spark7K){
     var vR=cur!==null?(k.pct?Math.round(cur):+cur.toFixed(1)):null;
     var hit=cur!==null&&k.target!==null&&(k.dir==='lte'?cur<=k.target:cur>=k.target);
@@ -4042,7 +4042,7 @@ function buildGlobalBannerHtml(visible){
     return count;
   }
   h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14)">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   [['oem','OEM'],['ups','UPSELLS'],['wka','WKA']].forEach(function(kk){
     var kind=kk[0],label=kk[1];
     var s=ovMonthSums(kind);
@@ -4068,7 +4068,7 @@ function buildGlobalBannerHtml(visible){
   });
   var ovOptZielMonatNeu=teamMonthZiel(visible,ovMk,false);
   var ovMargeZielMonatNeu=teamMonthZiel(visible,ovMk,true);
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;min-height:60px;align-items:center">';
   // Ring-Kachel: Ist/Ziel als Donut-Ring, optional mit weissem "Soll heute"-Strich (Woche/Monat)
   function ovRingTile(label,ist,ziel,sollFrac,unitSuffix,fmtFn){
     var fmt=fmtFn||function(v){return Math.round(v).toLocaleString('de-DE');};
