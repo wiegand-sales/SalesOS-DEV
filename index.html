@@ -3933,7 +3933,6 @@ function buildGlobalBannerHtml(visible){
       +'<div style="font-size:10px;color:#8fb5b9;margin-top:3px">Vormonat '+(prev!==null?Math.round(prev)+(k.pct?'%':''):'\u2014')+' \u00b7 '+targetTxt+'</div>'
       +'</div>';
   }
-  if(section==='performance'||isAll){
     function teamMonthAvg(key,monthsAgo){
       var ym=monthBoundsUTC(today(),monthsAgo).ym;
       var vals=[];
@@ -3992,25 +3991,6 @@ function buildGlobalBannerHtml(visible){
       var spark=k.cr?weightedCRSeries(k.key):teamSumSeries(function(s){return s.oem+s.ups+s.wka;});
       h+=heroKpiCell(k,cur,prev,spark);
     });
-  } else {
-    var kpis=[
-      {label:'CR OEM', key:'crOEM',      target:empT.crOEM.val,      dir:empT.crOEM.dir,      pct:true},
-      {label:'CR TW',  key:'crTeilweise', target:empT.crTeilweise.val, dir:empT.crTeilweise.dir, pct:true},
-      {label:'CR SY',  key:'crSuperYes',  target:empT.crSuperYes.val,  dir:empT.crSuperYes.dir,  pct:true},
-      {label:'CR MY',  key:'crMegaYes',   target:empT.crMegaYes.val,   dir:empT.crMegaYes.dir,   pct:true},
-      {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false, fallbackLabel:'kein Zielwert'},
-    ];
-    kpis.forEach(function(k){
-      var cur=monthAvg(emp.id,k.key,0);
-      var prev=monthAvg(emp.id,k.key,1);
-      var _perfAllK=(performance[emp.id]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
-      var _cutoff7K=addDaysUTC(today(),-7);
-      var _spark7srcK=_perfAllK.filter(function(x){return x.date>=_cutoff7K;});
-      if(_spark7srcK.length<2)_spark7srcK=_perfAllK.slice(-7);
-      var spark7K=_spark7srcK.map(function(x){return x[k.key];});
-      h+=heroKpiCell(k,cur,prev,spark7K);
-    });
-  }
   h+='</div>'; // Ende KPI-Zeile
   h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:18px">'
     +'<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
