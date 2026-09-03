@@ -3811,7 +3811,7 @@ function buildGlobalBannerHtml(visible){
     var maxV2=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
     var CH2=195;
     function pct2(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV2*100));}
-    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px">';
+    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;align-items:flex-end;gap:10px;height:'+CH2+'px;padding:0 4px">';
     for(var i=0;i<12;i++){
       var pctNl2=pct2(zielNlArr[i]),pctZiel2=pct2(zielMargeArr[i]),pctErz2=erzieltArr[i]!=null?pct2(erzieltArr[i]):null;
@@ -3830,7 +3830,7 @@ function buildGlobalBannerHtml(visible){
     h+='<div style="display:flex;gap:10px;padding:0 4px;margin-top:8px">';
     for(var i=0;i<12;i++){h+='<div style="flex:1;text-align:center;font-size:10px;color:#8fb5b9">'+MONTH_SHORT_DE[i]+'</div>';}
     h+='</div>';
-    h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:12px;padding-bottom:6px">'
+    h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
       +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
       +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
       +'<div onclick="setBannerViewMode(\'ziel\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Zielvereinbarung"></div>'
@@ -3887,7 +3887,7 @@ function buildGlobalBannerHtml(visible){
   var optZielMonat=teamMonthZiel(visible,mk,false);
   var margeZielMonat=teamMonthZiel(visible,mk,true);
 
-  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
+  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   h+='<div style="grid-column:span 1;padding-left:14px">'
     +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
@@ -3992,7 +3992,7 @@ function buildGlobalBannerHtml(visible){
       h+=heroKpiCell(k,cur,prev,spark);
     });
   h+='</div>'; // Ende KPI-Zeile
-  h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:18px">'
+  h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
     +'<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
     +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
@@ -4041,7 +4041,7 @@ function buildGlobalBannerHtml(visible){
     });
     return count;
   }
-  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px">';
+  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   [['oem','OEM'],['ups','UPSELLS'],['wka','WKA']].forEach(function(kk){
     var kind=kk[0],label=kk[1];
@@ -4115,7 +4115,7 @@ function buildGlobalBannerHtml(visible){
   h+=ovRingTile('Opt. Ges. (Monat)',ovOptGesamtNeu,ovOptZielMonatNeu,moSollFrac,'Stk.');
   h+=ovRingTile('Margenerhöhung (Monat)',ovMargeGesamtNeu,ovMargeZielMonatNeu,moSollFrac,'€');
   h+='</div>'; // Ende KPI-Zeile
-  h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:18px">'
+  h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
     +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Overview"></div>'
     +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
