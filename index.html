@@ -1949,21 +1949,20 @@ function renderCoachingAnsicht(){
         var sg=dedupeGroupEntries(all.filter(function(x){return x.d===ds&&x.s==='geplant';}));
         var sa=dedupeGroupEntries(all.filter(function(x){return x.d===ds&&x.s!=='geplant';}));
         var entries=sg.map(function(x){return {x:x,planned:true};}).concat(sa.map(function(x){return {x:x,planned:false};}));
-        var bdrCol=isH?'var(--purple)':'var(--border)';
-        var bgCol=isH?'var(--purple-bg)':'var(--bg)';
-        var ftCol=isH?'var(--purple)':'var(--text)';
+        var bdrCol=isH?'var(--teal-mid)':'var(--border)';
+        var bgCol=isH?'rgba(32,106,114,0.06)':'var(--bg)';
+        var ftCol=isH?'var(--teal-mid)':'var(--text)';
         k+='<div data-d="'+ds+'" onclick="kalKlick(this.dataset.d)" style="cursor:pointer;border:1px solid '+bdrCol+';background:'+bgCol+';border-radius:6px;padding:6px;min-height:104px">';
         k+='<div style="font-size:12px;font-weight:'+(isH?700:500)+';color:'+ftCol+';margin-bottom:4px">'+d+'</div>';
         entries.slice(0,4).forEach(function(e2){
           var x=e2.x;
           var labelTxt=x.isGroup?('Mehrfachauswahl ('+x.count+')'):x.en.split(' ')[0];
-          var openCall="event.stopPropagation();openPlannedSession('"+x.eid+"','"+x.sid+"','"+esc(x.t||'')+"','"+esc(x.f||'')+"','"+x.d+"','"+x.uhrzeit+"')";
+          var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
           if(e2.planned){
-            var c=ec(x.eid);
-            k+='<div onclick="'+openCall+'" style="font-size:10px;background:'+c.bg+';color:'+c.text+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'">'+labelTxt+'</div>';
+            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:#164e54;color:#fff;border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'">'+labelTxt+'</div>';
           } else {
             var r2=x.r?RS[x.r]:null;
-            k+='<div onclick="'+openCall+'" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+labelTxt+'</div>';
+            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+labelTxt+'</div>';
           }
         });
         if(entries.length>4)k+='<div style="font-size:9px;color:var(--text3);margin-top:1px">+'+(entries.length-4)+' weitere</div>';
@@ -2006,8 +2005,8 @@ function renderCoachingAnsicht(){
       var p=s.split(':');return (+p[0])*60+(+p[1]);
     }
     // Feste, kraeftige (nicht blasse) Farben je Status - loest das "Rasterlinien scheinen durch"-Problem der vorherigen blassen Farben
-    var PLANNED_BG='#6a5fc1', PLANNED_BORDER='#4d3fae';
-    var DONE_BG='#3fb37f', DONE_BORDER='#2f8f66';
+    var PLANNED_BG='#164e54', PLANNED_BORDER='#0c3b40';
+    var DONE_BG='#7ED2DB', DONE_BORDER='#5FBAC4';
     weekDates.forEach(function(d,di){
       var ds=dsOf(d),isH=ds===heute;
       k+='<div style="border-left:1px solid var(--border);position:relative;'+(isH?'background:rgba(106,95,193,0.03)':'')+'">';
@@ -2044,15 +2043,16 @@ function renderCoachingAnsicht(){
         var height=Math.max(20,bottom-top);
         var planned=x.s==='geplant';
         var bg=planned?PLANNED_BG:DONE_BG, bdr=planned?PLANNED_BORDER:DONE_BORDER;
+        var fg=planned?'#fff':'#0c3b40', fgSub=planned?'rgba(255,255,255,0.85)':'rgba(12,59,64,0.75)';
         var colWidthPct=100/totalCols;
         var leftPct=e._col*colWidthPct;
         var coachEmp=x.coachId?employees.find(function(em){return em.id===x.coachId;}):null;
         var labelTxt=x.isGroup?('Mehrfachauswahl ('+x.count+')'):x.en;
-        var openCall="event.stopPropagation();openPlannedSession('"+x.eid+"','"+x.sid+"','"+esc(x.t||'')+"','"+esc(x.f||'')+"','"+x.d+"','"+x.uhrzeit+"')";
-        k+='<div draggable="true" ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="'+openCall+'" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+(coachEmp?' · Coach: '+esc(coachEmp.name):'')+' · '+esc(x.t||'')+'">'
-          +'<div style="font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(labelTxt)+'</div>'
-          +(coachEmp?'<div style="color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px">Coach: '+esc(coachEmp.name)+'</div>':'')
-          +'<div style="color:rgba(255,255,255,0.85)">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+'</div>'
+        var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
+        k+='<div draggable="true" '+dataAttrs+' ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+(coachEmp?' · Coach: '+esc(coachEmp.name):'')+' · '+esc(x.t||'')+'">'
+          +'<div style="font-weight:700;color:'+fg+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(labelTxt)+'</div>'
+          +(coachEmp?'<div style="color:'+fgSub+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px">Coach: '+esc(coachEmp.name)+'</div>':'')
+          +'<div style="color:'+fgSub+'">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+'</div>'
           +'</div>';
       });
       k+='</div>';
@@ -2080,7 +2080,7 @@ function renderCoachingAnsicht(){
     +'</div>';
   h+=buildCalNavControls();
   h+='</div>';
-  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--purple);background:var(--purple-bg);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#EEEDFE;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#9FE1CB;display:inline-block"></span>Abgeschlossen</span></div>';
+  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--teal-mid);background:rgba(32,106,114,0.1);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#164e54;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#7ED2DB;display:inline-block"></span>Abgeschlossen</span></div>';
   h+='</div>';
   h+=(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
 
@@ -2491,6 +2491,9 @@ function restoreBackupToSupabase(d){
 function kalKlick(d){
   openSessionModal(0);
   setTimeout(function(){var el=document.getElementById('sessionDatum');if(el)el.value=d;},50);
+}
+function openPlannedSessionFromChip(el){
+  openPlannedSession(el.dataset.eid,el.dataset.sid,el.dataset.typ,el.dataset.focus,el.dataset.datum,el.dataset.uhrzeit);
 }
 function kalKlickMitZeit(d,hh){
   openSessionModal(0);
