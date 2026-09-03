@@ -424,7 +424,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
 
 
 <!-- SESSION PLANEN MODAL -->
-<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:80vh;overflow-y:auto;padding:0">
+<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:80vh;overflow-y:auto">
   <div id="coachingInfoModalBody"></div>
 </div></div>
 <div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal">
@@ -9168,21 +9168,23 @@ function openCoachingInfoModal(empId){
   var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
   var dowShort=['So','Mo','Di','Mi','Do','Fr','Sa'];
 
-  var h='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);color:#fff;padding:18px 22px;display:flex;align-items:center;gap:12px;border-radius:14px 14px 0 0">'
-    +'<div style="width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px">'+ini(emp.name)+'</div>'
-    +'<div><div style="font-weight:700;font-size:15px">'+esc(emp.name)+'</div><div style="font-size:11.5px;color:#9fc9cd">'+esc(emp.role)+' · Coaching-Historie</div></div>'
-    +'<div onclick="closeModal(\'coachingInfoModal\')" style="margin-left:auto;color:#9fc9cd;cursor:pointer;font-size:18px">✕</div>'
+  var h='<div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-history" style="color:var(--purple)"></i> Coaching-Historie · '+esc(emp.name)+'</div>';
+
+  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Übersicht</div>';
+  h+='<div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">';
+  h+='<div style="display:flex;gap:10px;margin-bottom:10px">'
+    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+total+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Gesamt</div></div>'
+    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:'+(daysSinceLast!==null&&daysSinceLast>30?'#B23A3A':'#0c3b40')+'">'+(daysSinceLast===null?'—':daysSinceLast+'d')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Letzte</div></div>'
+    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+(avgPerMonth||'—')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø/Monat</div></div>'
+    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+geplant.length+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Geplant</div></div>'
     +'</div>';
-  h+='<div style="display:flex;justify-content:space-around;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--border)">'
-    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+total+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Gesamt</div></div>'
-    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:'+(daysSinceLast!==null&&daysSinceLast>30?'#B23A3A':'#0c3b40')+'">'+(daysSinceLast===null?'—':daysSinceLast+'d')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Letzte</div></div>'
-    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+(avgPerMonth||'—')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø/Monat</div></div>'
-    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+geplant.length+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Geplant</div></div>'
-    +'</div>';
-  h+='<div style="padding:20px 22px">';
   if(mainCoach){
-    h+='<div style="font-size:11.5px;color:var(--text2);margin-bottom:16px">Haupt-Coach: <b style="color:#0c3b40">'+esc(mainCoach.name)+'</b> ('+coachCounts[mainCoachId]+'× von '+total+')</div>';
+    h+='<div style="font-size:11.5px;color:var(--text2)">Haupt-Coach: <b style="color:#0c3b40">'+esc(mainCoach.name)+'</b> ('+coachCounts[mainCoachId]+'× von '+total+')</div>';
   }
+  h+='</div>';
+
+  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Verlauf</div>';
+  h+='<div style="border-left:2px solid var(--border2);padding-left:14px">';
   if(!timeline.length){
     h+='<div style="text-align:center;color:var(--text3);padding:20px 0"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Sessions vorhanden</div>';
   } else {
@@ -9211,6 +9213,7 @@ function openCoachingInfoModal(empId){
     h+='</div>';
   }
   h+='</div>';
+  h+='<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="btn" onclick="closeModal(\'coachingInfoModal\')">Schließen</button></div>';
   document.getElementById('coachingInfoModalBody').innerHTML=h;
   openModal('coachingInfoModal');
 }
