@@ -3019,7 +3019,7 @@ function zielvereinbarungHtml(){
   var ZIEL_WK_TARGET_COL=108; // Wochenziel-Spalten (Euro-Beträge sind meist 5-stellig, brauchen mehr Platz gegen Zeilenumbruch)
   var weeksMeta=getMonthWeeksZiel(zielMonth);
   var weekGridTemplate='2.2fr '+ZIEL_WK_COL+'px '+ZIEL_WK_COL+'px repeat('+weeksMeta.length+','+ZIEL_WK_COL+'px) 0.8fr 0.9fr 1fr repeat('+weeksMeta.length+','+ZIEL_WK_TARGET_COL+'px) 1.3fr 1.2fr 0.8fr';
-  var yearGridTemplate='1.6fr 1fr 0.9fr 1fr 1.2fr 1.3fr 1.2fr 0.8fr';
+  var yearGridTemplate='1.6fr 0.9fr 0.9fr 1fr 0.9fr 1fr 1.2fr 1.3fr 1.2fr 0.8fr';
 
   // ── Aufgeklappter Wochen-Detailblick fuer den aktuell gewaehlten Monat (wird unter dessen Monatszeile eingehaengt) ──
   var weekDetailHtml=(function(){
@@ -3134,13 +3134,13 @@ function zielvereinbarungHtml(){
   // ── Eine Tabelle: 12 Monatszeilen, Klick klappt den Wochen-Detailblick direkt darunter auf/zu ──
   var year=zielYearView;
   var monthRows=[];
-  var yearDaysSum=0,yearNlSum=0,yearTargetSum=0,yearIstSum=0;
+  var yearDaysSum=0,yearNlSum=0,yearTargetSum=0,yearIstSum=0,yearUrlaubSum=0,yearKrankSum=0;
   for(var m=1;m<=12;m++){
     var mk=year+'-'+(m<10?'0'+m:m);
     var wMeta=getMonthWeeksZiel(mk);
     var mRec=zielStore[mk]||{};
     var mVisible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
-    var mDaysSum=0,mTargetSum=0,mIstSum=0,mMargeVals=[],mOptVals=[];
+    var mDaysSum=0,mTargetSum=0,mIstSum=0,mMargeVals=[],mOptVals=[],mUrlaubSum=0,mKrankSum=0;
     mVisible.forEach(function(e){
       var r=mRec[e.id]||{};
       var weeks=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
@@ -3151,17 +3151,25 @@ function zielvereinbarungHtml(){
       mIstSum+=istForEmpMonth(e.id,mk);
       if(margeOpt)mMargeVals.push(margeOpt);
       if(optTag)mOptVals.push(optTag);
+      if(r.arbeitstage&&typeof r.arbeitstage==='object'&&!Array.isArray(r.arbeitstage)){
+        Object.keys(r.arbeitstage).forEach(function(ds){
+          if(r.arbeitstage[ds]==='urlaub')mUrlaubSum++;
+          else if(r.arbeitstage[ds]==='krank')mKrankSum++;
+        });
+      }
     });
     var mAvgMarge=mMargeVals.length?Math.round(mMargeVals.reduce(function(a,b){return a+b;},0)/mMargeVals.length):0;
     var mAvgOpt=mOptVals.length?Math.round(mOptVals.reduce(function(a,b){return a+b;},0)/mOptVals.length):0;
     var mNl=zielNlTargets[mk]!=null?zielNlTargets[mk]:0;
     var mPct=mTargetSum>0?Math.round(mIstSum/mTargetSum*100):(mIstSum>0?100:0);
-    yearDaysSum+=mDaysSum;yearNlSum+=mNl;yearTargetSum+=mTargetSum;yearIstSum+=mIstSum;
+    yearDaysSum+=mDaysSum;yearNlSum+=mNl;yearTargetSum+=mTargetSum;yearIstSum+=mIstSum;yearUrlaubSum+=mUrlaubSum;yearKrankSum+=mKrankSum;
     var isCurrent=mk===zielMonth;
     var rowBg=isCurrent?'background:var(--purple-bg);':(m%2===0?'background:rgba(32,106,114,0.07);':'');
     monthRows.push('<div style="display:grid;grid-template-columns:'+yearGridTemplate+';cursor:pointer;'+rowBg+(isCurrent?'border-left:3px solid var(--purple);':'')+'" onclick="toggleZielMonth(\''+mk+'\')">'
       +'<div style="'+GD+';font-weight:'+(isCurrent?'700':'600')+'"><i class="ti ti-chevron-'+(isCurrent?'down':'right')+'" style="font-size:12px;margin-right:6px;color:var(--text3)"></i>'+MONTH_NAMES_ZIEL[m-1]+'</div>'
       +'<div style="'+GD+';justify-content:center;font-weight:600">'+mDaysSum+'</div>'
+      +'<div style="'+GD+';justify-content:center"><span style="font-weight:700;padding:2px 8px;border-radius:8px;'+(mUrlaubSum>0?'background:#e8ecfb;color:#3d4fb0':'color:var(--text3)')+'">'+mUrlaubSum+'</span></div>'
+      +'<div style="'+GD+';justify-content:center"><span style="font-weight:700;padding:2px 8px;border-radius:8px;'+(mKrankSum>0?'background:#fff2e0;color:#b5720c':'color:var(--text3)')+'">'+mKrankSum+'</span></div>'
       +'<div style="'+GD+';justify-content:center;color:var(--text2)">'+(mAvgOpt||'–')+'</div>'
       +'<div style="'+GD+';justify-content:center;color:var(--text2)">'+(mAvgMarge?'€ '+mAvgMarge:'–')+'</div>'
       +'<div style="'+GD+'" onclick="event.stopPropagation()"><input type="number" class="ziel-num" id="zf-mk-'+mk+'" min="0" value="'+mNl+'" onchange="updateZielNlTarget(\''+mk+'\',this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right" placeholder="0"></div>'
@@ -3174,6 +3182,8 @@ function zielvereinbarungHtml(){
   var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)">'
     +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center">Jahresergebnis</div>'
     +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+yearDaysSum+'</div>'
+    +'<div style="font-weight:800;color:#7ED2DB;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+yearUrlaubSum+'</div>'
+    +'<div style="font-weight:800;color:#e0a13a;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+yearKrankSum+'</div>'
     +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">–</div>'
     +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">–</div>'
     +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
@@ -3195,6 +3205,8 @@ function zielvereinbarungHtml(){
     +'<div style="display:grid;grid-template-columns:'+yearGridTemplate+'">'
     +'<div style="'+GH+'">Monat</div>'
     +'<div style="'+GH+';justify-content:center">Σ Einsatztage</div>'
+    +'<div style="'+GH+';justify-content:center">Urlaub</div>'
+    +'<div style="'+GH+';justify-content:center">Krank</div>'
     +'<div style="'+GH+';justify-content:center">Ø Opt./Tag</div>'
     +'<div style="'+GH+';justify-content:center">Ø Marge/Opt.</div>'
     +'<div style="'+GH+';justify-content:flex-end">Ziel NL Marge/Mon.</div>'
