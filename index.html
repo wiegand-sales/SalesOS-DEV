@@ -7536,25 +7536,11 @@ function renderActivity(){
   }
   var h='<div class="content">';
   h+=buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
-  h+='<div class="month-bar" style="grid-template-columns:auto 1fr 1fr 1fr 1fr 1fr">';
-  h+='<div class="mb-month"><div class="l">Zeitraum</div><div class="v">Letzte 30 Tage</div></div>';
-  [
-    {label:'Coaching Sessions',cat:'session'},
-    {label:'QA Bewertungen',cat:'qa'},
-    {label:'Mitarbeiterentwicklungen',cat:'eval'},
-    {label:'Tasks',cat:'task'},
-    {label:'Gesamtänderungen (Board)',cat:'all'}
-  ].forEach(function(m){
-    var cur=countInRange(m.cat,last30From,last30To);
-    var prev=countInRange(m.cat,prev30From,prev30To);
-    h+='<div class="mb-stat"><div class="l">'+m.label+'</div><div class="row"><span class="n">'+cur+'</span></div><div class="m">'+trendBit(cur,prev)+'</div></div>';
-  });
-  h+='</div>';
 
-  // ── Chart-Karte mit Filter ──
-  h+='<div class="card" style="margin-bottom:22px">';
-  h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
-  h+='<div class="card-title" style="margin:0">Filter</div>';
+  // ── Verlauf-Liste (mit Filter-Steuerung im Kopf) ──
+  h+='<div class="card">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
+  h+='<div class="card-title" style="margin:0">Verlauf <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+filtered.length+' von '+combinedLog.length+')</span></div>';
   h+='<div style="display:flex;align-items:center;gap:8px">';
   h+='<select onchange="setActivityFilterPerson(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
   h+='<option value="ALL"'+(activityFilterPerson==='ALL'?' selected':'')+'>Alle Personen</option>';
@@ -7568,12 +7554,6 @@ function renderActivity(){
     h+='<button style="padding:0 14px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(activityFilterDays===d?'var(--purple)':'transparent')+';color:'+(activityFilterDays===d?'#fff':'var(--text2)')+'" onclick="setActivityFilterDays('+d+')">'+d+'T</button>';
   });
   h+='</div></div></div>';
-  h+='<div style="font-size:11px;color:var(--text3);text-align:center;padding:4px 0 2px">📊 Das Diagramm findest du jetzt im Banner oben (Slide "Aktivitäten")</div>';
-  h+='</div>';
-
-  // ── Verlauf-Liste ──
-  h+='<div class="card">';
-  h+='<div class="card-title" style="margin-bottom:12px">Verlauf <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+filtered.length+' von '+combinedLog.length+')</span></div>';
   if(!filtered.length){
     h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-history-off" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Einträge</div>';
   } else {
