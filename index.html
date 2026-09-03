@@ -3032,7 +3032,7 @@ function zielvereinbarungHtml(){
       return a.name.localeCompare(b.name);
     });
     var rec=zielStore[zielMonth]||{};
-    var teamDaysSum=0,teamTargetSum=0,teamIstSum=0,margeVals=[],teamWeekTargetSums=null,teamUrlaubSum=0,teamKrankSum=0;
+    var teamDaysSum=0,teamTargetSum=0,teamIstSum=0,margeVals=[],teamWeekTargetSums=null,teamWeekDaysSums=null,teamUrlaubSum=0,teamKrankSum=0;
     var weekHeaderCells=weeksMeta.map(function(wm){
       var isHol=wm.holidayNames.length>0;
       var isShort=wm.defaultDays<5;
@@ -3048,6 +3048,8 @@ function zielvereinbarungHtml(){
     var rowsHtml=visibleEmps.map(function(e,idx){
       var r=rec[e.id]||{};
       var weeks=weeksMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
+      if(!teamWeekDaysSums)teamWeekDaysSums=weeksMeta.map(function(){return 0;});
+      weeks.forEach(function(d,i){teamWeekDaysSums[i]+=d;});
       var monthSum=weeks.reduce(function(a,b){return a+b;},0);
       var optTag=r.optTag!=null?r.optTag:0;
       var margeOpt=r.margeOpt!=null?r.margeOpt:0;
@@ -3093,7 +3095,7 @@ function zielvereinbarungHtml(){
         +'</div>';
     }).join('');
     var avgMarge=margeVals.length?Math.round(margeVals.reduce(function(a,b){return a+b;},0)/margeVals.length):0;
-    var weekTotalCells=weeksMeta.map(function(){return '<div style="border-top:1px solid var(--border2)"></div>';}).join('');
+    var weekTotalCells=(teamWeekDaysSums||weeksMeta.map(function(){return 0;})).map(function(sum){return '<div style="border-top:1px solid var(--border2);justify-content:center;font-weight:700;color:#fff;padding:10px 6px;display:flex;align-items:center">'+sum+'</div>';}).join('');
     return '<div style="grid-column:1/-1;padding:16px 14px 18px;background:rgba(32,106,114,0.03);border-top:2px solid var(--purple)">'
       +'<div style="font-size:12.5px;font-weight:700;color:var(--purple-dark);margin-bottom:12px"><i class="ti ti-calendar-event" style="margin-right:5px"></i>Wochen-Detail · '+monthLabel+'</div>'
       +'<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2);background:var(--bg-solid,#fff)">'
