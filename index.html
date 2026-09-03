@@ -7731,6 +7731,11 @@ function renderEinstellungen(){
     +'<button class="btn btn-sm" onclick="downloadCSVVorlage()"><i class="ti ti-download"></i> Vorlage laden</button>'
     +'</div>'
     +'<div id="csv-status" style="margin-top:10px;font-size:12px;min-height:18px"></div>'
+    +'<div style="border-top:1px solid var(--border);margin:14px 0 12px"></div>'
+    +'<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Bestehende Datensätze bereinigen</div>'
+    +'<p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">Entfernt bereits importierte Einsatztage ohne Präsenz (Gesamtmarge = 0€, nur ein Lead wurde abgelehnt).</p>'
+    +'<button class="btn btn-sm" onclick="countZeroMargeRecords()"><i class="ti ti-search"></i> Betroffene Datensätze zählen</button>'
+    +'<div id="zero-marge-status" style="margin-top:10px;font-size:12px;min-height:18px"></div>'
     +'</div>'
     // Backup
     +'<div class="card">'
@@ -8299,6 +8304,39 @@ var CSV_COLS=[
   ['CR OEM %','oem_cr'],['CR TW %','oem_tw_cr'],['CR Yes %','oem_yes_cr'],['CR SY %','oem_sy_cr'],['CR MY %','oem_my_cr']
 ];
 
+function countZeroMargeRecords(){
+  var statusEl=document.getElementById('zero-marge-status');
+  if(statusEl){statusEl.style.color='var(--text2)';statusEl.textContent='Zähle…';}
+  sb.from('performance').select('id',{count:'exact',head:true}).eq('gesamt_margenerhoehung',0).then(function(res){
+    if(res.error){if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Fehler: '+res.error.message;}return;}
+    var n=res.count||0;
+    if(!n){if(statusEl){statusEl.style.color='var(--teal)';statusEl.textContent='✓ Keine Datensätze mit Gesamtmarge 0€ gefunden.';}return;}
+    if(statusEl){
+      statusEl.style.color='var(--text)';
+      statusEl.innerHTML='';
+      var txt=document.createElement('div');
+      txt.textContent=n+' Datensatz(e) mit Gesamtmarge 0€ gefunden.';
+      txt.style.marginBottom='6px';
+      statusEl.appendChild(txt);
+      var btn=document.createElement('button');
+      btn.className='btn btn-sm';
+      btn.style.color='#b91c1c';btn.style.borderColor='#b91c1c';
+      btn.innerHTML='<i class="ti ti-trash"></i> '+n+' Datensatz(e) jetzt löschen';
+      btn.onclick=function(){deleteZeroMargeRecords(n);};
+      statusEl.appendChild(btn);
+    }
+  }).catch(function(err){if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Unerwarteter Fehler: '+err.message;}});
+}
+function deleteZeroMargeRecords(expectedCount){
+  if(!confirm('Wirklich '+expectedCount+' Datensatz(e) mit Gesamtmarge 0€ endgültig löschen? Das kann nicht rückgängig gemacht werden.'))return;
+  var statusEl=document.getElementById('zero-marge-status');
+  if(statusEl){statusEl.style.color='var(--text2)';statusEl.textContent='Lösche…';}
+  sb.from('performance').delete().eq('gesamt_margenerhoehung',0).then(function(res){
+    if(res.error){if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Fehler beim Löschen: '+res.error.message;}return;}
+    if(statusEl){statusEl.style.color='var(--teal)';statusEl.textContent='✓ Datensätze gelöscht.';}
+    loadPerformanceFromSupabase().then(function(){renderTab();});
+  }).catch(function(err){if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Unerwarteter Fehler: '+err.message;}});
+}
 function downloadCSVVorlage(){
   var headers=CSV_COLS.map(function(c){return c[0];});
   var exampleName=(employees[0]&&employees[0].name)||'Vorname Nachname';
