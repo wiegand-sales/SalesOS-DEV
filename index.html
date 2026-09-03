@@ -9165,6 +9165,7 @@ function openCoachingInfoModal(empId){
   var heute=today();
   // Chronologisch absteigend (neueste zuerst), geplante UND abgeschlossene gemeinsam
   var timeline=all.slice().sort(function(a,b){return b.date.localeCompare(a.date)||( (b.uhrzeit||'').localeCompare(a.uhrzeit||''));});
+  var bestEvents=personalBestEvents(empId);
   // Kennzahlen
   var total=abgeschlossen.length;
   var lastDone=abgeschlossen.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0];
@@ -9253,13 +9254,26 @@ function openCoachingInfoModal(empId){
 
   h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Verlauf</div>';
   h+='<div style="border-left:2px solid var(--border2);padding-left:14px">';
-  if(!timeline.length){
+  // Sessions und persoenliche Bestwerte zu einer gemeinsamen, chronologisch sortierten Zeitleiste zusammenfuehren
+  var combinedTl=timeline.map(function(p){return {kind:'session',date:p.date,p:p};})
+    .concat(bestEvents.map(function(ev){return {kind:'record',date:ev.date,label:ev.label};}))
+    .sort(function(a,b){return b.date.localeCompare(a.date);});
+  if(!combinedTl.length){
     h+='<div style="text-align:center;color:var(--text3);padding:20px 0"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Sessions vorhanden</div>';
   } else {
     h+='<div style="position:relative;padding-left:22px">';
     h+='<div style="position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--border)"></div>';
-    timeline.forEach(function(p,idx){
-      var dt=new Date(p.date+'T00:00:00');
+    combinedTl.forEach(function(item,idx){
+      var dt=new Date(item.date+'T00:00:00');
+      if(item.kind==='record'){
+        h+='<div style="position:relative;padding-bottom:18px">';
+        h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:#174C52;display:flex;align-items:center;justify-content:center"></div>';
+        h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+'</div>';
+        h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px;color:#174C52">🎉 '+esc(item.label)+'</div>';
+        h+='</div>';
+        return;
+      }
+      var p=item.p;
       var planned=p.status==='geplant';
       var coach=p.coachId?employees.find(function(e){return e.id===p.coachId;}):null;
       h+='<div style="position:relative;padding-bottom:18px">';
@@ -9272,10 +9286,11 @@ function openCoachingInfoModal(empId){
         h+='<div style="margin-top:4px"><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:'+(eff.delta>=0?'#eafaf3':'#fdeeee')+';color:'+(eff.delta>=0?'#2f8f66':'#B23A3A')+'">'+(eff.delta>=0?'+':'')+eff.delta.toFixed(1)+' '+esc(eff.label)+'</span></div>';
       }
       h+='</div>';
-      // Luecken-Hervorhebung zwischen dieser und der naechsten (aelteren) Session
-      var next=timeline[idx+1];
-      if(next){
-        var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(next.date+'T00:00:00'))/86400000);
+      // Luecken-Hervorhebung: zur naechsten (aelteren) SESSION (Bestwerte dazwischen werden uebersprungen)
+      var nextSession=null;
+      for(var ni=idx+1;ni<combinedTl.length;ni++){if(combinedTl[ni].kind==='session'){nextSession=combinedTl[ni].p;break;}}
+      if(nextSession){
+        var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(nextSession.date+'T00:00:00'))/86400000);
         if(gapDays>=14){
           var gapWeeks=Math.round(gapDays/7);
           h+='<div style="background:rgba(32,106,114,0.08);border-left:3px solid #206A72;border-radius:6px;padding:8px 12px;margin:4px 0 14px 0;font-size:11.5px;color:#164e54;font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
