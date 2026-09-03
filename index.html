@@ -2126,6 +2126,9 @@ function renderCoachingAnsicht(){
     h+='</div>';
   }
 
+  // ══ Performance-Tabelle (dieselbe Tabelle wie im Performance-Reiter, ohne Banner und ohne Diagramm) ══
+  h+=buildOverviewTab(liste,'performance',true,true);
+
   // ══ Geplante Sessions (volle Breite, weiße Box) ══
   var gep10=gep.slice(0,10);
   h+='<div class="card" style="margin-bottom:22px">';
@@ -2186,9 +2189,6 @@ function renderCoachingAnsicht(){
     h+='</tbody></table></div>';
   }
   h+='</div>';
-
-  // ══ Performance-Tabelle (dieselbe Tabelle wie im Performance-Reiter, ohne erneuten Banner) ══
-  h+=buildOverviewTab(liste,'performance',true);
 
   } // Ende else (nicht coverage)
 
@@ -4712,7 +4712,7 @@ function buildGlobalBannerHtml(visible){
 }
 
 // ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
-function buildOverviewTab(liste,section,skipBanner){
+function buildOverviewTab(liste,section,skipBanner,skipChart){
   // section: undefined = komplettes Overview wie bisher, UNVERAENDERT (Banner+Kacheln+Rest+Tabelle).
   // 'performance' = nur Banner + Kacheln + Performance-Tabelle (fuer den neuen Performance-Reiter, zeigt dieselben Daten 1:1, keine Aufteilung von Overview).
   var showRest=(section!=='performance');
@@ -4751,6 +4751,7 @@ function buildOverviewTab(liste,section,skipBanner){
   if(!skipBanner)h+=buildGlobalBannerHtml(visible);
 
   // ── Performance Trend Chart (unter dem Banner) ──
+  if(!skipChart){
   var chartRows=isAll
     ? selectedEmps.reduce(function(acc,e){return acc.concat((performance[e.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;}));},[])
     : (performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;});
@@ -4922,6 +4923,7 @@ function buildOverviewTab(liste,section,skipBanner){
       });
     }
   });});
+  } // Ende if(!skipChart)
 
 
   var selLabel=selectedEmps.length===visible.length?'Alle Mitarbeiter':(isAll?selectedEmps.length+' Mitarbeiter ausgewählt':emp.name);
