@@ -9168,6 +9168,31 @@ function openCoachingInfoModal(empId){
   var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
   var dowShort=['So','Mo','Di','Mi','Do','Fr','Sa'];
 
+  // ── Effekt je Session: Ø-Veraenderung des hinterlegten Ziel-KPI 14 Tage vor vs. nach der Session
+  // (gleiche Methodik wie bei "Coach-Wirksamkeit"), normalisiert auf Zielrichtung
+  var empT=empTargets(emp);
+  var fullPerf=(performance[empId]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+  var FOCUS_METRIC_LABELS={};
+  (typeof FOCUS_METRICS!=='undefined'?FOCUS_METRICS:[]).forEach(function(m){FOCUS_METRIC_LABELS[m.key]=m.label;});
+  function avgWindow(centerDate,daysBefore,daysAfter,metricKey){
+    var fromS=addDaysUTC(centerDate,-daysBefore);
+    var toS=addDaysUTC(centerDate,daysAfter);
+    var rows=fullPerf.filter(function(p){return p.date>=fromS&&p.date<toS;});
+    var vals=rows.map(function(p){return p[metricKey];}).filter(function(v){return v!==undefined&&v!==null;});
+    return vals.length?(vals.reduce(function(a,b){return a+b;},0)/vals.length):null;
+  }
+  function sessionEffekt(p){
+    if(p.status==='geplant'||!p.focusMetric||!fullPerf.length)return null;
+    var before=avgWindow(p.date,14,0,p.focusMetric);
+    var after=avgWindow(p.date,0,14,p.focusMetric);
+    if(before===null||after===null)return null;
+    var dir=(empT[p.focusMetric]&&empT[p.focusMetric].dir)||'gte';
+    var signedDelta=(after-before)*(dir==='lte'?-1:1);
+    return {delta:signedDelta,raw:after-before,metric:p.focusMetric,label:FOCUS_METRIC_LABELS[p.focusMetric]||p.focusMetric};
+  }
+  var alleEffekte=abgeschlossen.map(sessionEffekt).filter(function(e){return e!==null;});
+  var avgEffekt=alleEffekte.length?(alleEffekte.reduce(function(a,b){return a+b.delta;},0)/alleEffekte.length):null;
+
   var h='<div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-history" style="color:var(--purple)"></i> Coaching-Historie · '+esc(emp.name)+'</div>';
 
   h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Übersicht</div>';
@@ -9177,9 +9202,13 @@ function openCoachingInfoModal(empId){
     +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:'+(daysSinceLast!==null&&daysSinceLast>30?'#B23A3A':'#0c3b40')+'">'+(daysSinceLast===null?'—':daysSinceLast+'d')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Letzte</div></div>'
     +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+(avgPerMonth||'—')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø/Monat</div></div>'
     +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+geplant.length+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Geplant</div></div>'
+    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:'+(avgEffekt===null?'#94a4a4':avgEffekt>=0?'#2f8f66':'#B23A3A')+'">'+(avgEffekt===null?'—':(avgEffekt>=0?'+':'')+avgEffekt.toFixed(1))+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø Effekt</div></div>'
     +'</div>';
   if(mainCoach){
     h+='<div style="font-size:11.5px;color:var(--text2)">Haupt-Coach: <b style="color:#0c3b40">'+esc(mainCoach.name)+'</b> ('+coachCounts[mainCoachId]+'× von '+total+')</div>';
+  }
+  if(alleEffekte.length){
+    h+='<div style="font-size:10.5px;color:var(--text3);margin-top:4px">Effekt = Ø-Veränderung des hinterlegten Ziel-KPI 14 Tage vor/nach der Session, in Zielrichtung normalisiert (basiert auf '+alleEffekte.length+' von '+total+' Sessions mit Ziel-KPI)</div>';
   }
   h+='</div>';
 
@@ -9199,6 +9228,10 @@ function openCoachingInfoModal(empId){
       h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+(planned?' · Geplant':'')+'</div>';
       h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px">'+esc(p.type||p.art||'Coaching')+'</div>';
       h+='<div style="font-size:11.5px;color:var(--text2);margin-top:1px">'+(coach?'Coach: '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):'')+'</div>';
+      var eff=sessionEffekt(p);
+      if(eff){
+        h+='<div style="margin-top:4px"><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:'+(eff.delta>=0?'#eafaf3':'#fdeeee')+';color:'+(eff.delta>=0?'#2f8f66':'#B23A3A')+'">'+(eff.delta>=0?'+':'')+eff.delta.toFixed(1)+' '+esc(eff.label)+'</span></div>';
+      }
       h+='</div>';
       // Luecken-Hervorhebung zwischen dieser und der naechsten (aelteren) Session
       var next=timeline[idx+1];
