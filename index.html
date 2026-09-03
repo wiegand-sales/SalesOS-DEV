@@ -982,7 +982,7 @@ function deleteAppUser(uid,name){
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
 function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
-var _bannerRotationOrder=['performance','overview','ziel','coaching'];
+var _bannerRotationOrder=['performance','overview','ziel','coaching','activity'];
 var _bannerRotationTimer=null;
 function _bannerRotateNext(){
   var cur=bannerViewMode||'overview';
@@ -4346,6 +4346,7 @@ function buildGlobalBannerHtml(visible){
       +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
       +'<div onclick="setBannerViewMode(\'ziel\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Zielvereinbarung"></div>'
       +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
+      +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
       +'</div>';
     h+='</div>';
     return h;
@@ -4410,6 +4411,48 @@ function buildGlobalBannerHtml(visible){
       +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
       +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
       +'<div onclick="setBannerViewMode(\'coaching\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Coaching"></div>'
+      +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
+      +'</div>';
+    h+='</div>';
+    return h;
+  }
+  if(_bvMode==='activity'){
+    var _actHeute=today();
+    var _actAuditAsActivity=(typeof adminAuditLog!=='undefined'?(adminAuditLog||[]):[]).map(function(a){return {createdAt:a.changedAt};});
+    var _actCombined=(typeof activityLog!=='undefined'?(activityLog||[]):[]).concat(_actAuditAsActivity);
+    var _actByDate={};
+    _actCombined.forEach(function(a){var d=(a.createdAt||'').slice(0,10);if(d)_actByDate[d]=(_actByDate[d]||0)+1;});
+    var _actDays=[];
+    for(var _ai=29;_ai>=0;_ai--){
+      var _ads=addDaysUTC(_actHeute,-_ai);
+      _actDays.push(_actByDate[_ads]||0);
+    }
+    var _actMax=Math.max.apply(null,_actDays.concat([1]));
+    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="display:flex;height:195px">';
+    h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
+    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
+      +renderOemTileHtml(visible)
+      +'</div>';
+    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
+      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
+      +renderOptGesHeuteTileHtml(visible)
+      +'</div>'
+      +'</div>';
+    h+='</div>';
+    h+='<div style="flex:1;padding:0 4px 0 18px;display:flex;align-items:flex-end;gap:3px;height:195px">';
+    _actDays.forEach(function(n){
+      var pct=Math.max(2,Math.round(n/_actMax*100));
+      h+='<div style="flex:1;height:100%;display:flex;align-items:flex-end"><div style="width:100%;height:'+pct+'%;background:linear-gradient(180deg,#7ED2DB,#206A72);border-radius:2px 2px 0 0" title="'+n+' Aktivitäten"></div></div>';
+    });
+    h+='</div>';
+    h+='</div>';
+    h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
+      +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
+      +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
+      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
+      +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
+      +'<div onclick="setBannerViewMode(\'activity\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Aktivitäten"></div>'
       +'</div>';
     h+='</div>';
     return h;
@@ -4573,6 +4616,7 @@ function buildGlobalBannerHtml(visible){
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
     +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
     +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
+    +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } else {
@@ -4699,6 +4743,7 @@ function buildGlobalBannerHtml(visible){
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Overview"></div>'
     +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
     +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
+    +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } // Ende else (Overview)
@@ -7509,7 +7554,7 @@ function renderActivity(){
   // ── Chart-Karte mit Filter ──
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
-  h+='<div class="card-title" style="margin:0">Aktivitäten pro Tag</div>';
+  h+='<div class="card-title" style="margin:0">Filter</div>';
   h+='<div style="display:flex;align-items:center;gap:8px">';
   h+='<select onchange="setActivityFilterPerson(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
   h+='<option value="ALL"'+(activityFilterPerson==='ALL'?' selected':'')+'>Alle Personen</option>';
@@ -7523,22 +7568,7 @@ function renderActivity(){
     h+='<button style="padding:0 14px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(activityFilterDays===d?'var(--purple)':'transparent')+';color:'+(activityFilterDays===d?'#fff':'var(--text2)')+'" onclick="setActivityFilterDays('+d+')">'+d+'T</button>';
   });
   h+='</div></div></div>';
-  if(!filtered.length){
-    h+='<div style="text-align:center;color:var(--text3);padding:20px;font-size:12px">Keine Aktivitäten in diesem Zeitraum</div>';
-  } else {
-    h+='<div style="display:flex;align-items:flex-end;gap:'+(activityFilterDays>30?'2px':'6px')+';height:160px;padding:0 4px">';
-    days.forEach(function(d){
-      var pct=Math.max(2,Math.round(d.n/maxN*100));
-      h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">'
-        +'<div style="font-size:10px;color:var(--text3);margin-bottom:3px;line-height:1.2">'+(activityFilterDays<=30?(d.n||'\u00A0'):'\u00A0')+'</div>'
-        +'<div style="width:100%;background:linear-gradient(180deg,#5FBAC4,#206A72);border-radius:3px 3px 0 0;height:'+pct+'%" title="'+fd(d.ds)+': '+d.n+'"></div>'
-        +'</div>';
-    });
-    h+='</div>';
-    h+='<div style="display:flex;gap:6px;padding:0 4px;margin-top:6px">';
-    days.forEach(function(d){h+='<div style="flex:1;text-align:center;font-size:10px;color:var(--text3)">'+(activityFilterDays<=30?d.wd:'\u00A0')+'</div>';});
-    h+='</div>';
-  }
+  h+='<div style="font-size:11px;color:var(--text3);text-align:center;padding:4px 0 2px">📊 Das Diagramm findest du jetzt im Banner oben (Slide "Aktivitäten")</div>';
   h+='</div>';
 
   // ── Verlauf-Liste ──
