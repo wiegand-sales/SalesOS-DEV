@@ -9139,6 +9139,27 @@ function saveInlineCallBewertung(empId){
 }
 
 
+var _savingCoachingInfoNotiz=false;
+function saveCoachingInfoNotiz(empId){
+  if(_savingCoachingInfoNotiz)return;
+  var field=document.getElementById('coachingInfoNotizField');
+  var statusEl=document.getElementById('coachingInfoNotizStatus');
+  if(!field)return;
+  var notiz=field.value;
+  _savingCoachingInfoNotiz=true;
+  if(statusEl)statusEl.textContent='Speichert…';
+  sb.from('employees').update({notes:notiz}).eq('id',empId).then(function(res){
+    _savingCoachingInfoNotiz=false;
+    if(res.error){ if(statusEl)statusEl.textContent='Fehler beim Speichern'; alert('Fehler beim Speichern: '+res.error.message); return; }
+    var emp=employees.find(function(e){return e.id===empId;});
+    if(emp)emp.notes=notiz;
+    if(statusEl){statusEl.textContent='✓ Gespeichert';setTimeout(function(){if(statusEl)statusEl.textContent='';},2500);}
+  }).catch(function(err){
+    _savingCoachingInfoNotiz=false;
+    if(statusEl)statusEl.textContent='Fehler beim Speichern';
+    alert('Unerwarteter Fehler: '+err.message);
+  });
+}
 function openCoachingInfoModal(empId){
   var emp=employees.find(function(e){return e.id===empId;});
   if(!emp)return;
@@ -9212,7 +9233,13 @@ function openCoachingInfoModal(empId){
   }
   h+='</div>';
 
-  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Verlauf</div>';
+  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Notiz</div>';
+  h+='<div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">';
+  h+='<textarea id="coachingInfoNotizField" placeholder="Notiz zu diesem Mitarbeiter..." style="width:100%;min-height:70px;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--r-md);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box">'+esc(emp.notes||'')+'</textarea>';
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><button class="btn btn-sm" onclick="saveCoachingInfoNotiz(\''+empId+'\')"><i class="ti ti-device-floppy"></i> Notiz speichern</button><span id="coachingInfoNotizStatus" style="font-size:11px;color:var(--text3)"></span></div>';
+  h+='</div>';
+
+  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Verlauf</div>';
   h+='<div style="border-left:2px solid var(--border2);padding-left:14px">';
   if(!timeline.length){
     h+='<div style="text-align:center;color:var(--text3);padding:20px 0"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Sessions vorhanden</div>';
