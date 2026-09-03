@@ -4369,8 +4369,13 @@ function buildGlobalBannerHtml(visible){
     var _CW=900,_CHh=195,_nD=_coachDays.length,_hIdx=45;
     function _xP(idx){return Math.round(idx/(_nD-1)*_CW);}
     function _yP(n){return _CHh-Math.round(n/_maxN*_CHh);}
-    var _pathPts=_coachDays.map(function(n,i){return _xP(i)+','+_yP(n);}).join(' ');
-    var _areaPts='0,'+_CHh+' '+_pathPts+' '+_CW+','+_CHh;
+    // Weiche Bezier-Kurve statt eckiger Linie (gleiche Technik wie beim Performance-Diagramm)
+    var _linePath='M '+_xP(0)+' '+_yP(_coachDays[0]);
+    for(var _pi=1;_pi<_coachDays.length;_pi++){
+      var _px=_xP(_pi-1),_py=_yP(_coachDays[_pi-1]),_cx=_xP(_pi),_cy=_yP(_coachDays[_pi]),_mx=_px+(_cx-_px)*0.5;
+      _linePath+=' C '+_mx+' '+_py+','+_mx+' '+_cy+','+_cx+' '+_cy;
+    }
+    var _areaPath=_linePath+' L '+_xP(_nD-1)+' '+_CHh+' L '+_xP(0)+' '+_CHh+' Z';
     var _hX=_xP(_hIdx);
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
@@ -4387,8 +4392,8 @@ function buildGlobalBannerHtml(visible){
     h+='<div style="flex:1;padding:0 4px 0 18px;position:relative">'
       +'<svg width="100%" height="195" viewBox="0 0 '+_CW+' '+_CHh+'" preserveAspectRatio="none">'
       +'<line x1="'+_hX+'" y1="0" x2="'+_hX+'" y2="'+_CHh+'" stroke="#e0a13a" stroke-width="1.5" stroke-dasharray="4,3"/>'
-      +'<polyline points="'+_pathPts+'" fill="none" stroke="#7ED2DB" stroke-width="2.5"/>'
-      +'<polygon points="'+_areaPts+'" fill="#7ED2DB" opacity="0.12"/>'
+      +'<path d="'+_areaPath+'" fill="#7ED2DB" opacity="0.12"/>'
+      +'<path d="'+_linePath+'" fill="none" stroke="#7ED2DB" stroke-width="2.5" stroke-linecap="round"/>'
       +'</svg>'
       +'<div style="position:absolute;top:0;left:calc('+(_hX/_CW*100)+'% + 4px);font-size:10px;font-weight:700;color:#e0a13a;white-space:nowrap">HEUTE</div>'
       +'</div>';
@@ -7938,7 +7943,7 @@ function saveSession(empId){
       logActivity('session','created','Gruppensession erfasst ('+empIds.length+' Mitarbeiter): '+(type||'Session'),null,namesTxt+(focus?' · '+focus:'')+' · '+fd(date));
       resetSessionFormFields();
       closeModal('neuesCoachingModal');
-      renderTab();
+      if(view==='coaching')renderCoachingAnsicht();else renderTab();
     }).catch(function(err){_savingSession=false;alert('Unerwarteter Fehler: '+err.message);});
     return;
   }
@@ -7976,7 +7981,7 @@ function saveSession(empId){
     _editingSessionId=null;
     resetSessionFormFields();
     closeModal('neuesCoachingModal');
-    renderTab();
+    if(view==='coaching')renderCoachingAnsicht();else renderTab();
   }).catch(function(err){
     _savingSession=false;
     alert('Unerwarteter Fehler: '+err.message);
