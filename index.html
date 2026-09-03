@@ -9212,6 +9212,8 @@ function openCoachingInfoModal(empId){
     return {delta:signedDelta,raw:after-before,metric:p.focusMetric,label:FOCUS_METRIC_LABELS[p.focusMetric]||p.focusMetric};
   }
   var alleEffekte=abgeschlossen.map(sessionEffekt).filter(function(e){return e!==null;});
+  var effektPaare=abgeschlossen.map(function(p){return {p:p,eff:sessionEffekt(p)};}).filter(function(x){return x.eff!==null;});
+  var besteSession=effektPaare.length?effektPaare.slice().sort(function(a,b){return b.eff.delta-a.eff.delta;})[0]:null;
   var avgEffekt=alleEffekte.length?(alleEffekte.reduce(function(a,b){return a+b.delta;},0)/alleEffekte.length):null;
 
   var h='<div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-history" style="color:var(--purple)"></i> Coaching-Historie · '+esc(emp.name)+'</div>';
@@ -9230,6 +9232,12 @@ function openCoachingInfoModal(empId){
   }
   if(alleEffekte.length){
     h+='<div style="font-size:10.5px;color:var(--text3);margin-top:4px">Effekt = Ø-Veränderung des hinterlegten Ziel-KPI 14 Tage vor/nach der Session, in Zielrichtung normalisiert (basiert auf '+alleEffekte.length+' von '+total+' Sessions mit Ziel-KPI)</div>';
+  }
+  if(besteSession&&besteSession.eff.delta>0){
+    var bd=new Date(besteSession.p.date+'T00:00:00');
+    h+='<div style="background:#eafaf3;border-left:3px solid #2f8f66;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:11.5px;color:#1f5e42">'
+      +'🏆 <b>Beste Session:</b> '+esc(besteSession.p.type||besteSession.p.art||'Coaching')+' am '+bd.getDate()+'. '+mNamesShort[bd.getMonth()]+' <span style="font-weight:700">(+'+besteSession.eff.delta.toFixed(1)+' '+esc(besteSession.eff.label)+')</span>'
+      +'</div>';
   }
   // QA-Fälligkeit: letzte Call-Bewertung dieses Mitarbeiters, gleiche 60-Tage-Schwelle wie bei "QA fällig" in der Coaching-Uebersicht
   var sortedRatings=(callRatings[empId]||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
@@ -9261,7 +9269,7 @@ function openCoachingInfoModal(empId){
       h+='<div style="position:relative;padding-bottom:18px">';
       h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+(planned?'#e8ecfb':'#164e54')+'"></div>';
       h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+(planned?' · Geplant':'')+'</div>';
-      h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px">'+esc(p.type||p.art||'Coaching')+'</div>';
+      h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px">'+esc(p.type||p.art||'Coaching')+(besteSession&&besteSession.p===p?' 🏆':'')+'</div>';
       h+='<div style="font-size:11.5px;color:var(--text2);margin-top:1px">'+(coach?'Coach: '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):'')+'</div>';
       var eff=sessionEffekt(p);
       if(eff){
