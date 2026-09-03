@@ -984,7 +984,7 @@ function deleteAppUser(uid,name){
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
 function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
-var _bannerRotationOrder=['performance','overview','ziel'];
+var _bannerRotationOrder=['performance','overview','ziel','coaching'];
 var _bannerRotationTimer=null;
 function _bannerRotateNext(){
   var cur=bannerViewMode||'overview';
@@ -4077,7 +4077,59 @@ function buildGlobalBannerHtml(visible){
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
       +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
       +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
-      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Zielvereinbarung"></div>'
+      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
+      +'<div onclick="setBannerViewMode(\'coaching\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Coaching"></div>'
+      +'</div>';
+    h+='</div>';
+    return h;
+  }
+  if(_bvMode==='coaching'){
+    var _heute=today();
+    var _coachDays=[];
+    var _allSess=[];
+    employees.forEach(function(e){
+      (protocols[e.id]||[]).forEach(function(p){_allSess.push({d:p.date,s:p.status||'abgeschlossen'});});
+    });
+    for(var _i=-45;_i<=45;_i++){
+      var _ds=addDaysUTC(_heute,_i);
+      var _cnt=_i>0
+        ?_allSess.filter(function(x){return x.d===_ds&&x.s==='geplant';}).length
+        :_allSess.filter(function(x){return x.d===_ds&&x.s!=='geplant';}).length;
+      _coachDays.push(_cnt);
+    }
+    var _maxN=Math.max.apply(null,_coachDays.concat([1]));
+    var _CW=900,_CHh=195,_nD=_coachDays.length,_hIdx=45;
+    function _xP(idx){return Math.round(idx/(_nD-1)*_CW);}
+    function _yP(n){return _CHh-Math.round(n/_maxN*_CHh);}
+    var _pathPts=_coachDays.map(function(n,i){return _xP(i)+','+_yP(n);}).join(' ');
+    var _areaPts='0,'+_CHh+' '+_pathPts+' '+_CW+','+_CHh;
+    var _hX=_xP(_hIdx);
+    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="display:flex;height:195px">';
+    h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
+    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
+      +renderOemTileHtml(visible)
+      +'</div>';
+    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
+      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
+      +renderOptGesHeuteTileHtml(visible)
+      +'</div>'
+      +'</div>';
+    h+='</div>';
+    h+='<div style="flex:1;padding:0 4px 0 18px;position:relative">'
+      +'<svg width="100%" height="195" viewBox="0 0 '+_CW+' '+_CHh+'" preserveAspectRatio="none">'
+      +'<line x1="'+_hX+'" y1="0" x2="'+_hX+'" y2="'+_CHh+'" stroke="#e0a13a" stroke-width="1.5" stroke-dasharray="4,3"/>'
+      +'<text x="'+_hX+'" y="14" fill="#e0a13a" font-size="10" text-anchor="middle" font-weight="700">HEUTE</text>'
+      +'<polyline points="'+_pathPts+'" fill="none" stroke="#7ED2DB" stroke-width="2.5"/>'
+      +'<polygon points="'+_areaPts+'" fill="#7ED2DB" opacity="0.12"/>'
+      +'</svg>'
+      +'</div>';
+    h+='</div>';
+    h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
+      +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
+      +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
+      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
+      +'<div onclick="setBannerViewMode(\'coaching\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Coaching"></div>'
       +'</div>';
     h+='</div>';
     return h;
@@ -4240,6 +4292,7 @@ function buildGlobalBannerHtml(visible){
     +'<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
     +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
+    +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } else {
@@ -4365,6 +4418,7 @@ function buildGlobalBannerHtml(visible){
     +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Overview"></div>'
     +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
+    +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } // Ende else (Overview)
