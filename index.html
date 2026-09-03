@@ -1052,6 +1052,15 @@ function applyOverviewMonth(){
 }
 function setOverviewPerfGroup(g){overviewPerfGroup=g;renderTeam();}
 var coachCalYear=null, coachCalMonthIdx=null; // Kalender-Monatsnavigation SFP Coaching (init. beim ersten Rendern auf aktuellen Monat)
+var coachCalViewMode='month'; // 'month' | 'week'
+var coachCalWeekStart=null; // Montag der aktuell angezeigten Woche (YYYY-MM-DD), init. beim ersten Rendern auf aktuelle Woche
+function setCoachCalViewMode(mode){coachCalViewMode=mode;renderCoachingAnsicht();}
+function setCoachCalWeek(delta){
+  var d=new Date(coachCalWeekStart+'T00:00:00');
+  d.setDate(d.getDate()+delta*7);
+  coachCalWeekStart=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  renderCoachingAnsicht();
+}
 function setCoachCalMonth(delta){
   var d=new Date(coachCalYear,coachCalMonthIdx+delta,1);
   if(d.getFullYear()<2026)return;
@@ -1704,6 +1713,11 @@ function renderCoachingAnsicht(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   var heute=today(),hD=new Date(heute+'T00:00:00');
   if(coachCalYear===null){coachCalYear=hD.getFullYear();coachCalMonthIdx=hD.getMonth();}
+  if(coachCalWeekStart===null){
+    var _dow=hD.getDay()||7; // Montag=1..Sonntag=7
+    var _mon=new Date(hD.getFullYear(),hD.getMonth(),hD.getDate()-(_dow-1));
+    coachCalWeekStart=_mon.getFullYear()+'-'+('0'+(_mon.getMonth()+1)).slice(-2)+'-'+('0'+_mon.getDate()).slice(-2);
+  }
   var liste=employees.filter(function(e){return e.active!==false;});
   var all=[];
   liste.forEach(function(emp){
@@ -1868,6 +1882,73 @@ function renderCoachingAnsicht(){
     return k;
   }
 
+  // ── Wochenansicht (Outlook-Stil): Stundenraster 8-19 Uhr, Sessions nach Uhrzeit+Dauer positioniert ──
+  function buildWeekKal(){
+    var HOUR_START=8, HOUR_END=19, ROW_H=44; // px pro Stunde
+    var wkStart=new Date(coachCalWeekStart+'T00:00:00');
+    var dowNames=['Mo','Di','Mi','Do','Fr','Sa','So'];
+    var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    var weekDates=[];
+    for(var i=0;i<7;i++){var d=new Date(wkStart);d.setDate(d.getDate()+i);weekDates.push(d);}
+    function dsOf(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+    var wkEnd=weekDates[6];
+    var iwMeta=isoWeekOf(wkStart);
+    var k='<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px">';
+    k+='<button class="btn btn-sm" onclick="setCoachCalWeek(-1)"><i class="ti ti-chevron-left"></i></button>';
+    k+='<div style="font-size:14px;font-weight:700;min-width:220px;text-align:center">'+wkStart.getDate()+'. '+mNamesShort[wkStart.getMonth()]+' – '+wkEnd.getDate()+'. '+mNamesShort[wkEnd.getMonth()]+' '+wkEnd.getFullYear()+' (KW '+iwMeta.week+')</div>';
+    k+='<button class="btn btn-sm" onclick="setCoachCalWeek(1)"><i class="ti ti-chevron-right"></i></button>';
+    k+='</div>';
+    // Kopfzeile mit Wochentagen/Datum
+    k+='<div style="display:grid;grid-template-columns:50px repeat(7,1fr);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;overflow:hidden">';
+    k+='<div style="background:var(--bg2)"></div>';
+    weekDates.forEach(function(d,i){
+      var ds=dsOf(d),isH=ds===heute;
+      k+='<div style="padding:8px 4px;text-align:center;font-size:11px;font-weight:700;color:'+(isH?'var(--purple)':'var(--text2)')+';border-left:1px solid var(--border);'+(isH?'background:var(--purple-bg)':'background:var(--bg2)')+'">'
+        +'<div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">'+dowNames[i]+'</div>'+d.getDate()+'.'+('0'+(d.getMonth()+1)).slice(-2)
+        +'</div>';
+    });
+    k+='</div>';
+    // Zeitraster + Sessions
+    var nHours=HOUR_END-HOUR_START+1;
+    k+='<div style="display:grid;grid-template-columns:50px repeat(7,1fr);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;position:relative">';
+    k+='<div style="border-right:1px solid var(--border)">';
+    for(var hh=HOUR_START;hh<=HOUR_END;hh++){
+      k+='<div style="height:'+ROW_H+'px;font-size:9.5px;color:var(--text3);text-align:right;padding-right:6px;position:relative;top:-6px">'+('0'+hh).slice(-2)+':00</div>';
+    }
+    k+='</div>';
+    function parseHM(s){ // "HH:MM" -> Minuten seit 00:00, oder null
+      if(!s||s.indexOf(':')<0)return null;
+      var p=s.split(':');return (+p[0])*60+(+p[1]);
+    }
+    weekDates.forEach(function(d,di){
+      var ds=dsOf(d),isH=ds===heute;
+      k+='<div style="border-left:1px solid var(--border);position:relative;'+(isH?'background:rgba(106,95,193,0.03)':'')+'">';
+      for(var hh=HOUR_START;hh<=HOUR_END;hh++){k+='<div style="height:'+ROW_H+'px;border-bottom:1px solid var(--border)"></div>';}
+      var dayEntries=all.filter(function(x){return x.d===ds;});
+      dayEntries.forEach(function(x){
+        var startMin=parseHM(x.uhrzeit);
+        if(startMin===null)return; // keine Uhrzeit hinterlegt -> in der Wochenansicht nicht darstellbar
+        var endMin=parseHM(x.endUhrzeit);
+        if(endMin===null||endMin<=startMin)endMin=startMin+60; // Standard 60 Min., falls keine Endzeit hinterlegt
+        var gridStartMin=HOUR_START*60,gridEndMin=(HOUR_END+1)*60;
+        if(endMin<=gridStartMin||startMin>=gridEndMin)return; // ausserhalb des sichtbaren Zeitraums
+        var top=Math.max(0,(startMin-gridStartMin)/60*ROW_H);
+        var bottom=Math.min(nHours*ROW_H,(endMin-gridStartMin)/60*ROW_H);
+        var height=Math.max(20,bottom-top);
+        var planned=x.s==='geplant';
+        var c=ec(x.eid);
+        var bg=planned?c.bg:'#eafaf3',fg=planned?c.text:'#2f8f66',bdr=planned?c.text:'#3fb37f';
+        k+='<div onclick="event.stopPropagation();kalKlick(\''+ds+'\')" style="position:absolute;left:3px;right:3px;top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'">'
+          +'<div style="font-weight:700;color:'+fg+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.en)+'</div>'
+          +'<div style="color:'+fg+';opacity:0.8">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+'</div>'
+          +'</div>';
+      });
+      k+='</div>';
+    });
+    k+='</div>';
+    return k;
+  }
+
   var h='<div class="content">';
   h+=buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
 
@@ -1881,8 +1962,14 @@ function renderCoachingAnsicht(){
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
   h+='<div class="card-title" style="margin:0">Kalender <span style="font-weight:400;font-size:12px;color:var(--text3)">· Klick auf Tag = Session planen</span></div>';
+  h+='<div style="display:flex;align-items:center;gap:14px">';
+  h+='<div style="display:flex;gap:6px">'
+    +'<button class="btn btn-sm" style="'+(coachCalViewMode==='month'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
+    +'<button class="btn btn-sm" style="'+(coachCalViewMode==='week'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
+    +'</div>';
   h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--purple);background:var(--purple-bg);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#EEEDFE;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#9FE1CB;display:inline-block"></span>Abgeschlossen</span></div>';
-  h+='</div>'+buildKal()+'</div>';
+  h+='</div>';
+  h+='</div>'+(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
 
   // ══ Coach-Wirksamkeit (nur Overview, ab 2 Coaches sinnvoll) ══
   if(coachFilterView==='overview'&&coachList.length>=2){
