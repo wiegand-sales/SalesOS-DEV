@@ -327,7 +327,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     <div class="sb-item" id="nav-team" onclick="toggleWiegandNav()"><div class="sb-icon"><i class="ti ti-layout-grid"></i></div> SFP Wiegand <i class="ti ti-chevron-up" id="wiegandNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="wiegandSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Performance</div>
-      <div class="sb-item sb-navsub" id="nav-team-ziel" onclick="selectWiegandSub('ziel')">KPIs</div>
+      <div class="sb-item sb-navsub" id="nav-team-ziel" onclick="selectWiegandSub('ziel')">Zielvereinbarung</div>
     </div>
     <div class="sb-item" id="nav-coaching" onclick="toggleCoachingNav()"><div class="sb-icon"><i class="ti ti-calendar-event"></i></div> SFP Coaching <i class="ti ti-chevron-down" id="coachingNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="coachingSubNav" class="wiegand-subnav hidden">
@@ -3007,7 +3007,8 @@ function zielvereinbarungHtml(){
     +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearIstSum).toLocaleString('de-DE')+'</div>'
     +'<div style="font-weight:800;color:#7ED2DB;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+(yearTargetSum>0?Math.round(yearIstSum/yearTargetSum*100):(yearIstSum>0?100:0))+'%</div>'
     +'</div>';
-  return zielInfoBoxHtml()
+  return buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}))
+    +zielInfoBoxHtml()
     +zielverlaufJahrChartHtml()
     +wochenzielKachelnHtml()
     +'<div class="card card-static">'
@@ -3763,30 +3764,8 @@ function buildMonthBar(liste){
     +'<div class="mb-stat mb-margin"><div class="l">Margenerhöhung</div><div class="row"><span class="n">'+eur(sums.margeGesamt)+'</span></div><div class="m">Ziel: '+eur(zielMargeSum)+'/Mon.</div></div>'
     +'</div>';
 }
-// ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
-function buildOverviewTab(liste,section){
-  // section: undefined = komplettes Overview wie bisher, UNVERAENDERT (Banner+Kacheln+Rest+Tabelle).
-  // 'performance' = nur Banner + Kacheln + Performance-Tabelle (fuer den neuen Performance-Reiter, zeigt dieselben Daten 1:1, keine Aufteilung von Overview).
-  var showRest=(section!=='performance');
-  var HIDDEN=[];
-  var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;}).slice().sort(function(a,b){return a.name.localeCompare(b.name);});
-  if(!visible.length)return '<div class="card" style="text-align:center;color:var(--text3);padding:40px">Keine Mitarbeiter vorhanden</div>';
-  if(!overviewSelectedIds){overviewSelectedIds=visible.map(function(e){return e.id;});}
-  overviewSelectedIds=overviewSelectedIds.filter(function(id){return visible.some(function(e){return e.id===id;});});
-  var selectedEmps=visible.filter(function(e){return overviewSelectedIds.indexOf(e.id)>=0;});
-  var isAll=selectedEmps.length!==1;
-  var emp=isAll?null:selectedEmps[0];
-  var empT=isAll?null:empTargets(emp);
-  var currentMonthKey=today().slice(0,7); // z.B. "2026-07"
-  var monthStart=currentMonthKey+'-01';
-  var monthEnd=monthBoundsUTC(today(),0).to;
-  var effFrom=overviewFromDate||monthStart;
-  var effTo=overviewToDate||monthEnd;
-  var perfAll=isAll?[]:(performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;}).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
-
-  function kpiCol(v,t,dir){if(v===null)return 'var(--text3)';return(dir==='lte'?v<=t:v>=t)?'#206A72':'var(--red)';}
-  // Ziel fuer Opt. OEM-Kachel: Durchschnitt aller eingetragenen "Opt./Tag"-Werte aus der Zielvereinbarung (aktueller Monat)
-  function avgOptTagZielvereinbarung(){
+function buildGlobalBannerHtml(visible){
+  function avgOptTagZielvereinbarungLocal(){
     var zmk=today().slice(0,7);
     var zRec=zielStore[zmk]||{};
     var zVisible=visible.filter(function(e){return empActiveInZielMonth(e,zmk);});
@@ -3797,10 +3776,9 @@ function buildOverviewTab(liste,section){
     });
     return zVals.length?zVals.reduce(function(a,b){return a+b;},0)/zVals.length:null;
   }
-  var optOemZiel=avgOptTagZielvereinbarung();
+  var optOemZiel=avgOptTagZielvereinbarungLocal();
   var h='';
-
-  if((bannerViewMode||section)==='performance'){
+  if((bannerViewMode||'overview')==='performance'){
   var mk=today().slice(0,7);
   var heroSums={optGesamt:0,margeGesamt:0};
   visible.forEach(function(e){
@@ -4102,6 +4080,48 @@ function buildOverviewTab(liste,section){
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } // Ende else (Overview)
+  return h;
+
+}
+
+// ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
+function buildOverviewTab(liste,section){
+  // section: undefined = komplettes Overview wie bisher, UNVERAENDERT (Banner+Kacheln+Rest+Tabelle).
+  // 'performance' = nur Banner + Kacheln + Performance-Tabelle (fuer den neuen Performance-Reiter, zeigt dieselben Daten 1:1, keine Aufteilung von Overview).
+  var showRest=(section!=='performance');
+  var HIDDEN=[];
+  var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;}).slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  if(!visible.length)return '<div class="card" style="text-align:center;color:var(--text3);padding:40px">Keine Mitarbeiter vorhanden</div>';
+  if(!overviewSelectedIds){overviewSelectedIds=visible.map(function(e){return e.id;});}
+  overviewSelectedIds=overviewSelectedIds.filter(function(id){return visible.some(function(e){return e.id===id;});});
+  var selectedEmps=visible.filter(function(e){return overviewSelectedIds.indexOf(e.id)>=0;});
+  var isAll=selectedEmps.length!==1;
+  var emp=isAll?null:selectedEmps[0];
+  var empT=isAll?null:empTargets(emp);
+  var currentMonthKey=today().slice(0,7); // z.B. "2026-07"
+  var monthStart=currentMonthKey+'-01';
+  var monthEnd=monthBoundsUTC(today(),0).to;
+  var effFrom=overviewFromDate||monthStart;
+  var effTo=overviewToDate||monthEnd;
+  var perfAll=isAll?[]:(performance[emp.id]||[]).filter(function(x){return x.date>=effFrom&&x.date<=effTo;}).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+
+  function kpiCol(v,t,dir){if(v===null)return 'var(--text3)';return(dir==='lte'?v<=t:v>=t)?'#206A72':'var(--red)';}
+  // Ziel fuer Opt. OEM-Kachel: Durchschnitt aller eingetragenen "Opt./Tag"-Werte aus der Zielvereinbarung (aktueller Monat)
+  function avgOptTagZielvereinbarung(){
+    var zmk=today().slice(0,7);
+    var zRec=zielStore[zmk]||{};
+    var zVisible=visible.filter(function(e){return empActiveInZielMonth(e,zmk);});
+    var zVals=[];
+    zVisible.forEach(function(e){
+      var r=zRec[e.id]||{};
+      if(r.optTag!=null)zVals.push(r.optTag);
+    });
+    return zVals.length?zVals.reduce(function(a,b){return a+b;},0)/zVals.length:null;
+  }
+  var optOemZiel=avgOptTagZielvereinbarung();
+  var h='';
+
+  h+=buildGlobalBannerHtml(visible);
 
   // ── Performance Trend Chart (unter dem Banner) ──
   var chartRows=isAll
