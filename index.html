@@ -1004,7 +1004,14 @@ function resetBannerRotation(){
   if(_bannerRotationTimer)clearInterval(_bannerRotationTimer);
   _bannerRotationTimer=setInterval(_bannerRotateNext,60000);
 }
-function setBannerViewMode(m){bannerViewMode=m;resetBannerRotation();renderMain();}
+function setBannerViewMode(m){
+  bannerViewMode=m;
+  resetBannerRotation();
+  if(m==='coaching'){ view='coaching'; coachFilterView='overview'; }
+  else { view='team'; wiegandView=m; }
+  renderSidebar();
+  renderMain();
+}
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
 function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDate=to||null;renderTeam();}
 function setOverviewQuickRange(type){
