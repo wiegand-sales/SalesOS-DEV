@@ -1054,7 +1054,35 @@ function setOverviewPerfGroup(g){overviewPerfGroup=g;renderTeam();}
 var coachCalYear=null, coachCalMonthIdx=null; // Kalender-Monatsnavigation SFP Coaching (init. beim ersten Rendern auf aktuellen Monat)
 var coachCalViewMode='month'; // 'month' | 'week'
 var coachCalWeekStart=null; // Montag der aktuell angezeigten Woche (YYYY-MM-DD), init. beim ersten Rendern auf aktuelle Woche
+var coachCalMiniPickerOpen=false;
+var coachCalMiniPickerYear=null; // im Mini-Picker angezeigtes Jahr (kann vom eigentlich aktiven Jahr abweichen, waehrend man blaettert)
 function setCoachCalViewMode(mode){coachCalViewMode=mode;renderCoachingAnsicht();}
+function goToCoachCalToday(){
+  var t=new Date();
+  coachCalYear=t.getFullYear();coachCalMonthIdx=t.getMonth();
+  var _dow=t.getDay()||7;
+  var _mon=new Date(t.getFullYear(),t.getMonth(),t.getDate()-(_dow-1));
+  coachCalWeekStart=_mon.getFullYear()+'-'+('0'+(_mon.getMonth()+1)).slice(-2)+'-'+('0'+_mon.getDate()).slice(-2);
+  renderCoachingAnsicht();
+}
+function toggleCoachCalMiniPicker(){
+  coachCalMiniPickerOpen=!coachCalMiniPickerOpen;
+  coachCalMiniPickerYear=coachCalViewMode==='week'?(new Date(coachCalWeekStart+'T00:00:00')).getFullYear():coachCalYear;
+  renderCoachingAnsicht();
+}
+function coachCalMiniPickerYearNav(delta){coachCalMiniPickerYear+=delta;renderCoachingAnsicht();}
+function jumpToCoachCalMonth(year,monthIdx){
+  coachCalMiniPickerOpen=false;
+  if(coachCalViewMode==='week'){
+    var d=new Date(year,monthIdx,1);
+    var _dow=d.getDay()||7;
+    var _mon=new Date(year,monthIdx,1-(_dow-1));
+    coachCalWeekStart=_mon.getFullYear()+'-'+('0'+(_mon.getMonth()+1)).slice(-2)+'-'+('0'+_mon.getDate()).slice(-2);
+  } else {
+    coachCalYear=year;coachCalMonthIdx=monthIdx;
+  }
+  renderCoachingAnsicht();
+}
 function setCoachCalWeek(delta){
   var d=new Date(coachCalWeekStart+'T00:00:00');
   d.setDate(d.getDate()+delta*7);
@@ -1821,16 +1849,39 @@ function renderCoachingAnsicht(){
   }
 
   // Kalender
+  function buildMiniMonthPicker(){
+    var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    var activeYear=coachCalViewMode==='week'?(new Date(coachCalWeekStart+'T00:00:00')).getFullYear():coachCalYear;
+    var activeMonth=coachCalViewMode==='week'?(new Date(coachCalWeekStart+'T00:00:00')).getMonth():coachCalMonthIdx;
+    var p='<div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:6px;background:#fff;border:1px solid var(--border2);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,0.14);padding:12px;z-index:50;width:220px">';
+    p+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+    p+='<button class="btn btn-sm" onclick="event.stopPropagation();coachCalMiniPickerYearNav(-1)"><i class="ti ti-chevron-left"></i></button>';
+    p+='<div style="font-weight:700;font-size:13px">'+coachCalMiniPickerYear+'</div>';
+    p+='<button class="btn btn-sm" onclick="event.stopPropagation();coachCalMiniPickerYearNav(1)"><i class="ti ti-chevron-right"></i></button>';
+    p+='</div>';
+    p+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+    for(var m=0;m<12;m++){
+      var isActive=(coachCalMiniPickerYear===activeYear&&m===activeMonth);
+      p+='<button onclick="event.stopPropagation();jumpToCoachCalMonth('+coachCalMiniPickerYear+','+m+')" style="padding:8px 4px;border-radius:6px;border:1px solid '+(isActive?'var(--teal-mid)':'var(--border)')+';background:'+(isActive?'var(--teal-mid)':'#fff')+';color:'+(isActive?'#fff':'var(--text)')+';font-size:11.5px;font-weight:600;cursor:pointer">'+mNamesShort[m]+'</button>';
+    }
+    p+='</div>';
+    p+='</div>';
+    return p;
+  }
   function buildKal(){
     var mNames=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
     var firstOfMonth=new Date(coachCalYear,coachCalMonthIdx,1);
     var daysInMonth=new Date(coachCalYear,coachCalMonthIdx+1,0).getDate();
     var atMin=(coachCalYear===2026&&coachCalMonthIdx===0);
     var atMax=(coachCalYear===2030&&coachCalMonthIdx===11);
-    var k='<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px">';
-    k+='<button class="btn btn-sm" '+(atMin?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(-1)"')+'><i class="ti ti-chevron-left"></i></button>';
-    k+='<div style="font-size:14px;font-weight:700;min-width:150px;text-align:center">'+mNames[coachCalMonthIdx]+' '+coachCalYear+'</div>';
-    k+='<button class="btn btn-sm" '+(atMax?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(1)"')+'><i class="ti ti-chevron-right"></i></button>';
+    var k='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;position:relative">';
+    k+='<button class="btn btn-sm" onclick="goToCoachCalToday()"><i class="ti ti-calendar-event" style="margin-right:4px"></i>Heute</button>';
+    k+='<div style="display:flex;gap:2px">'
+      +'<button class="btn btn-sm" '+(atMin?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(-1)"')+' title="Vorheriger Monat"><i class="ti ti-chevron-up"></i></button>'
+      +'<button class="btn btn-sm" '+(atMax?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(1)"')+' title="Nächster Monat"><i class="ti ti-chevron-down"></i></button>'
+      +'</div>';
+    k+='<div onclick="toggleCoachCalMiniPicker()" style="font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'\'">'+mNames[coachCalMonthIdx]+' '+coachCalYear+' <i class="ti ti-chevron-down" style="font-size:12px;color:var(--text3)"></i></div>';
+    if(coachCalMiniPickerOpen)k+=buildMiniMonthPicker();
     k+='</div>';
     k+='<div style="display:grid;grid-template-columns:34px repeat(7,1fr);gap:4px;margin-bottom:3px">';
     k+='<div></div>';
@@ -1893,10 +1944,14 @@ function renderCoachingAnsicht(){
     function dsOf(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
     var wkEnd=weekDates[6];
     var iwMeta=isoWeekOf(wkStart);
-    var k='<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px">';
-    k+='<button class="btn btn-sm" onclick="setCoachCalWeek(-1)"><i class="ti ti-chevron-left"></i></button>';
-    k+='<div style="font-size:14px;font-weight:700;min-width:220px;text-align:center">'+wkStart.getDate()+'. '+mNamesShort[wkStart.getMonth()]+' – '+wkEnd.getDate()+'. '+mNamesShort[wkEnd.getMonth()]+' '+wkEnd.getFullYear()+' (KW '+iwMeta.week+')</div>';
-    k+='<button class="btn btn-sm" onclick="setCoachCalWeek(1)"><i class="ti ti-chevron-right"></i></button>';
+    var k='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;position:relative">';
+    k+='<button class="btn btn-sm" onclick="goToCoachCalToday()"><i class="ti ti-calendar-event" style="margin-right:4px"></i>Heute</button>';
+    k+='<div style="display:flex;gap:2px">'
+      +'<button class="btn btn-sm" onclick="setCoachCalWeek(-1)" title="Vorherige Woche"><i class="ti ti-chevron-up"></i></button>'
+      +'<button class="btn btn-sm" onclick="setCoachCalWeek(1)" title="Nächste Woche"><i class="ti ti-chevron-down"></i></button>'
+      +'</div>';
+    k+='<div onclick="toggleCoachCalMiniPicker()" style="font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'\'">'+wkStart.getDate()+'. '+mNamesShort[wkStart.getMonth()]+' – '+wkEnd.getDate()+'. '+mNamesShort[wkEnd.getMonth()]+' '+wkEnd.getFullYear()+' (KW '+iwMeta.week+') <i class="ti ti-chevron-down" style="font-size:12px;color:var(--text3)"></i></div>';
+    if(coachCalMiniPickerOpen)k+=buildMiniMonthPicker();
     k+='</div>';
     // Kopfzeile mit Wochentagen/Datum
     k+='<div style="display:grid;grid-template-columns:50px repeat(7,1fr);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;overflow:hidden">';
@@ -1961,15 +2016,13 @@ function renderCoachingAnsicht(){
   // ══ ZEILE 2: Kalender volle Breite ══
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
-  h+='<div class="card-title" style="margin:0">Kalender <span style="font-weight:400;font-size:12px;color:var(--text3)">· Klick auf Tag = Session planen</span></div>';
-  h+='<div style="display:flex;align-items:center;gap:14px">';
   h+='<div style="display:flex;gap:6px">'
     +'<button class="btn btn-sm" style="'+(coachCalViewMode==='month'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
     +'<button class="btn btn-sm" style="'+(coachCalViewMode==='week'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
     +'</div>';
   h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--purple);background:var(--purple-bg);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#EEEDFE;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#9FE1CB;display:inline-block"></span>Abgeschlossen</span></div>';
   h+='</div>';
-  h+='</div>'+(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
+  h+=(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
 
   // ══ Coach-Wirksamkeit (nur Overview, ab 2 Coaches sinnvoll) ══
   if(coachFilterView==='overview'&&coachList.length>=2){
