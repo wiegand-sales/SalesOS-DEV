@@ -2127,13 +2127,14 @@ function renderCoachingAnsicht(){
   }
 
   // ══ Geplante Sessions (volle Breite, weiße Box) ══
+  var gep10=gep.slice(0,10);
   h+='<div class="card" style="margin-bottom:22px">';
-  h+='<div class="card-title"><i class="ti ti-calendar-event"></i> Geplante Sessions'+(gep.length?' <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+gep.length+')</span>':'')+'</div>';
+  h+='<div class="card-title"><i class="ti ti-calendar-event"></i> Geplante Sessions'+(gep.length?' <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+gep10.length+(gep.length>10?' von '+gep.length:'')+')</span>':'')+'</div>';
   if(!gep.length){
     h+='<div style="text-align:center;color:var(--text3);padding:28px"><i class="ti ti-calendar-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Keine Sessions geplant<div style="margin-top:10px"><button class="btn btn-sm btn-primary" onclick="openSessionModal(0)"><i class="ti ti-plus"></i> Jetzt planen</button></div></div>';
   } else {
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
-    gep.forEach(function(x){
+    gep10.forEach(function(x){
       var c=ec(x.eid),dt2=new Date(x.d+'T00:00:00'),df=Math.round((dt2-hD)/86400000);
       var pTyp=(x.t||'').replace(/[<>"']/g,'');
       var pFok=(x.f||'').replace(/[<>"']/g,'');
@@ -2150,8 +2151,8 @@ function renderCoachingAnsicht(){
 
   // ══ Letzte Sessions (volle Breite, weiße Box, gleiches Tabellenformat wie Coaching-Historie) ══
   var let7=abg.slice(0,10);
-  h+='<div class="card">';
-  h+='<div class="card-title"><i class="ti ti-history"></i> Letzte Sessions <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+let7.length+')</span></div>';
+  h+='<div class="card" style="margin-bottom:22px">';
+  h+='<div class="card-title"><i class="ti ti-history"></i> Letzte Sessions <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+let7.length+(abg.length>10?' von '+abg.length:'')+')</span></div>';
   if(!let7.length){
     h+='<div style="text-align:center;color:var(--text3);padding:28px"><i class="ti ti-history" style="font-size:28px;display:block;margin-bottom:8px"></i>Noch keine Sessions</div>';
   } else {
@@ -2185,6 +2186,9 @@ function renderCoachingAnsicht(){
     h+='</tbody></table></div>';
   }
   h+='</div>';
+
+  // ══ Performance-Tabelle (dieselbe Tabelle wie im Performance-Reiter, ohne erneuten Banner) ══
+  h+=buildOverviewTab(liste,'performance',true);
 
   } // Ende else (nicht coverage)
 
@@ -4700,7 +4704,7 @@ function buildGlobalBannerHtml(visible){
 }
 
 // ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
-function buildOverviewTab(liste,section){
+function buildOverviewTab(liste,section,skipBanner){
   // section: undefined = komplettes Overview wie bisher, UNVERAENDERT (Banner+Kacheln+Rest+Tabelle).
   // 'performance' = nur Banner + Kacheln + Performance-Tabelle (fuer den neuen Performance-Reiter, zeigt dieselben Daten 1:1, keine Aufteilung von Overview).
   var showRest=(section!=='performance');
@@ -4736,7 +4740,7 @@ function buildOverviewTab(liste,section){
   var optOemZiel=avgOptTagZielvereinbarung();
   var h='';
 
-  h+=buildGlobalBannerHtml(visible);
+  if(!skipBanner)h+=buildGlobalBannerHtml(visible);
 
   // ── Performance Trend Chart (unter dem Banner) ──
   var chartRows=isAll
