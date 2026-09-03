@@ -2597,23 +2597,29 @@ function openArbeitstageKalender(empId){
   var feiertage=bayernFeiertage(year);
   var daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
   var existing=zielStore[mk]&&zielStore[mk][empId]&&zielStore[mk][empId].arbeitstage;
-  var hasExisting=Array.isArray(existing)&&existing.length>0;
-  var existingSet={};
-  if(hasExisting)existing.forEach(function(ds){existingSet[ds]=true;});
+  // Rueckwaertskompatibel: altes Format war ein Array von Arbeitstagen (nur "work"), neues Format
+  // ist ein Objekt {datum: 'work'|'urlaub'|'krank'} - "off" wird nicht gespeichert (spart Platz).
+  var existingMap={};
+  if(Array.isArray(existing)){existing.forEach(function(ds){existingMap[ds]='work';});}
+  else if(existing&&typeof existing==='object'){existingMap=existing;}
+  var hasExisting=Object.keys(existingMap).length>0;
   var tage={};
   for(var d=1;d<=daysInMonth;d++){
     var dt=new Date(Date.UTC(year,month-1,d));
     var ds=dt.toISOString().slice(0,10);
     var dow=dt.getUTCDay();
     if(dow===0||dow===6||feiertage[ds])continue; // Wochenende/Feiertag: kein Eintrag noetig, immer frei
-    tage[ds]=hasExisting?!!existingSet[ds]:true; // Vorhandene Auswahl uebernehmen, sonst alle Wochentage vorbelegt
+    tage[ds]=hasExisting?(existingMap[ds]||'off'):'work'; // Vorhandene Auswahl uebernehmen, sonst alle Wochentage als Arbeitstag vorbelegt
   }
   _kalenderState={empId:empId,mk:mk,tage:tage};
   renderArbeitstageKalenderModal();
 }
+var KALENDER_ZYKLUS=['work','off','urlaub','krank'];
 function toggleKalenderTag(ds){
   if(!_kalenderState)return;
-  _kalenderState.tage[ds]=!_kalenderState.tage[ds];
+  var cur=_kalenderState.tage[ds]||'off';
+  var idx=KALENDER_ZYKLUS.indexOf(cur);
+  _kalenderState.tage[ds]=KALENDER_ZYKLUS[(idx+1)%KALENDER_ZYKLUS.length];
   renderArbeitstageKalenderModal();
 }
 function closeArbeitstageKalender(){
@@ -2625,10 +2631,11 @@ function uebernehmeArbeitstageKalender(){
   if(!_kalenderState)return;
   var wMeta=getMonthWeeksZiel(_kalenderState.mk);
   var weekCounts=wMeta.map(function(){return 0;});
-  var gewaehlteTage=[];
+  var statusMap={};
   Object.keys(_kalenderState.tage).sort().forEach(function(ds){
-    if(!_kalenderState.tage[ds])return;
-    gewaehlteTage.push(ds);
+    var status=_kalenderState.tage[ds];
+    if(status&&status!=='off')statusMap[ds]=status; // 'off' nicht speichern, spart Platz (impliziter Standard)
+    if(status!=='work')return;
     wMeta.forEach(function(wm,i){
       if(ds>=wm.from&&ds<=wm.to)weekCounts[i]++;
     });
@@ -2637,7 +2644,7 @@ function uebernehmeArbeitstageKalender(){
   if(!zielStore[mk])zielStore[mk]={};
   if(!zielStore[mk][empId])zielStore[mk][empId]={};
   zielStore[mk][empId].weeks=weekCounts;
-  zielStore[mk][empId].arbeitstage=gewaehlteTage;
+  zielStore[mk][empId].arbeitstage=statusMap;
   closeArbeitstageKalender();
   renderTeam();
 }
@@ -2667,13 +2674,20 @@ function renderArbeitstageKalenderModal(){
     } else if(holName){
       cells+='<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;background:#fdeeee;color:#c0392b;font-size:13px;font-weight:600" title="'+esc(holName)+'"><div>'+d+'</div><div style="font-size:6.5px;font-weight:700;padding:0 2px;text-align:center;line-height:1.1">'+esc(holName)+'</div></div>';
     } else {
-      var work=!!st.tage[ds];
-      cells+='<div onclick="toggleKalenderTag(\''+ds+'\')" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;border:1.5px solid '+(isToday?'#e0a13a':'transparent')+';background:'+(work?'#7ED2DB':'#f4f6f6')+';color:'+(work?'#0c3b40':'#94a4a4')+'">'+d+'</div>';
+      var status=st.tage[ds]||'off';
+      var styleMap={
+        work:{bg:'#7ED2DB',fg:'#0c3b40',sub:''},
+        off:{bg:'#f4f6f6',fg:'#94a4a4',sub:''},
+        urlaub:{bg:'#e8ecfb',fg:'#3d4fb0',sub:'Urlaub'},
+        krank:{bg:'#fff2e0',fg:'#b5720c',sub:'Krank'}
+      };
+      var sm=styleMap[status];
+      cells+='<div onclick="toggleKalenderTag(\''+ds+'\')" style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;border:1.5px solid '+(isToday?'#e0a13a':'transparent')+';background:'+sm.bg+';color:'+sm.fg+'"><div style="font-size:13px;font-weight:600">'+d+'</div>'+(sm.sub?'<div style="font-size:6.5px;font-weight:700;margin-top:1px">'+sm.sub+'</div>':'')+'</div>';
     }
   }
   var weekChips=wMeta.map(function(wm){
     var n=0;
-    Object.keys(st.tage).forEach(function(ds){if(st.tage[ds]&&ds>=wm.from&&ds<=wm.to)n++;});
+    Object.keys(st.tage).forEach(function(ds){if(st.tage[ds]==='work'&&ds>=wm.from&&ds<=wm.to)n++;});
     return '<div style="flex:1;background:#f7fafa;border-radius:8px;padding:8px 6px;text-align:center;border:1px solid #e3e8e8"><div style="font-size:10px;color:#94a4a4;font-weight:600">KW '+wm.kw+'</div><div style="font-size:16px;font-weight:800;color:#0c3b40;margin-top:2px">'+n+'</div></div>';
   }).join('');
   var html='<div id="arbeitstage-kalender-overlay" style="position:fixed;inset:0;background:rgba(15,35,38,0.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)closeArbeitstageKalender()">'
@@ -2687,9 +2701,12 @@ function renderArbeitstageKalenderModal(){
     +['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(d){return '<div style="text-align:center;font-size:10px;font-weight:700;color:#94a4a4;padding-bottom:4px;text-transform:uppercase">'+d+'</div>';}).join('')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">'+cells+'</div>'
-    +'<div style="display:flex;gap:14px;margin-top:14px;font-size:11px;color:#5c7070;flex-wrap:wrap">'
+    +'<div style="font-size:10.5px;color:#94a4a4;margin-top:10px">Klicke einen Tag mehrfach: Arbeitstag → Frei → Urlaub → Krank → Arbeitstag …</div>'
+    +'<div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:#5c7070;flex-wrap:wrap">'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#7ED2DB"></span>Arbeitstag</span>'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#f4f6f6;border:1px solid #e3e8e8"></span>Frei</span>'
+    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#e8ecfb;border:1px solid #d3d9f5"></span>Urlaub</span>'
+    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#fff2e0;border:1px solid #f5dfb8"></span>Krank</span>'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;border:1px solid #d5dcdc"></span>Wochenende</span>'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#fdeeee;border:1px solid #f3c9c9"></span>Feiertag</span>'
     +'</div>'
@@ -3829,9 +3846,14 @@ function todayTargetStat(kind){
     var r=rec[e.id]||{};
     // Wenn fuer diesen Mitarbeiter/Monat bereits konkrete Arbeitstage hinterlegt sind (Kalender-Auswahl),
     // zaehlt das Tagesziel nur, wenn er laut Kalender heute tatsaechlich arbeitet - sonst (Altbestand
-    // ohne Tagesdaten) faellt es wie bisher auf "immer mitzaehlen" zurueck.
-    var hatArbeitstage=Array.isArray(r.arbeitstage)&&r.arbeitstage.length>0;
-    if(hatArbeitstage&&r.arbeitstage.indexOf(t)<0)return;
+    // ohne Tagesdaten) faellt es wie bisher auf "immer mitzaehlen" zurueck. Neues Format ist ein Objekt
+    // {datum:'work'|'urlaub'|'krank'}, altes Format war ein reines Array von Arbeitstagen.
+    var at=r.arbeitstage;
+    var hatArbeitstage=(Array.isArray(at)&&at.length>0)||(at&&typeof at==='object'&&!Array.isArray(at)&&Object.keys(at).length>0);
+    if(hatArbeitstage){
+      var arbeitetHeute=Array.isArray(at)?(at.indexOf(t)>=0):(at[t]==='work');
+      if(!arbeitetHeute)return;
+    }
     var optTag=r.optTag!=null?r.optTag:0;
     var margeOpt=r.margeOpt!=null?r.margeOpt:0;
     target+=withMarge?optTag*margeOpt:optTag;
