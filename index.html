@@ -2563,7 +2563,7 @@ function loadZielvereinbarungFromSupabase(){
     zielStore={};
     res.data.forEach(function(r){
       if(!zielStore[r.month])zielStore[r.month]={};
-      zielStore[r.month][r.employee_id]={weeks:[r.week1,r.week2,r.week3,r.week4,r.week5],optTag:r.opt_per_tag,margeOpt:r.marge_per_opt};
+      zielStore[r.month][r.employee_id]={weeks:[r.week1,r.week2,r.week3,r.week4,r.week5],optTag:r.opt_per_tag,margeOpt:r.marge_per_opt,arbeitstage:r.arbeitstage||null};
     });
     return true;
   });
@@ -2596,13 +2596,17 @@ function openArbeitstageKalender(empId){
   var year=+mk.slice(0,4),month=+mk.slice(5,7);
   var feiertage=bayernFeiertage(year);
   var daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
+  var existing=zielStore[mk]&&zielStore[mk][empId]&&zielStore[mk][empId].arbeitstage;
+  var hasExisting=Array.isArray(existing)&&existing.length>0;
+  var existingSet={};
+  if(hasExisting)existing.forEach(function(ds){existingSet[ds]=true;});
   var tage={};
   for(var d=1;d<=daysInMonth;d++){
     var dt=new Date(Date.UTC(year,month-1,d));
     var ds=dt.toISOString().slice(0,10);
     var dow=dt.getUTCDay();
     if(dow===0||dow===6||feiertage[ds])continue; // Wochenende/Feiertag: kein Eintrag noetig, immer frei
-    tage[ds]=true; // Standard: alle Wochentage als Arbeitstag vorbelegt
+    tage[ds]=hasExisting?!!existingSet[ds]:true; // Vorhandene Auswahl uebernehmen, sonst alle Wochentage vorbelegt
   }
   _kalenderState={empId:empId,mk:mk,tage:tage};
   renderArbeitstageKalenderModal();
@@ -2621,9 +2625,10 @@ function uebernehmeArbeitstageKalender(){
   if(!_kalenderState)return;
   var wMeta=getMonthWeeksZiel(_kalenderState.mk);
   var weekCounts=wMeta.map(function(){return 0;});
-  Object.keys(_kalenderState.tage).forEach(function(ds){
+  var gewaehlteTage=[];
+  Object.keys(_kalenderState.tage).sort().forEach(function(ds){
     if(!_kalenderState.tage[ds])return;
-    var dt=new Date(ds+'T00:00:00Z');
+    gewaehlteTage.push(ds);
     wMeta.forEach(function(wm,i){
       if(ds>=wm.from&&ds<=wm.to)weekCounts[i]++;
     });
@@ -2632,6 +2637,7 @@ function uebernehmeArbeitstageKalender(){
   if(!zielStore[mk])zielStore[mk]={};
   if(!zielStore[mk][empId])zielStore[mk][empId]={};
   zielStore[mk][empId].weeks=weekCounts;
+  zielStore[mk][empId].arbeitstage=gewaehlteTage;
   closeArbeitstageKalender();
   renderTeam();
 }
@@ -3165,7 +3171,8 @@ function saveZielvereinbarung(){
       employee_id:e.id,month:zielMonth,
       week1:weeks[0],week2:weeks[1],week3:weeks[2],week4:weeks[3],week5:weeks[4],
       opt_per_tag:r.optTag!=null?r.optTag:0,
-      marge_per_opt:r.margeOpt!=null?r.margeOpt:0
+      marge_per_opt:r.margeOpt!=null?r.margeOpt:0,
+      arbeitstage:r.arbeitstage||[]
     };
   });
   _savingZielvereinbarung=true;
@@ -3814,11 +3821,17 @@ function currentWeekMargin(){ return currentWeekStat('marge'); }
 function todayTargetStat(kind){
   var withMarge=(kind==='marge');
   var mk=today().slice(0,7);
+  var t=today();
   var rec=zielStore[mk]||{};
   var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
   var target=0;
   visible.forEach(function(e){
     var r=rec[e.id]||{};
+    // Wenn fuer diesen Mitarbeiter/Monat bereits konkrete Arbeitstage hinterlegt sind (Kalender-Auswahl),
+    // zaehlt das Tagesziel nur, wenn er laut Kalender heute tatsaechlich arbeitet - sonst (Altbestand
+    // ohne Tagesdaten) faellt es wie bisher auf "immer mitzaehlen" zurueck.
+    var hatArbeitstage=Array.isArray(r.arbeitstage)&&r.arbeitstage.length>0;
+    if(hatArbeitstage&&r.arbeitstage.indexOf(t)<0)return;
     var optTag=r.optTag!=null?r.optTag:0;
     var margeOpt=r.margeOpt!=null?r.margeOpt:0;
     target+=withMarge?optTag*margeOpt:optTag;
