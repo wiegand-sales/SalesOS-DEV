@@ -893,6 +893,8 @@ function setOverviewPerfSort(key){
 }
 var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = Standard (Monatsanfang)
 var overviewChartMetric='margeGesamt';
+var overviewChartGroup='week'; // 'day' | 'week' | 'month' - X-Achsen-Granularitaet des Performance-Trend-Charts
+function setOverviewChartGroup(g){overviewChartGroup=g;renderTeam();}
 var overviewChartEmpId=null; // null = Team (alle aktiven Mitarbeiter), sonst employee-id
 var bannerViewMode=null; // null = Standard je Reiter, sonst 'performance'|'overview' explizit ueberschrieben
 var settingsView='integrations'; // 'integrations' | 'data'
@@ -2652,6 +2654,35 @@ function buildYearWeeksForChart(year){
     cur.setUTCDate(cur.getUTCDate()+7);
   }
   return weeks;
+}
+// Monate des Jahres fuer den Trend-Chart (12 Perioden)
+function buildYearMonthsForChart(year){
+  var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  var months=[];
+  for(var m=0;m<12;m++){
+    var from=new Date(Date.UTC(year,m,1));
+    var to=new Date(Date.UTC(year,m+1,0));
+    months.push({label:mNamesShort[m],from:from.toISOString().slice(0,10),to:to.toISOString().slice(0,10)});
+  }
+  return months;
+}
+// Tage des aktuellen Monats fuer den Trend-Chart (ca. 28-31 Perioden)
+function buildMonthDaysForChart(year){
+  var todayD=new Date(today()+'T00:00:00Z');
+  var m=todayD.getUTCMonth();
+  var daysInMonth=new Date(Date.UTC(year,m+1,0)).getUTCDate();
+  var days=[];
+  for(var d=1;d<=daysInMonth;d++){
+    var ds=new Date(Date.UTC(year,m,d)).toISOString().slice(0,10);
+    days.push({label:('0'+d).slice(-2)+'.',from:ds,to:ds});
+  }
+  return days;
+}
+// Liefert je nach overviewChartGroup die passenden Perioden mit einheitlichem {label,from,to}
+function buildChartPeriods(group,year){
+  if(group==='day')return buildMonthDaysForChart(year).map(function(p){return {label:p.label,from:p.from,to:p.to};});
+  if(group==='month')return buildYearMonthsForChart(year).map(function(p){return {label:p.label,from:p.from,to:p.to};});
+  return buildYearWeeksForChart(year).map(function(p){return {label:'KW '+p.kw,from:p.from,to:p.to};});
 }
 // Rohzahlen-Summen (ueber eine Mitarbeiterliste) fuer einen Datumsbereich - Basis fuer den Jahres-Trendchart
 function chartSumsForRange(liste,from,to){
@@ -4831,6 +4862,11 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
   });
   h+='</optgroup>';
   h+='</select>';
+  h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
+  [{k:'day',l:'Tag'},{k:'week',l:'Woche'},{k:'month',l:'Monat'}].forEach(function(it){
+    h+='<button style="padding:0 12px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(overviewChartGroup===it.k?'#164e54':'transparent')+';color:'+(overviewChartGroup===it.k?'#fff':'var(--text2)')+'" onclick="setOverviewChartGroup(\''+it.k+'\')">'+it.l+'</button>';
+  });
+  h+='</div>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
   [{k:'akt',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
@@ -4841,11 +4877,11 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
   h+='<div style="height:280px;position:relative"><canvas id="overviewPerfChart"></canvas></div>';
   h+='</div>';
 
-  // Chart.js Init - immer aktuelles Jahr, X-Achse = alle 52/53 KWs, Zukunft = offene Punkte (null)
+  // Chart.js Init - immer aktuelles Jahr (bzw. aktueller Monat bei Tagesansicht), X-Achse je nach overviewChartGroup, Zukunft = offene Punkte (null)
   (function(metric){
     window._overviewChartData=null;
     var year=+today().slice(0,4);
-    var weeks=buildYearWeeksForChart(year);
+    var weeks=buildChartPeriods(overviewChartGroup,year);
     var todayStr=today();
     var liste;
     if(!overviewChartEmpId){
@@ -4856,7 +4892,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
     } else {
       liste=visible.filter(function(e){return e.id===overviewChartEmpId;});
     }
-    var labels=weeks.map(function(w){return 'KW '+w.kw;});
+    var labels=weeks.map(function(w){return w.label;});
     var colors={gesamt:'#206A72',oem:'#7ED2DB',ups:'#e0a13a',wka:'#8a6fd4'};
 
     function seriesFor(valFn,color,label,fillOrder){
