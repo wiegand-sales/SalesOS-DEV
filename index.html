@@ -3831,17 +3831,23 @@ function buildGlobalBannerHtml(visible){
     var oemProLead3=oemMonthSum>0?oemMargeSum/oemMonthSum:0;
     var optHeuteAbw3=optHeuteIst3-optHeuteZiel3;
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
-    h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;height:'+CH2+'px">';
-    h+='<div style="grid-column:span 1;display:flex;flex-direction:column;justify-content:space-between;padding-left:14px;padding-bottom:4px">'
-      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OEM</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+oemMonthSum+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">Stk.</span></div>'
+    h+='<div style="display:flex;height:'+CH2+'px">';
+    h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
+    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
+      +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OEM</div>'
+      +'<div style="font-size:30px;font-weight:700;line-height:1">'+oemMonthSum+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
       +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Margenerhöhung '+Math.round(oemMargeSum).toLocaleString('de-DE')+' EUR</div>'
       +'<div style="font-size:11px;color:#8fb5b9">Ø '+Math.round(oemProLead3).toLocaleString('de-DE')+' EUR/Lead</div>'
       +'</div>'
-      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+optHeuteIst3+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+optHeuteZiel3+' Stk.</span></div>'
-      +'<div style="font-size:10px;color:#8fb5b9;margin-top:3px">Abw. '+(optHeuteAbw3>=0?'+':'')+optHeuteAbw3+'</div>'
+      +'</div>';
+    h+='<div style="min-height:60px;display:flex;align-items:center;padding:4px 14px">'
+      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div>'
+      +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+optHeuteIst3+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+optHeuteZiel3+' Stk.</span></div>'
+      +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">Abw. <span style="color:'+(optHeuteAbw3<0?'#e57373':'#7ED2DB')+';font-weight:600">'+(optHeuteAbw3>=0?'+':'')+optHeuteAbw3+'</span></div>'
       +'</div>'
       +'</div>';
-    h+='<div style="grid-column:span 5;display:flex;align-items:flex-end;gap:10px;padding:0 4px">';
+    h+='</div>'; // Ende linke Spalte
+    h+='<div style="flex:1;display:flex;align-items:flex-end;gap:10px;padding:0 4px 0 18px">';
     for(var i=0;i<12;i++){
       var pctNl2=pct2(zielNlArr[i]),pctZiel2=pct2(zielMargeArr[i]),pctErz2=erzieltArr[i]!=null?pct2(erzieltArr[i]):null;
       var tipTxt2='Ziel NL Marge/Mon.: €'+zielNlArr[i].toLocaleString('de-DE')
@@ -3856,10 +3862,10 @@ function buildGlobalBannerHtml(visible){
         +'</div>';
     }
     h+='</div>';
-    h+='</div>'; // Ende Grid-Zeile (Kennzahlen + Diagramm)
-    h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px">';
-    h+='<div style="grid-column:span 1"></div>';
-    h+='<div style="grid-column:span 5;display:flex;gap:10px;padding:0 4px">';
+    h+='</div>'; // Ende Flex-Zeile (linke Spalte + Diagramm)
+    h+='<div style="display:flex;margin-top:8px">';
+    h+='<div style="width:16.6667%;flex-shrink:0"></div>';
+    h+='<div style="flex:1;display:flex;gap:10px;padding:0 4px 0 18px">';
     for(var i=0;i<12;i++){h+='<div style="flex:1;text-align:center;font-size:10px;color:#8fb5b9">'+MONTH_SHORT_DE[i]+'</div>';}
     h+='</div>';
     h+='</div>';
