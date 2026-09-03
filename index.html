@@ -2998,7 +2998,7 @@ function zielvereinbarungHtml(){
   var ZIEL_WK_COL=64; // KW-Tage-Felder bleiben fest, brauchen konsistente lesbare Breite
   var ZIEL_WK_TARGET_COL=108; // Wochenziel-Spalten (Euro-Beträge sind meist 5-stellig, brauchen mehr Platz gegen Zeilenumbruch)
   var weeksMeta=getMonthWeeksZiel(zielMonth);
-  var weekGridTemplate='2.2fr repeat('+weeksMeta.length+','+ZIEL_WK_COL+'px) 0.8fr 0.9fr 1fr repeat('+weeksMeta.length+','+ZIEL_WK_TARGET_COL+'px) 1.3fr 1.2fr 0.8fr';
+  var weekGridTemplate='2.2fr '+ZIEL_WK_COL+'px '+ZIEL_WK_COL+'px repeat('+weeksMeta.length+','+ZIEL_WK_COL+'px) 0.8fr 0.9fr 1fr repeat('+weeksMeta.length+','+ZIEL_WK_TARGET_COL+'px) 1.3fr 1.2fr 0.8fr';
   var yearGridTemplate='1.6fr 1fr 0.9fr 1fr 1.2fr 1.3fr 1.2fr 0.8fr';
 
   // ── Aufgeklappter Wochen-Detailblick fuer den aktuell gewaehlten Monat (wird unter dessen Monatszeile eingehaengt) ──
@@ -3041,6 +3041,17 @@ function zielvereinbarungHtml(){
       var pctBadge='<span style="font-weight:700;font-size:11.5px;padding:3px 9px;border-radius:12px;background:'+(pctOk?'rgba(32,106,114,0.14)':'rgba(200,60,60,0.12)')+';color:'+(pctOk?'#0c3b40':'#B23A3A')+'">'+pct+'%</span>';
       teamDaysSum+=monthSum;teamTargetSum+=target;teamIstSum+=istMarge;if(margeOpt)margeVals.push(margeOpt);
       var c=COLORS[e.color%COLORS.length];
+      var urlaubCount=0,krankCount=0;
+      if(r.arbeitstage&&typeof r.arbeitstage==='object'&&!Array.isArray(r.arbeitstage)){
+        Object.keys(r.arbeitstage).forEach(function(ds){
+          if(r.arbeitstage[ds]==='urlaub')urlaubCount++;
+          else if(r.arbeitstage[ds]==='krank')krankCount++;
+        });
+      }
+      function abwCell(n,kind){
+        var style=n>0?(kind==='urlaub'?'background:#e8ecfb;color:#3d4fb0;border:1px solid #d3d9f5':'background:#fff2e0;color:#b5720c;border:1px solid #f5dfb8'):'background:#f7fafa;color:#c3cccc;border:1px solid var(--border)';
+        return '<div style="'+GD+';justify-content:center"><div style="width:48px;height:34px;border-radius:6px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;'+style+'">'+n+'</div></div>';
+      }
       var weekCells=weeksMeta.map(function(wm,i){
         var isHol=wm.holidayNames.length>0;
         return '<div style="'+GD+';justify-content:center"><input type="number" class="ziel-num" id="zf-'+e.id+'-w'+i+'" min="0" max="7" value="'+weeks[i]+'" onchange="updateZielField(\''+e.id+'\',\'week\','+i+',this.value)" onkeydown="return zielTabNav(event,this)" style="width:48px;height:34px;box-sizing:border-box;padding:0 2px;text-align:center'+(isHol?';border-color:var(--amber)':'')+'"></div>';
@@ -3048,6 +3059,8 @@ function zielvereinbarungHtml(){
       var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
         +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;cursor:pointer" onclick="openArbeitstageKalender(\''+e.id+'\')" title="Arbeitstage per Kalender festlegen"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">'+esc(e.name)+' <i class="ti ti-calendar-event" style="font-size:12px;color:var(--text3)"></i></div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
+        +abwCell(urlaubCount,'urlaub')
+        +abwCell(krankCount,'krank')
         +weekCells
         +'<div style="'+GD+';justify-content:center;font-weight:600">'+monthSum+'</div>'
         +'<div style="'+GD+'"><input type="number" class="ziel-num" id="zf-'+e.id+'-opt" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
@@ -3065,6 +3078,8 @@ function zielvereinbarungHtml(){
       +'<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2);background:var(--bg-solid,#fff)">'
       +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+'">'
       +'<div style="'+GH+'">Mitarbeiter</div>'
+      +'<div style="'+GH+';justify-content:center">Urlaub</div>'
+      +'<div style="'+GH+';justify-content:center">Krank</div>'
       +weekHeaderCells
       +'<div style="'+GH+';justify-content:center">Σ Mon.</div>'
       +'<div style="'+GH+';justify-content:flex-end">Opt./Tag</div>'
