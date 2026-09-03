@@ -4997,7 +4997,10 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
   if(overviewEmpDropdownOpen){
     h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:var(--bg-solid);border:1px solid var(--border2);border-radius:10px;box-shadow:0 10px 24px rgba(15,61,66,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
     // Mitarbeiter-Suche + Liste
-    h+='<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;border-bottom:1px solid var(--border);outline:none;font-size:12.5px;padding:6px 12px 8px;width:100%;color:var(--text);background:transparent">';
+    h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
+      +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
+      +'<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
+      +'</div></div>';
     h+='<div id="overviewEmpScrollList" style="max-height:160px;overflow-y:auto;padding-top:4px">';
     var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
     var sortedVisible=visible.slice().sort(function(a,b){
