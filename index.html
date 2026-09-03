@@ -3764,6 +3764,32 @@ function buildMonthBar(liste){
     +'<div class="mb-stat mb-margin"><div class="l">Margenerhöhung</div><div class="row"><span class="n">'+eur(sums.margeGesamt)+'</span></div><div class="m">Ziel: '+eur(zielMargeSum)+'/Mon.</div></div>'
     +'</div>';
 }
+// Wiederverwendbare Kachel: OEM (Anzahl, Margenerhoehung, Oe EUR/Lead) - identischer Code fuer Slide 2 und Slide 3
+function renderOemTileHtml(visible){
+  var _mk=today().slice(0,7);
+  var count=0,marge=0;
+  visible.forEach(function(e){
+    (performance[e.id]||[]).forEach(function(x){
+      if((x.date||'').slice(0,7)!==_mk)return;
+      count+=x.convOEM||0;marge+=x.margeOEM||0;
+    });
+  });
+  var proLead=count>0?marge/count:0;
+  return '<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OEM</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+count+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
+    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Margenerhöhung '+Math.round(marge).toLocaleString('de-DE')+' EUR</div>'
+    +'<div style="font-size:11px;color:#8fb5b9">Ø '+Math.round(proLead).toLocaleString('de-DE')+' EUR/Lead</div>'
+    +'</div>';
+}
+// Wiederverwendbare Kachel: Opt. Ges. (Heute) Ist/Ziel/Abweichung - identischer Code fuer Slide 2 und Slide 3
+function renderOptGesHeuteTileHtml(visible){
+  var ist=todayActualStat('opt',visible), ziel=todayTargetStat('opt');
+  var diff=ist-ziel;
+  return '<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div>'
+    +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+ist+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+ziel+' Stk.</span></div>'
+    +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">Abw. <span style="color:'+(diff<0?'#e57373':'#7ED2DB')+';font-weight:600">'+(diff>=0?'+':'')+diff+'</span></div>'
+    +'</div>';
+}
 function buildGlobalBannerHtml(visible){
   function avgOptTagZielvereinbarungLocal(){
     var zmk=today().slice(0,7);
@@ -3811,39 +3837,15 @@ function buildGlobalBannerHtml(visible){
     var maxV2=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
     var CH2=195;
     function pct2(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV2*100));}
-    // Zwei Kennzahlen aus Slide 2 uebernehmen (nur Zahl, kein Diagramm): OEM (Monat) und Opt. Ges. (Heute)
-    var oemMonthSum=0;
-    var _zmkNow=today().slice(0,7);
-    visible.forEach(function(e){
-      (performance[e.id]||[]).forEach(function(x){
-        if((x.date||'').slice(0,7)!==_zmkNow)return;
-        oemMonthSum+=x.convOEM||0;
-      });
-    });
-    var optHeuteIst3=todayActualStat('opt',visible), optHeuteZiel3=todayTargetStat('opt');
-    var oemMargeSum=0;
-    visible.forEach(function(e){
-      (performance[e.id]||[]).forEach(function(x){
-        if((x.date||'').slice(0,7)!==_zmkNow)return;
-        oemMargeSum+=x.margeOEM||0;
-      });
-    });
-    var oemProLead3=oemMonthSum>0?oemMargeSum/oemMonthSum:0;
-    var optHeuteAbw3=optHeuteIst3-optHeuteZiel3;
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:'+CH2+'px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
-      +'<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OEM</div>'
-      +'<div style="font-size:30px;font-weight:700;line-height:1">'+oemMonthSum+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
-      +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Margenerhöhung '+Math.round(oemMargeSum).toLocaleString('de-DE')+' EUR</div>'
-      +'<div style="font-size:11px;color:#8fb5b9">Ø '+Math.round(oemProLead3).toLocaleString('de-DE')+' EUR/Lead</div>'
-      +'</div>'
+      +renderOemTileHtml(visible)
       +'</div>';
-    h+='<div style="min-height:60px;display:flex;align-items:center;padding:4px 14px">'
-      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div>'
-      +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+optHeuteIst3+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+optHeuteZiel3+' Stk.</span></div>'
-      +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">Abw. <span style="color:'+(optHeuteAbw3<0?'#e57373':'#7ED2DB')+';font-weight:600">'+(optHeuteAbw3>=0?'+':'')+optHeuteAbw3+'</span></div>'
+    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
+      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
+      +renderOptGesHeuteTileHtml(visible)
       +'</div>'
       +'</div>';
     h+='</div>'; // Ende linke Spalte
@@ -4082,7 +4084,9 @@ function buildGlobalBannerHtml(visible){
   }
   h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
-  [['oem','OEM'],['ups','UPSELLS'],['wka','WKA']].forEach(function(kk){
+  h+='<div style="grid-column:span 1;padding-left:14px">'+renderOemTileHtml(visible)+'</div>'
+    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(ovLast14WD.map(function(d){return ovCountsForDate(d,'oem');}),'#7ED2DB',300,34,ovLast14WD,function(v){return Math.round(v).toLocaleString('de-DE')+' Stk.';})+'</div>';
+  [['ups','UPSELLS'],['wka','WKA']].forEach(function(kk){
     var kind=kk[0],label=kk[1];
     var s=ovMonthSums(kind);
     var proLead=s.count>0?s.marge/s.count:0;
