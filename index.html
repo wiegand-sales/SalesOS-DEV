@@ -3809,16 +3809,31 @@ function buildGlobalBannerHtml(visible){
       erzieltArr.push(hasData2?Math.round(erzieltSum2):null);
     }
     var maxV2=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
-    var CH2=195;
+    var CH2=140;
     function pct2(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV2*100));}
+    // Zwei Kennzahlen aus Slide 2 uebernehmen (nur Zahl, kein Diagramm): OEM (Monat) und Opt. Ges. (Heute)
+    var oemMonthSum=0;
+    var _zmkNow=today().slice(0,7);
+    visible.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if((x.date||'').slice(0,7)!==_zmkNow)return;
+        oemMonthSum+=x.convOEM||0;
+      });
+    });
+    var optHeuteIst3=todayActualStat('opt',visible), optHeuteZiel3=todayTargetStat('opt');
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
-    h+='<div style="display:flex;align-items:flex-end;gap:10px;height:'+CH2+'px;padding:0 4px">';
+    h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;height:'+CH2+'px">';
+    h+='<div style="grid-column:span 1;display:flex;flex-direction:column;justify-content:space-between;padding-left:14px;padding-bottom:4px">'
+      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OEM</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+oemMonthSum+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">Stk.</span></div></div>'
+      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+optHeuteIst3+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+optHeuteZiel3+' Stk.</span></div></div>'
+      +'</div>';
+    h+='<div style="grid-column:span 5;display:flex;align-items:flex-end;gap:10px;padding:0 4px">';
     for(var i=0;i<12;i++){
       var pctNl2=pct2(zielNlArr[i]),pctZiel2=pct2(zielMargeArr[i]),pctErz2=erzieltArr[i]!=null?pct2(erzieltArr[i]):null;
       var tipTxt2='Ziel NL Marge/Mon.: €'+zielNlArr[i].toLocaleString('de-DE')
         +'\nZiel DE Marge/Mon.: €'+zielMargeArr[i].toLocaleString('de-DE')
         +'\nErzielte Marge: '+(erzieltArr[i]!=null?'€'+erzieltArr[i].toLocaleString('de-DE'):'—');
-      h+='<div style="flex:1;position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center;cursor:default" title="'+tipTxt2+'">'
+      h+='<div style="flex:1;position:relative;height:'+CH2+'px;display:flex;align-items:flex-end;justify-content:center;cursor:default" title="'+tipTxt2+'">'
         +'<div style="position:absolute;left:14px;right:14px;bottom:'+pctNl2+'%;border-top:2px dashed #e0a13a"></div>'
         +'<div style="display:flex;align-items:flex-end;gap:4px;height:100%">'
         +'<div style="width:24px;height:'+pctZiel2+'%;background:#7ED2DB;opacity:0.4;border-radius:3px 3px 0 0"></div>'
@@ -3827,8 +3842,12 @@ function buildGlobalBannerHtml(visible){
         +'</div>';
     }
     h+='</div>';
-    h+='<div style="display:flex;gap:10px;padding:0 4px;margin-top:8px">';
+    h+='</div>'; // Ende Grid-Zeile (Kennzahlen + Diagramm)
+    h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px">';
+    h+='<div style="grid-column:span 1"></div>';
+    h+='<div style="grid-column:span 5;display:flex;gap:10px;padding:0 4px">';
     for(var i=0;i<12;i++){h+='<div style="flex:1;text-align:center;font-size:10px;color:#8fb5b9">'+MONTH_SHORT_DE[i]+'</div>';}
+    h+='</div>';
     h+='</div>';
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
       +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
