@@ -983,7 +983,27 @@ function deleteAppUser(uid,name){
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
 function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
-function setBannerViewMode(m){bannerViewMode=m;renderTeam();}
+var _bannerRotationOrder=['performance','overview','ziel'];
+var _bannerRotationTimer=null;
+function _bannerRotateNext(){
+  var cur=bannerViewMode||'overview';
+  var idx=_bannerRotationOrder.indexOf(cur);
+  bannerViewMode=_bannerRotationOrder[(idx+1)%_bannerRotationOrder.length];
+  renderTeam();
+}
+// Idempotent: laeuft die Rotation schon, wird nichts veraendert (sonst wuerde jeder normale
+// Re-Render z.B. bei Dateneingaben den 60s-Timer immer wieder zuruecksetzen und er wuerde nie feuern)
+function ensureBannerRotation(){
+  if(_bannerRotationTimer)return;
+  _bannerRotationTimer=setInterval(_bannerRotateNext,60000);
+}
+// Nur bei manuellem Klick auf einen Karussell-Punkt: Timer bewusst zuruecksetzen, damit der Nutzer
+// nach seiner Auswahl die vollen 60s Ruhe hat, bevor automatisch weitergeschaltet wird
+function resetBannerRotation(){
+  if(_bannerRotationTimer)clearInterval(_bannerRotationTimer);
+  _bannerRotationTimer=setInterval(_bannerRotateNext,60000);
+}
+function setBannerViewMode(m){bannerViewMode=m;resetBannerRotation();renderTeam();}
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
 function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDate=to||null;renderTeam();}
 function setOverviewQuickRange(type){
@@ -3585,7 +3605,7 @@ function toggleWiegandNav(){
   if(wiegandView==='team')wiegandView='overview'; // 'team' gehoert jetzt zu SFP Coaching, nicht mehr zu SFP Wiegand
   selectWiegandSub(wiegandView);
 }
-function selectWiegandSub(v){wiegandView=v;view='team';renderSidebar();renderMain();}
+function selectWiegandSub(v){wiegandView=v;view='team';if(v==='ziel')bannerViewMode='ziel';renderSidebar();renderMain();}
 var coachingNavOpen=false;
 function toggleCoachingNav(){
   coachingNavOpen=!coachingNavOpen;
@@ -3950,6 +3970,7 @@ function renderOptGesHeuteTileHtml(visible){
     +'</div>';
 }
 function buildGlobalBannerHtml(visible){
+  ensureBannerRotation();
   function avgOptTagZielvereinbarungLocal(){
     var zmk=today().slice(0,7);
     var zRec=zielStore[zmk]||{};
