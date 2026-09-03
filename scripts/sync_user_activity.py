@@ -264,6 +264,7 @@ def main():
 
     payload_rows = []
     not_found = set()
+    skipped_zero_marge = 0
     for row in reader:
         if not row or not row[0].strip():
             continue
@@ -276,9 +277,15 @@ def main():
         date = parse_de_date(row[COL["datum"]])
         if not date:
             continue
-        payload_rows.append(row_to_payload(row, emp_id))
+        payload = row_to_payload(row, emp_id)
+        # Einsatztage ohne Praesenz (nur ein Lead abgelehnt, keine echte Marge erzielt)
+        # werden nicht importiert - gleiche Regel wie beim manuellen CSV-Import in der App
+        if not payload["gesamt_margenerhoehung"]:
+            skipped_zero_marge += 1
+            continue
+        payload_rows.append(payload)
 
-    log(f"{len(payload_rows)} Zeilen zuordenbar, {len(not_found)} Mitarbeiter nicht gefunden.")
+    log(f"{len(payload_rows)} Zeilen zuordenbar, {len(not_found)} Mitarbeiter nicht gefunden, {skipped_zero_marge} Zeile(n) mit Gesamtmarge 0€ übersprungen.")
     if not_found:
         log("Nicht zugeordnet (bitte prüfen, ob diese Personen im System fehlen):")
         for n in sorted(not_found):
