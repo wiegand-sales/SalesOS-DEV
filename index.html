@@ -4995,13 +4995,10 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
   h+='<div style="position:relative" id="overviewEmpDropdownWrap">';
   h+='<button class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="toggleOverviewEmpDropdown()"><i class="ti ti-users"></i> '+selLabel+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>';
   if(overviewEmpDropdownOpen){
-    h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:var(--bg-solid);border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(15,61,66,0.14);width:300px;display:flex;flex-direction:column">';
-    h+='<div style="padding:8px;border-bottom:1px solid var(--border)">';
-    h+='<div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">';
-    h+='<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>';
-    h+='<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">';
-    h+='</div></div>';
-    h+='<div id="overviewEmpScrollList" style="max-height:220px;overflow-y:auto;padding:6px 0">';
+    h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:var(--bg-solid);border:1px solid var(--border2);border-radius:10px;box-shadow:0 10px 24px rgba(15,61,66,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
+    // Mitarbeiter-Suche + Liste
+    h+='<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;border-bottom:1px solid var(--border);outline:none;font-size:12.5px;padding:6px 12px 8px;width:100%;color:var(--text);background:transparent">';
+    h+='<div id="overviewEmpScrollList" style="max-height:160px;overflow-y:auto;padding-top:4px">';
     var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
     var sortedVisible=visible.slice().sort(function(a,b){
       var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
@@ -5009,34 +5006,29 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
     });
     sortedVisible.forEach(function(e){
       var checked=overviewSelectedIds.indexOf(e.id)>=0;
-      h+='<label class="emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
+      h+='<label class="emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:5px 12px;font-size:12.5px;cursor:pointer;border-radius:6px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
         +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleOverviewEmpId(\''+e.id+'\')" style="cursor:pointer;margin:0">'
         +'<span style="font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.02em">'+e.role+'</span>'
         +'<span>'+esc(e.name)+'</span>'
         +'</label>';
     });
     h+='<div id="overviewEmpNoResults" style="display:none;padding:14px 12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div>';
-    h+='<div style="border-top:1px solid var(--border);margin:6px 0 4px"></div>';
-    h+='<div style="padding:4px 12px 2px;font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Anzeige</div>';
-    [{k:'individual',l:'Einzeln (Standard)'},{k:'gesamt',l:'Gesamt (Team-Summe)'},{k:'durchschnitt_mitarbeiter',l:'Durch. Mitarbeiter'},{k:'durchschnitt_tag',l:'Durch. Einsatztag'}].forEach(function(dm){
-      var active=overviewDisplayMode===dm.k;
-      h+='<label style="display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
-        +'<input type="radio" name="overviewDisplayMode" '+(active?'checked':'')+' onchange="setOverviewDisplayMode(\''+dm.k+'\')" style="cursor:pointer;margin:0">'
-        +'<span>'+dm.l+'</span>'
-        +'</label>';
-    });
     h+='</div>';
-    h+='<div style="display:flex;gap:6px;padding:8px;border-top:1px solid var(--border);flex-wrap:wrap">';
-    h+='<button class="btn btn-sm" style="flex:1;font-size:11px" onclick="setOverviewSelectAll(['+visible.map(function(e){return '\''+e.id+'\'';}).join(',')+'])">Alle</button>';
-    h+='<button class="btn btn-sm" style="flex:1;font-size:11px" onclick="setOverviewSelectNone()">Keine</button>';
-    h+='</div>';
-    h+='<div style="padding:4px 12px 2px;font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Team</div>';
-    h+='<div style="display:flex;gap:6px;padding:2px 8px 8px;flex-wrap:wrap">';
     var _visIds=visible.map(function(e){return e.id;});
-    [{k:'DE',l:'Team DE'},{k:'VLC',l:'Team VLC'},{k:'SR',l:'Team SR'},{k:'SE',l:'Team SE'},{k:'OB',l:'Team OB'}].forEach(function(tg){
-      h+='<button class="btn btn-sm" style="font-size:11px" onclick="setOverviewTeamGroup(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'],\''+tg.k+'\')">'+tg.l+'</button>';
+    h+='<div style="padding:6px 12px 2px;font-size:10.5px;color:var(--text3)">Team</div>';
+    h+='<div style="padding:0 8px 6px;display:flex;flex-wrap:wrap;gap:2px 6px">';
+    [{k:'DE',l:'DE'},{k:'VLC',l:'VLC'},{k:'SR',l:'SR'},{k:'SE',l:'SE'},{k:'OB',l:'OB'}].forEach(function(tg){
+      h+='<span onclick="setOverviewTeamGroup(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'],\''+tg.k+'\')" style="font-size:10.5px;font-weight:600;color:#164e54;padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'+tg.l+'</span>';
     });
+    h+='<span onclick="setOverviewSelectAll(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'])" style="font-size:10.5px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Alle</span>';
+    h+='<span onclick="setOverviewSelectNone()" style="font-size:10.5px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Keine</span>';
     h+='</div>';
+    // Anzeige-Modus ganz unten
+    h+='<div style="border-top:1px solid var(--border);margin:4px 0 4px"></div>';
+    [{k:'individual',l:'Einzeln'},{k:'gesamt',l:'Gesamt'},{k:'durchschnitt_mitarbeiter',l:'Ø Mitarbeiter'},{k:'durchschnitt_tag',l:'Ø Einsatztag'}].forEach(function(dm){
+      var active=overviewDisplayMode===dm.k;
+      h+='<button onclick="setOverviewDisplayMode(\''+dm.k+'\')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:6px 12px;font-size:12.5px;font-family:inherit;cursor:pointer;border-radius:6px;color:'+(active?'#164e54':'var(--text2)')+';font-weight:'+(active?'700':'500')+'" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'+dm.l+'</button>';
+    });
     h+='</div>';
   }
   h+='</div>';
