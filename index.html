@@ -836,6 +836,22 @@ var currentCoach = null;      // {id,name,role} falls eingeloggter User ein Coac
 var coachFilterView = 'overview'; // 'overview' | employee-id des Coaches
 var wiegandView='overview'; // 'overview' | 'team' | 'performance' (SFP Wiegand Tab-Navigation) - Overview ist der Standard-Landing-Tab nach dem Login (Performance-Menue entfernt, per Banner-Umschalter in Overview weiterhin erreichbar)
 var overviewSelectedIds=null; // Array ausgewählter Mitarbeiter-IDs in SFP Wiegand > Overview (Mehrfachauswahl)
+var overviewDisplayMode='individual'; // 'individual' | 'gesamt' | 'durchschnitt' - steuert ob je Mitarbeiter oder aggregiert angezeigt wird
+function setOverviewDisplayMode(m){overviewDisplayMode=m;renderTeam();}
+function setOverviewTeamGroup(visibleIds,groupKey){
+  var ids=visibleIds.filter(function(id){
+    var e=employees.find(function(x){return x.id===id;});
+    if(!e)return false;
+    if(groupKey==='DE')return e.role!=='VLC';
+    if(groupKey==='VLC')return e.role==='VLC';
+    if(groupKey==='SR')return e.role==='SR';
+    if(groupKey==='SE')return e.role==='SE';
+    if(groupKey==='OB')return e.phase==='Onboarding'&&e.role!=='VLC';
+    return true;
+  });
+  overviewSelectedIds=ids;
+  renderTeam();
+}
 var overviewEmpDropdownOpen=false;
 var overviewEmpSearchQuery='';
 function toggleOverviewEmpDropdown(){overviewEmpDropdownOpen=!overviewEmpDropdownOpen;if(!overviewEmpDropdownOpen)overviewEmpSearchQuery='';renderTeam();}
@@ -4966,7 +4982,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
   } // Ende if(!skipChart)
 
 
-  var selLabel=selectedEmps.length===visible.length?'Alle Mitarbeiter':(isAll?selectedEmps.length+' Mitarbeiter ausgewählt':emp.name);
+  var selLabel=overviewDisplayMode==='gesamt'?'Team gesamt ('+selectedEmps.length+')':overviewDisplayMode==='durchschnitt'?'Ø pro Mitarbeiter ('+selectedEmps.length+')':(selectedEmps.length===visible.length?'Alle Mitarbeiter':(isAll?selectedEmps.length+' Mitarbeiter ausgewählt':emp.name));
   if(showRest){
   } // Ende if(showRest)
 
@@ -5000,10 +5016,26 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
         +'</label>';
     });
     h+='<div id="overviewEmpNoResults" style="display:none;padding:14px 12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div>';
+    h+='<div style="border-top:1px solid var(--border);margin:6px 0 4px"></div>';
+    h+='<div style="padding:4px 12px 2px;font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Anzeige</div>';
+    [{k:'individual',l:'Einzeln (Standard)'},{k:'gesamt',l:'Gesamt (Team-Summe)'},{k:'durchschnitt',l:'Durchschnitt (Ø pro Mitarbeiter)'}].forEach(function(dm){
+      var active=overviewDisplayMode===dm.k;
+      h+='<label style="display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
+        +'<input type="radio" name="overviewDisplayMode" '+(active?'checked':'')+' onchange="setOverviewDisplayMode(\''+dm.k+'\')" style="cursor:pointer;margin:0">'
+        +'<span>'+dm.l+'</span>'
+        +'</label>';
+    });
     h+='</div>';
-    h+='<div style="display:flex;gap:6px;padding:8px;border-top:1px solid var(--border)">';
+    h+='<div style="display:flex;gap:6px;padding:8px;border-top:1px solid var(--border);flex-wrap:wrap">';
     h+='<button class="btn btn-sm" style="flex:1;font-size:11px" onclick="setOverviewSelectAll(['+visible.map(function(e){return '\''+e.id+'\'';}).join(',')+'])">Alle</button>';
     h+='<button class="btn btn-sm" style="flex:1;font-size:11px" onclick="setOverviewSelectNone()">Keine</button>';
+    h+='</div>';
+    h+='<div style="padding:4px 12px 2px;font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Team</div>';
+    h+='<div style="display:flex;gap:6px;padding:2px 8px 8px;flex-wrap:wrap">';
+    var _visIds=visible.map(function(e){return e.id;});
+    [{k:'DE',l:'Team DE'},{k:'VLC',l:'Team VLC'},{k:'SR',l:'Team SR'},{k:'SE',l:'Team SE'},{k:'OB',l:'Team OB'}].forEach(function(tg){
+      h+='<button class="btn btn-sm" style="font-size:11px" onclick="setOverviewTeamGroup(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'],\''+tg.k+'\')">'+tg.l+'</button>';
+    });
     h+='</div>';
     h+='</div>';
   }
@@ -5059,6 +5091,34 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
       eGrouped.forEach(function(g){combinedGroupedRows.push({g:g,emp:e,empT:empTargets(e)});});
     });
     combinedGroupedRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.label.localeCompare(a.g.label);});
+    // Gesamt/Durchschnitt: statt einer Zeile je (Mitarbeiter,Zeitraum) eine Zeile je Zeitraum,
+    // mit summierten bzw. gemittelten Rohwerten ueber alle ausgewaehlten Mitarbeiter
+    if(overviewDisplayMode!=='individual'){
+      var byPeriod={};
+      var periodOrder=[];
+      combinedGroupedRows.forEach(function(item){
+        var key=item.g.label;
+        if(!byPeriod[key]){byPeriod[key]={label:key,sortKey:item.g.label,rows:[],dateFrom:item.g.dateFrom,dateTo:item.g.dateTo};periodOrder.push(key);}
+        byPeriod[key].rows.push(item.g.row);
+      });
+      var aggGroupedRows=periodOrder.map(function(key){
+        var pd=byPeriod[key];
+        var n=pd.rows.length;
+        var aggRow={};
+        pd.rows.forEach(function(r){
+          Object.keys(r).forEach(function(k){
+            var v=r[k];
+            if(typeof v!=='number')return;
+            aggRow[k]=(aggRow[k]||0)+v;
+          });
+        });
+        if(overviewDisplayMode==='durchschnitt'){
+          Object.keys(aggRow).forEach(function(k){aggRow[k]=aggRow[k]/n;});
+        }
+        return {g:{label:pd.label,row:aggRow,dateFrom:pd.dateFrom,dateTo:pd.dateTo},emp:{id:'__agg__',name:overviewDisplayMode==='gesamt'?'Team gesamt':'Ø pro Mitarbeiter',role:''},empT:empTargets(selectedEmps[0]||{})};
+      });
+      combinedGroupedRows=aggGroupedRows;
+    }
   }
   var hasAnyData=isAll?combinedGroupedRows.length>0:perfAll.length>0;
   if(!hasAnyData){
