@@ -333,7 +333,6 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     <div class="sb-item" id="nav-coaching" onclick="toggleCoachingNav()"><div class="sb-icon"><i class="ti ti-calendar-event"></i></div> SFP Coaching <i class="ti ti-chevron-down" id="coachingNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="coachingSubNav" class="wiegand-subnav hidden">
       <div class="sb-item sb-navsub" id="nav-coaching-team" onclick="selectCoachingTeam()">Overview KPIs</div>
-      <div class="sb-item sb-navsub" id="nav-coaching-overview" onclick="setCoachFilterView('overview')">Overview Coachings</div>
       <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivitäten</div>
       <div id="coachingCoachSubItems"></div>
     </div>
@@ -3492,7 +3491,6 @@ function renderSidebar(){
   var ntc=document.getElementById('nav-team-coaching');if(ntc)ntc.classList.toggle('active',view==='coaching'&&coachFilterView==='overview');
   var ntz=document.getElementById('nav-team-ziel');if(ntz)ntz.classList.toggle('active',view==='team'&&wiegandView==='ziel');
   var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab||view==='activity');
-  var nco=document.getElementById('nav-coaching-overview');if(nco)nco.classList.toggle('active',view==='coaching'&&coachFilterView==='overview');
   var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
   var na=document.getElementById('nav-coaching-activity');if(na)na.classList.toggle('active',view==='activity');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
