@@ -3778,7 +3778,75 @@ function buildGlobalBannerHtml(visible){
   }
   var optOemZiel=avgOptTagZielvereinbarungLocal();
   var h='';
-  if((bannerViewMode||'overview')==='performance'){
+  var _bvMode=bannerViewMode||'overview';
+  if(_bvMode==='ziel'){
+    var yr=today().slice(0,4);
+    var MONTH_SHORT_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    var zielNlArr=[],zielMargeArr=[],erzieltArr=[];
+    for(var m=1;m<=12;m++){
+      var zmk2=yr+'-'+(m<10?'0'+m:m);
+      var wMeta2=getMonthWeeksZiel(zmk2);
+      var mRec2=zielStore[zmk2]||{};
+      var mVisible2=visible.filter(function(e){return empActiveInZielMonth(e,zmk2);});
+      var mTargetSum2=0;
+      mVisible2.forEach(function(e){
+        var r=mRec2[e.id]||{};
+        var weeks2=wMeta2.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
+        var monthSum2=weeks2.reduce(function(a,b){return a+b;},0);
+        var optTag2=r.optTag!=null?r.optTag:0;
+        var margeOpt2=r.margeOpt!=null?r.margeOpt:0;
+        mTargetSum2+=monthSum2*optTag2*margeOpt2;
+      });
+      var erzieltSum2=0,hasData2=false;
+      mVisible2.forEach(function(e){
+        (performance[e.id]||[]).forEach(function(x){
+          if((x.date||'').slice(0,7)!==zmk2)return;
+          erzieltSum2+=x.margeGesamt||x.margin||0; hasData2=true;
+        });
+      });
+      zielNlArr.push(zielNlTargets[zmk2]!=null?zielNlTargets[zmk2]:0);
+      zielMargeArr.push(Math.round(mTargetSum2));
+      erzieltArr.push(hasData2?Math.round(erzieltSum2):null);
+    }
+    var maxV2=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
+    var CH2=150;
+    function pct2(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV2*100));}
+    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">';
+    h+='<div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar"></i> Monatliche Zielvereinbarung <span style="font-weight:400;font-size:11px;color:#9fc9cd">'+yr+'</span></div>';
+    h+='<div style="display:flex;gap:14px;font-size:10.5px;color:#9fc9cd">'
+      +'<span><span style="width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px;background:#7ED2DB"></span>Ziel Marge/Mon.</span>'
+      +'<span><span style="width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px;background:#fff"></span>Erzielte Marge</span>'
+      +'<span><span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;background:#e0a13a"></span>Ziel NL</span>'
+      +'</div>';
+    h+='</div>';
+    h+='<div style="display:flex;align-items:flex-end;gap:6px;height:'+CH2+'px;padding:0 4px">';
+    for(var i=0;i<12;i++){
+      var pctNl2=pct2(zielNlArr[i]),pctZiel2=pct2(zielMargeArr[i]),pctErz2=erzieltArr[i]!=null?pct2(erzieltArr[i]):null;
+      var tipTxt2='Ziel NL Marge/Mon.: €'+zielNlArr[i].toLocaleString('de-DE')
+        +'\nZiel Marge/Mon.: €'+zielMargeArr[i].toLocaleString('de-DE')
+        +'\nErzielte Marge: '+(erzieltArr[i]!=null?'€'+erzieltArr[i].toLocaleString('de-DE'):'—');
+      h+='<div style="flex:1;position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center;cursor:default" title="'+tipTxt2+'">'
+        +'<div style="position:absolute;left:20px;right:20px;bottom:'+pctNl2+'%;border-top:2px dashed #e0a13a"></div>'
+        +'<div style="display:flex;align-items:flex-end;gap:3px;height:100%">'
+        +'<div style="width:16px;height:'+pctZiel2+'%;background:linear-gradient(180deg,#7ED2DB,#3d7f87);border-radius:3px 3px 0 0"></div>'
+        +(pctErz2!=null?'<div style="width:16px;height:'+pctErz2+'%;background:#fff;border-radius:3px 3px 0 0"></div>':'<div style="width:16px"></div>')
+        +'</div>'
+        +'</div>';
+    }
+    h+='</div>';
+    h+='<div style="display:flex;gap:6px;padding:0 4px;margin-top:8px">';
+    for(var i=0;i<12;i++){h+='<div style="flex:1;text-align:center;font-size:10px;color:#8fb5b9">'+MONTH_SHORT_DE[i]+'</div>';}
+    h+='</div>';
+    h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:12px;padding-bottom:6px">'
+      +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
+      +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
+      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Zielvereinbarung"></div>'
+      +'</div>';
+    h+='</div>';
+    return h;
+  }
+  if(_bvMode==='performance'){
   var mk=today().slice(0,7);
   var heroSums={optGesamt:0,margeGesamt:0};
   visible.forEach(function(e){
@@ -3955,6 +4023,7 @@ function buildGlobalBannerHtml(visible){
   h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:18px">'
     +'<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
+    +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } else {
@@ -4077,6 +4146,7 @@ function buildGlobalBannerHtml(visible){
   h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:18px">'
     +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Overview"></div>'
+    +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } // Ende else (Overview)
