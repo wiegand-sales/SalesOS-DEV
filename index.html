@@ -424,6 +424,9 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
 
 
 <!-- SESSION PLANEN MODAL -->
+<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="width:480px;max-height:80vh;overflow-y:auto;padding:0">
+  <div id="coachingInfoModalBody"></div>
+</div></div>
 <div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal" style="width:640px">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Session planen</div>
 
@@ -5121,7 +5124,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+'">'+stackCell(crSY+'%',sy)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+'">'+stackCell(crMY+'%',my)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(Math.round(convOEM+ups+wka_gesamt_yes>0?convOEM/(convOEM+ups+wka_gesamt_yes)*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+'">'+stackCell((convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%',null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border)"><button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button></td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);white-space:nowrap"><button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button> <button class="btn btn-sm" onclick="event.stopPropagation();openCoachingInfoModal(\''+rowEmp.id+'\')"><i class="ti ti-info-circle"></i> Info</button></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text)">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—'))+'</td>'
         +'</tr>';
       sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumNotROem+=notROem;sumNotPOem+=notPOem;sumNotSOem+=notSOem;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;sumTotalHours+=rowTotalHours;
@@ -9136,6 +9139,81 @@ function saveInlineCallBewertung(empId){
 }
 
 
+function openCoachingInfoModal(empId){
+  var emp=employees.find(function(e){return e.id===empId;});
+  if(!emp)return;
+  var all=(protocols[empId]||[]).slice();
+  var abgeschlossen=all.filter(function(p){return (p.status||'abgeschlossen')!=='geplant';});
+  var geplant=all.filter(function(p){return p.status==='geplant';});
+  var heute=today();
+  // Chronologisch absteigend (neueste zuerst), geplante UND abgeschlossene gemeinsam
+  var timeline=all.slice().sort(function(a,b){return b.date.localeCompare(a.date)||( (b.uhrzeit||'').localeCompare(a.uhrzeit||''));});
+  // Kennzahlen
+  var total=abgeschlossen.length;
+  var lastDone=abgeschlossen.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0];
+  var daysSinceLast=lastDone?Math.round((new Date(heute+'T00:00:00')-new Date(lastDone.date+'T00:00:00'))/86400000):null;
+  var firstDone=abgeschlossen.slice().sort(function(a,b){return a.date.localeCompare(b.date);})[0];
+  var avgPerMonth=null;
+  if(firstDone&&total>1){
+    var monthsSpan=Math.max(1,(new Date(heute+'T00:00:00')-new Date(firstDone.date+'T00:00:00'))/(86400000*30.44));
+    avgPerMonth=(total/monthsSpan).toFixed(1);
+  }
+  // Haupt-Coach (haeufigster coachId unter abgeschlossenen Sessions)
+  var coachCounts={};
+  abgeschlossen.forEach(function(p){if(p.coachId)coachCounts[p.coachId]=(coachCounts[p.coachId]||0)+1;});
+  var mainCoachId=Object.keys(coachCounts).sort(function(a,b){return coachCounts[b]-coachCounts[a];})[0];
+  var mainCoach=mainCoachId?employees.find(function(e){return e.id===mainCoachId;}):null;
+
+  var c=COLORS[emp.color%COLORS.length];
+  var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  var dowShort=['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+  var h='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);color:#fff;padding:18px 22px;display:flex;align-items:center;gap:12px;border-radius:14px 14px 0 0">'
+    +'<div style="width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px">'+ini(emp.name)+'</div>'
+    +'<div><div style="font-weight:700;font-size:15px">'+esc(emp.name)+'</div><div style="font-size:11.5px;color:#9fc9cd">'+esc(emp.role)+' · Coaching-Historie</div></div>'
+    +'<div onclick="closeModal(\'coachingInfoModal\')" style="margin-left:auto;color:#9fc9cd;cursor:pointer;font-size:18px">✕</div>'
+    +'</div>';
+  h+='<div style="display:flex;justify-content:space-around;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--border)">'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+total+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Gesamt</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:'+(daysSinceLast!==null&&daysSinceLast>30?'#B23A3A':'#0c3b40')+'">'+(daysSinceLast===null?'—':daysSinceLast+'d')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Letzte</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+(avgPerMonth||'—')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø/Monat</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+geplant.length+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Geplant</div></div>'
+    +'</div>';
+  h+='<div style="padding:20px 22px">';
+  if(mainCoach){
+    h+='<div style="font-size:11.5px;color:var(--text2);margin-bottom:16px">Haupt-Coach: <b style="color:#0c3b40">'+esc(mainCoach.name)+'</b> ('+coachCounts[mainCoachId]+'× von '+total+')</div>';
+  }
+  if(!timeline.length){
+    h+='<div style="text-align:center;color:var(--text3);padding:20px 0"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Sessions vorhanden</div>';
+  } else {
+    h+='<div style="position:relative;padding-left:22px">';
+    h+='<div style="position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--border)"></div>';
+    timeline.forEach(function(p,idx){
+      var dt=new Date(p.date+'T00:00:00');
+      var planned=p.status==='geplant';
+      var coach=p.coachId?employees.find(function(e){return e.id===p.coachId;}):null;
+      h+='<div style="position:relative;padding-bottom:18px">';
+      h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+(planned?'#e8ecfb':'#164e54')+'"></div>';
+      h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+(planned?' · Geplant':'')+'</div>';
+      h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px">'+esc(p.type||p.art||'Coaching')+'</div>';
+      h+='<div style="font-size:11.5px;color:var(--text2);margin-top:1px">'+(coach?'Coach: '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):'')+'</div>';
+      h+='</div>';
+      // Luecken-Hervorhebung zwischen dieser und der naechsten (aelteren) Session
+      var next=timeline[idx+1];
+      if(next){
+        var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(next.date+'T00:00:00'))/86400000);
+        if(gapDays>=14){
+          var gapWeeks=Math.round(gapDays/7);
+          h+='<div style="background:#fff2e0;border-left:3px solid #e0a13a;border-radius:6px;padding:8px 12px;margin:4px 0 14px 0;font-size:11.5px;color:#8a5a0c;font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
+        }
+      }
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  document.getElementById('coachingInfoModalBody').innerHTML=h;
+  openModal('coachingInfoModal');
+}
 function openSessionModalWithFocus(empId,focusText){
   openSessionModal(empId);
   var notizEl=document.getElementById('sessionNotiz');
