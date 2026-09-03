@@ -1751,7 +1751,7 @@ function renderCoachingAnsicht(){
   var all=[];
   liste.forEach(function(emp){
     (protocols[emp.id]||[]).forEach(function(p){
-      all.push({eid:emp.id,en:emp.name,d:p.date,r:p.rating,f:p.focus||'',s:p.status||'abgeschlossen',t:p.type||p.typ||'',sid:p.id,uhrzeit:p.uhrzeit||'',endUhrzeit:p.endUhrzeit||'',start:p.start||'',stop:p.stop||'',cont:p.cont||'',notes:p.notes||'',topics:p.topics||[],coachId:p.coachId||null});
+      all.push({eid:emp.id,en:emp.name,d:p.date,r:p.rating,f:p.focus||'',s:p.status||'abgeschlossen',t:p.type||p.typ||'',sid:p.id,uhrzeit:p.uhrzeit||'',endUhrzeit:p.endUhrzeit||'',start:p.start||'',stop:p.stop||'',cont:p.cont||'',notes:p.notes||'',topics:p.topics||[],coachId:p.coachId||null,groupId:p.groupId||null});
     });
   });
   all.sort(function(a,b){return b.d.localeCompare(a.d);});
@@ -1869,6 +1869,23 @@ function renderCoachingAnsicht(){
     p+='</div>';
     return p;
   }
+  // Gruppencoaching-Sessions (gleiche groupId, mehrere Mitarbeiter) im Kalender zu EINEM Eintrag
+  // zusammenfassen ("Mehrfachauswahl"), statt sie pro Mitarbeiter einzeln anzuzeigen
+  function dedupeGroupEntries(entries){
+    var seenGroups={},result=[];
+    entries.forEach(function(e){
+      if(e.groupId){
+        if(seenGroups[e.groupId]){seenGroups[e.groupId].count++;return;}
+        var combo={};for(var k in e)combo[k]=e[k];
+        combo.en='Mehrfachauswahl';combo.count=1;combo.isGroup=true;
+        seenGroups[e.groupId]=combo;
+        result.push(combo);
+      } else {
+        result.push(e);
+      }
+    });
+    return result;
+  }
   function buildCalNavControls(){
     var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
     var mNamesFull=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
@@ -1929,8 +1946,8 @@ function renderCoachingAnsicht(){
         if(d===null){k+='<div></div>';return;}
         var dt=new Date(Date.UTC(coachCalYear,coachCalMonthIdx,d));
         var ds=dt.toISOString().slice(0,10),isH=ds===heute;
-        var sg=all.filter(function(x){return x.d===ds&&x.s==='geplant';});
-        var sa=all.filter(function(x){return x.d===ds&&x.s!=='geplant';});
+        var sg=dedupeGroupEntries(all.filter(function(x){return x.d===ds&&x.s==='geplant';}));
+        var sa=dedupeGroupEntries(all.filter(function(x){return x.d===ds&&x.s!=='geplant';}));
         var entries=sg.map(function(x){return {x:x,planned:true};}).concat(sa.map(function(x){return {x:x,planned:false};}));
         var bdrCol=isH?'var(--purple)':'var(--border)';
         var bgCol=isH?'var(--purple-bg)':'var(--bg)';
@@ -1939,12 +1956,14 @@ function renderCoachingAnsicht(){
         k+='<div style="font-size:12px;font-weight:'+(isH?700:500)+';color:'+ftCol+';margin-bottom:4px">'+d+'</div>';
         entries.slice(0,4).forEach(function(e2){
           var x=e2.x;
+          var labelTxt=x.isGroup?('Mehrfachauswahl ('+x.count+')'):x.en.split(' ')[0];
+          var openCall="event.stopPropagation();openPlannedSession('"+x.eid+"','"+x.sid+"','"+esc(x.t||'')+"','"+esc(x.f||'')+"','"+x.d+"','"+x.uhrzeit+"')";
           if(e2.planned){
             var c=ec(x.eid);
-            k+='<div style="font-size:10px;background:'+c.bg+';color:'+c.text+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="'+x.en+' · '+(x.t||'')+'">'+x.en.split(' ')[0]+'</div>';
+            k+='<div onclick="'+openCall+'" style="font-size:10px;background:'+c.bg+';color:'+c.text+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'">'+labelTxt+'</div>';
           } else {
             var r2=x.r?RS[x.r]:null;
-            k+='<div style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="'+x.en+' · '+(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+x.en.split(' ')[0]+'</div>';
+            k+='<div onclick="'+openCall+'" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+labelTxt+'</div>';
           }
         });
         if(entries.length>4)k+='<div style="font-size:9px;color:var(--text3);margin-top:1px">+'+(entries.length-4)+' weitere</div>';
@@ -1996,7 +2015,7 @@ function renderCoachingAnsicht(){
         k+='<div ondragover="event.preventDefault()" ondrop="dropSessionOnSlot(event,\''+ds+'\','+hh+')" onclick="kalKlickMitZeit(\''+ds+'\','+hh+')" style="height:'+ROW_H+'px;border-bottom:1px solid var(--border);cursor:pointer"></div>';
       }
       // Sessions des Tages sammeln + Zeiten parsen
-      var dayEntries=all.filter(function(x){return x.d===ds;}).map(function(x){
+      var dayEntries=dedupeGroupEntries(all.filter(function(x){return x.d===ds;})).map(function(x){
         var startMin=parseHM(x.uhrzeit);
         if(startMin===null)return null;
         var endMin=parseHM(x.endUhrzeit);
@@ -2028,8 +2047,10 @@ function renderCoachingAnsicht(){
         var colWidthPct=100/totalCols;
         var leftPct=e._col*colWidthPct;
         var coachEmp=x.coachId?employees.find(function(em){return em.id===x.coachId;}):null;
-        k+='<div draggable="true" ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();kalKlick(\''+ds+'\')" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(x.en)+(coachEmp?' · Coach: '+esc(coachEmp.name):'')+' · '+esc(x.t||'')+'">'
-          +'<div style="font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.en)+'</div>'
+        var labelTxt=x.isGroup?('Mehrfachauswahl ('+x.count+')'):x.en;
+        var openCall="event.stopPropagation();openPlannedSession('"+x.eid+"','"+x.sid+"','"+esc(x.t||'')+"','"+esc(x.f||'')+"','"+x.d+"','"+x.uhrzeit+"')";
+        k+='<div draggable="true" ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="'+openCall+'" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+(coachEmp?' · Coach: '+esc(coachEmp.name):'')+' · '+esc(x.t||'')+'">'
+          +'<div style="font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(labelTxt)+'</div>'
           +(coachEmp?'<div style="color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px">Coach: '+esc(coachEmp.name)+'</div>':'')
           +'<div style="color:rgba(255,255,255,0.85)">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+'</div>'
           +'</div>';
