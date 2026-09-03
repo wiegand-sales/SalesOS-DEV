@@ -2589,6 +2589,117 @@ function updateZielField(empId,field,weekIdx,value){
   else{rec[field]=num;}
   renderTeam();
 }
+// ── Arbeitstage-Kalender: Tage statt reiner KW-Zahlen anklicken, daraus werden die Wochensummen berechnet ──
+var _kalenderState=null; // {empId, mk, tage:{'YYYY-MM-DD':true/false}}
+function openArbeitstageKalender(empId){
+  var mk=zielMonth;
+  var year=+mk.slice(0,4),month=+mk.slice(5,7);
+  var feiertage=bayernFeiertage(year);
+  var daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
+  var tage={};
+  for(var d=1;d<=daysInMonth;d++){
+    var dt=new Date(Date.UTC(year,month-1,d));
+    var ds=dt.toISOString().slice(0,10);
+    var dow=dt.getUTCDay();
+    if(dow===0||dow===6||feiertage[ds])continue; // Wochenende/Feiertag: kein Eintrag noetig, immer frei
+    tage[ds]=true; // Standard: alle Wochentage als Arbeitstag vorbelegt
+  }
+  _kalenderState={empId:empId,mk:mk,tage:tage};
+  renderArbeitstageKalenderModal();
+}
+function toggleKalenderTag(ds){
+  if(!_kalenderState)return;
+  _kalenderState.tage[ds]=!_kalenderState.tage[ds];
+  renderArbeitstageKalenderModal();
+}
+function closeArbeitstageKalender(){
+  _kalenderState=null;
+  var el=document.getElementById('arbeitstage-kalender-overlay');
+  if(el)el.remove();
+}
+function uebernehmeArbeitstageKalender(){
+  if(!_kalenderState)return;
+  var wMeta=getMonthWeeksZiel(_kalenderState.mk);
+  var weekCounts=wMeta.map(function(){return 0;});
+  Object.keys(_kalenderState.tage).forEach(function(ds){
+    if(!_kalenderState.tage[ds])return;
+    var dt=new Date(ds+'T00:00:00Z');
+    wMeta.forEach(function(wm,i){
+      if(ds>=wm.from&&ds<=wm.to)weekCounts[i]++;
+    });
+  });
+  var empId=_kalenderState.empId,mk=_kalenderState.mk;
+  if(!zielStore[mk])zielStore[mk]={};
+  if(!zielStore[mk][empId])zielStore[mk][empId]={};
+  zielStore[mk][empId].weeks=weekCounts;
+  closeArbeitstageKalender();
+  renderTeam();
+}
+function renderArbeitstageKalenderModal(){
+  var old=document.getElementById('arbeitstage-kalender-overlay');
+  if(old)old.remove();
+  var st=_kalenderState;
+  var emp=employees.find(function(e){return e.id===st.empId;});
+  var year=+st.mk.slice(0,4),month=+st.mk.slice(5,7);
+  var monthLabel=MONTH_NAMES_ZIEL[month-1]+' '+year;
+  var feiertage=bayernFeiertage(year);
+  var firstOfMonth=new Date(Date.UTC(year,month-1,1));
+  var daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
+  var leadEmpty=(firstOfMonth.getUTCDay()+6)%7; // Montag=0
+  var wMeta=getMonthWeeksZiel(st.mk);
+  var cells='';
+  for(var i=0;i<leadEmpty;i++)cells+='<div></div>';
+  for(var d=1;d<=daysInMonth;d++){
+    var dt=new Date(Date.UTC(year,month-1,d));
+    var ds=dt.toISOString().slice(0,10);
+    var dow=dt.getUTCDay();
+    var isWeekend=(dow===0||dow===6);
+    var holName=feiertage[ds];
+    var isToday=ds===today();
+    if(isWeekend){
+      cells+='<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;color:#d5dcdc;font-size:13px;font-weight:600">'+d+'</div>';
+    } else if(holName){
+      cells+='<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;background:#fdeeee;color:#c0392b;font-size:13px;font-weight:600" title="'+esc(holName)+'"><div>'+d+'</div><div style="font-size:6.5px;font-weight:700;padding:0 2px;text-align:center;line-height:1.1">'+esc(holName)+'</div></div>';
+    } else {
+      var work=!!st.tage[ds];
+      cells+='<div onclick="toggleKalenderTag(\''+ds+'\')" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;border:1.5px solid '+(isToday?'#e0a13a':'transparent')+';background:'+(work?'#7ED2DB':'#f4f6f6')+';color:'+(work?'#0c3b40':'#94a4a4')+'">'+d+'</div>';
+    }
+  }
+  var weekChips=wMeta.map(function(wm){
+    var n=0;
+    Object.keys(st.tage).forEach(function(ds){if(st.tage[ds]&&ds>=wm.from&&ds<=wm.to)n++;});
+    return '<div style="flex:1;background:#f7fafa;border-radius:8px;padding:8px 6px;text-align:center;border:1px solid #e3e8e8"><div style="font-size:10px;color:#94a4a4;font-weight:600">KW '+wm.kw+'</div><div style="font-size:16px;font-weight:800;color:#0c3b40;margin-top:2px">'+n+'</div></div>';
+  }).join('');
+  var html='<div id="arbeitstage-kalender-overlay" style="position:fixed;inset:0;background:rgba(15,35,38,0.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)closeArbeitstageKalender()">'
+    +'<div style="background:#fff;border-radius:16px;width:520px;max-width:92vw;box-shadow:0 20px 50px rgba(0,0,0,0.25);overflow:hidden">'
+    +'<div style="background:linear-gradient(180deg,#0c3b40,#164e54);color:#fff;padding:18px 22px">'
+    +'<div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px"><i class="ti ti-calendar-event"></i> Arbeitstage festlegen</div>'
+    +'<div style="font-size:12px;color:#9fc9cd;margin-top:3px">'+esc(emp?emp.name:'')+' · '+monthLabel+'</div>'
+    +'</div>'
+    +'<div style="padding:20px 22px">'
+    +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">'
+    +['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(d){return '<div style="text-align:center;font-size:10px;font-weight:700;color:#94a4a4;padding-bottom:4px;text-transform:uppercase">'+d+'</div>';}).join('')
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">'+cells+'</div>'
+    +'<div style="display:flex;gap:14px;margin-top:14px;font-size:11px;color:#5c7070;flex-wrap:wrap">'
+    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#7ED2DB"></span>Arbeitstag</span>'
+    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#f4f6f6;border:1px solid #e3e8e8"></span>Frei</span>'
+    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;border:1px solid #d5dcdc"></span>Wochenende</span>'
+    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#fdeeee;border:1px solid #f3c9c9"></span>Feiertag</span>'
+    +'</div>'
+    +'<div style="margin-top:20px;padding-top:16px;border-top:1px solid #e3e8e8">'
+    +'<div style="font-size:11px;font-weight:700;color:#94a4a4;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">Automatisch berechnete Wochensummen</div>'
+    +'<div style="display:flex;gap:8px">'+weekChips+'</div>'
+    +'</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid #e3e8e8;background:#fafcfc">'
+    +'<button onclick="closeArbeitstageKalender()" style="padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #e3e8e8;background:transparent;color:#5c7070">Abbrechen</button>'
+    +'<button onclick="uebernehmeArbeitstageKalender()" style="padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#164e54;color:#fff">Übernehmen</button>'
+    +'</div>'
+    +'</div>'
+    +'</div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
 // Tab/Shift+Tab in der Zielvereinbarung: der volle Re-Render bei jeder Eingabe (renderTeam) ersetzt
 // das DOM, wodurch der Browser das naechste Tab-Ziel verliert und an den Anfang springt. Wir merken
 // uns hier stattdessen die ID des naechsten Feldes und setzen den Fokus nach dem Re-Render selbst
@@ -2913,7 +3024,7 @@ function zielvereinbarungHtml(){
       }).join('');
       var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
-        +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
+        +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;cursor:pointer" onclick="openArbeitstageKalender(\''+e.id+'\')" title="Arbeitstage per Kalender festlegen"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">'+esc(e.name)+' <i class="ti ti-calendar-event" style="font-size:12px;color:var(--text3)"></i></div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
         +weekCells
         +'<div style="'+GD+';justify-content:center;font-weight:600">'+monthSum+'</div>'
         +'<div style="'+GD+'"><input type="number" class="ziel-num" id="zf-'+e.id+'-opt" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
