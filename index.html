@@ -1886,6 +1886,14 @@ function renderCoachingAnsicht(){
     });
     return result;
   }
+  // Petrol-Familie: jeder Coach bekommt einen eigenen, stabilen Ton aus dieser Palette (statt einer festen Farbe fuer alle)
+  var COACH_PETROL_PALETTE=['#0c3b40','#164e54','#206A72','#2d8891','#3d9ba3','#5FBAC4'];
+  function coachPetrolColor(coachId){
+    if(!coachId)return COACH_PETROL_PALETTE[1];
+    var coachList=employees.filter(function(e){return e.role==='SDM'||e.role==='SC';}).sort(function(a,b){return a.name.localeCompare(b.name);});
+    var idx=coachList.findIndex(function(c){return c.id===coachId;});
+    return COACH_PETROL_PALETTE[idx>=0?idx%COACH_PETROL_PALETTE.length:1];
+  }
   function buildCalNavControls(){
     var mNamesShort=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
     var mNamesFull=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
@@ -1961,7 +1969,9 @@ function renderCoachingAnsicht(){
           var labelTxt=(coachEmpM?coachEmpM.name.split(' ')[0]+' / ':'')+wenTxt;
           var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
           if(e2.planned){
-            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:#164e54;color:#fff;border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'">'+esc(labelTxt)+'</div>';
+            var chipBg=coachPetrolColor(x.coachId);
+            var chipOp=x.d<heute?0.4:1;
+            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+chipBg+';opacity:'+chipOp+';color:#fff;border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'">'+esc(labelTxt)+'</div>';
           } else {
             var r2=x.r?RS[x.r]:null;
             k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+esc(labelTxt)+'</div>';
@@ -2006,9 +2016,7 @@ function renderCoachingAnsicht(){
       if(!s||s.indexOf(':')<0)return null;
       var p=s.split(':');return (+p[0])*60+(+p[1]);
     }
-    // Feste, kraeftige (nicht blasse) Farben je Status - loest das "Rasterlinien scheinen durch"-Problem der vorherigen blassen Farben
-    var PLANNED_BG='#164e54', PLANNED_BORDER='#0c3b40';
-    var DONE_BG='#7ED2DB', DONE_BORDER='#5FBAC4';
+    // Farben jetzt pro Coach individuell (siehe coachPetrolColor), vergangene Termine werden per Opacity verblasst
     weekDates.forEach(function(d,di){
       var ds=dsOf(d),isH=ds===heute;
       k+='<div style="border-left:1px solid var(--border);position:relative;'+(isH?'background:rgba(106,95,193,0.03)':'')+'">';
@@ -2044,15 +2052,18 @@ function renderCoachingAnsicht(){
         var bottom=Math.min(nHours*ROW_H,(e.endMin-gridStartMin)/60*ROW_H);
         var height=Math.max(20,bottom-top);
         var planned=x.s==='geplant';
-        var bg=planned?PLANNED_BG:DONE_BG, bdr=planned?PLANNED_BORDER:DONE_BORDER;
-        var fg=planned?'#fff':'#0c3b40', fgSub=planned?'rgba(255,255,255,0.85)':'rgba(12,59,64,0.75)';
+        var isPast=x.d<heute;
+        var baseColor=coachPetrolColor(x.coachId);
+        var bg=baseColor, bdr=isPast?'#c3cccc':'#0c3b40';
+        var fg='#fff', fgSub='rgba(255,255,255,0.85)';
+        var opacity=isPast?0.4:1;
         var colWidthPct=100/totalCols;
         var leftPct=e._col*colWidthPct;
         var coachEmp=x.coachId?employees.find(function(em){return em.id===x.coachId;}):null;
         var wenTxt=x.isGroup?'Gruppencoaching':x.en;
         var labelTxt=(coachEmp?coachEmp.name+' / ':'')+wenTxt;
         var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
-        k+='<div draggable="true" '+dataAttrs+' ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+' · '+esc(x.t||'')+'">'
+        k+='<div draggable="true" '+dataAttrs+' ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';opacity:'+opacity+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+' · '+esc(x.t||'')+'">'
           +'<div style="font-weight:700;color:'+fg+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(labelTxt)+'</div>'
           +'<div style="color:'+fgSub+'">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+'</div>'
           +'</div>';
