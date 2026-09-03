@@ -9231,6 +9231,14 @@ function openCoachingInfoModal(empId){
   if(alleEffekte.length){
     h+='<div style="font-size:10.5px;color:var(--text3);margin-top:4px">Effekt = Ø-Veränderung des hinterlegten Ziel-KPI 14 Tage vor/nach der Session, in Zielrichtung normalisiert (basiert auf '+alleEffekte.length+' von '+total+' Sessions mit Ziel-KPI)</div>';
   }
+  // QA-Fälligkeit: letzte Call-Bewertung dieses Mitarbeiters, gleiche 60-Tage-Schwelle wie bei "QA fällig" in der Coaching-Uebersicht
+  var sortedRatings=(callRatings[empId]||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  var lastQa=sortedRatings[0]||null;
+  var daysSinceQa=lastQa?Math.round((new Date(heute+'T00:00:00')-new Date(lastQa.date+'T00:00:00'))/86400000):null;
+  if(daysSinceQa===null||daysSinceQa>60){
+    var qaTxt=daysSinceQa===null?'Noch keine QA-Bewertung (Telefonat) vorhanden':Math.round(daysSinceQa/7)+' Wochen seit letzter QA-Bewertung (Telefonat)';
+    h+='<div style="background:rgba(32,106,114,0.08);border-left:3px solid #206A72;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:11.5px;color:#164e54;font-weight:600">⚠ '+qaTxt+'</div>';
+  }
   h+='</div>';
 
   h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Notiz</div>';
@@ -9266,7 +9274,7 @@ function openCoachingInfoModal(empId){
         var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(next.date+'T00:00:00'))/86400000);
         if(gapDays>=14){
           var gapWeeks=Math.round(gapDays/7);
-          h+='<div style="background:#fff2e0;border-left:3px solid #e0a13a;border-radius:6px;padding:8px 12px;margin:4px 0 14px 0;font-size:11.5px;color:#8a5a0c;font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
+          h+='<div style="background:rgba(32,106,114,0.08);border-left:3px solid #206A72;border-radius:6px;padding:8px 12px;margin:4px 0 14px 0;font-size:11.5px;color:#164e54;font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
         }
       }
     });
