@@ -3032,7 +3032,7 @@ function zielvereinbarungHtml(){
       return a.name.localeCompare(b.name);
     });
     var rec=zielStore[zielMonth]||{};
-    var teamDaysSum=0,teamTargetSum=0,teamIstSum=0,margeVals=[],teamWeekTargetSums=null;
+    var teamDaysSum=0,teamTargetSum=0,teamIstSum=0,margeVals=[],teamWeekTargetSums=null,teamUrlaubSum=0,teamKrankSum=0;
     var weekHeaderCells=weeksMeta.map(function(wm){
       var isHol=wm.holidayNames.length>0;
       var isShort=wm.defaultDays<5;
@@ -3068,6 +3068,7 @@ function zielvereinbarungHtml(){
           else if(r.arbeitstage[ds]==='krank')krankCount++;
         });
       }
+      teamUrlaubSum+=urlaubCount;teamKrankSum+=krankCount;
       function abwCell(n,kind){
         var style=n>0?(kind==='urlaub'?'background:#e8ecfb;color:#3d4fb0;border:1px solid #d3d9f5':'background:#fff2e0;color:#b5720c;border:1px solid #f5dfb8'):'background:#f7fafa;color:#c3cccc;border:1px solid var(--border)';
         return '<div style="'+GD+';justify-content:center"><div style="width:48px;height:34px;border-radius:6px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;'+style+'">'+n+'</div></div>';
@@ -3112,6 +3113,8 @@ function zielvereinbarungHtml(){
       +rowsHtml
       +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)">'
       +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center">Team gesamt</div>'
+      +'<div style="font-weight:700;color:#7ED2DB;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamUrlaubSum+'</div>'
+      +'<div style="font-weight:700;color:#e0a13a;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamKrankSum+'</div>'
       +weekTotalCells
       +'<div style="font-weight:700;color:#fff;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamDaysSum+'</div>'
       +'<div style="color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">–</div>'
