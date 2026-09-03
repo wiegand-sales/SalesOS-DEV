@@ -1855,9 +1855,9 @@ function renderCoachingAnsicht(){
     var activeMonth=coachCalViewMode==='week'?(new Date(coachCalWeekStart+'T00:00:00')).getMonth():coachCalMonthIdx;
     var p='<div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:6px;background:#fff;border:1px solid var(--border2);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,0.14);padding:12px;z-index:50;width:220px">';
     p+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
-    p+='<button class="btn btn-sm" onclick="event.stopPropagation();coachCalMiniPickerYearNav(-1)"><i class="ti ti-chevron-left"></i></button>';
+    p+='<button onclick="event.stopPropagation();coachCalMiniPickerYearNav(-1)" style="height:28px;width:28px;font-size:12px;padding:0;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><i class="ti ti-chevron-left"></i></button>';
     p+='<div style="font-weight:700;font-size:13px">'+coachCalMiniPickerYear+'</div>';
-    p+='<button class="btn btn-sm" onclick="event.stopPropagation();coachCalMiniPickerYearNav(1)"><i class="ti ti-chevron-right"></i></button>';
+    p+='<button onclick="event.stopPropagation();coachCalMiniPickerYearNav(1)" style="height:28px;width:28px;font-size:12px;padding:0;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><i class="ti ti-chevron-right"></i></button>';
     p+='</div>';
     p+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
     for(var m=0;m<12;m++){
@@ -1875,10 +1875,10 @@ function renderCoachingAnsicht(){
     var atMin=(coachCalYear===2026&&coachCalMonthIdx===0);
     var atMax=(coachCalYear===2030&&coachCalMonthIdx===11);
     var k='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;position:relative">';
-    k+='<button class="btn btn-sm" onclick="goToCoachCalToday()"><i class="ti ti-calendar-event" style="margin-right:4px"></i>Heute</button>';
+    k+='<button onclick="goToCoachCalToday()" style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center"><i class="ti ti-calendar-event" style="margin-right:4px"></i>Heute</button>';
     k+='<div style="display:flex;gap:2px">'
-      +'<button class="btn btn-sm" '+(atMin?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(-1)"')+' title="Vorheriger Monat"><i class="ti ti-chevron-up"></i></button>'
-      +'<button class="btn btn-sm" '+(atMax?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(1)"')+' title="Nächster Monat"><i class="ti ti-chevron-down"></i></button>'
+      +'<button style="height:34px;width:34px;font-size:13px;padding:0;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" '+(atMin?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(-1)"')+' title="Vorheriger Monat"><i class="ti ti-chevron-up"></i></button>'
+      +'<button style="height:34px;width:34px;font-size:13px;padding:0;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" '+(atMax?'disabled style="opacity:0.35;cursor:default"':'onclick="setCoachCalMonth(1)"')+' title="Nächster Monat"><i class="ti ti-chevron-down"></i></button>'
       +'</div>';
     k+='<div onclick="toggleCoachCalMiniPicker()" style="font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'\'">'+mNames[coachCalMonthIdx]+' '+coachCalYear+' <i class="ti ti-chevron-down" style="font-size:12px;color:var(--text3)"></i></div>';
     if(coachCalMiniPickerOpen)k+=buildMiniMonthPicker();
@@ -1945,10 +1945,10 @@ function renderCoachingAnsicht(){
     var wkEnd=weekDates[6];
     var iwMeta=isoWeekOf(wkStart);
     var k='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;position:relative">';
-    k+='<button class="btn btn-sm" onclick="goToCoachCalToday()"><i class="ti ti-calendar-event" style="margin-right:4px"></i>Heute</button>';
+    k+='<button onclick="goToCoachCalToday()" style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center"><i class="ti ti-calendar-event" style="margin-right:4px"></i>Heute</button>';
     k+='<div style="display:flex;gap:2px">'
-      +'<button class="btn btn-sm" onclick="setCoachCalWeek(-1)" title="Vorherige Woche"><i class="ti ti-chevron-up"></i></button>'
-      +'<button class="btn btn-sm" onclick="setCoachCalWeek(1)" title="Nächste Woche"><i class="ti ti-chevron-down"></i></button>'
+      +'<button onclick="setCoachCalWeek(-1)" style="height:34px;width:34px;font-size:13px;padding:0;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" title="Vorherige Woche"><i class="ti ti-chevron-up"></i></button>'
+      +'<button onclick="setCoachCalWeek(1)" style="height:34px;width:34px;font-size:13px;padding:0;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" title="Nächste Woche"><i class="ti ti-chevron-down"></i></button>'
       +'</div>';
     k+='<div onclick="toggleCoachCalMiniPicker()" style="font-size:14px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'\'">'+wkStart.getDate()+'. '+mNamesShort[wkStart.getMonth()]+' – '+wkEnd.getDate()+'. '+mNamesShort[wkEnd.getMonth()]+' '+wkEnd.getFullYear()+' (KW '+iwMeta.week+') <i class="ti ti-chevron-down" style="font-size:12px;color:var(--text3)"></i></div>';
     if(coachCalMiniPickerOpen)k+=buildMiniMonthPicker();
@@ -2017,8 +2017,8 @@ function renderCoachingAnsicht(){
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
   h+='<div style="display:flex;gap:6px">'
-    +'<button class="btn btn-sm" style="'+(coachCalViewMode==='month'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
-    +'<button class="btn btn-sm" style="'+(coachCalViewMode==='week'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
+    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='month'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
+    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='week'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
     +'</div>';
   h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--purple);background:var(--purple-bg);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#EEEDFE;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#9FE1CB;display:inline-block"></span>Abgeschlossen</span></div>';
   h+='</div>';
