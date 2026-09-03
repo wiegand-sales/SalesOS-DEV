@@ -1863,7 +1863,7 @@ function renderCoachingAnsicht(){
     p+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
     for(var m=0;m<12;m++){
       var isActive=(coachCalMiniPickerYear===activeYear&&m===activeMonth);
-      p+='<button onclick="event.stopPropagation();jumpToCoachCalMonth('+coachCalMiniPickerYear+','+m+')" style="padding:8px 4px;border-radius:6px;border:1px solid '+(isActive?'var(--teal-mid)':'var(--border)')+';background:'+(isActive?'var(--teal-mid)':'#fff')+';color:'+(isActive?'#fff':'var(--text)')+';font-size:11.5px;font-weight:600;cursor:pointer">'+mNamesShort[m]+'</button>';
+      p+='<button onclick="event.stopPropagation();jumpToCoachCalMonth('+coachCalMiniPickerYear+','+m+')" style="padding:8px 4px;border-radius:6px;border:1px solid '+(isActive?'#164e54':'var(--border)')+';background:'+(isActive?'#164e54':'#fff')+';color:'+(isActive?'#fff':'var(--text)')+';font-size:11.5px;font-weight:600;cursor:pointer">'+mNamesShort[m]+'</button>';
     }
     p+='</div>';
     p+='</div>';
@@ -1949,20 +1949,22 @@ function renderCoachingAnsicht(){
         var sg=dedupeGroupEntries(all.filter(function(x){return x.d===ds&&x.s==='geplant';}));
         var sa=dedupeGroupEntries(all.filter(function(x){return x.d===ds&&x.s!=='geplant';}));
         var entries=sg.map(function(x){return {x:x,planned:true};}).concat(sa.map(function(x){return {x:x,planned:false};}));
-        var bdrCol=isH?'var(--teal-mid)':'var(--border)';
+        var bdrCol=isH?'#164e54':'var(--border)';
         var bgCol=isH?'rgba(32,106,114,0.06)':'var(--bg)';
-        var ftCol=isH?'var(--teal-mid)':'var(--text)';
+        var ftCol=isH?'#164e54':'var(--text)';
         k+='<div data-d="'+ds+'" onclick="kalKlick(this.dataset.d)" style="cursor:pointer;border:1px solid '+bdrCol+';background:'+bgCol+';border-radius:6px;padding:6px;min-height:104px">';
         k+='<div style="font-size:12px;font-weight:'+(isH?700:500)+';color:'+ftCol+';margin-bottom:4px">'+d+'</div>';
         entries.slice(0,4).forEach(function(e2){
           var x=e2.x;
-          var labelTxt=x.isGroup?('Mehrfachauswahl ('+x.count+')'):x.en.split(' ')[0];
+          var coachEmpM=x.coachId?employees.find(function(em){return em.id===x.coachId;}):null;
+          var wenTxt=x.isGroup?'Gruppencoaching':x.en.split(' ')[0];
+          var labelTxt=(coachEmpM?coachEmpM.name.split(' ')[0]+' / ':'')+wenTxt;
           var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
           if(e2.planned){
-            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:#164e54;color:#fff;border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'">'+labelTxt+'</div>';
+            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:#164e54;color:#fff;border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'">'+esc(labelTxt)+'</div>';
           } else {
             var r2=x.r?RS[x.r]:null;
-            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+esc(x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+labelTxt+'</div>';
+            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+esc(labelTxt)+'</div>';
           }
         });
         if(entries.length>4)k+='<div style="font-size:9px;color:var(--text3);margin-top:1px">+'+(entries.length-4)+' weitere</div>';
@@ -2047,11 +2049,11 @@ function renderCoachingAnsicht(){
         var colWidthPct=100/totalCols;
         var leftPct=e._col*colWidthPct;
         var coachEmp=x.coachId?employees.find(function(em){return em.id===x.coachId;}):null;
-        var labelTxt=x.isGroup?('Mehrfachauswahl ('+x.count+')'):x.en;
+        var wenTxt=x.isGroup?'Gruppencoaching':x.en;
+        var labelTxt=(coachEmp?coachEmp.name+' / ':'')+wenTxt;
         var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
-        k+='<div draggable="true" '+dataAttrs+' ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+(coachEmp?' · Coach: '+esc(coachEmp.name):'')+' · '+esc(x.t||'')+'">'
+        k+='<div draggable="true" '+dataAttrs+' ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+' · '+esc(x.t||'')+'">'
           +'<div style="font-weight:700;color:'+fg+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(labelTxt)+'</div>'
-          +(coachEmp?'<div style="color:'+fgSub+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px">Coach: '+esc(coachEmp.name)+'</div>':'')
           +'<div style="color:'+fgSub+'">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+'</div>'
           +'</div>';
       });
@@ -2075,12 +2077,12 @@ function renderCoachingAnsicht(){
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">';
   h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
   h+='<div style="display:flex;gap:6px">'
-    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='month'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
-    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='week'?'background:var(--teal-mid);color:#fff;border-color:var(--teal-mid)':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
+    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='month'?'background:#164e54;color:#fff;border-color:#164e54':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
+    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='week'?'background:#164e54;color:#fff;border-color:#164e54':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
     +'</div>';
   h+=buildCalNavControls();
   h+='</div>';
-  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid var(--teal-mid);background:rgba(32,106,114,0.1);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#164e54;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#7ED2DB;display:inline-block"></span>Abgeschlossen</span></div>';
+  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid #164e54;background:rgba(32,106,114,0.1);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#164e54;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#7ED2DB;display:inline-block"></span>Abgeschlossen</span></div>';
   h+='</div>';
   h+=(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
 
@@ -2493,7 +2495,30 @@ function kalKlick(d){
   setTimeout(function(){var el=document.getElementById('sessionDatum');if(el)el.value=d;},50);
 }
 function openPlannedSessionFromChip(el){
-  openPlannedSession(el.dataset.eid,el.dataset.sid,el.dataset.typ,el.dataset.focus,el.dataset.datum,el.dataset.uhrzeit);
+  var empId=el.dataset.eid,sessionId=el.dataset.sid,typ=el.dataset.typ,fokus=el.dataset.focus,datum=el.dataset.datum,uhrzeit=el.dataset.uhrzeit;
+  var proto0=null;
+  if(sessionId&&protocols[empId]){
+    proto0=protocols[empId].find(function(p){return String(p.id)===String(sessionId);});
+  }
+  if(proto0&&proto0.groupId){openGroupSessionModal(proto0.groupId);return;}
+  var proto=proto0;
+  openNeuesCoachingModal(empId);
+  _editingSessionId=sessionId||null;
+  var dateEl=document.getElementById('sess-date');
+  var timeEl=document.getElementById('sess-time');
+  var endTimeEl=document.getElementById('sess-end-time');
+  var topicEl=document.getElementById('sess-topic-sel');
+  var noteEl=document.getElementById('sess-note');
+  if(dateEl&&datum) dateEl.value=datum;
+  if(timeEl&&uhrzeit) timeEl.value=uhrzeit;
+  if(endTimeEl&&proto&&proto.endUhrzeit) endTimeEl.value=proto.endUhrzeit;
+  if(typ)setCoachingTypeSelection('sess-category','sess-type',typ);
+  if(topicEl&&fokus){
+    for(var j=0;j<topicEl.options.length;j++){
+      if(topicEl.options[j].value===fokus||topicEl.options[j].text===fokus){topicEl.selectedIndex=j;break;}
+    }
+  }
+  if(noteEl&&proto&&proto.note) noteEl.value=proto.note;
 }
 function kalKlickMitZeit(d,hh){
   openSessionModal(0);
