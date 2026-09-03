@@ -8628,10 +8628,12 @@ function importCSV(file){
         header.forEach(function(h,i){row[h]=vals[i];});
         return row;
       });
-      var payload=[],notFound=[];
+      var payload=[],notFound=[],skippedZeroMarge=0;
       rows.forEach(function(row){
         var emp=employees.find(function(e){return e.name.toLowerCase()===((row.mitarbeiter_name||'').toLowerCase());});
         if(!emp){if(row.mitarbeiter_name)notFound.push(row.mitarbeiter_name);return;}
+        var gesamtMarge=parseNum(row.gesamt_margenerhoehung);
+        if(!gesamtMarge){skippedZeroMarge++;return;} // Einsatztag ohne Praesenz (Lead abgelehnt) - Gesamtmarge 0 EUR wird nicht importiert
         payload.push({
           employee_id:emp.id,date:parseDateDE(row.datum),
           oem_aktivitaeten:parseIntNum(row.oem_aktivitaeten),oem_nicht_erreicht:parseIntNum(row.oem_nicht_erreicht),
@@ -8640,13 +8642,13 @@ function importCSV(file){
           oem_sy:parseIntNum(row.oem_sy),oem_my:parseIntNum(row.oem_my),ups_yes:parseIntNum(row.ups_yes),
           wka_gesamt_yes:parseIntNum(row.wka_gesamt_yes),opt_per_h:parseNum(row.opt_per_h),gesamt_optimierungen:parseIntNum(row.gesamt_optimierungen),
           oem_margenerhoehung:parseNum(row.oem_margenerhoehung),ups_margenerhoehung:parseNum(row.ups_margenerhoehung),
-          wka_margenerhoehung:parseNum(row.wka_margenerhoehung),gesamt_margenerhoehung:parseNum(row.gesamt_margenerhoehung),
+          wka_margenerhoehung:parseNum(row.wka_margenerhoehung),gesamt_margenerhoehung:gesamtMarge,
           oem_cr:parsePercent(row.oem_cr),oem_tw_cr:parsePercent(row.oem_tw_cr),oem_yes_cr:parsePercent(row.oem_yes_cr),
           oem_sy_cr:parsePercent(row.oem_sy_cr),oem_my_cr:parsePercent(row.oem_my_cr)
         });
       });
       if(!payload.length){
-        if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Keine gültigen Zeilen. Unbekannte Mitarbeiter: '+(notFound.join(', ')||'-');}
+        if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Keine gültigen Zeilen. Unbekannte Mitarbeiter: '+(notFound.join(', ')||'-')+(skippedZeroMarge?' · '+skippedZeroMarge+' Zeile(n) mit Gesamtmarge 0€ übersprungen':'');}
         _importingCSV=false;
         return;
       }
@@ -8661,6 +8663,7 @@ function importCSV(file){
           var msg='✓ Import erfolgreich: '+imported+' von '+payload.length+' Zeile(n).';
           if(failedChunks.length)msg=' ⚠ '+imported+' von '+payload.length+' Zeile(n) importiert. Fehlgeschlagene Päckchen: '+failedChunks.join(', ');
           if(notFound.length)msg+=' · Unbekannte Mitarbeiter übersprungen: '+notFound.join(', ');
+          if(skippedZeroMarge)msg+=' · '+skippedZeroMarge+' Zeile(n) mit Gesamtmarge 0€ übersprungen (kein Einsatztag)';
           if(statusEl){statusEl.style.color=failedChunks.length?'#b91c1c':'var(--teal)';statusEl.textContent=msg;}
           _importingCSV=false;
           loadPerformanceFromSupabase().then(function(){renderTab();});
