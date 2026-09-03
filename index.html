@@ -3008,8 +3008,6 @@ function zielvereinbarungHtml(){
     +'<div style="font-weight:800;color:#7ED2DB;padding:10px 14px;border-top:2px solid #7ED2DB;display:flex;align-items:center;justify-content:center">'+(yearTargetSum>0?Math.round(yearIstSum/yearTargetSum*100):(yearIstSum>0?100:0))+'%</div>'
     +'</div>';
   return buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}))
-    +zielInfoBoxHtml()
-    +zielverlaufJahrChartHtml()
     +wochenzielKachelnHtml()
     +'<div class="card card-static">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
