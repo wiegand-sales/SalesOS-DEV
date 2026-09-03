@@ -1007,9 +1007,6 @@ function resetBannerRotation(){
 function setBannerViewMode(m){
   bannerViewMode=m;
   resetBannerRotation();
-  if(m==='coaching'){ view='coaching'; coachFilterView='overview'; }
-  else { view='team'; wiegandView=m; }
-  renderSidebar();
   renderMain();
 }
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
