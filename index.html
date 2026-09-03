@@ -1053,7 +1053,7 @@ function applyOverviewMonth(){
 }
 function setOverviewPerfGroup(g){overviewPerfGroup=g;renderTeam();}
 var coachCalYear=null, coachCalMonthIdx=null; // Kalender-Monatsnavigation SFP Coaching (init. beim ersten Rendern auf aktuellen Monat)
-var coachCalViewMode='month'; // 'month' | 'week'
+var coachCalViewMode='week'; // 'month' | 'week'
 var coachCalWeekStart=null; // Montag der aktuell angezeigten Woche (YYYY-MM-DD), init. beim ersten Rendern auf aktuelle Woche
 var coachCalMiniPickerOpen=false;
 var coachCalMiniPickerYear=null; // im Mini-Picker angezeigtes Jahr (kann vom eigentlich aktiven Jahr abweichen, waehrend man blaettert)
@@ -2088,8 +2088,8 @@ function renderCoachingAnsicht(){
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">';
   h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
   h+='<div style="display:flex;gap:6px">'
-    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='month'?'background:#164e54;color:#fff;border-color:#164e54':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
     +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='week'?'background:#164e54;color:#fff;border-color:#164e54':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
+    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='month'?'background:#164e54;color:#fff;border-color:#164e54':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
     +'</div>';
   h+=buildCalNavControls();
   h+='</div>';
