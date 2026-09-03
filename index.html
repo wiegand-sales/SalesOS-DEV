@@ -3809,7 +3809,7 @@ function buildGlobalBannerHtml(visible){
       erzieltArr.push(hasData2?Math.round(erzieltSum2):null);
     }
     var maxV2=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
-    var CH2=140;
+    var CH2=195;
     function pct2(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV2*100));}
     // Zwei Kennzahlen aus Slide 2 uebernehmen (nur Zahl, kein Diagramm): OEM (Monat) und Opt. Ges. (Heute)
     var oemMonthSum=0;
@@ -3821,11 +3821,25 @@ function buildGlobalBannerHtml(visible){
       });
     });
     var optHeuteIst3=todayActualStat('opt',visible), optHeuteZiel3=todayTargetStat('opt');
+    var oemMargeSum=0;
+    visible.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if((x.date||'').slice(0,7)!==_zmkNow)return;
+        oemMargeSum+=x.margeOEM||0;
+      });
+    });
+    var oemProLead3=oemMonthSum>0?oemMargeSum/oemMonthSum:0;
+    var optHeuteAbw3=optHeuteIst3-optHeuteZiel3;
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;height:'+CH2+'px">';
     h+='<div style="grid-column:span 1;display:flex;flex-direction:column;justify-content:space-between;padding-left:14px;padding-bottom:4px">'
-      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OEM</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+oemMonthSum+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">Stk.</span></div></div>'
-      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+optHeuteIst3+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+optHeuteZiel3+' Stk.</span></div></div>'
+      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OEM</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+oemMonthSum+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">Stk.</span></div>'
+      +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Margenerhöhung '+Math.round(oemMargeSum).toLocaleString('de-DE')+' EUR</div>'
+      +'<div style="font-size:11px;color:#8fb5b9">Ø '+Math.round(oemProLead3).toLocaleString('de-DE')+' EUR/Lead</div>'
+      +'</div>'
+      +'<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div><div style="font-size:18px;font-weight:700;margin-top:3px">'+optHeuteIst3+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+optHeuteZiel3+' Stk.</span></div>'
+      +'<div style="font-size:10px;color:#8fb5b9;margin-top:3px">Abw. '+(optHeuteAbw3>=0?'+':'')+optHeuteAbw3+'</div>'
+      +'</div>'
       +'</div>';
     h+='<div style="grid-column:span 5;display:flex;align-items:flex-end;gap:10px;padding:0 4px">';
     for(var i=0;i<12;i++){
