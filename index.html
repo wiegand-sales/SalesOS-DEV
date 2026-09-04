@@ -5932,10 +5932,10 @@ function buildEmpBannerHtml(emp){
       +'</div>';
     h+='</div>';
     h+='<div style="flex:1;min-width:0;padding:0 4px 0 8px;display:flex;align-items:center;height:195px">'+radar.svg+'</div>';
-    h+='<div style="flex-shrink:0;width:130px;display:flex;flex-direction:column;justify-content:center;gap:18px;align-items:flex-end;padding-right:6px">'
+    h+='<div style="flex-shrink:0;width:170px;display:flex;flex-direction:column;justify-content:center;gap:18px;align-items:flex-end;padding-right:6px">'
       +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+totalCallsAll+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">CALLS BEWERTET</div></div>'
-      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+Math.round(avgScoreAll)+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">SCORE</div></div>'
-      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+abschlussCountAll+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">ABSCHLÜSSE</div></div>'
+      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+Math.round(avgScoreAll)+' <span style="font-size:14px;font-weight:500;color:#bcdadd">von 100</span></div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">SCORE</div></div>'
+      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+abschlussCountAll+' <span style="font-size:14px;font-weight:500;color:#bcdadd">von '+totalCallsAll+'</span></div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">ABSCHLÜSSE</div></div>'
       +'</div>';
     h+='</div>';
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'+dotsFor('qa')+'</div>';
