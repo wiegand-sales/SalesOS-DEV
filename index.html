@@ -6410,38 +6410,6 @@ function renderTab(){
     var _selDate=window._evalDate;
     var showEval=(_selDate&&evals.find(function(e){return e.date===_selDate;}))||evals[0]||null;
 
-    // ── 5 Kacheln: gleiche wie Coaching Sessions ──
-    html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px">';
-    [{k:'crOEM',l:'CR OEM',pct:true},{k:'crTeilweise',l:'CR Teilweise',pct:true},{k:'crSuperYes',l:'CR Super Yes',pct:true},{k:'crMegaYes',l:'CR Mega Yes',pct:true},{k:'convOEM',l:'Conv. OEM',pct:false}].forEach(function(d){
-      var cur=monthAvg(emp.id,d.k,0);
-      var prev=monthAvg(emp.id,d.k,1);
-      var bench=roleBenchmark(emp.id,d.k,30);
-      var trend=(cur!==null&&prev!==null)?cur-prev:null;
-      var trendArrow=trend===null?'':(trend>0.5?'↑':trend<-0.5?'↓':'→');
-      var trendCol=trend===null?'var(--text3)':(trend>0.5?'var(--teal-dark)':trend<-0.5?'var(--red)':'var(--text2)');
-      var vsRole=(cur!==null&&bench!==null)?cur-bench:null;
-      var vsRoleTxt=vsRole===null?'—':(vsRole>=0?'+':'')+vsRole.toFixed(1)+(d.pct?'%':'')+' vs. Ø Rolle';
-      var vsRoleCol=vsRole===null?'var(--text3)':(vsRole>=0?'var(--teal-dark)':'var(--red)');
-      var _perfAll=(performance[emp.id]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
-      var _cutoff7=addDaysUTC(today(),-7);
-      var _spark7src=_perfAll.filter(function(x){return x.date>=_cutoff7;});
-      if(_spark7src.length<2)_spark7src=_perfAll.slice(-7);
-      var spark7=_spark7src.map(function(x){return x[d.k];});
-      html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-        +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+d.l.toUpperCase()+'</div>'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
-        +'<div style="display:flex;align-items:baseline;gap:6px">'
-        +'<div style="font-size:20px;font-weight:700">'+(cur!==null?Math.round(cur)+(d.pct?'%':''):'—')+'</div>'
-        +'<div style="font-size:13px;font-weight:700;color:'+trendCol+'">'+trendArrow+'</div>'
-        +'</div>'
-        +sparkline(spark7,'#206A72',54,26)
-        +'</div>'
-        +'<div style="font-size:10.5px;color:var(--text3)">Vormonat: '+(prev!==null?Math.round(prev)+(d.pct?'%':''):'—')+'</div>'
-        +'<div style="font-size:10.5px;color:'+vsRoleCol+';margin-top:2px;font-weight:600">'+vsRoleTxt+'</div>'
-        +'</div>';
-    });
-    html+='</div>';
-
     // ── Entwicklungsprofil: EINE Karte, links Radar, rechts Skill/Will/Result, Button+Auswahl unten rechts ──
     html+='<div class="card" style="margin-bottom:22px">';
     html+='<div class="card-title"><i class="ti ti-chart-radar"></i> Entwicklungsprofil <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+evals.length+' Bewertungen</span></div>';
@@ -6675,38 +6643,6 @@ function renderTab(){
     var maxVal=Math.max(1,Math.max.apply(null,SDIMS.map(function(d){return tc[d.key];})));
     var catSum={skill:0,will:0,result:0};
     SDIMS.forEach(function(d){catSum[d.cat]+=tc[d.key];});
-
-    // ── KPI-Snapshot: Trend vs. Vormonat + Rollen-Benchmark ──
-    html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px">';
-    [{k:'crOEM',l:'CR OEM',pct:true},{k:'crTeilweise',l:'CR Teilweise',pct:true},{k:'crSuperYes',l:'CR Super Yes',pct:true},{k:'crMegaYes',l:'CR Mega Yes',pct:true},{k:'convOEM',l:'Conv. OEM',pct:false}].forEach(function(d){
-      var cur=monthAvg(emp.id,d.k,0);
-      var prev=monthAvg(emp.id,d.k,1);
-      var bench=roleBenchmark(emp.id,d.k,30);
-      var trend=(cur!==null&&prev!==null)?cur-prev:null;
-      var trendArrow=trend===null?'':(trend>0.5?'↑':trend<-0.5?'↓':'→');
-      var trendCol=trend===null?'var(--text3)':(trend>0.5?'var(--teal-dark)':trend<-0.5?'var(--red)':'var(--text2)');
-      var vsRole=(cur!==null&&bench!==null)?cur-bench:null;
-      var vsRoleTxt=vsRole===null?'—':(vsRole>=0?'+':'')+vsRole.toFixed(1)+(d.pct?'%':'')+' vs. Ø Rolle';
-      var vsRoleCol=vsRole===null?'var(--text3)':(vsRole>=0?'var(--teal-dark)':'var(--red)');
-      var _perfAll=(performance[emp.id]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
-      var _cutoff7=addDaysUTC(today(),-7);
-      var _spark7src=_perfAll.filter(function(x){return x.date>=_cutoff7;});
-      if(_spark7src.length<2)_spark7src=_perfAll.slice(-7); // Fallback: letzte verfügbaren Datenpunkte, falls in den letzten 7 Kalendertagen zu wenige Werte vorliegen
-      var spark7=_spark7src.map(function(x){return x[d.k];});
-      html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-        +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+d.l.toUpperCase()+'</div>'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
-        +'<div style="display:flex;align-items:baseline;gap:6px">'
-        +'<div style="font-size:20px;font-weight:700">'+(cur!==null?Math.round(cur)+(d.pct?'%':''):'—')+'</div>'
-        +'<div style="font-size:13px;font-weight:700;color:'+trendCol+'">'+trendArrow+'</div>'
-        +'</div>'
-        +sparkline(spark7,'#206A72',54,26)
-        +'</div>'
-        +'<div style="font-size:10.5px;color:var(--text3)">Vormonat: '+(prev!==null?Math.round(prev)+(d.pct?'%':''):'—')+'</div>'
-        +'<div style="font-size:10.5px;color:'+vsRoleCol+';margin-top:2px;font-weight:600">'+vsRoleTxt+'</div>'
-        +'</div>';
-    });
-    html+='</div>';
 
     // ── Coaching-Übersicht: EINE Karte, links Spinnendiagramm + Aktionen, rechts Zusammenfassung (oben) ──
     html+='<div class="card" style="margin-bottom:22px">';
