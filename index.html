@@ -5850,14 +5850,14 @@ function buildQaRadarSvg(empId,n,big){
     var cvals=callRat.map(function(r){return catAvg(r,cat);}).filter(function(v){return v>0;});
     return cvals.length?cvals.reduce(function(a,b){return a+b;},0)/cvals.length:0;
   });
-  var vw=big?300:220, vh=big?230:200;
-  var cx=vw/2, cy=big?128:105, R=big?82:58;
+  var vw=big?750:220, vh=big?205:200;
+  var cx=vw/2, cy=big?112:105, R=big?72:58;
   var N=cats.length;
   function pt(i,frac){
     var ang=-Math.PI/2+i*(2*Math.PI/N);
     return [cx+Math.cos(ang)*R*frac, cy+Math.sin(ang)*R*frac];
   }
-  var svg='<svg viewBox="0 0 '+vw+' '+vh+'" width="'+vw+'" height="'+vh+'" style="max-width:100%;max-height:100%;display:block;margin:0 auto">';
+  var svg='<svg viewBox="0 0 '+vw+' '+vh+'" style="width:100%;height:auto;display:block">';
   // Gitter (25/50/75/100%)
   [0.25,0.5,0.75,1].forEach(function(frac){
     var pts=[];
@@ -5906,25 +5906,13 @@ function buildEmpBannerHtml(emp){
     var abschlussCountAll=callRatAll.filter(function(r){return r.status==='ja';}).length;
     var avgScoreAll=totalCallsAll?callRatAll.reduce(function(a,r){return a+totalScore(r);},0)/totalCallsAll:0;
     var h='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:0;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
-    h+='<div style="display:flex;height:195px">';
-    h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
-    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
-      +renderOemTileHtml([emp])
+    h+='<div style="display:flex;height:250px">';
+    h+='<div style="flex:1;min-width:0;display:flex;align-items:center;height:100%">'+radar.svg+'</div>';
+    h+='<div style="flex-shrink:0;width:130px;display:flex;flex-direction:column;justify-content:center;gap:18px;align-items:flex-end;padding-right:6px">'
+      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+totalCallsAll+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">CALLS BEWERTET</div></div>'
+      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+Math.round(avgScoreAll)+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">SCORE</div></div>'
+      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+abschlussCountAll+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">ABSCHLÜSSE</div></div>'
       +'</div>';
-    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
-      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
-      +renderOptGesHeuteTileHtml([emp])
-      +'</div>'
-      +'</div>';
-    h+='</div>';
-    h+='<div style="flex:1;min-width:0;padding:0 4px 0 8px;display:flex;align-items:center;height:195px">';
-    h+='<div style="flex:1;height:100%;display:flex;align-items:center;justify-content:center">'+radar.svg+'</div>';
-    h+='<div style="flex-shrink:0;width:120px;display:flex;flex-direction:column;gap:14px;align-items:flex-end;padding-right:6px">'
-      +'<div style="text-align:right"><div style="font-size:22px;font-weight:700;line-height:1">'+totalCallsAll+'</div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">CALLS BEWERTET</div></div>'
-      +'<div style="text-align:right"><div style="font-size:22px;font-weight:700;line-height:1">'+Math.round(avgScoreAll)+'</div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">SCORE</div></div>'
-      +'<div style="text-align:right"><div style="font-size:22px;font-weight:700;line-height:1">'+abschlussCountAll+'</div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">ABSCHLÜSSE</div></div>'
-      +'</div>';
-    h+='</div>';
     h+='</div>';
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'+dotsFor('qa')+'</div>';
     h+='</div>';
