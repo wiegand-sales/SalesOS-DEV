@@ -4158,14 +4158,14 @@ function sparklineFilled(values,color,w,h){
 }
 // Marge (Ist) und Ziel fuer die aktuelle Kalenderwoche - gleiche Berechnung wie die Wochenziel-Kacheln in der Zielvereinbarung
 // Berechnet fuer einen Mitarbeiterkreis das Wochenziel-Tagekontingent eines bestimmten Monats-Anteils einer KW
-function weekTargetPortion(mk,curKw,withMarge){
+function weekTargetPortion(mk,curKw,withMarge,visibleList){
   if(withMarge===undefined)withMarge=true;
   var weeks=getMonthWeeksZiel(mk);
   var wi=-1,wm=null;
   weeks.forEach(function(w,i){if(w.kw===curKw){wm=w;wi=i;}});
   if(!wm)return 0;
   var rec=zielStore[mk]||{};
-  var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
+  var visible=visibleList||employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
   var target=0;
   visible.forEach(function(e){
     var r=rec[e.id]||{};
@@ -4176,7 +4176,7 @@ function weekTargetPortion(mk,curKw,withMarge){
   });
   return target;
 }
-function currentWeekStat(kind){
+function currentWeekStat(kind,visibleList){
   // kind: 'marge' oder 'opt'
   var withMarge=(kind==='marge');
   var mk=today().slice(0,7);
@@ -4191,11 +4191,11 @@ function currentWeekStat(kind){
   // daher ist "ist" (Performance-Daten) automatisch korrekt. Das Wochenziel wird jedoch pro
   // Monat separat in der Zielvereinbarung gepflegt - daher hier die Anteile aus beiden Monaten
   // zusammenzaehlen, falls die Woche ueber eine Monatsgrenze reicht.
-  var target=weekTargetPortion(mk,curKw,withMarge);
+  var target=weekTargetPortion(mk,curKw,withMarge,visibleList);
   var fromMk=wm.from.slice(0,7),toMk=wm.to.slice(0,7);
-  if(fromMk!==mk)target+=weekTargetPortion(fromMk,curKw,withMarge);
-  if(toMk!==mk)target+=weekTargetPortion(toMk,curKw,withMarge);
-  var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
+  if(fromMk!==mk)target+=weekTargetPortion(fromMk,curKw,withMarge,visibleList);
+  if(toMk!==mk)target+=weekTargetPortion(toMk,curKw,withMarge,visibleList);
+  var visible=visibleList||employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
   var ist=0;
   visible.forEach(function(e){
     (performance[e.id]||[]).forEach(function(x){
@@ -4205,7 +4205,7 @@ function currentWeekStat(kind){
   });
   return {ist:ist,target:target,kw:curKw,from:wm.from,to:wm.to};
 }
-function currentWeekMargin(){ return currentWeekStat('marge'); }
+function currentWeekMargin(visibleList){ return currentWeekStat('marge',visibleList); }
 // Tagesziel (heute): Summe optTag bzw. optTag*margeOpt ueber alle heute aktiven Mitarbeiter
 function todayTargetStat(kind){
   var withMarge=(kind==='marge');
@@ -4305,6 +4305,174 @@ function renderOptGesHeuteTileHtml(visible){
     +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+ist+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+ziel+' Stk.</span></div>'
     +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">Abw. <span style="color:'+(diff<0?'#e57373':'#7ED2DB')+';font-weight:600">'+(diff>=0?'+':'')+diff+'</span></div>'
     +'</div>';
+}
+// Slide 1 (Performance) des Banners - wiederverwendbar fuer den globalen Banner UND den
+// eigenstaendigen Mitarbeiter-Banner. 'visible' kann das gesamte Team oder ein einzelner
+// Mitarbeiter (als Array mit einem Eintrag) sein, 'dotsHtml' ist der jeweilige Karussell-Switcher.
+function buildBannerSlide1Html(visible,dotsHtml){
+  var h='';
+  var mk=today().slice(0,7);
+  var heroSums={optGesamt:0,margeGesamt:0};
+  visible.forEach(function(e){
+    (performance[e.id]||[]).forEach(function(x){
+      if((x.date||'').slice(0,7)!==mk)return;
+      heroSums.optGesamt+=(x.convOEM||0)+(x.ups_yes||0)+(x.wka_gesamt_yes||0);
+      heroSums.margeGesamt+=x.margeGesamt||x.margin||0;
+    });
+  });
+  var elapsedWD=elapsedWorkDaysThisMonth();
+  var optProTag=elapsedWD>0?heroSums.optGesamt/elapsedWD:0;
+  var margeProTag=elapsedWD>0?heroSums.margeGesamt/elapsedWD:0;
+  function lastNWorkdayDates(n){
+    var dates=[],feiertageCache={};
+    var d=new Date(today()+'T00:00:00Z');
+    while(dates.length<n){
+      var dow=d.getUTCDay();
+      var y=d.getUTCFullYear();
+      if(!feiertageCache[y])feiertageCache[y]=bayernFeiertage(y);
+      var ds=d.toISOString().slice(0,10);
+      if(dow!==0&&dow!==6&&!feiertageCache[y][ds])dates.unshift(ds);
+      d.setUTCDate(d.getUTCDate()-1);
+    }
+    return dates;
+  }
+  var _last7WD=lastNWorkdayDates(7);
+  var _last14WD=lastNWorkdayDates(14);
+  function crSumsForDate(dateStr){
+    var s={tw:0,yes:0,sy:0,my:0,oem:0,nerrOem:0,ups:0,wka:0,marge:0};
+    visible.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if(x.date!==dateStr)return;
+        s.tw+=x.convTW||0; s.yes+=x.convYes||0; s.sy+=x.convSY||0; s.my+=x.convMY||0;
+        s.oem+=x.convOEM||0; s.nerrOem+=x.notSuccessful||0;
+        s.ups+=x.ups_yes||0; s.wka+=x.wka_gesamt_yes||0; s.marge+=x.margeGesamt||x.margin||0;
+      });
+    });
+    return s;
+  }
+  var optSeries=_last14WD.map(function(d){var s=crSumsForDate(d);return s.oem+s.ups+s.wka;});
+  var margeSeries=_last14WD.map(function(d){return crSumsForDate(d).marge;});
+  var eurH=function(v){return '€ '+Math.round(v).toLocaleString('de-DE');};
+  var eurUnit=function(v){return Math.round(v).toLocaleString('de-DE')+' <span style="font-size:15px;font-weight:500;color:#bcdadd">EUR</span>';};
+  var optZielMonat=teamMonthZiel(visible,mk,false);
+  var margeZielMonat=teamMonthZiel(visible,mk,true);
+  function avgOptTagZielvereinbarungLocal(){
+    var zmk=today().slice(0,7);
+    var zRec=zielStore[zmk]||{};
+    var zVisible=visible.filter(function(e){return empActiveInZielMonth(e,zmk);});
+    var zVals=[];
+    zVisible.forEach(function(e){
+      var r=zRec[e.id]||{};
+      if(r.optTag!=null)zVals.push(r.optTag);
+    });
+    return zVals.length?zVals.reduce(function(a,b){return a+b;},0)/zVals.length:null;
+  }
+  var optOemZiel=avgOptTagZielvereinbarungLocal();
+
+  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
+  h+='<div style="grid-column:span 1;padding-left:14px">'
+    +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+heroSums.optGesamt+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
+    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+optProTag.toFixed(1)+' Opt./Tag</div>'
+    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+Math.round(optZielMonat).toLocaleString('de-DE')+' Stk./Mon.</div>'
+    +'</div>'
+    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(optSeries,'#7ED2DB',300,34,_last14WD,function(v){return Math.round(v).toLocaleString('de-DE')+' Stk.';})+'</div>';
+  var weekMarge=currentWeekMargin(visible);
+  var weekElapsedWD=weekMarge.from?elapsedWorkDaysInRange(weekMarge.from,weekMarge.to):0;
+  var weekProTag=weekElapsedWD>0?weekMarge.ist/weekElapsedWD:0;
+  h+='<div style="grid-column:span 1;padding-left:14px">'
+    +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">WOCHE (KW '+weekMarge.kw+')</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(weekMarge.ist)+'</div>'
+    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(weekProTag)+'/Arbeitstag</div>'
+    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(weekMarge.target)+'/Woche</div>'
+    +'</div>'
+    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(margeSeries,'#7ED2DB',300,34,_last14WD,function(v){return '€ '+Math.round(v).toLocaleString('de-DE');})+'</div>';
+  var monthLabelHero=MONTH_NAMES_DE[new Date(today()+'T00:00:00Z').getUTCMonth()].toUpperCase();
+  h+='<div style="grid-column:span 1;padding-left:14px">'
+    +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">'+monthLabelHero+'</div>'
+    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(heroSums.margeGesamt)+'</div>'
+    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+'/Arbeitstag</div>'
+    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(margeZielMonat)+'/Mon.</div>'
+    +'</div>'
+    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(margeSeries,'#7ED2DB',300,34,_last14WD,function(v){return '€ '+Math.round(v).toLocaleString('de-DE');})+'</div>';
+  h+='</div>'; // Ende Hero-Zeile
+
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;min-height:60px;align-items:center">';
+  function heroKpiCell(k,cur,prev,spark7K){
+    var vR=cur!==null?(k.pct?Math.round(cur):+cur.toFixed(1)):null;
+    var hit=cur!==null&&k.target!==null&&(k.dir==='lte'?cur<=k.target:cur>=k.target);
+    var colLight=cur===null?'#9fc9cd':(k.target!==null?(hit?'#fff':'#e57373'):'#fff');
+    var trend=(cur!==null&&prev!==null)?cur-prev:null;
+    var trendArrow=trend===null?'':(trend>0.5?'\u2191':trend<-0.5?'\u2193':'\u2192');
+    var targetTxt=k.target!==null?('Ziel '+(k.dir==='gte'?'\u2265':'\u2264')+k.target+(k.pct?'%':'')):(k.fallbackLabel||'Team-Durchschnitt');
+    return '<div style="padding:4px 14px;position:relative">'
+      +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">'+k.label.toUpperCase()+'</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">'
+      +'<div style="font-size:19px;font-weight:700;color:'+colLight+'">'+(vR!==null?vR+(k.pct?'%':''):'\u2014')+' '+trendArrow+'</div>'
+      +sparkline(spark7K,colLight,90,18)
+      +'</div>'
+      +'<div style="font-size:10px;color:#8fb5b9;margin-top:3px">Vormonat '+(prev!==null?Math.round(prev)+(k.pct?'%':''):'\u2014')+' \u00b7 '+targetTxt+'</div>'
+      +'</div>';
+  }
+    function teamMonthAvg(key,monthsAgo){
+      var ym=monthBoundsUTC(today(),monthsAgo).ym;
+      var vals=[];
+      visible.forEach(function(e){
+        (performance[e.id]||[]).forEach(function(x){
+          if(x.date.slice(0,7)===ym&&x[key]!==undefined&&x[key]!==null)vals.push(x[key]);
+        });
+      });
+      return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:null;
+    }
+    function crSumsForMonth(ym){
+      var s={tw:0,yes:0,sy:0,my:0,oem:0,nerrOem:0};
+      visible.forEach(function(e){
+        (performance[e.id]||[]).forEach(function(x){
+          if(x.date.slice(0,7)!==ym)return;
+          s.tw+=x.convTW||0; s.yes+=x.convYes||0; s.sy+=x.convSY||0; s.my+=x.convMY||0;
+          s.oem+=x.convOEM||0; s.nerrOem+=x.notSuccessful||0;
+        });
+      });
+      return s;
+    }
+    function crFromSums(kind,s){
+      var denomOEM=s.oem+s.nerrOem, denomRest=s.yes+s.sy+s.my;
+      if(kind==='crOEM')return denomOEM>0?s.oem/denomOEM*100:null;
+      if(kind==='crTeilweise')return (s.tw+denomRest)>0?s.tw/(s.tw+denomRest)*100:null;
+      if(kind==='crSyMy')return denomRest>0?(s.sy+s.my)/denomRest*100:null;
+      if(kind==='crSuperYes')return denomRest>0?s.sy/denomRest*100:null;
+      if(kind==='crMegaYes')return denomRest>0?s.my/denomRest*100:null;
+      return null;
+    }
+    function teamMonthCR(kind,monthsAgo){
+      var ym=monthBoundsUTC(today(),monthsAgo).ym;
+      return crFromSums(kind,crSumsForMonth(ym));
+    }
+    function weightedCRSeries(kind){
+      return _last7WD.map(function(d){return crFromSums(kind,crSumsForDate(d));}).filter(function(v){return v!==null;});
+    }
+    function teamSumSeries(sumFn){
+      return _last7WD.map(function(d){return sumFn(crSumsForDate(d));});
+    }
+    var kpisAll=[
+      {label:'CR OEM', key:'crOEM',      target:CR_GOOD, dir:'gte', pct:true, cr:true},
+      {label:'CR TW',  key:'crTeilweise', target:KPI_TARGETS.crTeilweise.val, dir:KPI_TARGETS.crTeilweise.dir, pct:true, cr:true},
+      {label:'CR SY/MY',key:'crSyMy',     target:KPI_TARGETS.crSyMy?KPI_TARGETS.crSyMy.val:null, dir:KPI_TARGETS.crSyMy?KPI_TARGETS.crSyMy.dir:'gte', pct:true, cr:true},
+      {label:'CR SY',  key:'crSuperYes',  target:KPI_TARGETS.crSuperYes.val,  dir:KPI_TARGETS.crSuperYes.dir,  pct:true, cr:true},
+      {label:'CR MY',  key:'crMegaYes',   target:KPI_TARGETS.crMegaYes.val,   dir:KPI_TARGETS.crMegaYes.dir,   pct:true, cr:true},
+      {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false},
+    ];
+    kpisAll.forEach(function(k){
+      var cur=k.cr?teamMonthCR(k.key,0):teamMonthAvg(k.key,0);
+      var prev=k.cr?teamMonthCR(k.key,1):teamMonthAvg(k.key,1);
+      var spark=k.cr?weightedCRSeries(k.key):teamSumSeries(function(s){return s.oem+s.ups+s.wka;});
+      h+=heroKpiCell(k,cur,prev,spark);
+    });
+  h+='</div>'; // Ende KPI-Zeile
+  h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'+dotsHtml+'</div>';
+  h+='</div>'; // Ende Hero-Panel
+  return h;
 }
 function buildGlobalBannerHtml(visible){
   ensureBannerRotation();
@@ -4505,167 +4673,13 @@ function buildGlobalBannerHtml(visible){
     return h;
   }
   if(_bvMode==='performance'){
-  var mk=today().slice(0,7);
-  var heroSums={optGesamt:0,margeGesamt:0};
-  visible.forEach(function(e){
-    (performance[e.id]||[]).forEach(function(x){
-      if((x.date||'').slice(0,7)!==mk)return;
-      heroSums.optGesamt+=(x.convOEM||0)+(x.ups_yes||0)+(x.wka_gesamt_yes||0);
-      heroSums.margeGesamt+=x.margeGesamt||x.margin||0;
-    });
-  });
-  var elapsedWD=elapsedWorkDaysThisMonth();
-  var optProTag=elapsedWD>0?heroSums.optGesamt/elapsedWD:0;
-  var margeProTag=elapsedWD>0?heroSums.margeGesamt/elapsedWD:0;
-  // Letzte N Arbeitstage (Mo-Fr, ohne bayerische Feiertage) - Basis fuer ALLE Sparklines im Hero-Panel,
-  // live aus den Rohdaten berechnet statt aus importierten CR-Einzelwerten
-  function lastNWorkdayDates(n){
-    var dates=[],feiertageCache={};
-    var d=new Date(today()+'T00:00:00Z');
-    while(dates.length<n){
-      var dow=d.getUTCDay();
-      var y=d.getUTCFullYear();
-      if(!feiertageCache[y])feiertageCache[y]=bayernFeiertage(y);
-      var ds=d.toISOString().slice(0,10);
-      if(dow!==0&&dow!==6&&!feiertageCache[y][ds])dates.unshift(ds);
-      d.setUTCDate(d.getUTCDate()-1);
-    }
-    return dates;
-  }
-  var _last7WD=lastNWorkdayDates(7);
-  var _last14WD=lastNWorkdayDates(14); // fuer die drei oberen Balkendiagramme (Opt.Gesamt/Woche/Monat)
-  function crSumsForDate(dateStr){
-    var s={tw:0,yes:0,sy:0,my:0,oem:0,nerrOem:0,ups:0,wka:0,marge:0};
-    visible.forEach(function(e){
-      (performance[e.id]||[]).forEach(function(x){
-        if(x.date!==dateStr)return;
-        s.tw+=x.convTW||0; s.yes+=x.convYes||0; s.sy+=x.convSY||0; s.my+=x.convMY||0;
-        s.oem+=x.convOEM||0; s.nerrOem+=x.notSuccessful||0;
-        s.ups+=x.ups_yes||0; s.wka+=x.wka_gesamt_yes||0; s.marge+=x.margeGesamt||x.margin||0;
-      });
-    });
-    return s;
-  }
-  var optSeries=_last14WD.map(function(d){var s=crSumsForDate(d);return s.oem+s.ups+s.wka;});
-  var margeSeries=_last14WD.map(function(d){return crSumsForDate(d).marge;});
-  var eurH=function(v){return '€ '+Math.round(v).toLocaleString('de-DE');};
-  var eurUnit=function(v){return Math.round(v).toLocaleString('de-DE')+' <span style="font-size:15px;font-weight:500;color:#bcdadd">EUR</span>';};
-  var optZielMonat=teamMonthZiel(visible,mk,false);
-  var margeZielMonat=teamMonthZiel(visible,mk,true);
-
-  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
-  h+='<div style="grid-column:span 1;padding-left:14px">'
-    +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
-    +'<div style="font-size:30px;font-weight:700;line-height:1">'+heroSums.optGesamt+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
-    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+optProTag.toFixed(1)+' Opt./Tag</div>'
-    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+Math.round(optZielMonat).toLocaleString('de-DE')+' Stk./Mon.</div>'
-    +'</div>'
-    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(optSeries,'#7ED2DB',300,34,_last14WD,function(v){return Math.round(v).toLocaleString('de-DE')+' Stk.';})+'</div>';
-  var weekMarge=currentWeekMargin();
-  var weekElapsedWD=weekMarge.from?elapsedWorkDaysInRange(weekMarge.from,weekMarge.to):0;
-  var weekProTag=weekElapsedWD>0?weekMarge.ist/weekElapsedWD:0;
-  h+='<div style="grid-column:span 1;padding-left:14px">'
-    +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">WOCHE (KW '+weekMarge.kw+')</div>'
-    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(weekMarge.ist)+'</div>'
-    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(weekProTag)+'/Arbeitstag</div>'
-    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(weekMarge.target)+'/Woche</div>'
-    +'</div>'
-    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(margeSeries,'#7ED2DB',300,34,_last14WD,function(v){return '€ '+Math.round(v).toLocaleString('de-DE');})+'</div>';
-  var monthLabelHero=MONTH_NAMES_DE[new Date(today()+'T00:00:00Z').getUTCMonth()].toUpperCase();
-  h+='<div style="grid-column:span 1;padding-left:14px">'
-    +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">'+monthLabelHero+'</div>'
-    +'<div style="font-size:30px;font-weight:700;line-height:1">'+eurUnit(heroSums.margeGesamt)+'</div>'
-    +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Ø '+eurH(margeProTag)+'/Arbeitstag</div>'
-    +'<div style="font-size:11px;color:#8fb5b9">Ziel '+eurH(margeZielMonat)+'/Mon.</div>'
-    +'</div>'
-    +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(margeSeries,'#7ED2DB',300,34,_last14WD,function(v){return '€ '+Math.round(v).toLocaleString('de-DE');})+'</div>';
-  h+='</div>'; // Ende Hero-Zeile
-
-  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;min-height:60px;align-items:center">';
-  function heroKpiCell(k,cur,prev,spark7K){
-    var vR=cur!==null?(k.pct?Math.round(cur):+cur.toFixed(1)):null;
-    var hit=cur!==null&&k.target!==null&&(k.dir==='lte'?cur<=k.target:cur>=k.target);
-    var colLight=cur===null?'#9fc9cd':(k.target!==null?(hit?'#fff':'#e57373'):'#fff');
-    var trend=(cur!==null&&prev!==null)?cur-prev:null;
-    var trendArrow=trend===null?'':(trend>0.5?'\u2191':trend<-0.5?'\u2193':'\u2192');
-    var targetTxt=k.target!==null?('Ziel '+(k.dir==='gte'?'\u2265':'\u2264')+k.target+(k.pct?'%':'')):(k.fallbackLabel||'Team-Durchschnitt');
-    return '<div style="padding:4px 14px;position:relative">'
-      +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">'+k.label.toUpperCase()+'</div>'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">'
-      +'<div style="font-size:19px;font-weight:700;color:'+colLight+'">'+(vR!==null?vR+(k.pct?'%':''):'\u2014')+' '+trendArrow+'</div>'
-      +sparkline(spark7K,colLight,90,18)
-      +'</div>'
-      +'<div style="font-size:10px;color:#8fb5b9;margin-top:3px">Vormonat '+(prev!==null?Math.round(prev)+(k.pct?'%':''):'\u2014')+' \u00b7 '+targetTxt+'</div>'
-      +'</div>';
-  }
-    function teamMonthAvg(key,monthsAgo){
-      var ym=monthBoundsUTC(today(),monthsAgo).ym;
-      var vals=[];
-      visible.forEach(function(e){
-        (performance[e.id]||[]).forEach(function(x){
-          if(x.date.slice(0,7)===ym&&x[key]!==undefined&&x[key]!==null)vals.push(x[key]);
-        });
-      });
-      return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:null;
-    }
-    // Gewichtete CR-Berechnung aus den summierten Rohzahlen (konsistent mit der Performance-Tabelle,
-    // statt der einfachen Mittelung der importierten CR-Einzelwerte, die zu abweichenden Zahlen fuehrte)
-    function crSumsForMonth(ym){
-      var s={tw:0,yes:0,sy:0,my:0,oem:0,nerrOem:0};
-      visible.forEach(function(e){
-        (performance[e.id]||[]).forEach(function(x){
-          if(x.date.slice(0,7)!==ym)return;
-          s.tw+=x.convTW||0; s.yes+=x.convYes||0; s.sy+=x.convSY||0; s.my+=x.convMY||0;
-          s.oem+=x.convOEM||0; s.nerrOem+=x.notSuccessful||0;
-        });
-      });
-      return s;
-    }
-    function crFromSums(kind,s){
-      var denomOEM=s.oem+s.nerrOem, denomRest=s.yes+s.sy+s.my;
-      if(kind==='crOEM')return denomOEM>0?s.oem/denomOEM*100:null;
-      if(kind==='crTeilweise')return (s.tw+denomRest)>0?s.tw/(s.tw+denomRest)*100:null;
-      if(kind==='crSyMy')return denomRest>0?(s.sy+s.my)/denomRest*100:null;
-      if(kind==='crSuperYes')return denomRest>0?s.sy/denomRest*100:null;
-      if(kind==='crMegaYes')return denomRest>0?s.my/denomRest*100:null;
-      return null;
-    }
-    function teamMonthCR(kind,monthsAgo){
-      var ym=monthBoundsUTC(today(),monthsAgo).ym;
-      return crFromSums(kind,crSumsForMonth(ym));
-    }
-    // Gewichtete CR-Tagesreihe fuer die letzten 7 Arbeitstage (identische Formel wie die Tabelle/Monatswert)
-    function weightedCRSeries(kind){
-      return _last7WD.map(function(d){return crFromSums(kind,crSumsForDate(d));}).filter(function(v){return v!==null;});
-    }
-    // Team-Tagessumme (kein CR, reine Summe z.B. Opt.Gesamt/Marge/Opt.OEM) fuer die letzten 7 Arbeitstage
-    function teamSumSeries(sumFn){
-      return _last7WD.map(function(d){return sumFn(crSumsForDate(d));});
-    }
-    var kpisAll=[
-      {label:'CR OEM', key:'crOEM',      target:CR_GOOD, dir:'gte', pct:true, cr:true},
-      {label:'CR TW',  key:'crTeilweise', target:KPI_TARGETS.crTeilweise.val, dir:KPI_TARGETS.crTeilweise.dir, pct:true, cr:true},
-      {label:'CR SY/MY',key:'crSyMy',     target:KPI_TARGETS.crSyMy?KPI_TARGETS.crSyMy.val:null, dir:KPI_TARGETS.crSyMy?KPI_TARGETS.crSyMy.dir:'gte', pct:true, cr:true},
-      {label:'CR SY',  key:'crSuperYes',  target:KPI_TARGETS.crSuperYes.val,  dir:KPI_TARGETS.crSuperYes.dir,  pct:true, cr:true},
-      {label:'CR MY',  key:'crMegaYes',   target:KPI_TARGETS.crMegaYes.val,   dir:KPI_TARGETS.crMegaYes.dir,   pct:true, cr:true},
-      {label:'Opt. OEM',key:'convOEM',   target:optOemZiel!=null?Math.round(optOemZiel*10)/10:null, dir:'gte', pct:false},
-    ];
-    kpisAll.forEach(function(k){
-      var cur=k.cr?teamMonthCR(k.key,0):teamMonthAvg(k.key,0);
-      var prev=k.cr?teamMonthCR(k.key,1):teamMonthAvg(k.key,1);
-      var spark=k.cr?weightedCRSeries(k.key):teamSumSeries(function(s){return s.oem+s.ups+s.wka;});
-      h+=heroKpiCell(k,cur,prev,spark);
-    });
-  h+='</div>'; // Ende KPI-Zeile
-  h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
-    +'<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
+  h+=buildBannerSlide1Html(visible,
+    '<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
     +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
     +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
     +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
     +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
-    +'</div>';
-  h+='</div>'; // Ende Hero-Panel
+  );
   } else {
   // ── NEUE, eigenstaendige Overview-Hero-Panel-Version (gleiche Optik wie Performance, andere Kennzahlen) ──
   var ovMk=today().slice(0,7);
@@ -5801,6 +5815,15 @@ function renderTeam(){
 function selectEmp(id){selectedEmp=id;view='emp';activeTab='performance';renderSidebar();renderMain();}
 
 // ── EMP DETAIL ──
+var empBannerViewMode='performance'; // eigener Banner-Status fuer die Mitarbeiterseite, komplett unabhaengig vom globalen bannerViewMode
+function setEmpBannerViewMode(m){empBannerViewMode=m;renderEmpDetail();}
+function buildEmpBannerHtml(emp){
+  var dots='<div onclick="setEmpBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
+    +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
+    +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
+    +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>';
+  return buildBannerSlide1Html([emp],dots);
+}
 function renderEmpDetail(){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
   if(!emp)return;
@@ -5824,6 +5847,7 @@ function renderEmpDetail(){
     +'<div class="tab" data-tab="solidroad" onclick="switchTab(\'solidroad\')">SolidRoad</div>'
     +'<div class="tab" data-tab="emp-settings" onclick="switchTab(\'emp-settings\')">Einstellungen</div>'
     +'</div>'
+    +'<div class="content" style="padding-bottom:0">'+buildEmpBannerHtml(emp)+'</div>'
     +'<div class="content" id="tabContent"></div>';
   renderTabBar();
   renderTab();
