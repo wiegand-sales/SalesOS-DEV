@@ -838,9 +838,23 @@ var wiegandView='overview'; // 'overview' | 'team' | 'performance' (SFP Wiegand 
 var overviewSelectedIds=null; // Array ausgewählter Mitarbeiter-IDs in SFP Wiegand > Overview (Mehrfachauswahl)
 var overviewRenderTarget='team'; // 'team' | 'emp' - steuert ob die Performance-Tabelle im Team-Kontext (renderTeam) oder eingebettet auf der Mitarbeiterseite (renderTab) neu gerendert wird
 function rerenderOverviewContext(){
+  if(overviewRenderTarget==='emp'){
+    // Nur die eingebettete Tabelle aktualisieren - Banner, Diagramm und Impact-Panel bleiben unangetastet
+    var container=document.getElementById('empPerfTableContainer');
+    var emp=employees.find(function(e){return e.id===selectedEmp;});
+    if(container&&emp){
+      var scrollEl=document.getElementById('tabContent');
+      var scrollTop=scrollEl?scrollEl.scrollTop:0;
+      container.innerHTML=buildOverviewTab([emp],'performance',true,true,true);
+      if(scrollEl)scrollEl.scrollTop=scrollTop;
+    } else {
+      renderTab();
+    }
+    return;
+  }
   var scrollEl=document.getElementById('tabContent');
   window._overviewScrollRestore=scrollEl?scrollEl.scrollTop:0;
-  if(overviewRenderTarget==='emp')renderTab(); else renderTeam();
+  renderTeam();
   var scrollElAfter=document.getElementById('tabContent');
   if(scrollElAfter)scrollElAfter.scrollTop=window._overviewScrollRestore;
 }
@@ -5347,7 +5361,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         +sumTdH(stackCell(optPerHourCalc.toFixed(1),null),null,'right','l')
         +sumTdH(crOEMcalc,pctStack)+sumTdH(cntPct(sumTw,crTWcalc))+sumTdH(cntPct(sumYes,crYescalc))+sumTdH(cntPct(sumSy+sumMy,crSyMycalc))+sumTdH(cntPct(sumSy,crSYcalc))+sumTdH(cntPct(sumMy,crMYcalc))
         +sumTdH(anteilOEMcalc,pctStack,'right','r')
-        +'<td style="padding:13px 14px;background:#0c3b40"></td>'
+        +'<td style="padding:13px 14px"></td>'
         +sumTd(stackCell(eur(sumMarge),'€'+Math.round(margeDurchCalc).toLocaleString('de-DE'),'opacity:.75'),null,'right')
         +'</tr>';
       h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
@@ -5358,7 +5372,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         +avgTdH(stackCell(optPerHourCalc.toFixed(1),null),null,'right','l')
         +avgTdH(crOEMcalc,pctStack)+avgTdH(cntPct(rnd1(sumTw/rowCount),crTWcalc))+avgTdH(cntPct(rnd1(sumYes/rowCount),crYescalc))+avgTdH(cntPct(rnd1((sumSy+sumMy)/rowCount),crSyMycalc))+avgTdH(cntPct(rnd1(sumSy/rowCount),crSYcalc))+avgTdH(cntPct(rnd1(sumMy/rowCount),crMYcalc))
         +avgTdH(anteilOEMcalc,pctStack,'right','r')
-        +'<td style="padding:13px 14px;background:rgba(32,106,114,0.14)"></td>'
+        +'<td style="padding:13px 14px"></td>'
         +avgTd(stackCell(eur(sumMarge/rowCount),'€'+Math.round(margeDurchCalc).toLocaleString('de-DE'),'opacity:.75'),null,'right')
         +'</tr>';
     }
@@ -6258,8 +6272,10 @@ function renderTab(){
     // Tabelle: dieselbe Performance-Tabelle wie unter SFP Wiegand -> Performance, aber fest auf diesen einen Mitarbeiter eingestellt.
     // Der letzte Parameter (hideMemberCol=true) sorgt dafuer, dass buildOverviewTab hierfuer die globale
     // overviewSelectedIds-Variable komplett ignoriert - keine Interaktion mit der Team-Performance-Seite.
+    // Eigener Container mit ID: Tabellen-Filter-Klicks aktualisieren NUR diesen Bereich (siehe rerenderEmpPerfTableOnly),
+    // damit Banner, Diagramm und Impact-Panel dabei nicht unnoetig neu gerendert werden (kein Flackern/Neuladen-Eindruck).
     overviewRenderTarget='emp';
-    html+=buildOverviewTab([emp],'performance',true,true,true);
+    html+='<div id="empPerfTableContainer">'+buildOverviewTab([emp],'performance',true,true,true)+'</div>';
   }
 
 
