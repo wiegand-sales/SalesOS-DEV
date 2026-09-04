@@ -5871,7 +5871,7 @@ function buildQaRadarSvg(empId,n,big){
     var ang=-Math.PI/2+i*(2*Math.PI/N);
     return [cx+Math.cos(ang)*R*frac, cy+Math.sin(ang)*R*frac];
   }
-  var svg='<svg viewBox="0 0 '+vw+' '+vh+'" width="'+vw+'" height="'+vh+'" style="display:block;flex-shrink:0">';
+  var svg='<svg viewBox="0 0 '+vw+' '+vh+'" width="'+vw+'" height="'+vh+'" style="display:block;width:'+vw+'px;height:'+vh+'px;flex-shrink:0">';
   // Gitter (25/50/75/100%)
   [0.25,0.5,0.75,1].forEach(function(frac){
     var pts=[];
@@ -5898,7 +5898,7 @@ function buildQaRadarSvg(empId,n,big){
   });
   svg+='</svg>';
   var avgAll=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0;
-  return {svg:svg,avg:avgAll,n:callRat.length};
+  return {svg:svg,avg:avgAll,n:callRat.length,vw:vw,vh:vh};
 }
 
 // ── EMP DETAIL ──
@@ -5931,7 +5931,7 @@ function buildEmpBannerHtml(emp){
       +'</div>'
       +'</div>';
     h+='</div>';
-    h+='<div style="flex:1;min-width:0;padding:0 4px 0 8px;display:flex;align-items:center;height:195px">'+radar.svg+'</div>';
+    h+='<div style="flex:1;min-width:0;padding:0 4px 0 8px;display:flex;align-items:center;height:195px;overflow:visible"><div style="width:'+radar.vw+'px;height:'+radar.vh+'px;flex-shrink:0">'+radar.svg+'</div></div>';
     h+='<div style="flex-shrink:0;width:170px;display:flex;flex-direction:column;justify-content:center;gap:18px;align-items:flex-end;padding-right:6px">'
       +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+totalCallsAll+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">CALLS BEWERTET</div></div>'
       +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+Math.round(avgScoreAll)+' <span style="font-size:14px;font-weight:500;color:#bcdadd">von 100</span></div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">SCORE</div></div>'
