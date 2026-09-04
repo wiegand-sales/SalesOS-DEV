@@ -1015,6 +1015,10 @@ function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
 var _bannerRotationOrder=['performance','overview','ziel','coaching','activity'];
 var _bannerRotationTimer=null;
 function _bannerRotateNext(){
+  // Auf der Mitarbeiter-Detailseite wird ein eigenstaendiger Banner gezeigt (nicht der globale) -
+  // ein Re-Render hier wuerde nur unnoetig die Seite zuruecksetzen (u.a. Scroll-Position), ohne
+  // dass sich optisch etwas Sichtbares aendert. Rotation daher auf diesen Seiten pausieren.
+  if(view!=='team'&&view!=='coaching'&&view!=='activity')return;
   var cur=bannerViewMode||'overview';
   var idx=_bannerRotationOrder.indexOf(cur);
   bannerViewMode=_bannerRotationOrder[(idx+1)%_bannerRotationOrder.length];
