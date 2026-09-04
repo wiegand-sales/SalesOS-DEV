@@ -7341,19 +7341,6 @@ function renderTab(){
       });
       var hasTeamAvg=teamAvgVals.some(function(v){return v!==null;});
 
-      var yScales={
-        oem_aktivitaeten:{min:0,max:300,step:50},
-        convOEM:     {min:0,max:50,step:10},
-        optGesamt:   {min:0,max:50,step:10},
-        crOEM:       {min:0,max:100,step:20},
-        crTeilweise: {min:0,max:100,step:20},
-        crYes:       {min:0,max:100,step:20},
-        crSuperYes:  {min:0,max:100,step:20},
-        crMegaYes:   {min:0,max:100,step:20},
-        margeGesamt: {min:0,max:5000,step:1000}
-      };
-      var yS=yScales[empChartMetric]||{min:0,max:100,step:20};
-      var yMin=yS.min,yMax=yS.max,yStep=yS.step;
       var datasets=[{
         label:(empObj?empObj.name.split(' ')[0]:'')+' – '+m.l,data:vals,borderColor:m.c,backgroundColor:m.c+'22',fill:true,tension:0.35,
         pointRadius:periods.length<=16?4:2,pointBackgroundColor:m.c,borderWidth:2,order:1,spanGaps:false
@@ -7366,6 +7353,21 @@ function renderTab(){
       if(target!==null){
         datasets.push({label:'Ziel ('+target+')',data:periods.map(function(){return target;}),borderColor:'#E24B4A',
           borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false,order:3});
+      }
+
+      // Y-Achse automatisch an die tatsaechlichen Datenwerte anpassen (gleiche Methode wie beim
+      // Performance-Diagramm unter SFP Wiegand -> Performance), statt fester Werte je Metrik
+      var allVals=[];
+      datasets.forEach(function(ds){ds.data.forEach(function(v){if(v!==null&&v!==undefined)allVals.push(v);});});
+      var yMin,yMax;
+      if(!allVals.length){
+        yMin=0;yMax=100;
+      } else {
+        var dataMin=Math.min.apply(null,allVals),dataMax=Math.max.apply(null,allVals);
+        var range=dataMax-dataMin;
+        if(range<=0)range=dataMax>0?dataMax:1;
+        var pad=range*0.4;
+        yMin=Math.max(0,dataMin-pad);yMax=dataMax+pad;
       }
 
       // ── Coaching-Marker je Periode: welche Sessions fielen in diesen Zeitraum? ──
@@ -7445,7 +7447,7 @@ function renderTab(){
           },
           scales:{
             x:{ticks:{font:{size:11},maxTicksLimit:10},grid:{display:false}},
-            y:{min:yMin,max:yMax,ticks:{font:{size:11},stepSize:yStep},grid:{color:'rgba(0,0,0,0.05)'}}
+            y:{min:yMin,max:yMax,ticks:{font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'}}
           }
         }
       });
