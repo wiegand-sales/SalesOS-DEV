@@ -7472,11 +7472,10 @@ function renderTab(){
         });
       }
 
-      // ── Impact Coaching: nur bei Tagesansicht sinnvoll (Vergleich 14 Tage vor/nach) ──
+      // ── Impact Coaching: arbeitet direkt auf Rohdaten (unabhaengig von Tag/Woche/Monat) ──
       (function(){
         var panel=document.getElementById('coachImpactPanel');
         if(!panel)return;
-        if(empChartGroup!=='day'){panel.innerHTML='';return;}
         var relevant=(protocols[selectedEmp]||[]).filter(function(s){return (s.status!=='geplant'||s.date<=today())&&s.focusMetric===empChartMetric;});
         var fullPerf=(performance[selectedEmp]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
         function avgWindow(centerDate,daysBefore,daysAfter){
