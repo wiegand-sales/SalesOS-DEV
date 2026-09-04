@@ -6123,7 +6123,10 @@ function renderTab(){
     // Chart
     html+='<div class="card" style="margin-bottom:22px">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">'
+      +'<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
       +'<div class="card-title" style="margin:0">Performance</div>'
+      +'<div id="empChartLegend" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>'
+      +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
       +'<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
     [{k:'day',l:'Tag'},{k:'week',l:'Woche'},{k:'month',l:'Monat'}].forEach(function(it){
@@ -6131,7 +6134,16 @@ function renderTab(){
     });
     html+='</div>'
       +'<select onchange="setEmpChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
-    [{k:'oem_aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges.'},{k:'convOEM',l:'Opt. OEM'},{k:'ups_yes',l:'Opt. Upsells'},{k:'wka_gesamt_yes',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'},{k:'margeGesamt',l:'Marge Gesamt'}].forEach(function(it){
+    [
+      {k:'aktivitaeten',l:'Aktivitäten (NE+NM+NERR+Opt.Ges.)'},
+      {k:'ne',l:'NE'},{k:'nm',l:'NM'},{k:'nerr',l:'NERR'},
+      {k:'optGesamt',l:'Opt. Ges.'},
+      {k:'convOEM',l:'OEM'},{k:'ups_yes',l:'UPS'},
+      {k:'wka_gesamt_yes',l:'WKA (WKA OEM + WKA UPS)'},
+      {k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR YES'},
+      {k:'crSyMy',l:'CR SY/MY'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'},
+      {k:'margeGesamt',l:'Marge Gesamt'}
+    ].forEach(function(it){
       html+='<option value="'+it.k+'"'+(empChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
     });
     html+='</select>'
@@ -7292,9 +7304,13 @@ function renderTab(){
         if(key==='crOEM'){var d=s.oem+s.nerrOem;return d>0?s.oem/d*100:null;}
         if(key==='crTeilweise'){var dr=s.yes+s.sy+s.my;return (s.tw+dr)>0?s.tw/(s.tw+dr)*100:null;}
         if(key==='crYes'){var dr2=s.yes+s.sy+s.my;return dr2>0?s.yes/dr2*100:null;}
+        if(key==='crSyMy'){var dr5=s.yes+s.sy+s.my;return dr5>0?(s.sy+s.my)/dr5*100:null;}
         if(key==='crSuperYes'){var dr3=s.yes+s.sy+s.my;return dr3>0?s.sy/dr3*100:null;}
         if(key==='crMegaYes'){var dr4=s.yes+s.sy+s.my;return dr4>0?s.my/dr4*100:null;}
-        if(key==='oem_aktivitaeten')return s.akt;
+        if(key==='ne')return s.ne;
+        if(key==='nm')return s.nm;
+        if(key==='nerr')return s.nerr;
+        if(key==='aktivitaeten')return s.ne+s.nm+s.nerr+(s.oem+s.ups+s.wka);
         if(key==='convOEM')return s.oem;
         if(key==='ups_yes')return s.ups;
         if(key==='wka_gesamt_yes')return s.wka;
@@ -7302,7 +7318,7 @@ function renderTab(){
         if(key==='margeGesamt')return s.margeGes;
         return 0;
       }
-      var mLabels={oem_aktivitaeten:'Aktivitäten',convOEM:'Opt. OEM',ups_yes:'Opt. Upsells',wka_gesamt_yes:'Opt. WKA',optGesamt:'Opt. Gesamt',crOEM:'CR OEM %',crTeilweise:'CR TW %',crYes:'CR Yes %',crSuperYes:'CR SY %',crMegaYes:'CR MY %',margeGesamt:'Marge Gesamt €'};
+      var mLabels={aktivitaeten:'Aktivitäten',ne:'NE',nm:'NM',nerr:'NERR',convOEM:'OEM',ups_yes:'UPS',wka_gesamt_yes:'WKA',optGesamt:'Opt. Gesamt',crOEM:'CR OEM %',crTeilweise:'CR TW %',crYes:'CR YES %',crSyMy:'CR SY/MY %',crSuperYes:'CR SY %',crMegaYes:'CR MY %',margeGesamt:'Marge Gesamt €'};
       var m={f:empChartMetric,l:mLabels[empChartMetric]||empChartMetric,c:'#206A72'};
 
       var vals=periods.map(function(p){
@@ -7339,7 +7355,7 @@ function renderTab(){
       var yS=yScales[empChartMetric]||{min:0,max:100,step:20};
       var yMin=yS.min,yMax=yS.max,yStep=yS.step;
       var datasets=[{
-        label:m.l,data:vals,borderColor:m.c,backgroundColor:m.c+'22',fill:true,tension:0.35,
+        label:(empObj?empObj.name.split(' ')[0]:'')+' – '+m.l,data:vals,borderColor:m.c,backgroundColor:m.c+'22',fill:true,tension:0.35,
         pointRadius:periods.length<=16?4:2,pointBackgroundColor:m.c,borderWidth:2,order:1,spanGaps:false
       }];
 
@@ -7414,7 +7430,7 @@ function renderTab(){
           responsive:true,resizeDelay:200,maintainAspectRatio:false,layout:{padding:{top:14}},
           animation:CHART_DRAWIN_ANIMATION,interaction:{mode:'index',intersect:false},
           plugins:{
-            legend:{display:hasTeamAvg||target!==null,position:'top',labels:{font:{size:11},boxWidth:20,padding:12}},
+            legend:{display:false},
             tooltip:{callbacks:{label:function(ctx){
               if(ctx.dataset.label==='Coaching (dieses KPI)'||ctx.dataset.label==='Anderes Coaching'){
                 var sess=sessMap[ctx.dataIndex]||[];
@@ -7434,6 +7450,25 @@ function renderTab(){
         }
       });
       reapplyChartGradient(activeChart,canvas,0.55,0.05);
+      // Eigene, klickbare Legende direkt neben dem Titel statt der nativen Chart.js-Legende
+      var empLegendEl=document.getElementById('empChartLegend');
+      if(empLegendEl){
+        empLegendEl.innerHTML='';
+        activeChart.data.datasets.forEach(function(ds,i){
+          if(ds.label==='Coaching (dieses KPI)'||ds.label==='Anderes Coaching')return; // unsichtbare Hover-Marker nicht in der Legende zeigen
+          var item=document.createElement('span');
+          var meta=activeChart.getDatasetMeta(i);
+          item.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;cursor:pointer;user-select:none;color:'+(meta.hidden?'var(--text3)':'var(--text2)')+';opacity:'+(meta.hidden?'0.5':'1');
+          item.innerHTML='<span style="width:9px;height:9px;border-radius:2px;background:'+ds.borderColor+';display:inline-block"></span>'+esc(ds.label);
+          item.onclick=function(){
+            meta.hidden=meta.hidden===null?!activeChart.data.datasets[i].hidden:!meta.hidden;
+            activeChart.update();
+            item.style.opacity=meta.hidden?'0.5':'1';
+            item.style.color=meta.hidden?'var(--text3)':'var(--text2)';
+          };
+          empLegendEl.appendChild(item);
+        });
+      }
 
       // ── Impact Coaching: unveraendert, arbeitet direkt auf Rohdaten (unabhaengig von Tag/Woche/Monat) ──
       (function(){
