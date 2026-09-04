@@ -895,6 +895,10 @@ var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = S
 var overviewChartMetric='margeGesamt';
 var overviewChartGroup='week'; // 'day' | 'week' | 'month' - X-Achsen-Granularitaet des Performance-Trend-Charts
 function setOverviewChartGroup(g){overviewChartGroup=g;renderTeam();}
+var empChartMetric='margeGesamt'; // eigenstaendiger Zustand fuer das Mitarbeiter-Performance-Diagramm
+var empChartGroup='week';
+function setEmpChartMetric(v){empChartMetric=v;renderTab();}
+function setEmpChartGroup(g){empChartGroup=g;renderTab();}
 var overviewChartEmpId=null; // null = Team (alle aktiven Mitarbeiter), sonst employee-id
 var bannerViewMode=null; // null = Standard je Reiter, sonst 'performance'|'overview' explizit ueberschrieben
 var settingsView='integrations'; // 'integrations' | 'data'
@@ -6119,25 +6123,20 @@ function renderTab(){
     // Chart
     html+='<div class="card" style="margin-bottom:22px">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">'
-      +'<div class="card-title" style="margin:0">Performance Trend</div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-      +'<div class="chart-toggle">';
-    [{k:'margeGesamt',l:'Marge Gesamt'},{k:'oem_aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges.'},{k:'convOEM',l:'Opt. OEM'},{k:'ups_yes',l:'Opt. Upsells'},{k:'wka_gesamt_yes',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'}].forEach(function(it){
-      html+='<button class="'+(perfMetric===it.k?'active':'')+'" data-m="'+it.k+'" onclick="setMetric(this.dataset.m)">'+it.l+'</button>';
+      +'<div class="card-title" style="margin:0">Performance</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
+    [{k:'day',l:'Tag'},{k:'week',l:'Woche'},{k:'month',l:'Monat'}].forEach(function(it){
+      html+='<button style="padding:0 12px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(empChartGroup===it.k?'#164e54':'transparent')+';color:'+(empChartGroup===it.k?'#fff':'var(--text2)')+'" onclick="setEmpChartGroup(\''+it.k+'\')">'+it.l+'</button>';
     });
-    html+='</div><div class="chart-toggle">';
-    var perfCustomActive=!!(perfCustomFrom&&perfCustomTo);
-    [7,30,90].forEach(function(d){html+='<button class="'+(!perfCustomActive&&perfRange===d?'active':'')+'" data-d="'+d+'" onclick="setRange(parseInt(this.dataset.d))">'+d+'d</button>';});
     html+='</div>'
-      +'<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;border:1px solid '+(perfCustomActive?'var(--purple)':'var(--border2)')+';border-radius:var(--r-md);background:'+(perfCustomActive?'var(--purple-bg)':'transparent')+'">'
-      +'<span style="font-size:10.5px;color:var(--text2);padding-left:3px">Von</span>'
-      +'<input type="date" id="perfFromDate" value="'+(perfCustomFrom||'')+'" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:var(--text);padding:2px;width:126px">'
-      +'<span style="font-size:10.5px;color:var(--text2)">Bis</span>'
-      +'<input type="date" id="perfToDate" value="'+(perfCustomTo||'')+'" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:var(--text);padding:2px;width:126px">'
-      +'<button class="btn btn-sm'+(perfCustomActive?' btn-primary':'')+'" style="padding:3px 8px" onclick="applyPerfCustomRange()"><i class="ti ti-check"></i></button>'
-      +(perfCustomActive?'<button class="btn btn-sm" style="padding:3px 7px" onclick="clearPerfCustomRange()" title="Custom-Zeitraum zurücksetzen"><i class="ti ti-x"></i></button>':'')
-      +'</div>'
-      +'</div></div><div style="height:280px;position:relative"><canvas id="perfChart"></canvas></div>'
+      +'<select onchange="setEmpChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
+    [{k:'oem_aktivitaeten',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges.'},{k:'convOEM',l:'Opt. OEM'},{k:'ups_yes',l:'Opt. Upsells'},{k:'wka_gesamt_yes',l:'Opt. WKA'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSuperYes',l:'CR SY'},{k:'crMegaYes',l:'CR MY'},{k:'margeGesamt',l:'Marge Gesamt'}].forEach(function(it){
+      html+='<option value="'+it.k+'"'+(empChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
+    });
+    html+='</select>'
+      +'</div></div>'
+      +'<div style="height:280px;position:relative"><canvas id="empPerfChart"></canvas></div>'
       +'<div style="display:flex;gap:16px;margin-top:8px;font-size:10.5px;color:var(--text2)">'
       +'<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:0;border-top:1.5px dashed rgba(32,106,114,0.7);display:inline-block"></span>Coaching zu diesem KPI (Kürzel = Coach)</span>'
       +'<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:0;border-top:1.5px dashed rgba(140,140,140,0.6);display:inline-block"></span>Coaching zu anderem Thema</span>'
@@ -7280,46 +7279,52 @@ function renderTab(){
   // Render chart
   if(activeTab==='performance'){
     setTimeout(function(){
-      var canvas=document.getElementById('perfChart');
+      var canvas=document.getElementById('empPerfChart');
       if(!canvas)return;
       if(activeChart){activeChart.destroy();activeChart=null;}
-      var data=empGetPerf(selectedEmp);
-      var labels=data.map(function(d){return fd(d.date);});
-      var mMap={
-        oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',    c:'#206A72'},
-        convOEM:     {f:'convOEM',     l:'Opt. OEM',       c:'#206A72'},
-        ups_yes:     {f:'ups_yes',     l:'Opt. Upsells',   c:'#206A72'},
-        wka_gesamt_yes:         {f:'wka_gesamt_yes',         l:'Opt. WKA',       c:'#206A72'},
-        optGesamt:   {f:'optGesamt',   l:'Opt. Gesamt',    c:'#206A72'},
-        crOEM:       {f:'crOEM',       l:'CR OEM %',       c:'#206A72'},
-        crTeilweise: {f:'crTeilweise', l:'CR TW %',        c:'#206A72'},
-        crYes:       {f:'crYes',       l:'CR Yes %',       c:'#206A72'},
-        crSuperYes:  {f:'crSuperYes',  l:'CR SY %',        c:'#206A72'},
-        crMegaYes:   {f:'crMegaYes',   l:'CR MY %',        c:'#206A72'},
-        margeGesamt: {f:'margeGesamt', l:'Marge Gesamt €', c:'#206A72'}
-      };
-      var m=mMap[perfMetric]||{f:perfMetric,l:perfMetric,c:'#206A72'};
-      var vals=data.map(function(d){return d[m.f]||0;});
       var empObj=employees.find(function(x){return x.id===selectedEmp;});
+      var year=+today().slice(0,4);
+      var periods=buildChartPeriods(empChartGroup,year);
+      var todayStr=today();
+      var labels=periods.map(function(p){return p.label;});
+
+      function metricValFromSums(key,s){
+        if(key==='crOEM'){var d=s.oem+s.nerrOem;return d>0?s.oem/d*100:null;}
+        if(key==='crTeilweise'){var dr=s.yes+s.sy+s.my;return (s.tw+dr)>0?s.tw/(s.tw+dr)*100:null;}
+        if(key==='crYes'){var dr2=s.yes+s.sy+s.my;return dr2>0?s.yes/dr2*100:null;}
+        if(key==='crSuperYes'){var dr3=s.yes+s.sy+s.my;return dr3>0?s.sy/dr3*100:null;}
+        if(key==='crMegaYes'){var dr4=s.yes+s.sy+s.my;return dr4>0?s.my/dr4*100:null;}
+        if(key==='oem_aktivitaeten')return s.akt;
+        if(key==='convOEM')return s.oem;
+        if(key==='ups_yes')return s.ups;
+        if(key==='wka_gesamt_yes')return s.wka;
+        if(key==='optGesamt')return s.oem+s.ups+s.wka;
+        if(key==='margeGesamt')return s.margeGes;
+        return 0;
+      }
+      var mLabels={oem_aktivitaeten:'Aktivitäten',convOEM:'Opt. OEM',ups_yes:'Opt. Upsells',wka_gesamt_yes:'Opt. WKA',optGesamt:'Opt. Gesamt',crOEM:'CR OEM %',crTeilweise:'CR TW %',crYes:'CR Yes %',crSuperYes:'CR SY %',crMegaYes:'CR MY %',margeGesamt:'Marge Gesamt €'};
+      var m={f:empChartMetric,l:mLabels[empChartMetric]||empChartMetric,c:'#206A72'};
+
+      var vals=periods.map(function(p){
+        if(p.from>todayStr)return null; // Zukunft: offener Punkt
+        return metricValFromSums(empChartMetric,chartSumsForRange([empObj],p.from,p.to));
+      });
+
       var empT=empTargets(empObj||{});
       var tMap={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes',optPerH:'optPerH',oem_aktivitaeten:'oem_aktivitaeten',convOEM:'convOEM',optGesamt:'optGesamt',margeGesamt:'margeGesamt'};
-      var tk=tMap[perfMetric];
+      var tk=tMap[empChartMetric];
       var target=tk&&empT[tk]?empT[tk].val:null;
 
-      // Team-Durchschnitt: alle Mitarbeiter gleicher Gruppe
+      // Team-Durchschnitt: alle Mitarbeiter gleicher Gruppe (Rolle), je Periode gemittelt
       var myTeam=empObj?empObj.team:null;
       var teamEmps=myTeam?employees.filter(function(e){return e.team===myTeam&&e.id!==selectedEmp&&e.active!==false;}):[];
-      var teamAvgVals=data.map(function(row){
-        var dayVals=[];
-        teamEmps.forEach(function(te){
-          var tp=(performance[te.id]||[]).find(function(p){return p.date===row.date;});
-          if(tp&&(tp[m.f]||tp[m.f]===0))dayVals.push(tp[m.f]);
-        });
+      var teamAvgVals=periods.map(function(p){
+        if(p.from>todayStr||!teamEmps.length)return null;
+        var dayVals=teamEmps.map(function(te){return metricValFromSums(empChartMetric,chartSumsForRange([te],p.from,p.to));}).filter(function(v){return v!==null;});
         return dayVals.length?+(dayVals.reduce(function(a,b){return a+b;},0)/dayVals.length).toFixed(1):null;
       });
       var hasTeamAvg=teamAvgVals.some(function(v){return v!==null;});
 
-      // Feste Y-Achsen-Skalen
       var yScales={
         oem_aktivitaeten:{min:0,max:300,step:50},
         convOEM:     {min:0,max:50,step:10},
@@ -7331,68 +7336,37 @@ function renderTab(){
         crMegaYes:   {min:0,max:100,step:20},
         margeGesamt: {min:0,max:5000,step:1000}
       };
-      var yS=yScales[perfMetric]||{min:0,max:100,step:20};
+      var yS=yScales[empChartMetric]||{min:0,max:100,step:20};
       var yMin=yS.min,yMax=yS.max,yStep=yS.step;
       var datasets=[{
-        label:m.l,
-        data:vals,
-        borderColor:m.c,
-        backgroundColor:m.c+'22',
-        fill:true,
-        tension:0.35,
-        pointRadius:data.length<=10?4:2,
-        pointBackgroundColor:m.c,
-        borderWidth:2,
-        order:1
+        label:m.l,data:vals,borderColor:m.c,backgroundColor:m.c+'22',fill:true,tension:0.35,
+        pointRadius:periods.length<=16?4:2,pointBackgroundColor:m.c,borderWidth:2,order:1,spanGaps:false
       }];
 
       if(hasTeamAvg){
-        datasets.push({
-          label:'Ø '+myTeam+'-Team',
-          data:teamAvgVals,
-          borderColor:'rgba(0,0,0,0.2)',
-          backgroundColor:'transparent',
-          fill:false,
-          tension:0.35,
-          pointRadius:0,
-          borderWidth:1.5,
-          borderDash:[4,3],
-          order:2
-        });
+        datasets.push({label:'Ø '+myTeam+'-Team',data:teamAvgVals,borderColor:'rgba(0,0,0,0.2)',backgroundColor:'transparent',
+          fill:false,tension:0.35,pointRadius:0,borderWidth:1.5,borderDash:[4,3],order:2});
       }
-
       if(target!==null){
-        datasets.push({
-          label:'Ziel ('+target+')',
-          data:data.map(function(){return target;}),
-          borderColor:'#E24B4A',
-          borderDash:[4,3],
-          borderWidth:1.5,
-          pointRadius:0,
-          fill:false,
-          order:3
-        });
+        datasets.push({label:'Ziel ('+target+')',data:periods.map(function(){return target;}),borderColor:'#E24B4A',
+          borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false,order:3});
       }
 
-      // ── Coaching-Marker: welche Sessions fanden an welchem Tag statt? ──
-      var sessMap={};
-      (protocols[selectedEmp]||[]).forEach(function(s){
-        if(s.status==='geplant')return; // nur tatsächlich stattgefundene Coachings markieren
-        if(!sessMap[s.date])sessMap[s.date]=[];
-        sessMap[s.date].push(s);
+      // ── Coaching-Marker je Periode: welche Sessions fielen in diesen Zeitraum? ──
+      var sessMap={}; // periodIndex -> [sessions]
+      var sessAll=(protocols[selectedEmp]||[]).filter(function(s){return s.status!=='geplant';});
+      periods.forEach(function(p,i){
+        sessMap[i]=sessAll.filter(function(s){return s.date>=p.from&&s.date<=p.to;});
       });
       function coachInitial(coachId){
         if(!coachId)return null;
         var c=employees.find(function(e){return e.id===coachId;});
         return c?c.name.split(' ')[0].charAt(0).toUpperCase():null;
       }
-      // unsichtbare Hover-Ziele oben im Chart, damit Tooltip trotz reinem Linien-Plugin funktioniert
-      var markMatch=data.map(function(row){
-        return (sessMap[row.date]||[]).some(function(s){return s.focusMetric===perfMetric;})?yMax:null;
-      });
-      var markOther=data.map(function(row){
-        var matched=(sessMap[row.date]||[]).some(function(s){return s.focusMetric===perfMetric;});
-        var other=(sessMap[row.date]||[]).some(function(s){return s.focusMetric!==perfMetric;});
+      var markMatch=periods.map(function(p,i){return (sessMap[i]||[]).some(function(s){return s.focusMetric===empChartMetric;})?yMax:null;});
+      var markOther=periods.map(function(p,i){
+        var matched=(sessMap[i]||[]).some(function(s){return s.focusMetric===empChartMetric;});
+        var other=(sessMap[i]||[]).some(function(s){return s.focusMetric!==empChartMetric;});
         return (other&&!matched)?yMax:null;
       });
       if(markMatch.some(function(v){return v!==null;})){
@@ -7402,97 +7376,77 @@ function renderTab(){
         datasets.push({label:'Anderes Coaching',data:markOther,showLine:false,pointRadius:7,pointHoverRadius:9,backgroundColor:'transparent',borderColor:'transparent',order:4});
       }
 
-      // ── Plugin: zeichnet dünne gestrichelte Vertikallinie + Coach-Kürzel je Coaching-Termin ──
+      // ── Plugin: zeichnet duenne gestrichelte Vertikallinie + Coach-Kuerzel je Periode mit Coaching ──
       var coachLinePlugin={
         id:'coachLines',
         afterDraw:function(chart){
           var ctx=chart.ctx,xScale=chart.scales.x,ya=chart.scales.y;
           if(!xScale||!ya)return;
           var top=ya.top,bottom=ya.bottom;
-          data.forEach(function(row,i){
-            var sess=sessMap[row.date];
+          periods.forEach(function(p,i){
+            var sess=sessMap[i];
             if(!sess||!sess.length)return;
-            var matched=sess.some(function(s){return s.focusMetric===perfMetric;});
+            var matched=sess.some(function(s){return s.focusMetric===empChartMetric;});
             var x=xScale.getPixelForValue(i);
             ctx.save();
             ctx.setLineDash([3,3]);
             ctx.lineWidth=1;
             ctx.strokeStyle=matched?'rgba(32,106,114,0.55)':'rgba(140,140,140,0.4)';
-            ctx.beginPath();
-            ctx.moveTo(x,top);
-            ctx.lineTo(x,bottom);
-            ctx.stroke();
-            var initials=sess.map(function(s){return coachInitial(s.coachId);}).filter(Boolean);
-            var label=initials.length?initials.join('/'):'·';
+            ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();
             ctx.setLineDash([]);
-            ctx.font='9px Inter, sans-serif';
-            ctx.fillStyle=matched?'#174C52':'rgba(90,90,90,0.8)';
-            ctx.textAlign='center';
-            ctx.fillText(label,x,top-4);
+            var initials=sess.map(function(s){return coachInitial(s.coachId);}).filter(Boolean);
+            if(initials.length){
+              ctx.fillStyle=matched?'rgba(32,106,114,0.85)':'rgba(120,120,120,0.75)';
+              ctx.font='10px -apple-system,sans-serif';
+              ctx.textAlign='center';
+              ctx.fillText(initials.slice(0,2).join(','),x,top-4);
+            }
             ctx.restore();
           });
         }
       };
 
-      if(datasets[0])datasets[0].backgroundColor=vGradient(canvas,datasets[0].borderColor,0.55,0.05);
       activeChart=new Chart(canvas,{
         type:'line',
         data:{labels:labels,datasets:datasets},
         plugins:[coachLinePlugin],
         options:{
-          responsive:true,
-          resizeDelay:200,
-          maintainAspectRatio:false,
-          layout:{padding:{top:14}},
-          animation:CHART_DRAWIN_ANIMATION,
-          interaction:{mode:'index',intersect:false},
+          responsive:true,resizeDelay:200,maintainAspectRatio:false,layout:{padding:{top:14}},
+          animation:CHART_DRAWIN_ANIMATION,interaction:{mode:'index',intersect:false},
           plugins:{
-            legend:{
-              display:hasTeamAvg||target!==null,
-              position:'top',
-              labels:{font:{size:11},boxWidth:20,padding:12}
-            },
-            tooltip:{
-              callbacks:{
-                label:function(ctx){
-                  if(ctx.dataset.label==='Coaching (dieses KPI)'||ctx.dataset.label==='Anderes Coaching'){
-                    var row=data[ctx.dataIndex];
-                    var sess=sessMap[row.date]||[];
-                    if(!sess.length)return ctx.dataset.label;
-                    return sess.map(function(s){
-                      var c=s.coachId?employees.find(function(e){return e.id===s.coachId;}):null;
-                      return (s.type||'Coaching')+(s.focus?' – '+s.focus:'')+(c?' ('+esc(c.name)+')':'');
-                    });
-                  }
-                  return ctx.dataset.label+': '+formatMetricValue(perfMetric,ctx.parsed.y);
-                }
+            legend:{display:hasTeamAvg||target!==null,position:'top',labels:{font:{size:11},boxWidth:20,padding:12}},
+            tooltip:{callbacks:{label:function(ctx){
+              if(ctx.dataset.label==='Coaching (dieses KPI)'||ctx.dataset.label==='Anderes Coaching'){
+                var sess=sessMap[ctx.dataIndex]||[];
+                if(!sess.length)return ctx.dataset.label;
+                return sess.map(function(s){
+                  var c=s.coachId?employees.find(function(e){return e.id===s.coachId;}):null;
+                  return (s.type||'Coaching')+(s.focus?' – '+s.focus:'')+(c?' ('+esc(c.name)+')':'');
+                });
               }
-            }
+              return ctx.dataset.label+': '+formatMetricValue(empChartMetric,ctx.parsed.y);
+            }}}
           },
           scales:{
             x:{ticks:{font:{size:11},maxTicksLimit:10},grid:{display:false}},
-            y:{
-              min:yMin,max:yMax,
-              ticks:{font:{size:11},stepSize:yStep},
-              grid:{color:'rgba(0,0,0,0.05)'}
-            }
+            y:{min:yMin,max:yMax,ticks:{font:{size:11},stepSize:yStep},grid:{color:'rgba(0,0,0,0.05)'}}
           }
         }
       });
       reapplyChartGradient(activeChart,canvas,0.55,0.05);
 
-      // ── Impact Coaching: immer 3 Zeilen, unabhängig von KPI/Datenlage ──
+      // ── Impact Coaching: unveraendert, arbeitet direkt auf Rohdaten (unabhaengig von Tag/Woche/Monat) ──
       (function(){
         var panel=document.getElementById('coachImpactPanel');
         if(!panel)return;
-        var relevant=(protocols[selectedEmp]||[]).filter(function(s){return (s.status!=='geplant'||s.date<=today())&&s.focusMetric===perfMetric;});
+        var relevant=(protocols[selectedEmp]||[]).filter(function(s){return (s.status!=='geplant'||s.date<=today())&&s.focusMetric===empChartMetric;});
         var fullPerf=(performance[selectedEmp]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
         function avgWindow(centerDate,daysBefore,daysAfter){
           var fromS=addDaysUTC(centerDate,-daysBefore);
           var toS=addDaysUTC(centerDate,daysAfter);
           var rows=fullPerf.filter(function(p){return p.date>=fromS&&p.date<toS;});
-          var vals=rows.map(function(p){return p[m.f];}).filter(function(v){return v!==undefined&&v!==null;});
-          return vals.length?(vals.reduce(function(a,b){return a+b;},0)/vals.length):null;
+          var vals2=rows.map(function(p){return p[empChartMetric];}).filter(function(v){return v!==undefined&&v!==null;});
+          return vals2.length?(vals2.reduce(function(a,b){return a+b;},0)/vals2.length):null;
         }
         var sortedRelevant=relevant.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
         function buildRow(s){
