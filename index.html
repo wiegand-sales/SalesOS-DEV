@@ -7417,7 +7417,7 @@ function renderTab(){
               ctx.fillStyle=matched?'rgba(32,106,114,0.85)':'rgba(120,120,120,0.75)';
               ctx.font='10px -apple-system,sans-serif';
               ctx.textAlign='center';
-              ctx.fillText(initials.slice(0,2).join(','),x,top-4);
+              ctx.fillText(initials.slice(0,2).join(','),x,top-10);
             }
             ctx.restore();
           });
@@ -7429,7 +7429,7 @@ function renderTab(){
         data:{labels:labels,datasets:datasets},
         plugins:[coachLinePlugin],
         options:{
-          responsive:true,resizeDelay:200,maintainAspectRatio:false,layout:{padding:{top:14}},
+          responsive:true,resizeDelay:200,maintainAspectRatio:false,layout:{padding:{top:24}},
           animation:CHART_DRAWIN_ANIMATION,interaction:{mode:'index',intersect:false},
           plugins:{
             legend:{display:false},
