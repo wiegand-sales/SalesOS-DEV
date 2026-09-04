@@ -6271,21 +6271,29 @@ function renderTab(){
     html+='<div id="callDetailBody" style="display:none;border-top:1px solid var(--border);padding:0 17px 14px">';
     if(showCall){
       CALL_CATS.forEach(function(cat){
-        html+='<div style="padding:5px 0;margin-top:6px">';
-        html+='<span style="font-size:10px;font-weight:700;color:'+cat.col+'">'+cat.label.toUpperCase()+' ('+Math.round(cat.weight*100)+'%)</span></div>';
-        cat.items.forEach(function(k){
+        var catVals=cat.items.map(function(k){return showCall.scores&&showCall.scores[k]?showCall.scores[k]:0;}).filter(function(v){return v>0;});
+        var catAvgVal=catVals.length?catVals.reduce(function(a,b){return a+b;},0)/catVals.length:0;
+        html+='<div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-top:12px">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+          +'<span style="font-size:11.5px;font-weight:700;color:'+cat.col+'">'+cat.label.toUpperCase()+' ('+Math.round(cat.weight*100)+'%)</span>'
+          +'<span style="font-size:10.5px;font-weight:700;color:#fff;background:'+cat.col+';padding:2px 10px;border-radius:10px">Ø '+catAvgVal.toFixed(1)+'</span>'
+          +'</div>';
+        cat.items.forEach(function(k,idx){
           var v=showCall.scores&&showCall.scores[k]?showCall.scores[k]:0;
-          var bc=v>=3.5?'var(--teal-dark)':v>=2.5?'var(--purple)':v>=1.5?'var(--amber-dark)':v>0?'var(--red)':'var(--text3)';
-          html+='<div style="padding:6px 0;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px">';
-          html+='<div style="width:150px;font-size:12px;flex-shrink:0">'+ITEM_LABELS[k]+'</div>';
-          html+='<div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">';
-          html+='<div style="height:100%;width:'+(v/4*100)+'%;background:'+bc+';border-radius:3px"></div></div>';
-          html+='<div style="width:22px;text-align:right;font-size:13px;font-weight:700;color:'+bc+'">'+v+'</div>';
+          html+='<div style="'+(idx>0?'margin-top:10px':'')+'">';
+          html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+            +'<span style="font-size:12.5px;color:var(--text2);font-weight:500">'+ITEM_LABELS[k]+'</span>'
+            +'<span style="font-size:12px;font-weight:700;color:'+cat.col+'">'+v+'</span>'
+            +'</div>';
+          html+='<div style="height:8px;background:#fff;border:1px solid var(--border2);border-radius:5px;overflow:hidden">'
+            +'<div style="height:100%;width:'+Math.max(2,v/4*100)+'%;border-radius:5px;background:linear-gradient(90deg,#7ED2DB,'+cat.col+')"></div>'
+            +'</div>';
           html+='</div>';
         });
+        html+='</div>';
       });
       var ts0=totalScore(showCall);var tc0=ts0>=75?'var(--teal-dark)':ts0>=50?'var(--amber-dark)':'var(--red)';
-      html+='<div style="padding:10px 0 0;font-size:11px;color:var(--text3);border-top:1px solid var(--border);margin-top:8px">';
+      html+='<div style="padding:14px 0 0;font-size:11px;color:var(--text3);margin-top:4px">';
       html+='Score: <strong style="color:'+tc0+'">'+ts0.toFixed(0)+'</strong>/100';
       if(showCall.einwand)html+=' · Einwand: <em>'+showCall.einwand+'</em>';
       html+='</div>';
