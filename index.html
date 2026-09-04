@@ -5855,94 +5855,15 @@ function renderTeam(){
 
 function selectEmp(id){selectedEmp=id;view='emp';activeTab='performance';renderSidebar();renderMain();}
 
-// ── QA-Spinnendiagramm (Radar): Ø-Bewertung je Kategorie über die letzten n Calls, 0-4 Skala ──
-function buildQaRadarSvg(empId,n,big){
-  n=n||5;
-  var cats=CALL_CATS.filter(function(cat){return cat.key!=='opener'&&cat.key!=='zusammenfassung';});
-  var callRat=(callRatings[empId]||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,n);
-  var vals=cats.map(function(cat){
-    var cvals=callRat.map(function(r){return catAvg(r,cat);}).filter(function(v){return v>0;});
-    return cvals.length?cvals.reduce(function(a,b){return a+b;},0)/cvals.length:0;
-  });
-  var vw=big?270:220, vh=big?190:200;
-  var cx=big?135:110, cy=vh/2, R=big?80:58;
-  var N=cats.length;
-  function pt(i,frac){
-    var ang=-Math.PI/2+i*(2*Math.PI/N);
-    return [cx+Math.cos(ang)*R*frac, cy+Math.sin(ang)*R*frac];
-  }
-  var svg='<svg viewBox="0 0 '+vw+' '+vh+'" width="'+vw+'" height="'+vh+'" style="display:block;width:'+vw+'px;height:'+vh+'px;flex-shrink:0">';
-  // Gitter (25/50/75/100%)
-  [0.25,0.5,0.75,1].forEach(function(frac){
-    var pts=[];
-    for(var i=0;i<N;i++){pts.push(pt(i,frac).join(','));}
-    svg+='<polygon points="'+pts.join(' ')+'" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>';
-  });
-  // Achsen
-  for(var i=0;i<N;i++){
-    var p=pt(i,1);
-    svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>';
-  }
-  // Werte-Polygon
-  var valPts=vals.map(function(v,i){return pt(i,Math.min(v/4,1)).join(',');});
-  svg+='<polygon points="'+valPts.join(' ')+'" fill="#7ED2DB" fill-opacity="0.32" stroke="#7ED2DB" stroke-width="2"/>';
-  vals.forEach(function(v,i){
-    var p=pt(i,Math.min(v/4,1));
-    svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="#7ED2DB"/>';
-  });
-  // Achsen-Beschriftungen
-  cats.forEach(function(cat,i){
-    var lp=pt(i,big?0.8:1.28);
-    var anchor=Math.abs(lp[0]-cx)<4?'middle':(lp[0]>cx?'start':'end');
-    svg+='<text x="'+lp[0]+'" y="'+lp[1]+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="'+(big?11.5:9.5)+'" fill="#fff" font-weight="'+(big?'700':'400')+'" stroke="#0c3b40" stroke-width="'+(big?'3':'0')+'" paint-order="stroke" font-family="-apple-system,sans-serif">'+esc(cat.short)+'</text>';
-  });
-  svg+='</svg>';
-  var avgAll=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0;
-  return {svg:svg,avg:avgAll,n:callRat.length,vw:vw,vh:vh};
-}
-
 // ── EMP DETAIL ──
 var empBannerViewMode='performance'; // eigener Banner-Status fuer die Mitarbeiterseite, komplett unabhaengig vom globalen bannerViewMode
 function setEmpBannerViewMode(m){empBannerViewMode=m;renderEmpDetail();}
 function buildEmpBannerHtml(emp){
-  var dotsFor=function(active){
-    return ['performance','qa'].map(function(k){
-      var isActive=active===k;
-      return '<div onclick="setEmpBannerViewMode(\''+k+'\')" style="width:'+(isActive?'20px':'7px')+';height:7px;border-radius:'+(isActive?'4px':'50%')+';background:'+(isActive?'#7ED2DB':'rgba(255,255,255,0.25)')+';cursor:pointer" title="'+(k==='performance'?'Performance':'QA-Übersicht')+'"></div>';
-    }).join('')
+  var dots='<div style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
+    +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
     +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
     +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>';
-  };
-  if(empBannerViewMode==='qa'){
-    var radar=buildQaRadarSvg(emp.id,5,true);
-    var callRatAll=(callRatings[emp.id]||[]);
-    var totalCallsAll=callRatAll.length;
-    var abschlussCountAll=callRatAll.filter(function(r){return r.status==='ja';}).length;
-    var avgScoreAll=totalCallsAll?callRatAll.reduce(function(a,r){return a+totalScore(r);},0)/totalCallsAll:0;
-    var h='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:0;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
-    h+='<div style="display:flex;height:195px">';
-    h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
-    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
-      +renderOemTileHtml([emp])
-      +'</div>';
-    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
-      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
-      +renderOptGesHeuteTileHtml([emp])
-      +'</div>'
-      +'</div>';
-    h+='</div>';
-    h+='<div style="flex:1;min-width:0;padding:0 4px 0 8px;display:flex;align-items:center;height:195px;overflow:visible"><div style="width:'+radar.vw+'px;height:'+radar.vh+'px;flex-shrink:0">'+radar.svg+'</div></div>';
-    h+='<div style="flex-shrink:0;width:170px;display:flex;flex-direction:column;justify-content:center;gap:18px;align-items:flex-end;padding-right:6px">'
-      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+totalCallsAll+'</div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">CALLS BEWERTET</div></div>'
-      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+Math.round(avgScoreAll)+' <span style="font-size:14px;font-weight:500;color:#bcdadd">von 100</span></div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">SCORE</div></div>'
-      +'<div style="text-align:right"><div style="font-size:26px;font-weight:700;line-height:1">'+abschlussCountAll+' <span style="font-size:14px;font-weight:500;color:#bcdadd">von '+totalCallsAll+'</span></div><div style="font-size:10px;font-weight:600;color:#9fc9cd;letter-spacing:.03em">ABSCHLÜSSE</div></div>'
-      +'</div>';
-    h+='</div>';
-    h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'+dotsFor('qa')+'</div>';
-    h+='</div>';
-    return h;
-  }
-  return buildBannerSlide1Html([emp],dotsFor('performance'),0);
+  return buildBannerSlide1Html([emp],dots,0);
 }
 function renderEmpDetail(){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
@@ -5980,7 +5901,7 @@ function renderTabBar(){
   });
 }
 
-function switchTab(t){activeTab=t;empBannerViewMode=(t==='call-performance')?'qa':'performance';renderTabBar();renderTab();}
+function switchTab(t){activeTab=t;renderTabBar();renderTab();}
 
 var CALL_CATS=[
   {key:'opener',        label:'Einstieg',            short:'Einstieg',   weight:0.05, col:'#7ED2DB', fill:'rgba(126,210,219,0.15)',  bg:'rgba(126,210,219,0.18)', items:['intro','ziel']},
@@ -6300,33 +6221,6 @@ function renderTab(){
         +'<div style="margin-top:8px"><button class="btn btn-sm btn-primary" data-eid="'+emp.id+'" data-focus="'+weakSpots[0].label+'" onclick="openSessionModalWithFocus(this.dataset.eid,this.dataset.focus)"><i class="ti ti-calendar-plus"></i> Session dazu planen</button></div>'
         +'</div></div>';
     }
-
-    // ── QA-Kategorie-Snapshot: Ø-Bewertung je Kategorie, Trend vs. letzte Bewertungen, vs. Ø Rolle, Sparkline ──
-    html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:22px">';
-    CALL_CATS.filter(function(cat){return cat.key!=='opener'&&cat.key!=='zusammenfassung';}).forEach(function(cat){
-      var tr=qaCatTrend(emp.id,cat,5);
-      var bench=qaCatRoleBenchmark(emp.id,cat,5);
-      var trend=(tr.cur!==null&&tr.prev!==null)?tr.cur-tr.prev:null;
-      var trendArrow=trend===null?'':(trend>0.15?'↑':trend<-0.15?'↓':'→');
-      var trendCol=trend===null?'var(--text3)':(trend>0.15?'var(--teal-dark)':trend<-0.15?'var(--red)':'var(--text2)');
-      var vsRole=(tr.cur!==null&&bench!==null)?tr.cur-bench:null;
-      var vsRoleTxt=vsRole===null?'—':(vsRole>=0?'+':'')+vsRole.toFixed(1)+' vs. Ø Rolle';
-      var vsRoleCol=vsRole===null?'var(--text3)':(vsRole>=0?'var(--teal-dark)':'var(--red)');
-      var spark=qaCatSparkline(emp.id,cat,7);
-      html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-        +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+cat.short.toUpperCase()+'</div>'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">'
-        +'<div style="display:flex;align-items:baseline;gap:6px">'
-        +'<div style="font-size:20px;font-weight:700">'+(tr.cur!==null?tr.cur.toFixed(1):'—')+'</div>'
-        +'<div style="font-size:13px;font-weight:700;color:'+trendCol+'">'+trendArrow+'</div>'
-        +'</div>'
-        +sparkline(spark,cat.col,54,26)
-        +'</div>'
-        +'<div style="font-size:10.5px;color:var(--text3)">Letzte: '+(tr.prev!==null?tr.prev.toFixed(1):'—')+'</div>'
-        +'<div style="font-size:10.5px;color:'+vsRoleCol+';margin-top:2px;font-weight:600">'+vsRoleTxt+'</div>'
-        +'</div>';
-    });
-    html+='</div>';
 
     // ── QA-Übersicht: EINE Karte, links Radar, rechts Zusammenfassung, Button unten rechts ──
     html+='<div class="card" style="margin-bottom:22px">';
