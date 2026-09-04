@@ -5039,7 +5039,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   } // Ende if(!skipChart)
 
 
-  var selLabel=overviewDisplayMode==='gesamt'?'Team gesamt ('+selectedEmps.length+')':overviewDisplayMode==='durchschnitt_mitarbeiter'?'Ø pro Mitarbeiter ('+selectedEmps.length+')':overviewDisplayMode==='durchschnitt_tag'?'Ø pro Einsatztag ('+selectedEmps.length+')':(selectedEmps.length===visible.length?'Alle Mitarbeiter':(isAll?selectedEmps.length+' Mitarbeiter ausgewählt':emp.name));
+  var selLabel=overviewDisplayMode==='gesamt'?'Team gesamt ('+selectedEmps.length+')':overviewDisplayMode==='durchschnitt_mitarbeiter'?'Ø pro Mitarbeiter ('+selectedEmps.length+')':overviewDisplayMode==='durchschnitt_tag'?'Ø pro Einsatztag ('+selectedEmps.length+')':(!isAll?emp.name:(selectedEmps.length===visible.length?'Alle Mitarbeiter':selectedEmps.length+' Mitarbeiter ausgewählt'));
   if(showRest){
   } // Ende if(showRest)
 
@@ -5291,7 +5291,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
     });
     // ── Summe & Durchschnitt (nur sinnvoll bei mehreren Zeilen) ──
     var rowCount=sortableRows.length;
-    if(rowCount>0){
+    if(rowCount>0&&!hideMemberCol){
       function sumTd(v,fmt,align){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#fff">'+(fmt?fmt(v):v)+'</td>';}
       function avgTd(v,fmt,align){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#0c3b40">'+(fmt?fmt(v):v)+'</td>';}
       var eur=function(v){return '€'+Math.round(v).toLocaleString('de-DE');};
