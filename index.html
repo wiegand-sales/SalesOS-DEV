@@ -5864,14 +5864,14 @@ function buildQaRadarSvg(empId,n,big){
     var cvals=callRat.map(function(r){return catAvg(r,cat);}).filter(function(v){return v>0;});
     return cvals.length?cvals.reduce(function(a,b){return a+b;},0)/cvals.length:0;
   });
-  var vw=big?230:220, vh=big?230:200;
-  var cx=vw/2, cy=vh/2, R=big?95:58;
+  var vw=big?270:220, vh=big?190:200;
+  var cx=big?135:110, cy=vh/2, R=big?80:58;
   var N=cats.length;
   function pt(i,frac){
     var ang=-Math.PI/2+i*(2*Math.PI/N);
     return [cx+Math.cos(ang)*R*frac, cy+Math.sin(ang)*R*frac];
   }
-  var svg='<svg viewBox="0 0 '+vw+' '+vh+'" width="'+vw+'" height="'+vh+'" style="max-width:'+(big?'230px':'100%')+';max-height:100%;display:block">';
+  var svg='<svg viewBox="0 0 '+vw+' '+vh+'" width="'+vw+'" height="'+vh+'" style="display:block;flex-shrink:0">';
   // Gitter (25/50/75/100%)
   [0.25,0.5,0.75,1].forEach(function(frac){
     var pts=[];
