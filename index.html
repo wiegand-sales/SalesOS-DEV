@@ -836,8 +836,10 @@ var currentCoach = null;      // {id,name,role} falls eingeloggter User ein Coac
 var coachFilterView = 'overview'; // 'overview' | employee-id des Coaches
 var wiegandView='overview'; // 'overview' | 'team' | 'performance' (SFP Wiegand Tab-Navigation) - Overview ist der Standard-Landing-Tab nach dem Login (Performance-Menue entfernt, per Banner-Umschalter in Overview weiterhin erreichbar)
 var overviewSelectedIds=null; // Array ausgewählter Mitarbeiter-IDs in SFP Wiegand > Overview (Mehrfachauswahl)
+var overviewRenderTarget='team'; // 'team' | 'emp' - steuert ob die Performance-Tabelle im Team-Kontext (renderTeam) oder eingebettet auf der Mitarbeiterseite (renderTab) neu gerendert wird
+function rerenderOverviewContext(){ if(overviewRenderTarget==='emp')renderTab(); else renderTeam(); }
 var overviewDisplayMode='individual'; // 'individual' | 'gesamt' | 'durchschnitt' - steuert ob je Mitarbeiter oder aggregiert angezeigt wird
-function setOverviewDisplayMode(m){overviewDisplayMode=m;renderTeam();}
+function setOverviewDisplayMode(m){overviewDisplayMode=m;rerenderOverviewContext();}
 function setOverviewTeamGroup(visibleIds,groupKey){
   var ids=visibleIds.filter(function(id){
     var e=employees.find(function(x){return x.id===id;});
@@ -850,15 +852,15 @@ function setOverviewTeamGroup(visibleIds,groupKey){
     return true;
   });
   overviewSelectedIds=ids;
-  renderTeam();
+  rerenderOverviewContext();
 }
 var overviewEmpDropdownOpen=false;
 var overviewEmpSearchQuery='';
-function toggleOverviewEmpDropdown(){overviewEmpDropdownOpen=!overviewEmpDropdownOpen;if(!overviewEmpDropdownOpen)overviewEmpSearchQuery='';renderTeam();}
+function toggleOverviewEmpDropdown(){overviewEmpDropdownOpen=!overviewEmpDropdownOpen;if(!overviewEmpDropdownOpen)overviewEmpSearchQuery='';rerenderOverviewContext();}
 document.addEventListener('click',function(e){
   if(!overviewEmpDropdownOpen)return;
   if(e.target.closest&&e.target.closest('#overviewEmpDropdownWrap'))return;
-  overviewEmpDropdownOpen=false;overviewEmpSearchQuery='';renderTeam();
+  overviewEmpDropdownOpen=false;overviewEmpSearchQuery='';rerenderOverviewContext();
 });
 function toggleOverviewEmpId(id){
   if(!overviewSelectedIds)overviewSelectedIds=[];
@@ -866,10 +868,10 @@ function toggleOverviewEmpId(id){
   if(idx>=0)overviewSelectedIds.splice(idx,1);else overviewSelectedIds.push(id);
   var scrollEl=document.getElementById('overviewEmpScrollList');
   window._overviewEmpScrollTop=scrollEl?scrollEl.scrollTop:null;
-  renderTeam();
+  rerenderOverviewContext();
 }
-function setOverviewSelectAll(allIds){overviewSelectedIds=allIds.slice();renderTeam();}
-function setOverviewSelectNone(){overviewSelectedIds=[];renderTeam();}
+function setOverviewSelectAll(allIds){overviewSelectedIds=allIds.slice();rerenderOverviewContext();}
+function setOverviewSelectNone(){overviewSelectedIds=[];rerenderOverviewContext();}
 function filterOverviewEmpList(q){
   q=(q||'').toLowerCase().trim();
   var wrap=document.getElementById('overviewEmpDropdownWrap');
@@ -889,7 +891,7 @@ var overviewPerfSortDir='asc'; // 'asc' | 'desc'
 function setOverviewPerfSort(key){
   if(overviewPerfSortKey===key){overviewPerfSortDir=overviewPerfSortDir==='asc'?'desc':'asc';}
   else{overviewPerfSortKey=key;overviewPerfSortDir='asc';}
-  renderTeam();
+  rerenderOverviewContext();
 }
 var overviewFromDate=null; // Von-Datum (Overview Performance-Tabelle), null = Standard (Monatsanfang)
 var overviewChartMetric='margeGesamt';
@@ -1030,7 +1032,7 @@ function setBannerViewMode(m){
   renderMain();
 }
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
-function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDate=to||null;renderTeam();}
+function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDate=to||null;rerenderOverviewContext();}
 function setOverviewQuickRange(type){
   var t=today();
   if(type==='today'){setOverviewDateRange(t,t);}
@@ -1068,7 +1070,7 @@ function applyOverviewMonth(){
   var to=year+'-'+('0'+month).slice(-2)+'-'+('0'+lastDay).slice(-2);
   setOverviewDateRange(from,to);
 }
-function setOverviewPerfGroup(g){overviewPerfGroup=g;renderTeam();}
+function setOverviewPerfGroup(g){overviewPerfGroup=g;rerenderOverviewContext();}
 var coachCalYear=null, coachCalMonthIdx=null; // Kalender-Monatsnavigation SFP Coaching (init. beim ersten Rendern auf aktuellen Monat)
 var coachCalViewMode='week'; // 'month' | 'week'
 var coachCalWeekStart=null; // Montag der aktuell angezeigten Woche (YYYY-MM-DD), init. beim ersten Rendern auf aktuelle Woche
@@ -4818,7 +4820,7 @@ function buildGlobalBannerHtml(visible){
 }
 
 // ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
-function buildOverviewTab(liste,section,skipBanner,skipChart){
+function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   // section: undefined = komplettes Overview wie bisher, UNVERAENDERT (Banner+Kacheln+Rest+Tabelle).
   // 'performance' = nur Banner + Kacheln + Performance-Tabelle (fuer den neuen Performance-Reiter, zeigt dieselben Daten 1:1, keine Aufteilung von Overview).
   var showRest=(section!=='performance');
@@ -5047,6 +5049,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
   var currentMonthLabel=monthNames[parseInt(currentMonthKey.slice(5,7),10)-1]+' '+currentMonthKey.slice(0,4);
   h+='<div class="card-title" style="margin-bottom:14px"><i class="ti ti-table"></i> Performance <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+selLabel+' · '+fd(effFrom)+'–'+fd(effTo)+'</span></div>';
   h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+  if(!hideMemberCol){
   h+='<div style="position:relative" id="overviewEmpDropdownWrap">';
   h+='<button class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="toggleOverviewEmpDropdown()"><i class="ti ti-users"></i> '+selLabel+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>';
   if(overviewEmpDropdownOpen){
@@ -5090,6 +5093,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
     h+='</div>';
   }
   h+='</div>';
+  }
   h+='<div class="chart-toggle">';
   [{k:'day',l:'Tag'},{k:'week',l:'Woche'},{k:'month',l:'Monat'}].forEach(function(it){
     h+='<button class="'+(overviewPerfGroup===it.k?'active':'')+'" data-g="'+it.k+'" onclick="setOverviewPerfGroup(this.dataset.g)">'+it.l+'</button>';
@@ -5220,7 +5224,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
       return '<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:'+(active?'#7ED2DB':'#fff')+';text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none'+(extraStyle||'')+'" onclick="setOverviewPerfSort(\''+key+'\')">'+label+arrow+'</th>';
     }
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
-      +sortTh('Mitarbeiter','name',';width:190px;min-width:190px')
+      +(hideMemberCol?'':sortTh('Mitarbeiter','name',';width:190px;min-width:190px'))
       +sortTh(firstColLabel,'period',';width:120px;min-width:120px')
       +[['Akt./Std.','akt'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right;width:92px;min-width:92px');
@@ -5256,7 +5260,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
       function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
       var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+stackCell(rowEmp.name,rowEmp.role||'',null,'left')+'</td>'
+        +(hideMemberCol?'':'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+stackCell(rowEmp.name,rowEmp.role||'',null,'left')+'</td>')
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCell(g.label,(overviewPerfGroup!=='day'?g.count+' Tage':''),null,'left')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(aktPerHour.toFixed(1),akt)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notR/akt*100),rowEmpT.notReached.val,rowEmpT.notReached.dir):'color:var(--text2)')+'">'+stackCell((akt>0?Math.round(notR/akt*100)+'%':'—'),(akt>0?notR:'—'))+'</td>'
@@ -5278,7 +5282,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+'">'+stackCell(crSY+'%',sy)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+'">'+stackCell(crMY+'%',my)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(Math.round(convOEM+ups+wka_gesamt_yes>0?convOEM/(convOEM+ups+wka_gesamt_yes)*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+'">'+stackCell((convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%',null)+'</td>'
-        +(rowEmp.id==='__agg__'?'<td style="padding:16px 14px;border-bottom:1px solid var(--border)"></td>':'<td style="padding:16px 14px;border-bottom:1px solid var(--border);white-space:nowrap"><div style="display:flex;gap:6px"><button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button><button class="btn btn-sm" onclick="event.stopPropagation();openCoachingInfoModal(\''+rowEmp.id+'\')"><i class="ti ti-info-circle"></i> Info</button></div></td>')
+        +(rowEmp.id==='__agg__'?'<td style="padding:16px 14px;border-bottom:1px solid var(--border)"></td>':'<td style="padding:16px 14px;border-bottom:1px solid var(--border);white-space:nowrap"><div style="display:flex;gap:6px">'+(hideMemberCol?'':'<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button>')+'<button class="btn btn-sm" onclick="event.stopPropagation();openCoachingInfoModal(\''+rowEmp.id+'\')"><i class="ti ti-info-circle"></i> Info</button></div></td>')
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text)">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—'))+'</td>'
         +'</tr>';
       sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumNotROem+=notROem;sumNotPOem+=notPOem;sumNotSOem+=notSOem;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;sumTotalHours+=rowTotalHours;
@@ -5349,6 +5353,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart){
 }
 
 function renderTeam(){
+  overviewRenderTarget='team';
   var ma=document.getElementById('mainArea');
   if(!ma)return;
   var days=teamRange||7;
@@ -6158,10 +6163,9 @@ function renderTab(){
     // overviewSelectedIds ist eine globale, von der Team-Performance-Seite mitgenutzte Variable - daher hier sichern und
     // danach wiederherstellen, damit ein spaeterer Besuch der Team-Seite nicht beeinflusst wird.
     (function(){
-      var _savedOverviewSelectedIds=overviewSelectedIds;
       overviewSelectedIds=[emp.id];
-      html+=buildOverviewTab([emp],'performance',true,true);
-      overviewSelectedIds=_savedOverviewSelectedIds;
+      overviewRenderTarget='emp';
+      html+=buildOverviewTab([emp],'performance',true,true,true);
     })();
   }
 
