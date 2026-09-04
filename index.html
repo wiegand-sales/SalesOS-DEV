@@ -5834,15 +5834,87 @@ function renderTeam(){
 
 function selectEmp(id){selectedEmp=id;view='emp';activeTab='performance';renderSidebar();renderMain();}
 
+// ── QA-Spinnendiagramm (Radar): Ø-Bewertung je Kategorie über die letzten n Calls, 0-4 Skala ──
+function buildQaRadarSvg(empId,n){
+  n=n||5;
+  var cats=CALL_CATS.filter(function(cat){return cat.key!=='opener'&&cat.key!=='zusammenfassung';});
+  var callRat=(callRatings[empId]||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,n);
+  var vals=cats.map(function(cat){
+    var cvals=callRat.map(function(r){return catAvg(r,cat);}).filter(function(v){return v>0;});
+    return cvals.length?cvals.reduce(function(a,b){return a+b;},0)/cvals.length:0;
+  });
+  var cx=110,cy=100,R=58;
+  var N=cats.length;
+  function pt(i,frac){
+    var ang=-Math.PI/2+i*(2*Math.PI/N);
+    return [cx+Math.cos(ang)*R*frac, cy+Math.sin(ang)*R*frac];
+  }
+  var svg='<svg viewBox="0 0 220 200" width="220" height="180" style="max-width:100%;max-height:100%;display:block;margin:0 auto">';
+  // Gitter (25/50/75/100%)
+  [0.25,0.5,0.75,1].forEach(function(frac){
+    var pts=[];
+    for(var i=0;i<N;i++){pts.push(pt(i,frac).join(','));}
+    svg+='<polygon points="'+pts.join(' ')+'" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>';
+  });
+  // Achsen
+  for(var i=0;i<N;i++){
+    var p=pt(i,1);
+    svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>';
+  }
+  // Werte-Polygon
+  var valPts=vals.map(function(v,i){return pt(i,Math.min(v/4,1)).join(',');});
+  svg+='<polygon points="'+valPts.join(' ')+'" fill="#7ED2DB" fill-opacity="0.32" stroke="#7ED2DB" stroke-width="2"/>';
+  vals.forEach(function(v,i){
+    var p=pt(i,Math.min(v/4,1));
+    svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="#7ED2DB"/>';
+  });
+  // Achsen-Beschriftungen
+  cats.forEach(function(cat,i){
+    var lp=pt(i,1.28);
+    var anchor=Math.abs(lp[0]-cx)<4?'middle':(lp[0]>cx?'start':'end');
+    svg+='<text x="'+lp[0]+'" y="'+lp[1]+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="9.5" fill="#cfe7e9" font-family="-apple-system,sans-serif">'+esc(cat.short)+'</text>';
+  });
+  svg+='</svg>';
+  var avgAll=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0;
+  return {svg:svg,avg:avgAll,n:callRat.length};
+}
+
 // ── EMP DETAIL ──
 var empBannerViewMode='performance'; // eigener Banner-Status fuer die Mitarbeiterseite, komplett unabhaengig vom globalen bannerViewMode
 function setEmpBannerViewMode(m){empBannerViewMode=m;renderEmpDetail();}
 function buildEmpBannerHtml(emp){
-  var dots='<div onclick="setEmpBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#7ED2DB;cursor:pointer" title="Performance"></div>'
-    +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
+  var dotsFor=function(active){
+    return ['performance','qa'].map(function(k){
+      var isActive=active===k;
+      return '<div onclick="setEmpBannerViewMode(\''+k+'\')" style="width:'+(isActive?'20px':'7px')+';height:7px;border-radius:'+(isActive?'4px':'50%')+';background:'+(isActive?'#7ED2DB':'rgba(255,255,255,0.25)')+';cursor:pointer" title="'+(k==='performance'?'Performance':'QA-Übersicht')+'"></div>';
+    }).join('')
     +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
     +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>';
-  return buildBannerSlide1Html([emp],dots,0);
+  };
+  if(empBannerViewMode==='qa'){
+    var radar=buildQaRadarSvg(emp.id,5);
+    var h='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:0;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="display:flex;height:195px">';
+    h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
+    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
+      +renderOemTileHtml([emp])
+      +'</div>';
+    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
+      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
+      +renderOptGesHeuteTileHtml([emp])
+      +'</div>'
+      +'</div>';
+    h+='</div>';
+    h+='<div style="flex:1;min-width:0;padding:0 4px 0 8px;display:flex;flex-direction:column;height:195px">';
+    h+='<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:2px">QA-ÜBERSICHT · Ø '+radar.avg.toFixed(1)+'/4 über die letzten '+radar.n+' Calls</div>';
+    h+='<div style="flex:1;display:flex;align-items:center;justify-content:center">'+radar.svg+'</div>';
+    h+='</div>';
+    h+='</div>';
+    h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'+dotsFor('qa')+'</div>';
+    h+='</div>';
+    return h;
+  }
+  return buildBannerSlide1Html([emp],dotsFor('performance'),0);
 }
 function renderEmpDetail(){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
