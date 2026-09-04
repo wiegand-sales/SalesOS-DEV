@@ -119,9 +119,9 @@ select{accent-color:#206A72;}select option:checked{background:#206A72;color:#fff
    Nutze wo möglich die Klasse .kpi + .kpi-label/.kpi-val/.kpi-sub statt eigener Inline-Maße. ── */
 .kpi{background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);border-radius:var(--r-lg);padding:12px 14px;border-top:3px solid transparent;box-shadow:0 10px 24px rgba(0,0,0,0.05);transition:box-shadow .18s ease,transform .18s ease;}
 .kpi:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,0.09);}
-.kpi-label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
 .kpi-val{font-size:20px;font-weight:700;}
-.kpi-sub{font-size:10.5px;color:var(--text3);margin-top:2px;}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:2px;}
 /* FORMS */
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
@@ -425,7 +425,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
 <div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Session planen</div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wer & wann</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wer & wann</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
     <div style="position:relative;margin-bottom:10px">
       <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
@@ -443,7 +443,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     <div style="margin-top:10px"><label>Coach</label><select id="sessionCoach"></select></div>
   </div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Was für ein Coaching</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Was für ein Coaching</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
     <div class="f2" style="margin-bottom:10px">
       <div><label>Kategorie</label><select id="sessionKategorie" onchange="onCoachingCategoryChange('sessionKategorie','sessionTyp')"></select></div>
@@ -474,7 +474,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     </div>
   </div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Kontext</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Kontext</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:14px">
     <div id="lastContinueBox"></div>
     <div><label>Anlass / Notiz für den Coach</label><textarea id="sessionNotiz" placeholder="Warum wird diese Session eingeplant? Was soll der Coach beachten..."></textarea></div>
@@ -500,7 +500,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
 <div class="modal-ov hidden" id="neuesCoachingModal"><div class="modal" style="max-height:88vh;overflow-y:auto">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Neue Session erfassen</div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wer & wann</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wer & wann</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
     <div style="position:relative;margin-bottom:10px">
       <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
@@ -517,7 +517,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     </div>
   </div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Was für ein Coaching</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Was für ein Coaching</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
     <div class="f2" style="margin-bottom:10px">
       <div><label>Kategorie</label><select id="sess-category" onchange="onCoachingCategoryChange('sess-category','sess-type')"></select></div>
@@ -531,7 +531,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     </div>
   </div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Rückblick & Kontext</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Rückblick & Kontext</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:14px">
     <div id="ncLastContinueBox"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
@@ -564,7 +564,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
 <div class="modal-ov hidden" id="qaBewertungModal"><div class="modal" style="max-height:88vh;overflow-y:auto">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-phone-plus" style="color:var(--purple)"></i> Neuen Call bewerten</div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Call-Details</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Call-Details</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
     <div style="margin-bottom:10px"><label>Datum</label><input type="date" id="cb-date"></div>
     <div class="f2" style="margin-bottom:10px">
@@ -589,12 +589,12 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     <div><label>Genannter Einwand</label><input type="text" id="cb-einwand" placeholder="z.B. Preis zu hoch, Kündigung läuft"></div>
   </div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Bewertung (1–4 pro Kriterium)</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Bewertung (1–4 pro Kriterium)</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
     <div id="qaScoringSection" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 
-  <div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Notiz</div>
+  <div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Notiz</div>
   <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:14px">
     <div><label>Hinweis / Notiz</label><textarea id="cb-hinweis" rows="2" placeholder="Beobachtungen, Verbesserungspotenzial"></textarea></div>
   </div>
@@ -1631,13 +1631,13 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
 
   function covTile(label,val,col,sub1,sub2){
     return '<div class="card" style="padding:12px 14px;margin-bottom:0">'
-      +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+label+'</div>'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+label+'</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
       +'<div style="font-size:20px;font-weight:700;color:'+col+'">'+val+'</div>'
       +sparkline([],col,54,26)
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3)">'+sub1+'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">'+(sub2||'\u00A0')+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+sub1+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+(sub2||'\u00A0')+'</div>'
       +'</div>';
   }
   var h='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px">'
@@ -1713,9 +1713,9 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
   h+='<div class="card" style="margin-bottom:22px">';
   h+='<div class="card-title"><i class="ti ti-chart-bar"></i> QA-Calls · Sessions · Simulationen <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">(gesamt, Team)</span></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">'
-    +'<div style="background:rgba(126,210,219,0.18);border:1px solid #7ED2DB;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:10.5px;font-weight:700;color:#3f6c72">QA-CALLS</div><div style="font-size:22px;font-weight:700;color:#3f6c72;margin-top:4px">'+totQA+'</div></div>'
-    +'<div style="background:rgba(32,106,114,0.10);border:1px solid #206A72;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:10.5px;font-weight:700;color:#206A72">SESSIONS</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSess+'</div></div>'
-    +'<div style="background:rgba(50,168,180,0.12);border:1px solid #32A8B4;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:10.5px;font-weight:700;color:#206A72">SIMULATIONEN</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSim+'</div></div>'
+    +'<div style="background:rgba(126,210,219,0.18);border:1px solid #7ED2DB;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#3f6c72">QA-CALLS</div><div style="font-size:22px;font-weight:700;color:#3f6c72;margin-top:4px">'+totQA+'</div></div>'
+    +'<div style="background:rgba(32,106,114,0.10);border:1px solid #206A72;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#206A72">SESSIONS</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSess+'</div></div>'
+    +'<div style="background:rgba(50,168,180,0.12);border:1px solid #32A8B4;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#206A72">SIMULATIONEN</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSim+'</div></div>'
     +'</div>';
   h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
     +'<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Mitarbeiter</th>'
@@ -2221,7 +2221,7 @@ function renderCoachingAnsicht(){
       h+='<td style="'+tdStyle+'"><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="selectEmp(\''+x.eid+'\')"><div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.en)+'</div><span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.en+'</span></div>'
         +(r2?'<div style="margin-top:4px"><span class="badge" style="background:'+r2.bg+';color:'+r2.color+'">'+x.r+'</span></div>':'')+'</td>';
       h+='<td style="'+tdStyle+';white-space:nowrap"><div style="font-weight:600">'+mday(x.d)+'</div>'
-        +'<div style="height:15px;font-size:10.5px;color:var(--text3);margin-top:2px">'+(x.uhrzeit?'<i class="ti ti-clock" style="font-size:10px"></i> '+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+(_dur?' ('+formatDuration(_dur)+')':''):'')+'</div></td>';
+        +'<div style="height:15px;font-size:11px;color:var(--text3);margin-top:2px">'+(x.uhrzeit?'<i class="ti ti-clock" style="font-size:10px"></i> '+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+(_dur?' ('+formatDuration(_dur)+')':''):'')+'</div></td>';
       h+='<td style="'+tdStyle+';color:var(--text2)"><div style="'+clampStyleT+'">'+(x.t||'Session')+(x.f?' · '+x.f:'')+'</div></td>';
       h+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyleT+'">'+(x.start&&x.start.trim()?x.start:'<span style="color:var(--text3)">—</span>')+'</div></td>';
       h+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyleT+'">'+(x.stop&&x.stop.trim()?x.stop:'<span style="color:var(--text3)">—</span>')+'</div></td>';
@@ -3068,7 +3068,7 @@ function renderArbeitstageKalenderModal(){
     +['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(d){return '<div style="text-align:center;font-size:10px;font-weight:700;color:#94a4a4;padding-bottom:4px;text-transform:uppercase">'+d+'</div>';}).join('')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">'+cells+'</div>'
-    +'<div style="font-size:10.5px;color:#94a4a4;margin-top:10px">Klicke einen Tag mehrfach: Arbeitstag → Frei → Urlaub → Krank → Arbeitstag …</div>'
+    +'<div style="font-size:11px;color:#94a4a4;margin-top:10px">Klicke einen Tag mehrfach: Arbeitstag → Frei → Urlaub → Krank → Arbeitstag …</div>'
     +'<div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:#5c7070;flex-wrap:wrap">'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#7ED2DB"></span>Arbeitstag</span>'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#f4f6f6;border:1px solid #e3e8e8"></span>Frei</span>'
@@ -3156,7 +3156,7 @@ function wochenzielKachelnHtml(){
         out+='<div style="flex:1 1 120px;min-width:0;border:1px dashed var(--border2);background:rgba(32,106,114,0.04);border-radius:12px;padding:12px;opacity:0.6">'
           +'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">KW '+wm.kw+'</div>'
           +'<div style="font-size:16px;font-weight:700;color:var(--text3)">–</div>'
-          +'<div style="font-size:10.5px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
+          +'<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
           +'<div style="height:5px;background:var(--bg2);border-radius:3px"></div>'
           +'<div style="font-size:11px;color:var(--text3);margin-top:6px">Noch offen</div>'
           +'</div>';
@@ -3165,7 +3165,7 @@ function wochenzielKachelnHtml(){
         out+='<div style="flex:1 1 120px;min-width:0;border:'+(isCur?'2px solid #206A72;background:rgba(32,106,114,0.1)':'1px solid var(--border2);background:rgba(32,106,114,0.06)')+';border-radius:12px;padding:12px">'
           +'<div style="font-size:11px;color:'+(isCur?'#206A72;font-weight:700':'var(--text3)')+';margin-bottom:6px">KW '+wm.kw+(isCur?' · Heute':'')+'</div>'
           +'<div style="font-size:16px;font-weight:700;color:#0c3b40">€ '+Math.round(ist).toLocaleString('de-DE')+'</div>'
-          +'<div style="font-size:10.5px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
+          +'<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
           +'<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden"><div style="width:'+Math.min(pct,100)+'%;height:100%;background:'+barColor+'"></div></div>'
           +'<div style="font-size:11px;font-weight:700;color:'+barColor+';margin-top:6px">'+pct+'%</div>'
           +'</div>';
@@ -3237,7 +3237,7 @@ function zielverlaufJahrChartHtml(){
   }
   barsHtml+='</div>';
   barsHtml+='<div style="display:flex;gap:6px;padding:0 4px;margin-top:8px">';
-  for(var i=0;i<12;i++){barsHtml+='<div style="flex:1;text-align:center;font-size:10.5px;color:var(--text3)">'+MONTH_SHORT_DE[i]+'</div>';}
+  for(var i=0;i<12;i++){barsHtml+='<div style="flex:1;text-align:center;font-size:11px;color:var(--text3)">'+MONTH_SHORT_DE[i]+'</div>';}
   barsHtml+='</div>';
   var h='<div class="card">';
   h+='<div class="card-title" style="margin:0"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-bar" style="color:var(--purple)"></i> Monatliche Zielvereinbarung</span> <span style="font-weight:400;color:var(--text3);font-size:11px">'+yr+'</span></div>';
@@ -3428,7 +3428,7 @@ function zielvereinbarungHtml(){
       }).join('');
       var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
-        +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;cursor:pointer" onclick="openArbeitstageKalender(\''+e.id+'\')" title="Arbeitstage per Kalender festlegen"><div class="av" style="width:28px;height:28px;font-size:10.5px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">'+esc(e.name)+' <i class="ti ti-calendar-event" style="font-size:12px;color:var(--text3)"></i></div><div style="font-size:10.5px;color:var(--text3)">'+e.role+'</div></div></div></div>'
+        +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;cursor:pointer" onclick="openArbeitstageKalender(\''+e.id+'\')" title="Arbeitstage per Kalender festlegen"><div class="av" style="width:28px;height:28px;font-size:11px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">'+esc(e.name)+' <i class="ti ti-calendar-event" style="font-size:12px;color:var(--text3)"></i></div><div style="font-size:11px;color:var(--text3)">'+e.role+'</div></div></div></div>'
         +abwCell(urlaubCount,'urlaub')
         +abwCell(krankCount,'krank')
         +weekCells
@@ -4321,7 +4321,7 @@ function renderOemTileHtml(visible){
     });
   });
   var proLead=count>0?marge/count:0;
-  return '<div><div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OEM</div>'
+  return '<div><div style="font-size:11px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OEM</div>'
     +'<div style="font-size:30px;font-weight:700;line-height:1">'+count+' <span style="font-size:15px;font-weight:500;color:#bcdadd">Stk.</span></div>'
     +'<div style="font-size:11px;color:#8fb5b9;margin-top:4px">Margenerhöhung '+Math.round(marge).toLocaleString('de-DE')+' EUR</div>'
     +'<div style="font-size:11px;color:#8fb5b9">Ø '+Math.round(proLead).toLocaleString('de-DE')+' EUR/Lead</div>'
@@ -4332,7 +4332,7 @@ function renderOptGesHeuteTileHtml(visible){
   var ist=todayActualStat('opt',visible), ziel=todayTargetStat('opt');
   var diff=ist-ziel;
   return '<div><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">OPT. GES. (HEUTE)</div>'
-    +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+ist+' <span style="font-size:10.5px;font-weight:400;color:#9fc9cd">/ '+ziel+' Stk.</span></div>'
+    +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+ist+' <span style="font-size:11px;font-weight:400;color:#9fc9cd">/ '+ziel+' Stk.</span></div>'
     +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">Abw. <span style="color:'+(diff<0?'#e57373':'#7ED2DB')+';font-weight:600">'+(diff>=0?'+':'')+diff+'</span></div>'
     +'</div>';
 }
@@ -5100,20 +5100,20 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       var checked=overviewSelectedIds.indexOf(e.id)>=0;
       h+='<label class="emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:5px 12px;font-size:12.5px;cursor:pointer;border-radius:6px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
         +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleOverviewEmpId(\''+e.id+'\')" style="cursor:pointer;margin:0">'
-        +'<span style="font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.02em">'+e.role+'</span>'
+        +'<span style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.02em">'+e.role+'</span>'
         +'<span>'+esc(e.name)+'</span>'
         +'</label>';
     });
     h+='<div id="overviewEmpNoResults" style="display:none;padding:14px 12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div>';
     h+='</div>';
     var _visIds=visible.map(function(e){return e.id;});
-    h+='<div style="padding:6px 12px 2px;font-size:10.5px;color:var(--text3)">Team</div>';
+    h+='<div style="padding:6px 12px 2px;font-size:11px;color:var(--text3)">Team</div>';
     h+='<div style="padding:0 8px 6px;display:flex;flex-wrap:wrap;gap:2px 6px">';
     [{k:'DE',l:'DE'},{k:'VLC',l:'VLC'},{k:'SR',l:'SR'},{k:'SE',l:'SE'},{k:'OB',l:'OB'}].forEach(function(tg){
-      h+='<span onclick="setOverviewTeamGroup(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'],\''+tg.k+'\')" style="font-size:10.5px;font-weight:600;color:#164e54;padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'+tg.l+'</span>';
+      h+='<span onclick="setOverviewTeamGroup(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'],\''+tg.k+'\')" style="font-size:11px;font-weight:600;color:#164e54;padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'+tg.l+'</span>';
     });
-    h+='<span onclick="setOverviewSelectAll(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'])" style="font-size:10.5px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Alle</span>';
-    h+='<span onclick="setOverviewSelectNone()" style="font-size:10.5px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Keine</span>';
+    h+='<span onclick="setOverviewSelectAll(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'])" style="font-size:11px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Alle</span>';
+    h+='<span onclick="setOverviewSelectNone()" style="font-size:11px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Keine</span>';
     h+='</div>';
     // Anzeige-Modus ganz unten
     h+='<div style="border-top:1px solid var(--border);margin:4px 0 4px"></div>';
@@ -5272,7 +5272,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
       return '<div style="display:flex;flex-direction:column;align-items:'+(align==='left'?'flex-start':'flex-end')+';line-height:1.15">'
         +'<span>'+main+'</span>'
-        +'<span style="font-size:10.5px;color:var(--text3);margin-top:1px;'+(hasSubValue?'':'visibility:hidden;')+(extraStyle||'')+'">'+(hasSubValue?sub:'0')+'</span>'
+        +'<span style="font-size:11px;color:var(--text3);margin-top:1px;'+(hasSubValue?'':'visibility:hidden;')+(extraStyle||'')+'">'+(hasSubValue?sub:'0')+'</span>'
         +'</div>';
     }
     var sumAkt=0,sumNotR=0,sumNotP=0,sumNotS=0,sumNotROem=0,sumNotPOem=0,sumNotSOem=0,sumConvOEM=0,sumTw=0,sumYes=0,sumSy=0,sumMy=0,sumUps=0,sumWka=0,sumOptGes=0,sumMarge=0,sumCrOEM=0,sumCrTW=0,sumCrSY=0,sumCrMY=0,sumTotalHours=0;
@@ -5633,13 +5633,13 @@ function renderTeam(){
       }
       function tile(label,col,wert,unterzeile1,unterzeile2,spark){
         return '<div class="card" style="padding:12px 14px;margin-bottom:0">'
-          +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+label+'</div>'
+          +'<div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">'+label+'</div>'
           +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
           +wert
           +sparkline(spark,col,54,26)
           +'</div>'
-          +'<div style="font-size:10.5px;color:var(--text3)">'+unterzeile1+'</div>'
-          +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">'+unterzeile2+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">'+unterzeile1+'</div>'
+          +'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+unterzeile2+'</div>'
           +'</div>';
       }
       var oemVal=oemD!==null?Math.round(oemD)+'%':'—';
@@ -6059,8 +6059,8 @@ function renderTab(){
     }
     var sessTrend=monthTrend(sessMonthCounts),qaTrend=monthTrend(qaMonthCounts);
     var optSpark=perfSorted.slice(-7).map(function(r){return r.optGesamt;}).filter(function(v){return v!==undefined&&v!==null;});
-    var LBL='font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-    var SUB='font-size:10.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    var LBL='font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    var SUB='font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
     html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px">';
     // Kachel 1: Bei Wiegand seit
     html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
@@ -6185,7 +6185,7 @@ function renderTab(){
     html+='</select>'
       +'</div></div>'
       +'<div style="height:280px;position:relative"><canvas id="empPerfChart"></canvas></div>'
-      +'<div style="display:flex;gap:16px;margin-top:8px;font-size:10.5px;color:var(--text2)">'
+      +'<div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text2)">'
       +'<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:0;border-top:1.5px dashed rgba(32,106,114,0.7);display:inline-block"></span>Coaching zu diesem KPI (Kürzel = Coach)</span>'
       +'<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:0;border-top:1.5px dashed rgba(140,140,140,0.6);display:inline-block"></span>Coaching zu anderem Thema</span>'
       +'</div></div>';
@@ -6240,7 +6240,7 @@ function renderTab(){
      {label:'Abschluss',val:totalCalls?Math.round(abschlussCount/totalCalls*100)+'%':'—',sub:abschlussCount+' von '+totalCalls,col:'#32A8B4',bg:'rgba(50,168,180,0.12)'}
     ].forEach(function(k){
       html+='<div style="background:'+k.bg+';border:1px solid '+k.col+';border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;justify-content:space-between">';
-      html+='<div><div style="font-size:10.5px;font-weight:700;color:'+k.col+'">'+k.label.toUpperCase()+'</div><div style="font-size:10.5px;color:'+k.col+';opacity:0.7;margin-top:1px">'+k.sub+'</div></div>';
+      html+='<div><div style="font-size:11px;font-weight:700;color:'+k.col+'">'+k.label.toUpperCase()+'</div><div style="font-size:11px;color:'+k.col+';opacity:0.7;margin-top:1px">'+k.sub+'</div></div>';
       html+='<div style="font-size:20px;font-weight:700;color:'+k.col+'">'+k.val+'</div>';
       html+='</div>';
     });
@@ -6276,7 +6276,7 @@ function renderTab(){
         html+='<div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-top:12px">';
         html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
           +'<span style="font-size:11.5px;font-weight:700;color:'+cat.col+'">'+cat.label.toUpperCase()+' ('+Math.round(cat.weight*100)+'%)</span>'
-          +'<span style="font-size:10.5px;font-weight:700;color:#fff;background:'+cat.col+';padding:2px 10px;border-radius:10px">Ø '+catAvgVal.toFixed(1)+'</span>'
+          +'<span style="font-size:11px;font-weight:700;color:#fff;background:'+cat.col+';padding:2px 10px;border-radius:10px">Ø '+catAvgVal.toFixed(1)+'</span>'
           +'</div>';
         cat.items.forEach(function(k,idx){
           var v=showCall.scores&&showCall.scores[k]?showCall.scores[k]:0;
@@ -6426,7 +6426,7 @@ function renderTab(){
         var cdims=DIMS.filter(function(d){return d.cat===cat;});
         var avg=(cdims.reduce(function(a,d){return a+(showEval[d.key]||0);},0)/cdims.length).toFixed(1);
         html+='<div style="background:'+CCAT[cat].fill+';border:1px solid '+CCAT[cat].col+';border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;justify-content:space-between">';
-        html+='<div><div style="font-size:10.5px;font-weight:700;color:'+CCAT[cat].col+'">'+CCAT[cat].l.toUpperCase()+'</div><div style="font-size:10.5px;color:'+CCAT[cat].col+';opacity:0.7;margin-top:1px">von 10</div></div>';
+        html+='<div><div style="font-size:11px;font-weight:700;color:'+CCAT[cat].col+'">'+CCAT[cat].l.toUpperCase()+'</div><div style="font-size:11px;color:'+CCAT[cat].col+';opacity:0.7;margin-top:1px">von 10</div></div>';
         html+='<div style="font-size:20px;font-weight:700;color:'+CCAT[cat].col+'">'+avg+'</div>';
         html+='</div>';
       });
@@ -6663,14 +6663,14 @@ function renderTab(){
         return (sess.topics||[]).some(function(t){var dim=SDIMS.find(function(d){return d.key===t;});return dim&&dim.cat===cat;});
       }).reduce(function(sum,sess){return sum+(sessionDuration(sess.uhrzeit,sess.endUhrzeit)||0);},0);
       html+='<div style="background:'+SCCAT[cat].bg+';border:1px solid '+SCCAT[cat].col+';border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;justify-content:space-between">';
-      html+='<div><div style="font-size:10.5px;font-weight:700;color:'+SCCAT[cat].col+'">'+SCCAT[cat].l.toUpperCase()+'</div><div style="font-size:10.5px;color:'+SCCAT[cat].col+';opacity:0.7;margin-top:1px">'+s+' Sessions'+(catDurMin?' · '+formatDuration(catDurMin):'')+'</div></div>';
+      html+='<div><div style="font-size:11px;font-weight:700;color:'+SCCAT[cat].col+'">'+SCCAT[cat].l.toUpperCase()+'</div><div style="font-size:11px;color:'+SCCAT[cat].col+';opacity:0.7;margin-top:1px">'+s+' Sessions'+(catDurMin?' · '+formatDuration(catDurMin):'')+'</div></div>';
       html+='<div style="font-size:20px;font-weight:700;color:'+SCCAT[cat].col+'">'+s+'</div>';
       html+='</div>';
     });
     (function(){
       var totalDurationMin=completedSessions.reduce(function(sum,s){return sum+(sessionDuration(s.uhrzeit,s.endUhrzeit)||0);},0);
       html+='<div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;justify-content:space-between">';
-      html+='<div><div style="font-size:10.5px;font-weight:700;color:var(--text)">GESAMT</div><div style="font-size:10.5px;color:var(--text2);opacity:0.8;margin-top:1px">'+completedSessions.length+' Sessions'+(totalDurationMin?' · '+formatDuration(totalDurationMin):'')+'</div></div>';
+      html+='<div><div style="font-size:11px;font-weight:700;color:var(--text)">GESAMT</div><div style="font-size:11px;color:var(--text2);opacity:0.8;margin-top:1px">'+completedSessions.length+' Sessions'+(totalDurationMin?' · '+formatDuration(totalDurationMin):'')+'</div></div>';
       html+='<div style="font-size:20px;font-weight:700;color:var(--text)">'+completedSessions.length+'</div>';
       html+='</div>';
     })();
@@ -6700,7 +6700,7 @@ function renderTab(){
       html+='<div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-top:12px">';
       html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
         +'<span style="font-size:11.5px;font-weight:700;color:'+SCCAT[cat].col+'">'+SCCAT[cat].l.toUpperCase()+'</span>'
-        +'<span style="font-size:10.5px;font-weight:700;color:#fff;background:'+SCCAT[cat].col+';padding:2px 10px;border-radius:10px">Ø '+catAvgVal.toFixed(1)+'</span>'
+        +'<span style="font-size:11px;font-weight:700;color:#fff;background:'+SCCAT[cat].col+';padding:2px 10px;border-radius:10px">Ø '+catAvgVal.toFixed(1)+'</span>'
         +'</div>';
       cdims.forEach(function(d,idx){
         var v=tc[d.key]||0;
@@ -6774,7 +6774,7 @@ function renderTab(){
         html+='<tr style="'+rowBg+'">';
         html+='<td style="'+tdStyle+';white-space:nowrap">';
         html+='<div style="font-weight:600">'+fd(s.date)+'</div>';
-        html+='<div style="height:15px;font-size:10.5px;color:var(--text3);margin-top:2px">'+(s.uhrzeit?'<i class="ti ti-clock" style="font-size:10px"></i> '+s.uhrzeit+(s.endUhrzeit?'–'+s.endUhrzeit:'')+(_dur?' ('+formatDuration(_dur)+')':''):'')+'</div>';
+        html+='<div style="height:15px;font-size:11px;color:var(--text3);margin-top:2px">'+(s.uhrzeit?'<i class="ti ti-clock" style="font-size:10px"></i> '+s.uhrzeit+(s.endUhrzeit?'–'+s.endUhrzeit:'')+(_dur?' ('+formatDuration(_dur)+')':''):'')+'</div>';
         html+='</td>';
         html+='<td style="'+tdStyle+';color:var(--text2)"><div style="'+clampStyle+'">'+(s.type||'Session')+(s.topics&&s.topics.length?' · '+s.topics.join(', '):'')+'</div><div style="height:16px;color:'+(rm?rm.c:'var(--text3)')+';font-size:11px;font-weight:700;margin-top:2px">'+(rm?s.rating:'')+'</div></td>';
         html+=(function(){
@@ -6919,49 +6919,49 @@ function renderTab(){
     var tenureTxtT=tenureDaysT===null?'—':tenureDaysT<30?tenureDaysT+' Tage':tenureDaysT<365?Math.floor(tenureDaysT/30)+' Monate':(tenureDaysT/365).toFixed(1)+' Jahre';
     html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px">';
     html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-      +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">DABEI SEIT</div>'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">DABEI SEIT</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
       +'<div style="font-size:20px;font-weight:700;color:#206A72">'+tenureTxtT+'</div>'
       +sparkline([],'#206A72',54,26)
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3)">Start '+(emp.startDate?fd(emp.startDate):'—')+'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">&nbsp;</div>'
+      +'<div style="font-size:11px;color:var(--text3)">Start '+(emp.startDate?fd(emp.startDate):'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">&nbsp;</div>'
       +'</div>';
     html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-      +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">OPEN</div>'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">OPEN</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
       +'<div style="font-size:20px;font-weight:700;color:var(--purple)">'+openCount+'</div>'
       +sparkline([],'#206A72',54,26)
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3)">'+(openCount===0?'Alles erledigt':'zu erledigen')+'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">&nbsp;</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+(openCount===0?'Alles erledigt':'zu erledigen')+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">&nbsp;</div>'
       +'</div>';
     html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-      +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">OVERDUE</div>'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">OVERDUE</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
       +'<div style="font-size:20px;font-weight:700;color:'+(overdueCount>0?'var(--red)':'var(--teal-dark)')+'">'+overdueCount+'</div>'
       +sparkline([],'#206A72',54,26)
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3)">'+(overdueCount>0?'Frist überschritten':'keine überfällig')+'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">&nbsp;</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+(overdueCount>0?'Frist überschritten':'keine überfällig')+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">&nbsp;</div>'
       +'</div>';
     html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-      +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">IN PROGRESS</div>'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">IN PROGRESS</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
       +'<div style="font-size:20px;font-weight:700;color:#32A8B4">'+inProgressTasks.length+'</div>'
       +sparkline([],'#206A72',54,26)
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3)">in Bearbeitung</div>'
-      +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">&nbsp;</div>'
+      +'<div style="font-size:11px;color:var(--text3)">in Bearbeitung</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">&nbsp;</div>'
       +'</div>';
     html+='<div class="card" style="padding:12px 14px;margin-bottom:0">'
-      +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">COMPLETED</div>'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px">COMPLETED</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
       +'<div style="font-size:20px;font-weight:700;color:var(--teal-dark)">'+doneTasks.length+'</div>'
       +sparkline([],'#206A72',54,26)
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3)">'+(empTasks.length>0?Math.round(doneTasks.length/empTasks.length*100)+'% abgeschlossen':'noch keine Aufgaben')+'</div>'
-      +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">&nbsp;</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+(empTasks.length>0?Math.round(doneTasks.length/empTasks.length*100)+'% abgeschlossen':'noch keine Aufgaben')+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">&nbsp;</div>'
       +'</div>';
     html+='</div>';
 
@@ -7185,7 +7185,7 @@ function renderTab(){
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border-radius:var(--r-md)">'
             +'<i class="ti ti-file-text" style="font-size:16px;color:var(--purple);flex-shrink:0"></i>'
             +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+d.filename+'</div>'
-            +'<div style="font-size:10.5px;color:var(--text3)">'+fd(d.uploadedAt?d.uploadedAt.slice(0,10):'')+(d.description?' · '+d.description:'')+'</div></div>'
+            +'<div style="font-size:11px;color:var(--text3)">'+fd(d.uploadedAt?d.uploadedAt.slice(0,10):'')+(d.description?' · '+d.description:'')+'</div></div>'
             +'<button class="btn btn-sm" data-id="'+d.id+'" onclick="downloadEmpDocument(this.dataset.id)"><i class="ti ti-download"></i></button>'
             +'<button class="btn btn-sm" data-id="'+d.id+'" style="color:var(--red)" onclick="deleteEmpDocument(this.dataset.id)"><i class="ti ti-trash"></i></button>'
             +'</div>';
@@ -7602,12 +7602,12 @@ function renderEinstellungen(){
     +'<span style="background:var(--teal-bg);color:var(--teal);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0">Aktiv · stündlich</span>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 100px;gap:10px;margin-bottom:10px">'
-    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">SFTP-Host</label><input type="text" id="ftpHost" placeholder="ftp.beispiel.de" value="'+esc(settings.ftpHost||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
-    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">Port</label><input type="text" id="ftpPort" placeholder="22" value="'+esc(settings.ftpPort||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">SFTP-Host</label><input type="text" id="ftpHost" placeholder="ftp.beispiel.de" value="'+esc(settings.ftpHost||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">Port</label><input type="text" id="ftpPort" placeholder="22" value="'+esc(settings.ftpPort||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
-    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">Benutzername</label><input type="text" id="ftpUser" placeholder="ftp-user" value="'+esc(settings.ftpUser||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
-    +'<div><label style="font-size:10.5px;color:var(--text2);font-weight:600">Dateiname</label><input type="text" id="ftpFile" placeholder="user_activity.csv" value="'+esc(settings.ftpFile||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">Benutzername</label><input type="text" id="ftpUser" placeholder="ftp-user" value="'+esc(settings.ftpUser||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
+    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">Dateiname</label><input type="text" id="ftpFile" placeholder="user_activity.csv" value="'+esc(settings.ftpFile||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
     +'</div>'
     +'<div style="background:var(--amber-bg,#FCEFD8);border-radius:var(--r-md);padding:10px 12px;display:flex;gap:9px;align-items:flex-start;margin-bottom:12px">'
     +'<i class="ti ti-lock" style="font-size:15px;color:var(--amber-dark,#a15c05);flex-shrink:0;margin-top:1px"></i>'
@@ -7726,7 +7726,7 @@ function openCoachingEval(empId){
 
   // Date input
   var sec1=document.createElement('div');
-  sec1.style.cssText='font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
+  sec1.style.cssText='font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
   sec1.textContent='① Bewertungsdatum';
   box.appendChild(sec1);
   var sec1body=document.createElement('div');
@@ -7747,7 +7747,7 @@ function openCoachingEval(empId){
   box.appendChild(sec1body);
 
   var sec2=document.createElement('div');
-  sec2.style.cssText='font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
+  sec2.style.cssText='font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
   sec2.textContent='② Bewertung (Skill / Will / Result)';
   box.appendChild(sec2);
   var sec2body=document.createElement('div');
@@ -7787,7 +7787,7 @@ function openCoachingEval(empId){
 
   // Note
   var sec3=document.createElement('div');
-  sec3.style.cssText='font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
+  sec3.style.cssText='font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
   sec3.textContent='③ Notiz';
   box.appendChild(sec3);
   var sec3body=document.createElement('div');
@@ -9242,7 +9242,7 @@ function openCoachingInfoModal(empId){
 
   var h='<div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-history" style="color:var(--purple)"></i> Coaching-Historie · '+esc(emp.name)+'</div>';
 
-  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Übersicht</div>';
+  h+='<div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Übersicht</div>';
   h+='<div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">';
   h+='<div style="display:flex;gap:10px;margin-bottom:10px">'
     +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#0c3b40">'+total+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Gesamt</div></div>'
@@ -9255,7 +9255,7 @@ function openCoachingInfoModal(empId){
     h+='<div style="font-size:11.5px;color:var(--text2)">Haupt-Coach: <b style="color:#0c3b40">'+esc(mainCoach.name)+'</b> ('+coachCounts[mainCoachId]+'× von '+total+')</div>';
   }
   if(alleEffekte.length){
-    h+='<div style="font-size:10.5px;color:var(--text3);margin-top:4px">Effekt = Ø-Veränderung des hinterlegten Ziel-KPI 14 Tage vor/nach der Session, in Zielrichtung normalisiert (basiert auf '+alleEffekte.length+' von '+total+' Sessions mit Ziel-KPI)</div>';
+    h+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Effekt = Ø-Veränderung des hinterlegten Ziel-KPI 14 Tage vor/nach der Session, in Zielrichtung normalisiert (basiert auf '+alleEffekte.length+' von '+total+' Sessions mit Ziel-KPI)</div>';
   }
   if(besteSession&&besteSession.eff.delta>0){
     var bd=new Date(besteSession.p.date+'T00:00:00');
@@ -9273,13 +9273,13 @@ function openCoachingInfoModal(empId){
   }
   h+='</div>';
 
-  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Notiz</div>';
+  h+='<div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Notiz</div>';
   h+='<div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">';
   h+='<textarea id="coachingInfoNotizField" placeholder="Notiz zu diesem Mitarbeiter..." style="width:100%;min-height:70px;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--r-md);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box">'+esc(emp.notes||'')+'</textarea>';
   h+='<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><button class="btn btn-sm" onclick="saveCoachingInfoNotiz(\''+empId+'\')"><i class="ti ti-device-floppy"></i> Notiz speichern</button><span id="coachingInfoNotizStatus" style="font-size:11px;color:var(--text3)"></span></div>';
   h+='</div>';
 
-  h+='<div style="font-size:10.5px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Verlauf</div>';
+  h+='<div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Verlauf</div>';
   h+='<div style="border-left:2px solid var(--border2);padding-left:14px">';
   // Sessions und persoenliche Bestwerte zu einer gemeinsamen, chronologisch sortierten Zeitleiste zusammenfuehren
   var combinedTl=timeline.map(function(p){return {kind:'session',date:p.date,p:p};})
@@ -9310,7 +9310,7 @@ function openCoachingInfoModal(empId){
       h+='<div style="font-size:11.5px;color:var(--text2);margin-top:1px">'+(coach?'Coach: '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):'')+'</div>';
       var eff=sessionEffekt(p);
       if(eff){
-        h+='<div style="margin-top:4px"><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:'+(eff.delta>=0?'#eafaf3':'#fdeeee')+';color:'+(eff.delta>=0?'#2f8f66':'#B23A3A')+'">'+(eff.delta>=0?'+':'')+eff.delta.toFixed(1)+' '+esc(eff.label)+'</span></div>';
+        h+='<div style="margin-top:4px"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:'+(eff.delta>=0?'#eafaf3':'#fdeeee')+';color:'+(eff.delta>=0?'#2f8f66':'#B23A3A')+'">'+(eff.delta>=0?'+':'')+eff.delta.toFixed(1)+' '+esc(eff.label)+'</span></div>';
       }
       h+='</div>';
       // Luecken-Hervorhebung: zur naechsten (aelteren) SESSION (Bestwerte dazwischen werden uebersprungen)
@@ -9391,7 +9391,7 @@ function renderNcEmpDropdown(){
     var checked=ncSelectedEmpIds.indexOf(e.id)>=0;
     h+='<label class="nc-emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
       +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleNcEmpId(\''+e.id+'\')" style="cursor:pointer">'
-      +'<span style="font-size:10.5px;font-weight:700;color:var(--text3)">'+e.role+'</span>'
+      +'<span style="font-size:11px;font-weight:700;color:var(--text3)">'+e.role+'</span>'
       +'<span>'+esc(e.name)+'</span>'
       +'</label>';
   });
@@ -9462,7 +9462,7 @@ function renderSessionEmpDropdown(){
     var checked=sessionSelectedEmpIds.indexOf(e.id)>=0;
     h+='<label class="sess-emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;border-radius:4px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
       +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleSessionEmpId(\''+e.id+'\')" style="cursor:pointer">'
-      +'<span style="font-size:10.5px;font-weight:700;color:var(--text3)">'+e.role+'</span>'
+      +'<span style="font-size:11px;font-weight:700;color:var(--text3)">'+e.role+'</span>'
       +'<span>'+esc(e.name)+'</span>'
       +'</label>';
   });
