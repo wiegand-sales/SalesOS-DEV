@@ -896,7 +896,7 @@ var overviewChartMetric='margeGesamt';
 var overviewChartGroup='week'; // 'day' | 'week' | 'month' - X-Achsen-Granularitaet des Performance-Trend-Charts
 function setOverviewChartGroup(g){overviewChartGroup=g;renderTeam();}
 var empChartMetric='margeGesamt'; // eigenstaendiger Zustand fuer das Mitarbeiter-Performance-Diagramm
-var empChartGroup='week';
+var empChartGroup='day';
 function setEmpChartMetric(v){empChartMetric=v;renderTab();}
 function setEmpChartGroup(g){empChartGroup=g;renderTab();}
 var overviewChartEmpId=null; // null = Team (alle aktiven Mitarbeiter), sonst employee-id
@@ -7472,10 +7472,11 @@ function renderTab(){
         });
       }
 
-      // ── Impact Coaching: unveraendert, arbeitet direkt auf Rohdaten (unabhaengig von Tag/Woche/Monat) ──
+      // ── Impact Coaching: nur bei Tagesansicht sinnvoll (Vergleich 14 Tage vor/nach) ──
       (function(){
         var panel=document.getElementById('coachImpactPanel');
         if(!panel)return;
+        if(empChartGroup!=='day'){panel.innerHTML='';return;}
         var relevant=(protocols[selectedEmp]||[]).filter(function(s){return (s.status!=='geplant'||s.date<=today())&&s.focusMetric===empChartMetric;});
         var fullPerf=(performance[selectedEmp]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
         function avgWindow(centerDate,daysBefore,daysAfter){
