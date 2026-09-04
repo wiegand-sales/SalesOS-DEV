@@ -839,10 +839,10 @@ var overviewSelectedIds=null; // Array ausgewählter Mitarbeiter-IDs in SFP Wieg
 var overviewRenderTarget='team'; // 'team' | 'emp' - steuert ob die Performance-Tabelle im Team-Kontext (renderTeam) oder eingebettet auf der Mitarbeiterseite (renderTab) neu gerendert wird
 function rerenderOverviewContext(){
   var scrollEl=document.getElementById('tabContent');
-  var scrollTop=scrollEl?scrollEl.scrollTop:0;
+  window._overviewScrollRestore=scrollEl?scrollEl.scrollTop:0;
   if(overviewRenderTarget==='emp')renderTab(); else renderTeam();
   var scrollElAfter=document.getElementById('tabContent');
-  if(scrollElAfter)scrollElAfter.scrollTop=scrollTop;
+  if(scrollElAfter)scrollElAfter.scrollTop=window._overviewScrollRestore;
 }
 var overviewDisplayMode='individual'; // 'individual' | 'gesamt' | 'durchschnitt' - steuert ob je Mitarbeiter oder aggregiert angezeigt wird
 function setOverviewDisplayMode(m){overviewDisplayMode=m;rerenderOverviewContext();}
@@ -7484,6 +7484,8 @@ function renderTab(){
           +'<div class="card-title"><i class="ti ti-arrows-diff"></i> Impact Coaching – '+m.l+' <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">(Ø 14 Tage vor vs. nach dem Coaching)</span></div>'
           +visibleRows+toggleHtml+'</div>';
       })();
+      var scrollElAfterChart=document.getElementById('tabContent');
+      if(scrollElAfterChart&&window._overviewScrollRestore!=null)scrollElAfterChart.scrollTop=window._overviewScrollRestore;
     },50);
   }
 }
