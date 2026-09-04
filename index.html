@@ -4309,7 +4309,8 @@ function renderOptGesHeuteTileHtml(visible){
 // Slide 1 (Performance) des Banners - wiederverwendbar fuer den globalen Banner UND den
 // eigenstaendigen Mitarbeiter-Banner. 'visible' kann das gesamte Team oder ein einzelner
 // Mitarbeiter (als Array mit einem Eintrag) sein, 'dotsHtml' ist der jeweilige Karussell-Switcher.
-function buildBannerSlide1Html(visible,dotsHtml){
+function buildBannerSlide1Html(visible,dotsHtml,marginTop){
+  if(marginTop===undefined)marginTop=56;
   var h='';
   var mk=today().slice(0,7);
   var heroSums={optGesamt:0,margeGesamt:0};
@@ -4369,7 +4370,7 @@ function buildBannerSlide1Html(visible,dotsHtml){
   }
   var optOemZiel=avgOptTagZielvereinbarungLocal();
 
-  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:'+marginTop+'px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   h+='<div style="grid-column:span 1;padding-left:14px">'
     +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
@@ -5822,7 +5823,7 @@ function buildEmpBannerHtml(emp){
     +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
     +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>'
     +'<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:default" title="Weitere Slides folgen"></div>';
-  return buildBannerSlide1Html([emp],dots);
+  return buildBannerSlide1Html([emp],dots,0);
 }
 function renderEmpDetail(){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
