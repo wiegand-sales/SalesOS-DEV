@@ -6305,10 +6305,10 @@ function renderTab(){
         var cardId='cr'+emp.id+'x'+rdx;
         var ts=totalScore(r);var tcol=ts>=75?'var(--teal-dark)':ts>=50?'var(--amber-dark)':'var(--red)';
         html+='<div style="background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden">';
-        html+='<div class="sess-hdr" data-eid="'+cardId+'" onclick="toggleSessCard(this.dataset.eid)" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none">';
-        html+='<span style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(r.date)+'</span>';
-        html+='<span style="font-size:11px;color:var(--text2);background:var(--bg-solid);padding:2px 8px;border-radius:20px;flex-shrink:0">'+(r.b2b||'B2C')+'</span>';
-        html+='<span style="font-size:11px;color:'+(r.status==='ja'?'var(--teal-dark)':'var(--red)')+';flex:1">'+(r.status==='ja'?'✓ Abschluss':'✗ Kein Abschluss')+(r.abschlussArt?' · Opt.: '+r.abschlussArt:'')+'</span>';
+        html+='<div class="sess-hdr" data-eid="'+cardId+'" onclick="toggleSessCard(this.dataset.eid)" style="display:flex;align-items:center;gap:10px;padding:16px 14px;cursor:pointer;user-select:none;font-size:13px">';
+        html+='<span style="font-size:13px;font-weight:700;white-space:nowrap">'+fd(r.date)+'</span>';
+        html+='<span style="font-size:13px;color:var(--text2);background:var(--bg-solid);padding:2px 8px;border-radius:20px;flex-shrink:0">'+(r.b2b||'B2C')+'</span>';
+        html+='<span style="font-size:13px;color:'+(r.status==='ja'?'var(--teal-dark)':'var(--red)')+';flex:1">'+(r.status==='ja'?'✓ Abschluss':'✗ Kein Abschluss')+(r.abschlussArt?' · Opt.: '+r.abschlussArt:'')+'</span>';
         html+='<span style="font-size:13px;font-weight:700;color:'+tcol+';flex-shrink:0">'+ts.toFixed(0)+'</span>';
         html+='<span id="arr-'+cardId+'" style="color:var(--text3);font-size:12px;flex-shrink:0;transition:transform .2s">▾</span></div>';
         html+='<div id="body-'+cardId+'" style="display:none;border-top:1px solid var(--border)">';
