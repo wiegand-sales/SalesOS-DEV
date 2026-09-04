@@ -4837,9 +4837,16 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   var HIDDEN=[];
   var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;}).slice().sort(function(a,b){return a.name.localeCompare(b.name);});
   if(!visible.length)return '<div class="card" style="text-align:center;color:var(--text3);padding:40px">Keine Mitarbeiter vorhanden</div>';
-  if(!overviewSelectedIds){overviewSelectedIds=visible.map(function(e){return e.id;});}
-  overviewSelectedIds=overviewSelectedIds.filter(function(id){return visible.some(function(e){return e.id===id;});});
-  var selectedEmps=visible.filter(function(e){return overviewSelectedIds.indexOf(e.id)>=0;});
+  var selectedEmps;
+  if(hideMemberCol){
+    // Eingebettete Mitarbeiteransicht: komplett unabhaengig von der globalen Team-Auswahl (overviewSelectedIds).
+    // Sonst wuerde ein Besuch der Mitarbeiterseite die Auswahl auf der Team-Performance-Seite veraendern und umgekehrt.
+    selectedEmps=visible.slice();
+  } else {
+    if(!overviewSelectedIds){overviewSelectedIds=visible.map(function(e){return e.id;});}
+    overviewSelectedIds=overviewSelectedIds.filter(function(id){return visible.some(function(e){return e.id===id;});});
+    selectedEmps=visible.filter(function(e){return overviewSelectedIds.indexOf(e.id)>=0;});
+  }
   var isAll=selectedEmps.length!==1;
   var emp=isAll?null:selectedEmps[0];
   var empT=isAll?null:empTargets(emp);
@@ -6242,13 +6249,10 @@ function renderTab(){
       +'</div></div>';
     html+='<div id="coachImpactPanel"></div>';
     // Tabelle: dieselbe Performance-Tabelle wie unter SFP Wiegand -> Performance, aber fest auf diesen einen Mitarbeiter eingestellt.
-    // overviewSelectedIds ist eine globale, von der Team-Performance-Seite mitgenutzte Variable - daher hier sichern und
-    // danach wiederherstellen, damit ein spaeterer Besuch der Team-Seite nicht beeinflusst wird.
-    (function(){
-      overviewSelectedIds=[emp.id];
-      overviewRenderTarget='emp';
-      html+=buildOverviewTab([emp],'performance',true,true,true);
-    })();
+    // Der letzte Parameter (hideMemberCol=true) sorgt dafuer, dass buildOverviewTab hierfuer die globale
+    // overviewSelectedIds-Variable komplett ignoriert - keine Interaktion mit der Team-Performance-Seite.
+    overviewRenderTarget='emp';
+    html+=buildOverviewTab([emp],'performance',true,true,true);
   }
 
 
