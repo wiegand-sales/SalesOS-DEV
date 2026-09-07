@@ -8277,6 +8277,7 @@ function buildProvisionTeamTable(){
     rows.forEach(function(g){allRows.push({emp:emp,g:g});});
   });
   allRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
+  var sumKrank=0,sumUrlaub=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumGesamtAkt=0,sumTotalHoursAll=0;
 
   if(!allRows.length){
     h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-file-upload" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Daten für diesen Zeitraum</div>';
@@ -8320,6 +8321,10 @@ function buildProvisionTeamTable(){
           +(calc.mindestleistungGreift?' · Mindestleistung unterschritten (§5)':'')
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
+      sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;
+      sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
+      sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0);
+      sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
       var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
@@ -8343,6 +8348,60 @@ function buildProvisionTeamTable(){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
         +'</tr>';
     });
+    if(allRows.length>1){
+      var n=allRows.length;
+      var sumCrOEM=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
+      var sumCrTW=(sumRawTw+sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawTw/(sumRawTw+sumRawYes+sumRawSy+sumRawMy)*100):0;
+      var sumCrSY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawSy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
+      var sumCrMY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawMy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
+      var sumCrSyMy=sumCrSY+sumCrMY;
+      var sumAnteilOem=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
+      var sumAktPerStd=sumTotalHoursAll>0?(sumGesamtAkt/sumTotalHoursAll):0;
+      var sumOptPerStd=sumTotalHoursAll>0?(sumOptGes/sumTotalHoursAll):0;
+      var sumMargeProOpt=sumOptGes>0?(sumMarge/sumOptGes):0;
+      var sumAbzugPct=(sumAbzug+sumProvision)>0?Math.round(sumAbzug/(sumAbzug+sumProvision)*100):0;
+      var sumProvisionPct=100-sumAbzugPct;
+      h+='<tr class="perf-sum-row" style="background:#0c3b40;color:#fff">'
+        +'<td style="padding:13px 14px;font-weight:700" colspan="2">Σ Summe</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumKrank,null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumUrlaub,null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumAktPerStd.toFixed(1),sumGesamtAkt)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumOptGes>0?Math.round(sumOEM/sumOptGes*100)+'%':'—'),(sumOptGes>0?sumOEM:'—'))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumOptGes>0?Math.round(sumUps/sumOptGes*100)+'%':'—'),(sumOptGes>0?sumUps:'—'))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumOptGes>0?Math.round(sumWka/sumOptGes*100)+'%':'—'),(sumOptGes>0?sumWka:'—'))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumOptGes,null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumOptPerStd.toFixed(1),null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrOEM+'%',sumOEM)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrTW+'%',sumRawTw)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrSyMy+'%',sumRawSy+sumRawMy)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrSY+'%',sumRawSy)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrMY+'%',sumRawMy)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumAnteilOem+'%',sumOEM)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell('€'+Math.round(sumMarge).toLocaleString('de-DE'),(sumOptGes>0?'€'+sumMargeProOpt.toFixed(0)+' Ø/Opt.':null))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#ffb3b3">'+stackCell('−€'+Math.round(sumAbzug).toLocaleString('de-DE'),sumAbzugPct+'%')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#7ED2DB">'+stackCell('€'+Math.round(sumProvision).toLocaleString('de-DE'),sumProvisionPct+'%')+'</td>'
+        +'</tr>';
+      h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
+        +'<td style="padding:13px 14px;font-weight:700" colspan="2">Ø Durchschnitt</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumKrank/n).toFixed(1),null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumUrlaub/n).toFixed(1),null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumAktPerStd.toFixed(1),Math.round(sumGesamtAkt/n))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumOptGes>0?Math.round(sumOEM/sumOptGes*100)+'%':'—'),(n>0?(sumOEM/n).toFixed(1):'—'))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumOptGes>0?Math.round(sumUps/sumOptGes*100)+'%':'—'),(n>0?(sumUps/n).toFixed(1):'—'))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumOptGes>0?Math.round(sumWka/sumOptGes*100)+'%':'—'),(n>0?(sumWka/n).toFixed(1):'—'))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumOptGes/n).toFixed(1),null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumOptPerStd.toFixed(1),null)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrOEM+'%',(sumOEM/n).toFixed(1))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrTW+'%',(sumRawTw/n).toFixed(1))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrSyMy+'%',((sumRawSy+sumRawMy)/n).toFixed(1))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrSY+'%',(sumRawSy/n).toFixed(1))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrMY+'%',(sumRawMy/n).toFixed(1))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumAnteilOem+'%',(sumOEM/n).toFixed(1))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell('€'+Math.round(sumMarge/n).toLocaleString('de-DE'),(sumOptGes>0?'€'+sumMargeProOpt.toFixed(0)+' Ø/Opt.':null))+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:var(--red)">'+stackCell('−€'+Math.round(sumAbzug/n).toLocaleString('de-DE'),sumAbzugPct+'%')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:var(--teal-dark)">'+stackCell('€'+Math.round(sumProvision/n).toLocaleString('de-DE'),sumProvisionPct+'%')+'</td>'
+        +'</tr>';
+    }
     h+='</tbody></table></div>';
   }
   h+='</div>';
