@@ -4525,14 +4525,15 @@ function buildGlobalBannerHtml(visible){
     var yr=today().slice(0,4);
     var MONTH_SHORT_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
     var zielNlArr=[],zielMargeArr=[],erzieltArr=[];
-    function barTile(label,ist,ziel){
+    function barTile(label,ist,ziel,big){
       var pct=ziel>0?Math.min(100,Math.round(ist/ziel*100)):(ist>0?100:0);
       var diff=ist-ziel;
       var diffTxt=(diff>=0?'+':'')+Math.round(diff).toLocaleString('de-DE')+' €';
       var barCol=diff>=0?'#7ED2DB':'#e57373';
+      var fs=big?30:18;
       return '<div style="padding:4px 14px">'
         +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:6px">'+label.toUpperCase()+'</div>'
-        +'<div style="font-size:30px;font-weight:700;line-height:1;margin-bottom:5px">'+Math.round(ist).toLocaleString('de-DE')+' <span style="font-size:15px;font-weight:500;color:#bcdadd">€</span></div>'
+        +'<div style="font-size:'+fs+'px;font-weight:700;line-height:1;margin-bottom:5px">'+Math.round(ist).toLocaleString('de-DE')+' <span style="font-size:'+(big?15:11)+'px;font-weight:500;color:#bcdadd">€</span></div>'
         +'<div style="height:9px;background:rgba(255,255,255,0.14);border-radius:5px;position:relative;overflow:visible">'
         +'<div style="height:100%;border-radius:5px;width:'+pct+'%;background:'+barCol+'"></div>'
         +'<div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;left:100%"></div>'
@@ -4584,10 +4585,10 @@ function buildGlobalBannerHtml(visible){
     h+='<div style="display:flex;height:'+CH2+'px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
-      +barTile('Ist Marge/Mon.',istMargeMon,zielNlMon)
+      +barTile('Ist Marge/Mon.',istMargeMon,zielNlMon,true)
       +'</div>';
     h+='<div style="min-height:60px;display:flex;align-items:center">'
-      +barTile('Margenerhöhung (Monat)',margeMonatIst,margeMonatZiel)
+      +barTile('Margenerhöhung (Monat)',margeMonatIst,margeMonatZiel,false)
       +'</div>';
     h+='</div>'; // Ende linke Spalte
     h+='<div style="flex:1;display:flex;align-items:flex-end;gap:10px;padding:0 4px 0 18px">';
