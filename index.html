@@ -354,6 +354,14 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     </div>
   </div>
 </div>
+<div class="wizard-overlay hidden" id="dailyWizardOverlay">
+  <div class="wizard-card" style="width:420px;min-height:0">
+    <div class="wizard-body" id="dailyWizardBody" style="padding:32px 28px 24px"></div>
+    <div class="wizard-footer" style="justify-content:flex-end">
+      <button class="wizard-next-btn" onclick="closeDailyWizard()">Verstanden</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODALS -->
 <div class="modal-ov hidden" id="addEmpModal"><div class="modal">
@@ -1316,6 +1324,7 @@ function initAppAfterLogin(){
         window._freshLoginClick=false;
         openLoginWizard();
       }
+      checkDailyWizard(); // pruefen ob der taegliche 13-Uhr-Ueberblick sofort beim Laden faellig ist
     });
   });
 }
@@ -1579,6 +1588,70 @@ function openLoginWizard(){
 function closeLoginWizard(){
   document.getElementById('loginWizardOverlay').classList.add('hidden');
 }
+// ── Taeglicher Team-Ueberblick-Wizard (13 Uhr) ──
+function closeDailyWizard(){
+  document.getElementById('dailyWizardOverlay').classList.add('hidden');
+  localStorage.setItem('dailyWizardShownDate',today());
+}
+function buildDailyWizardHtml(){
+  var visible=employees.filter(function(e){return !e.isPureCoach&&e.active!==false;});
+  var mk=today().slice(0,7);
+  var margeMonat=0;
+  visible.forEach(function(e){
+    (performance[e.id]||[]).forEach(function(x){
+      if((x.date||'').slice(0,7)!==mk)return;
+      margeMonat+=x.margeGesamt||x.margin||0;
+    });
+  });
+  function teamCrAvg(key){
+    var vals=visible.map(function(e){return monthAvg(e.id,key,0);}).filter(function(v){return v!==null;});
+    return vals.length?Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length):null;
+  }
+  var crOem=teamCrAvg('crOEM'), crTw=teamCrAvg('crTeilweise'), crSyMy=teamCrAvg('crSyMy');
+  if(crSyMy===null){
+    // Fallback falls crSyMy nicht direkt als Monatsmittel existiert: aus SY + MY zusammensetzen
+    var sy=teamCrAvg('crSuperYes'), my=teamCrAvg('crMegaYes');
+    crSyMy=(sy!==null&&my!==null)?Math.round(sy+my):null;
+  }
+  var todayStr=today();
+  var worst3=visible.map(function(e){
+    var cr=monthAvg(e.id,'crMegaYes',0);
+    var margeHeute=0;
+    (performance[e.id]||[]).forEach(function(x){if(x.date===todayStr)margeHeute+=x.margeGesamt||x.margin||0;});
+    return {name:e.name,cr:cr,margeHeute:margeHeute};
+  }).filter(function(x){return x.cr!==null;}).sort(function(a,b){return a.cr-b.cr;}).slice(0,3);
+  var fmtEur=function(v){return Math.round(v).toLocaleString('de-DE')+' €';};
+  var h='<div style="width:48px;height:48px;border-radius:12px;background:rgba(126,210,219,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px">📊</div>';
+  h+='<div style="font-size:18px;font-weight:700;margin-bottom:4px">Dein Tages-Überblick</div>';
+  h+='<div style="font-size:12.5px;color:#9fc9cd;margin-bottom:20px">'+fd(todayStr)+' · 13:00 Uhr</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">';
+  h+='<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px"><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">MARGE (MONAT)</div><div style="font-size:20px;font-weight:700;margin-top:4px">'+fmtEur(margeMonat)+'</div></div>';
+  h+='<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px"><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">CR OEM (TEAM)</div><div style="font-size:20px;font-weight:700;margin-top:4px">'+(crOem!==null?crOem+'%':'—')+'</div></div>';
+  h+='<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px"><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">CR TW (TEAM)</div><div style="font-size:20px;font-weight:700;margin-top:4px">'+(crTw!==null?crTw+'%':'—')+'</div></div>';
+  h+='<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px"><div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">CR SY/MY (TEAM)</div><div style="font-size:20px;font-weight:700;margin-top:4px">'+(crSyMy!==null?crSyMy+'%':'—')+'</div></div>';
+  h+='</div>';
+  h+='<div style="font-size:11px;font-weight:700;color:#ffb3b3;letter-spacing:.03em;margin-bottom:8px">⚠ SCHWÄCHSTE 3 MITARBEITER (CR MY)</div>';
+  worst3.forEach(function(w){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(229,115,115,0.12);border-radius:8px;margin-bottom:6px;font-size:13px">'
+      +'<span style="font-weight:600">'+esc(w.name)+'</span>'
+      +'<span><span style="color:#cfe7e9;font-weight:500;margin-right:10px">'+fmtEur(w.margeHeute)+'</span><span style="font-weight:700;color:#ffb3b3">'+Math.round(w.cr)+'%</span></span>'
+      +'</div>';
+  });
+  return h;
+}
+function showDailyWizard(){
+  document.getElementById('dailyWizardBody').innerHTML=buildDailyWizardHtml();
+  document.getElementById('dailyWizardOverlay').classList.remove('hidden');
+}
+function checkDailyWizard(){
+  if(!currentUserRole)return; // nur fuer eingeloggte Nutzer
+  var lastShown=localStorage.getItem('dailyWizardShownDate');
+  var now=new Date();
+  if(now.getHours()>=13&&lastShown!==today()){
+    showDailyWizard();
+  }
+}
+setInterval(checkDailyWizard,60000); // jede Minute pruefen, ob 13 Uhr erreicht und heute noch nicht gezeigt
 function wizardNext(){
   if(wizardPage>=wizardPages.length-1){closeLoginWizard();return;}
   wizardPage++;
