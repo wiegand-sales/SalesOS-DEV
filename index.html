@@ -4400,7 +4400,7 @@ function buildBannerSlide1Html(visible,dotsHtml,marginTop){
   }
   var optOemZiel=avgOptTagZielvereinbarungLocal();
 
-  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:'+marginTop+'px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:'+marginTop+'px;height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   h+='<div style="grid-column:span 1;padding-left:14px">'
     +'<div style="font-size:10.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
@@ -4531,7 +4531,7 @@ function buildGlobalBannerHtml(visible){
       var diffTxt=(diff>=0?'+':'')+Math.round(diff).toLocaleString('de-DE')+' €';
       var barCol=diff>=0?'#7ED2DB':'#e57373';
       var fs=big?30:18;
-      return '<div style="padding:4px 14px">'
+      return '<div style="padding:4px 14px;width:100%">'
         +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:6px">'+label.toUpperCase()+'</div>'
         +'<div style="font-size:'+fs+'px;font-weight:700;line-height:1;margin-bottom:5px">'+Math.round(ist).toLocaleString('de-DE')+' <span style="font-size:'+(big?15:11)+'px;font-weight:500;color:#bcdadd">€</span></div>'
         +'<div style="height:9px;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.15);border-radius:5px;position:relative;overflow:visible">'
@@ -4581,7 +4581,7 @@ function buildGlobalBannerHtml(visible){
       });
     });
     var margeMonatZiel=teamMonthZiel(visible,ovMkZiel,true);
-    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:'+CH2+'px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
@@ -4668,7 +4668,7 @@ function buildGlobalBannerHtml(visible){
     var _sessPct=_sessionsZiel>0?Math.min(100,Math.round(_sessionsMonat/_sessionsZiel*100)):0;
     var _sessDiff=_sessionsMonat-_sessionsZiel;
     var _sessBarCol=_sessDiff>=0?'#7ED2DB':'#e57373';
-    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
@@ -4723,7 +4723,7 @@ function buildGlobalBannerHtml(visible){
       _actDays.push(_actByDate[_ads]||0);
     }
     var _actMax=Math.max.apply(null,_actDays.concat([1]));
-    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
@@ -4803,7 +4803,7 @@ function buildGlobalBannerHtml(visible){
     });
     return count;
   }
-  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
+  h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   h+='<div style="grid-column:span 1;padding-left:14px">'+renderOemTileHtml(visible)+'</div>'
     +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(ovLast14WD.map(function(d){return ovCountsForDate(d,'oem');}),'#7ED2DB',300,34,ovLast14WD,function(v){return Math.round(v).toLocaleString('de-DE')+' Stk.';})+'</div>';
