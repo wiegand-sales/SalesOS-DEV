@@ -8202,9 +8202,9 @@ function buildProvisionTable(empId){
   if(!rows.length){
     h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-file-upload" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Daten für diesen Zeitraum</div>';
   } else {
-    h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>';
+    h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse;table-layout:fixed"><thead><tr>';
     ['Monat','Krankheitstage','Urlaubstage','Akt./Std.','OEM','Upsells','WKA','Opt. Ges.','Opt./Std.','CR OEM','CR TW','CR SY/MY','CR SY','CR MY','Anteil OEM','Marge Ges.','Abzug','Provision'].forEach(function(lbl,i){
-      h+='<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:'+(i===0?'left':'right')+';font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">'+lbl+'</th>';
+      h+='<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:'+(i===0?'left':'right')+';font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:'+(i===0?'150px':'80px')+'">'+lbl+'</th>';
     });
     h+='</tr></thead><tbody>';
     rows.forEach(function(g,ridx){
