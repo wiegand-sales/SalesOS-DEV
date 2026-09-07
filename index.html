@@ -8094,8 +8094,10 @@ function openCommentModal(empId){
   document.body.appendChild(overlay);
 }
 // ── PROVISION: komplett eigenstaendige Tabelle, unabhaengig von buildOverviewTab (keine geteilte Zustandsvariable) ──
-var provisionMode='year'; // 'month' | 'year'
-function setProvisionMode(m){provisionMode=m;renderTab();}
+var provisionMode='year'; // 'month' | 'year' | 'custom'
+var provisionCustomMonth=today().slice(0,7);
+function setProvisionCustomMonth(val){provisionMode='custom';provisionCustomMonth=val;if(view==='provisionTeam')renderMain();else renderTab();}
+function setProvisionMode(m){provisionMode=m;if(view==='provisionTeam')renderMain();else renderTab();}
 // ── Provisionsberechnung nach der Provisionsvereinbarung (§2-§5) ──
 function beschaeftigungsmonat(emp,monthKey){
   if(!emp.startDate)return 1;
@@ -8266,14 +8268,16 @@ function buildProvisionTeamTable(){
   [{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
     h+='<button style="padding:0 14px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(provisionMode===it.k?'#164e54':'transparent')+';color:'+(provisionMode===it.k?'#fff':'var(--text2)')+'" onclick="setProvisionMode(\''+it.k+'\')">'+it.l+'</button>';
   });
-  h+='</div></div></div>';
+  h+='</div>';
+  h+='<input type="month" value="'+provisionCustomMonth+'" onchange="setProvisionCustomMonth(this.value)" style="height:34px;padding:0 10px;border:1px solid '+(provisionMode==='custom'?'#164e54':'var(--border2)')+';border-radius:var(--r-md);font-size:12.5px;font-family:inherit;color:var(--text);background:#fff;cursor:pointer">';
+  h+='</div></div>';
 
   // Alle Zeilen aller ausgewaehlten Mitarbeiter zusammenstellen (Mitarbeiter + Monat je Zeile)
   var allRows=[];
   selectedEmps.forEach(function(emp){
     var rowsAll=(performance[emp.id]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
     var grouped=groupPerfRows(rowsAll,'month');
-    var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):grouped;
+    var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):(provisionMode==='custom'?grouped.filter(function(g){return g.key===provisionCustomMonth;}):grouped);
     rows.forEach(function(g){allRows.push({emp:emp,g:g});});
   });
   allRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
@@ -8348,7 +8352,7 @@ function buildProvisionTeamTable(){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
         +'</tr>';
     });
-    if(allRows.length>1){
+    if(allRows.length>=1){
       var n=allRows.length;
       var sumCrOEM=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
       var sumCrTW=(sumRawTw+sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawTw/(sumRawTw+sumRawYes+sumRawSy+sumRawMy)*100):0;
@@ -8439,16 +8443,19 @@ function buildProvisionTable(empId){
   var yr=today().slice(0,4), curMk=today().slice(0,7);
   var rowsAll=(performance[empId]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
   var grouped=groupPerfRows(rowsAll,'month'); // ein Eintrag je Monat, neueste zuerst
-  var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):grouped;
+  var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):(provisionMode==='custom'?grouped.filter(function(g){return g.key===provisionCustomMonth;}):grouped);
   var sumKrank=0,sumUrlaub=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumAktivitaeten=0,sumGesamtAkt=0,sumTotalHoursAll=0;
 
   var h='<div class="card">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
   h+='<div class="card-title" style="margin:0"><i class="ti ti-cash"></i> Provision</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px">';
   h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
   [{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
     h+='<button style="padding:0 14px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(provisionMode===it.k?'#164e54':'transparent')+';color:'+(provisionMode===it.k?'#fff':'var(--text2)')+'" onclick="setProvisionMode(\''+it.k+'\')">'+it.l+'</button>';
   });
+  h+='</div>';
+  h+='<input type="month" value="'+provisionCustomMonth+'" onchange="setProvisionCustomMonth(this.value)" style="height:34px;padding:0 10px;border:1px solid '+(provisionMode==='custom'?'#164e54':'var(--border2)')+';border-radius:var(--r-md);font-size:12.5px;font-family:inherit;color:var(--text);background:#fff;cursor:pointer">';
   h+='</div></div>';
 
   if(!rows.length){
