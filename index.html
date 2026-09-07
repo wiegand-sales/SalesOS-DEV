@@ -7407,26 +7407,34 @@ function renderTab(){
         html+='</div>';
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">§3 KPI-VORGABEN JE BESCHÄFTIGUNGSMONAT</div>';
-        [{key:'monat1',label:'Kalendermonat 1',obj:m1,defs:{optH:2.00,crOem:45,tw:20,sy:30,my:10,oemAnteil:60}},
-         {key:'monat2',label:'Kalendermonat 2',obj:m2,defs:{optH:2.50,crOem:50,tw:20,sy:40,my:20,oemAnteil:80}},
-         {key:'monat3plus',label:'Ab Kalendermonat 3',obj:m3,defs:{optH:3.50,crOem:55,tw:15,sy:40,my:20,oemAnteil:80}}
-        ].forEach(function(mset){
-          html+='<div style="font-size:11px;font-weight:700;color:#206A72;margin:10px 0 6px">'+mset.label+'</div>';
-          html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">';
-          [{lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
-           {lbl:'CR OEM (mind.)',f:'crOem',unit:'%'},
-           {lbl:'TW-Anteil (max.)',f:'tw',unit:'%'},
-           {lbl:'SY-Anteil (mind.)',f:'sy',unit:'%'},
-           {lbl:'MY-Anteil (mind.)',f:'my',unit:'%'},
-           {lbl:'OEM-Anteil (mind.)',f:'oemAnteil',unit:'%'}
-          ].forEach(function(fld){
-            html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:8px 10px">';
-            html+='<div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:5px">'+fld.lbl+'</div>';
-            html+='<div style="display:flex;align-items:center;gap:5px"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:13px;font-weight:700;text-align:center">'+(fld.unit?'<span style="font-size:11px;font-weight:600;color:var(--text2)">'+fld.unit+'</span>':'')+'</div>';
-            html+='</div>';
+        (function(){
+          var monatSets=[{key:'monat1',label:'Monat 1',obj:m1,defs:{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60}},
+           {key:'monat2',label:'Monat 2',obj:m2,defs:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80}},
+           {key:'monat3plus',label:'Ab Monat 3',obj:m3,defs:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80}}
+          ];
+          var fieldRows=[
+            {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
+            {lbl:'CR OEM (mind.) %',f:'crOem',unit:'%'},
+            {lbl:'TW-Anteil (max.) %',f:'tw',unit:'%'},
+            {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
+            {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
+            {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
+            {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'}
+          ];
+          html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:8px"><table style="width:100%;border-collapse:collapse">';
+          html+='<thead><tr><th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px">Kennzahl</th>';
+          monatSets.forEach(function(mset){html+='<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+mset.label+'</th>';});
+          html+='</tr></thead><tbody>';
+          fieldRows.forEach(function(fld,ridx){
+            var rowBg=ridx%2===1?'background:#fafcfc;':'';
+            html+='<tr style="'+rowBg+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1">'+fld.lbl+'</td>';
+            monatSets.forEach(function(mset){
+              html+='<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>';
+            });
+            html+='</tr>';
           });
-          html+='</div>';
-        });
+          html+='</tbody></table></div>';
+        })();
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">§4/§5 REDUZIERUNG</div>';
         html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">';
@@ -8158,9 +8166,9 @@ function provisionKpiSetFor(pv,bm){
 var PROVISION_DEFAULTS={
   basisProOpt:1.00,divOEM:10000,divUpsell:20000,divWka:20000,
   reduktionProKpi:20,mindestprovision:20,mindestleistungOptH:2.50,
-  monat1:{optH:2.00,crOem:45,tw:20,sy:30,my:10,oemAnteil:60},
-  monat2:{optH:2.50,crOem:50,tw:20,sy:40,my:20,oemAnteil:80},
-  monat3plus:{optH:3.50,crOem:55,tw:15,sy:40,my:20,oemAnteil:80}
+  monat1:{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},
+  monat2:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},
+  monat3plus:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80}
 };
 function calculateProvision(emp,monthKey,row,dayCount){
   // Solange fuer diesen Mitarbeiter noch keine individuelle Vereinbarung gespeichert wurde,
@@ -9990,9 +9998,9 @@ function saveProvisionSettings(empId){
     reduktionProKpi:val('pv-reduktionProKpi'),
     mindestprovision:val('pv-mindestprovision'),
     mindestleistungOptH:val('pv-mindestleistungOptH'),
-    monat1:{optH:val('pv-monat1-optH'),crOem:val('pv-monat1-crOem'),tw:val('pv-monat1-tw'),sy:val('pv-monat1-sy'),my:val('pv-monat1-my'),oemAnteil:val('pv-monat1-oemAnteil')},
-    monat2:{optH:val('pv-monat2-optH'),crOem:val('pv-monat2-crOem'),tw:val('pv-monat2-tw'),sy:val('pv-monat2-sy'),my:val('pv-monat2-my'),oemAnteil:val('pv-monat2-oemAnteil')},
-    monat3plus:{optH:val('pv-monat3plus-optH'),crOem:val('pv-monat3plus-crOem'),tw:val('pv-monat3plus-tw'),sy:val('pv-monat3plus-sy'),my:val('pv-monat3plus-my'),oemAnteil:val('pv-monat3plus-oemAnteil')}
+    monat1:{optH:val('pv-monat1-optH'),crOem:val('pv-monat1-crOem'),tw:val('pv-monat1-tw'),sy:val('pv-monat1-sy'),my:val('pv-monat1-my'),syMy:val('pv-monat1-syMy'),oemAnteil:val('pv-monat1-oemAnteil')},
+    monat2:{optH:val('pv-monat2-optH'),crOem:val('pv-monat2-crOem'),tw:val('pv-monat2-tw'),sy:val('pv-monat2-sy'),my:val('pv-monat2-my'),syMy:val('pv-monat2-syMy'),oemAnteil:val('pv-monat2-oemAnteil')},
+    monat3plus:{optH:val('pv-monat3plus-optH'),crOem:val('pv-monat3plus-crOem'),tw:val('pv-monat3plus-tw'),sy:val('pv-monat3plus-sy'),my:val('pv-monat3plus-my'),syMy:val('pv-monat3plus-syMy'),oemAnteil:val('pv-monat3plus-oemAnteil')}
   };
   emp.provisionSettings=settings;
   _savingProvisionSettings=true;
