@@ -8284,7 +8284,7 @@ function buildProvisionTable(empId){
       var sumCrMY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawMy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
       var sumCrSyMy=sumCrSY+sumCrMY;
       var sumAnteilOem=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
-      h+='<tr style="background:#0c3b40;color:#fff">'
+      h+='<tr class="perf-sum-row" style="background:#0c3b40;color:#fff">'
         +'<td style="padding:13px 14px;font-weight:700" colspan="1">Σ Summe</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumKrank+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumUrlaub+'</td>'
@@ -8304,7 +8304,7 @@ function buildProvisionTable(empId){
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#ffb3b3">−€'+Math.round(sumAbzug).toLocaleString('de-DE')+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#7ED2DB">€'+Math.round(sumProvision).toLocaleString('de-DE')+'</td>'
         +'</tr>';
-      h+='<tr style="background:rgba(32,106,114,0.14)">'
+      h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
         +'<td style="padding:13px 14px;font-weight:700">Ø Durchschnitt</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumKrank/n).toFixed(1)+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumUrlaub/n).toFixed(1)+'</td>'
