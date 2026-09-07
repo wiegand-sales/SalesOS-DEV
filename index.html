@@ -6757,6 +6757,7 @@ function renderTab(){
         html+='<span style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(ev.date)+'</span>';
         html+='<span style="flex:1"></span>';
         html+='<span style="font-size:13px;font-weight:700;color:'+avgCol+'">Ø '+overallAvg+'/10</span>';
+        if(canEditHistorie())html+='<button class="btn btn-sm" data-eid="'+emp.id+'" data-vid="'+ev.id+'" onclick="event.stopPropagation();openCoachingEval(this.dataset.eid,this.dataset.vid)" style="padding:2px 8px;height:auto"><i class="ti ti-pencil" style="font-size:12px"></i></button>';
         if(canEditHistorie())html+='<button class="btn btn-sm" data-eid="'+emp.id+'" data-vid="'+ev.id+'" onclick="event.stopPropagation();deleteHistorieEval(this.dataset.eid,this.dataset.vid)" style="padding:2px 8px;height:auto;color:var(--red)"><i class="ti ti-trash" style="font-size:12px"></i></button>';
         html+='<span id="arr-'+eid+'" style="color:var(--text3);font-size:12px;flex-shrink:0;transition:transform .2s">▾</span></div>';
         html+='<div id="body-'+eid+'" style="display:none;border-top:1px solid var(--border)">';
@@ -8627,7 +8628,7 @@ function buildProvisionTable(empId){
   h+='</div>';
   return h;
 }
-function openCoachingEval(empId){
+function openCoachingEval(empId,editEvalId){
   var DIMS=[
     {key:'einwand',label:'Einwandsbehandlung',cat:'skill'},
     {key:'bedarf',label:'Bedarfsanalyse',cat:'skill'},
@@ -8644,7 +8645,8 @@ function openCoachingEval(empId){
   ];
   var CC={skill:{col:'#0c3b40',bg:'rgba(12,59,64,0.08)',l:'Skill'},will:{col:'#164e54',bg:'rgba(22,78,84,0.12)',l:'Will'},result:{col:'#1d6169',bg:'rgba(29,97,105,0.16)',l:'Result'}};
   var existing=(reviews[empId]||[]).filter(function(r){return r.einwand!==undefined;});
-  var last=existing.length?existing.sort(function(a,b){return b.date.localeCompare(a.date);})[0]:null;
+  var editingEntry=editEvalId?existing.find(function(r){return r.id===editEvalId;}):null;
+  var last=editingEntry||(existing.length?existing.sort(function(a,b){return b.date.localeCompare(a.date);})[0]:null);
 
   // Build modal via DOM API - no onclick strings needed
   var overlay=document.createElement('div');
@@ -8657,7 +8659,7 @@ function openCoachingEval(empId){
   // Header
   var hdr=document.createElement('div');
   hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:18px';
-  hdr.innerHTML='<div style="font-size:17px;font-weight:700">Mitarbeiterentwicklung bewerten</div>';
+  hdr.innerHTML='<div style="font-size:17px;font-weight:700">'+(editingEntry?'Bewertung bearbeiten':'Mitarbeiterentwicklung bewerten')+'</div>';
   var closeBtn=document.createElement('button');
   closeBtn.textContent='×';
   closeBtn.style.cssText='background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1';
@@ -8680,7 +8682,7 @@ function openCoachingEval(empId){
   var dateInput=document.createElement('input');
   dateInput.type='date';
   dateInput.id='cev-date';
-  dateInput.value=today();
+  dateInput.value=editingEntry?editingEntry.date:today();
   dateInput.style.cssText='display:block;margin-top:4px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);width:180px';
   dateWrap.appendChild(dateLabel);
   dateWrap.appendChild(dateInput);
@@ -8742,6 +8744,7 @@ function openCoachingEval(empId){
   noteArea.id='cev-note';
   noteArea.rows=2;
   noteArea.placeholder='Beobachtungen, Schwerpunkte...';
+  if(editingEntry&&editingEntry.note)noteArea.value=editingEntry.note;
   noteArea.style.cssText='display:block;margin-top:4px;width:100%;box-sizing:border-box;font-size:12px;padding:8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical';
   noteWrap.appendChild(noteLabel);
   noteWrap.appendChild(noteArea);
@@ -8754,7 +8757,7 @@ function openCoachingEval(empId){
   var saveBtn=document.createElement('button');
   saveBtn.className='btn btn-primary';
   saveBtn.style.flex='1';
-  saveBtn.innerHTML='&#10003; Bewertung speichern';
+  saveBtn.innerHTML=editingEntry?'&#10003; Änderungen speichern':'&#10003; Bewertung speichern';
   saveBtn.onclick=function(){saveCoachEval(empId);};
   var cancelBtn=document.createElement('button');
   cancelBtn.className='btn';
