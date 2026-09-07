@@ -4525,6 +4525,21 @@ function buildGlobalBannerHtml(visible){
     var yr=today().slice(0,4);
     var MONTH_SHORT_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
     var zielNlArr=[],zielMargeArr=[],erzieltArr=[];
+    function barTile(label,ist,ziel){
+      var pct=ziel>0?Math.min(100,Math.round(ist/ziel*100)):(ist>0?100:0);
+      var diff=ist-ziel;
+      var diffTxt=(diff>=0?'+':'')+Math.round(diff).toLocaleString('de-DE')+' €';
+      var barCol=diff>=0?'#7ED2DB':'#e57373';
+      return '<div style="padding:4px 14px">'
+        +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:6px">'+label.toUpperCase()+'</div>'
+        +'<div style="font-size:16px;font-weight:700;margin-bottom:5px">'+Math.round(ist).toLocaleString('de-DE')+' <span style="font-size:11px;font-weight:400;color:#9fc9cd">/ '+Math.round(ziel).toLocaleString('de-DE')+' €</span></div>'
+        +'<div style="height:9px;background:rgba(255,255,255,0.14);border-radius:5px;position:relative;overflow:visible">'
+        +'<div style="height:100%;border-radius:5px;width:'+pct+'%;background:'+barCol+'"></div>'
+        +'<div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;left:100%"></div>'
+        +'</div>'
+        +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:5px">Ziel: <span style="color:'+barCol+';font-weight:600">'+diffTxt+'</span> '+(diff>=0?'über':'unter')+' Ziel</div>'
+        +'</div>';
+    }
     for(var m=1;m<=12;m++){
       var zmk2=yr+'-'+(m<10?'0'+m:m);
       var wMeta2=getMonthWeeksZiel(zmk2);
@@ -4553,16 +4568,26 @@ function buildGlobalBannerHtml(visible){
     var maxV2=Math.max.apply(null,zielNlArr.concat(zielMargeArr).concat(erzieltArr.filter(function(v){return v!=null;})).concat([1]));
     var CH2=195;
     function pct2(v){return v==null?0:Math.max(v>0?2:0,Math.round(v/maxV2*100));}
+    var curMonthIdx=+today().slice(5,7)-1;
+    var istMargeMon=erzieltArr[curMonthIdx]!=null?erzieltArr[curMonthIdx]:0;
+    var zielNlMon=zielNlArr[curMonthIdx]||0;
+    var ovMkZiel=yr+'-'+today().slice(5,7);
+    var margeMonatIst=0;
+    visible.forEach(function(e){
+      (performance[e.id]||[]).forEach(function(x){
+        if((x.date||'').slice(0,7)!==ovMkZiel)return;
+        margeMonatIst+=x.margeGesamt||x.margin||0;
+      });
+    });
+    var margeMonatZiel=teamMonthZiel(visible,ovMkZiel,true);
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:'+CH2+'px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
-    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
-      +renderOemTileHtml(visible)
+    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
+      +barTile('Ist Marge/Mon.',istMargeMon,zielNlMon)
       +'</div>';
-    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
-      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
-      +renderOptGesHeuteTileHtml(visible)
-      +'</div>'
+    h+='<div style="min-height:60px;display:flex;align-items:center">'
+      +barTile('Margenerhöhung (Monat)',margeMonatIst,margeMonatZiel)
       +'</div>';
     h+='</div>'; // Ende linke Spalte
     h+='<div style="flex:1;display:flex;align-items:flex-end;gap:10px;padding:0 4px 0 18px">';
