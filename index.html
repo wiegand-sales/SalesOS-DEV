@@ -8172,6 +8172,7 @@ function buildProvisionTable(empId){
       +'<span style="font-size:11px;font-weight:400;color:var(--text3);margin-top:1px;'+(hasSubValue?'':'visibility:hidden;')+'">'+(hasSubValue?sub:'0')+'</span>'
       +'</div>';
   }
+  function fc(v,t,dir){if(t==null)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
   function urlaubKrankTage(empId,monthKey){
     var rec=(zielStore[monthKey]||{})[empId];
     var urlaub=0,krank=0;
@@ -8187,6 +8188,7 @@ function buildProvisionTable(empId){
   var rowsAll=(performance[empId]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
   var grouped=groupPerfRows(rowsAll,'month'); // ein Eintrag je Monat, neueste zuerst
   var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):grouped;
+  var sumKrank=0,sumUrlaub=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumAktivitaeten=0;
 
   var h='<div class="card">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
@@ -8216,8 +8218,12 @@ function buildProvisionTable(empId){
       var abwTage=urlaubKrankTage(empId,g.key);
       var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
       var aktProStd=row.oem_aktivitaeten&&row.gesamtStunden?(row.oem_aktivitaeten/row.gesamtStunden).toFixed(1):(row.oem_aktivitaeten||0).toFixed(1);
-      var optProStd=(row.optPerH||0).toFixed(1);
+      var optPerH_num=row.optPerH||0;
+      var optProStd=optPerH_num.toFixed(1);
       var calc=calculateProvision(emp,g.key,row);
+      var rowPv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
+      var rowBm=beschaeftigungsmonat(emp,g.key);
+      var rowKpiSet=provisionKpiSetFor(rowPv,rowBm);
       var abzug, provision, provisionTitle='';
       if(calc.provision===null){
         abzug='—';provision='<span style="font-size:10.5px;color:var(--text3);font-weight:400">Keine Vereinbarung</span>';
@@ -8229,6 +8235,9 @@ function buildProvisionTable(empId){
           +(calc.mindestleistungGreift?' · Mindestleistung unterschritten (§5)':'')
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
+      sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;
+      sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
+      sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0);sumAktivitaeten+=optPerH_num;
       var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
       h+='<tr style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCellLeft(g.label,g.count+' Einsatztage')+'</td>'
@@ -8239,18 +8248,67 @@ function buildProvisionTable(empId){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--blue-dark)">'+ups+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--blue-dark)">'+wka+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+optGes+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+optProStd+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(crOEM+'%',convOEM)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crTW+'%',rawTw)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+'">'+optProStd+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+'">'+stackCell(crOEM+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+'">'+stackCell(crTW+'%',rawTw)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crSY+'%',rawSy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crMY+'%',rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(anteilOem+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(crSY,rowKpiSet.sy,'gte')+'">'+stackCell(crSY+'%',rawSy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+'">'+stackCell(crMY+'%',rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+'">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+abzug+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+provision+'</td>'
         +'</tr>';
     });
+    if(rows.length>1){
+      var n=rows.length;
+      var sumCrOEM=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
+      var sumCrTW=(sumRawTw+sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawTw/(sumRawTw+sumRawYes+sumRawSy+sumRawMy)*100):0;
+      var sumCrSY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawSy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
+      var sumCrMY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawMy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
+      var sumCrSyMy=sumCrSY+sumCrMY;
+      var sumAnteilOem=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
+      h+='<tr style="background:#0c3b40;color:#fff">'
+        +'<td style="padding:13px 14px;font-weight:700" colspan="1">Σ Summe</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumKrank+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumUrlaub+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumAktivitaeten/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumOEM+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumUps+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumWka+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumOptGes+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumOptGes/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrOEM+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrTW+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrSyMy+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrSY+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrMY+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumAnteilOem+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">€'+Math.round(sumMarge).toLocaleString('de-DE')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#ffb3b3">−€'+Math.round(sumAbzug).toLocaleString('de-DE')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#7ED2DB">€'+Math.round(sumProvision).toLocaleString('de-DE')+'</td>'
+        +'</tr>';
+      h+='<tr style="background:rgba(32,106,114,0.14)">'
+        +'<td style="padding:13px 14px;font-weight:700">Ø Durchschnitt</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumKrank/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumUrlaub/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumAktivitaeten/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumOEM/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumUps/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumWka/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumOptGes/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+(sumOptGes/n).toFixed(1)+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrOEM+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrTW+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrSyMy+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrSY+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumCrMY+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+sumAnteilOem+'%</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">€'+Math.round(sumMarge/n).toLocaleString('de-DE')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:var(--red)">−€'+Math.round(sumAbzug/n).toLocaleString('de-DE')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:var(--teal-dark)">€'+Math.round(sumProvision/n).toLocaleString('de-DE')+'</td>'
+        +'</tr>';
+    }
     h+='</tbody></table></div>';
   }
   h+='</div>';
