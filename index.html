@@ -8072,7 +8072,7 @@ function openCommentModal(empId){
   document.body.appendChild(overlay);
 }
 // ── PROVISION: komplett eigenstaendige Tabelle, unabhaengig von buildOverviewTab (keine geteilte Zustandsvariable) ──
-var provisionMode='month'; // 'month' | 'year'
+var provisionMode='year'; // 'month' | 'year'
 function setProvisionMode(m){provisionMode=m;renderTab();}
 // ── Provisionsberechnung nach der Provisionsvereinbarung (§2-§5) ──
 function beschaeftigungsmonat(emp,monthKey){
