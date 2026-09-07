@@ -8087,11 +8087,17 @@ function provisionKpiSetFor(pv,bm){
   if(bm===2)return pv.monat2||{};
   return pv.monat3plus||{};
 }
+var PROVISION_DEFAULTS={
+  basisProOpt:1.00,divOEM:10000,divUpsell:20000,divWka:20000,
+  reduktionProKpi:20,mindestprovision:20,mindestleistungOptH:2.50,
+  monat1:{optH:2.00,crOem:45,tw:20,sy:30,my:10,oemAnteil:60},
+  monat2:{optH:2.50,crOem:50,tw:20,sy:40,my:20,oemAnteil:80},
+  monat3plus:{optH:3.50,crOem:55,tw:15,sy:40,my:20,oemAnteil:80}
+};
 function calculateProvision(emp,monthKey,row){
-  var pv=emp.provisionSettings||{};
-  if(!pv.basisProOpt&&pv.basisProOpt!==0){
-    return {basis:null,umsatz:null,regulaer:null,abzug:null,provision:null,fehlendeKpis:[],hinweis:'Keine Provisionsvereinbarung hinterlegt'};
-  }
+  // Solange fuer diesen Mitarbeiter noch keine individuelle Vereinbarung gespeichert wurde,
+  // greifen automatisch die Standardwerte aus der Provisionsvereinbarung (Stand 01/2026)
+  var pv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
   var convTW=row.convTW||0, convYes=row.convYes||0, convSY=row.convSY||0, convMY=row.convMY||0;
   var ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
   var convOEM=row.convOEM||0, optGes=row.optGesamt||(convOEM+ups+wka)||0;
