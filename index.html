@@ -8309,7 +8309,7 @@ function buildProvisionTeamTable(){
   }
   h+='</div>';
   h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
-  [{k:'month',l:'Monat'},{k:'year',l:'Jahr'}].forEach(function(it){
+  [{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
     h+='<button style="padding:0 10px;height:100%;font-size:11.5px;font-weight:500;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;background:'+(provisionMode===it.k?'#164e54':'transparent')+';color:'+(provisionMode===it.k?'#fff':'var(--text2)')+'" onclick="setProvisionMode(\''+it.k+'\')">'+it.l+'</button>';
   });
   h+='</div>';
@@ -8495,7 +8495,7 @@ function buildProvisionTable(empId){
   h+='<div class="card-title" style="margin:0"><i class="ti ti-cash"></i> Provision</div>';
   h+='<div style="display:flex;align-items:center;gap:8px">';
   h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
-  [{k:'month',l:'Monat'},{k:'year',l:'Jahr'}].forEach(function(it){
+  [{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
     h+='<button style="padding:0 10px;height:100%;font-size:11.5px;font-weight:500;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;background:'+(provisionMode===it.k?'#164e54':'transparent')+';color:'+(provisionMode===it.k?'#fff':'var(--text2)')+'" onclick="setProvisionMode(\''+it.k+'\')">'+it.l+'</button>';
   });
   h+='</div>';
