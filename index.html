@@ -7980,7 +7980,9 @@ function openCommentModal(empId){
     });
     // TODO: Supabase-Persistenz analog zu reviews-Speicherung ergaenzen, sobald Tabellen-Spalte vorhanden
     overlay.remove();
-    renderTab();
+    var infoModalOpen=document.getElementById('coachingInfoModal')&&!document.getElementById('coachingInfoModal').classList.contains('hidden');
+    if(infoModalOpen){openCoachingInfoModal(empId);}
+    else{renderTab();}
   };
   footer.appendChild(cancelBtn);
   footer.appendChild(saveBtn);
@@ -9582,11 +9584,17 @@ function openCoachingInfoModal(empId){
   h+='<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><button class="btn btn-sm" onclick="saveCoachingInfoNotiz(\''+empId+'\')"><i class="ti ti-device-floppy"></i> Notiz speichern</button><span id="coachingInfoNotizStatus" style="font-size:11px;color:var(--text3)"></span></div>';
   h+='</div>';
 
-  h+='<div style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Verlauf</div>';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+    +'<span style="font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em">③ Verlauf</span>'
+    +'<button class="btn btn-sm" onclick="openCommentModal(\''+empId+'\')"><i class="ti ti-message-plus"></i> Kommentar</button>'
+    +'</div>';
   h+='<div style="border-left:2px solid var(--border2);padding-left:14px">';
-  // Sessions und persoenliche Bestwerte zu einer gemeinsamen, chronologisch sortierten Zeitleiste zusammenfuehren
+  // Sessions, persoenliche Bestwerte UND Kommentare zu einer gemeinsamen, chronologisch sortierten Zeitleiste zusammenfuehren
+  var infoComments=(reviews[empId]||[]).filter(function(r){return r.isComment;});
+  var commentTypeColInfo={skill:'#0c3b40',will:'#164e54',result:'#1d6169',diverses:'#5c7070'};
   var combinedTl=timeline.map(function(p){return {kind:'session',date:p.date,p:p};})
     .concat(bestEvents.map(function(ev){return {kind:'record',date:ev.date,label:ev.label};}))
+    .concat(infoComments.map(function(c){return {kind:'comment',date:c.date,c:c};}))
     .sort(function(a,b){return b.date.localeCompare(a.date);});
   if(!combinedTl.length){
     h+='<div style="text-align:center;color:var(--text3);padding:20px 0"><i class="ti ti-history" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Sessions vorhanden</div>';
@@ -9595,6 +9603,21 @@ function openCoachingInfoModal(empId){
     h+='<div style="position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--border)"></div>';
     combinedTl.forEach(function(item,idx){
       var dt=new Date(item.date+'T00:00:00');
+      if(item.kind==='comment'){
+        var cc=item.c;
+        var ccol=commentTypeColInfo[cc.commentType]||'#5c7070';
+        h+='<div style="position:relative;padding-bottom:18px">';
+        h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+ccol+';display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff"><i class="ti ti-message-2"></i></div>';
+        h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+'</div>';
+        h+='<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'
+          +'<i class="ti ti-message-2" style="color:'+ccol+';font-size:14px"></i>'
+          +'<span style="font-size:10px;font-weight:700;color:#fff;background:'+ccol+';padding:1px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.03em">'+esc(cc.commentType)+'</span>'
+          +(cc.author?'<span style="font-size:10.5px;color:var(--text3)">'+esc(cc.author)+'</span>':'')
+          +'</div>';
+        h+='<div style="font-size:12.5px;color:var(--text2);margin-top:3px">'+esc(cc.note)+'</div>';
+        h+='</div>';
+        return;
+      }
       if(item.kind==='record'){
         h+='<div style="position:relative;padding-bottom:18px">';
         h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:#174C52;display:flex;align-items:center;justify-content:center"></div>';
