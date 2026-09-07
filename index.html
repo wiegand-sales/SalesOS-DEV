@@ -6324,8 +6324,7 @@ function renderTab(){
 
   // ── PERFORMANCE TAB ──
   if(activeTab==='provision'){
-    overviewRenderTarget='emp';
-    html+='<div id="provisionTableContainer">'+buildOverviewTab([emp],'performance',true,true,true)+'</div>';
+    html+=buildProvisionTable(emp.id);
   }
   if(activeTab==='performance'){
     var empT=empTargets(emp);
@@ -7995,6 +7994,71 @@ function openCommentModal(empId){
 
   overlay.appendChild(box);
   document.body.appendChild(overlay);
+}
+// ── PROVISION: komplett eigenstaendige Tabelle, unabhaengig von buildOverviewTab (keine geteilte Zustandsvariable) ──
+var provisionMode='month'; // 'month' | 'year'
+function setProvisionMode(m){provisionMode=m;renderTab();}
+function buildProvisionTable(empId){
+  var emp=employees.find(function(e){return e.id===empId;});
+  if(!emp)return '<div class="card">Mitarbeiter nicht gefunden</div>';
+  var yr=today().slice(0,4), curMk=today().slice(0,7);
+  var rowsAll=(performance[empId]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
+  var grouped=groupPerfRows(rowsAll,'month'); // ein Eintrag je Monat, neueste zuerst
+  var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):grouped;
+
+  var h='<div class="card">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
+  h+='<div class="card-title" style="margin:0"><i class="ti ti-cash"></i> Provision</div>';
+  h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
+  [{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
+    h+='<button style="padding:0 14px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(provisionMode===it.k?'#164e54':'transparent')+';color:'+(provisionMode===it.k?'#fff':'var(--text2)')+'" onclick="setProvisionMode(\''+it.k+'\')">'+it.l+'</button>';
+  });
+  h+='</div></div>';
+
+  if(!rows.length){
+    h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-file-upload" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Daten für diesen Zeitraum</div>';
+  } else {
+    h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>';
+    ['Monat','Akt./Std.','OEM','Upsells','WKA','Opt. Ges.','Opt./Std.','CR OEM','CR TW','CR SY/MY','CR SY','CR MY','Anteil OEM','Marge Ges.','Abzug','Provision'].forEach(function(lbl){
+      h+='<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">'+lbl+'</th>';
+    });
+    h+='</tr></thead><tbody>';
+    rows.forEach(function(g,ridx){
+      var row=g.row;
+      var convOEM=row.convOEM||0, ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
+      var optGes=row.optGesamt||(convOEM+ups+wka)||0;
+      var marge=row.margeGesamt||row.margin||0;
+      var crOEM=Math.round(row.crOEM||0), crTW=Math.round(row.crTeilweise||0), crSY=Math.round(row.crSuperYes||0), crMY=Math.round(row.crMegaYes||0);
+      var crSyMy=crSY+crMY;
+      var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
+      var aktProStd=row.oem_aktivitaeten&&row.gesamtStunden?(row.oem_aktivitaeten/row.gesamtStunden).toFixed(1):(row.oem_aktivitaeten||0).toFixed(1);
+      var optProStd='—'; // TODO: Formel folgt
+      var abzug='—'; // TODO: Formel folgt
+      var provision='—'; // TODO: Formel folgt
+      var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
+      h+='<tr style="'+rowBg+'">'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+g.label+(provisionMode==='year'?' <span style="font-weight:400;color:var(--text3);font-size:11px">('+g.count+' Tage)</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+aktProStd+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;color:var(--purple)">'+convOEM+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--blue-dark)">'+ups+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;color:var(--blue-dark)">'+wka+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">'+optGes+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+optProStd+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">'+crOEM+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+crTW+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+crSyMy+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+crSY+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+crMY+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+anteilOem+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text3)">'+abzug+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--text3)">'+provision+'</td>'
+        +'</tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  h+='</div>';
+  return h;
 }
 function openCoachingEval(empId){
   var DIMS=[
