@@ -4532,12 +4532,12 @@ function buildGlobalBannerHtml(visible){
       var barCol=diff>=0?'#7ED2DB':'#e57373';
       return '<div style="padding:4px 14px">'
         +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:6px">'+label.toUpperCase()+'</div>'
-        +'<div style="font-size:16px;font-weight:700;margin-bottom:5px">'+Math.round(ist).toLocaleString('de-DE')+' <span style="font-size:11px;font-weight:400;color:#9fc9cd">/ '+Math.round(ziel).toLocaleString('de-DE')+' €</span></div>'
+        +'<div style="font-size:30px;font-weight:700;line-height:1;margin-bottom:5px">'+Math.round(ist).toLocaleString('de-DE')+' <span style="font-size:15px;font-weight:500;color:#bcdadd">€</span></div>'
         +'<div style="height:9px;background:rgba(255,255,255,0.14);border-radius:5px;position:relative;overflow:visible">'
         +'<div style="height:100%;border-radius:5px;width:'+pct+'%;background:'+barCol+'"></div>'
         +'<div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;left:100%"></div>'
         +'</div>'
-        +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:5px">Ziel: <span style="color:'+barCol+';font-weight:600">'+diffTxt+'</span> '+(diff>=0?'über':'unter')+' Ziel</div>'
+        +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:5px">Ziel '+Math.round(ziel).toLocaleString('de-DE')+' € · <span style="color:'+barCol+';font-weight:600">'+diffTxt+'</span> '+(diff>=0?'über':'unter')+' Ziel</div>'
         +'</div>';
     }
     for(var m=1;m<=12;m++){
