@@ -328,6 +328,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
     <div id="wiegandSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Performance</div>
       <div class="sb-item sb-navsub" id="nav-team-coaching" onclick="bannerViewMode='coaching';resetBannerRotation();setCoachFilterView('overview')">Coaching</div>
+      <div class="sb-item sb-navsub" id="nav-team-provision" onclick="selectProvisionTeam()">Provision</div>
       <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivitäten</div>
       <div class="sb-item sb-navsub" id="nav-team-ziel" onclick="selectWiegandSub('ziel')">Zielvereinbarung</div>
     </div>
@@ -845,6 +846,25 @@ var currentCoach = null;      // {id,name,role} falls eingeloggter User ein Coac
 var coachFilterView = 'overview'; // 'overview' | employee-id des Coaches
 var wiegandView='overview'; // 'overview' | 'team' | 'performance' (SFP Wiegand Tab-Navigation) - Overview ist der Standard-Landing-Tab nach dem Login (Performance-Menue entfernt, per Banner-Umschalter in Overview weiterhin erreichbar)
 var overviewSelectedIds=null; // Array ausgewählter Mitarbeiter-IDs in SFP Wiegand > Overview (Mehrfachauswahl)
+var provisionTeamSelectedIds=null; // null = alle Mitarbeiter; sonst Array ausgewaehlter IDs (eigenstaendig, unabhaengig von overviewSelectedIds)
+var provisionTeamDropdownOpen=false;
+var provisionTeamSearchQuery='';
+function toggleProvisionTeamDropdown(){provisionTeamDropdownOpen=!provisionTeamDropdownOpen;if(!provisionTeamDropdownOpen)provisionTeamSearchQuery='';renderProvisionTeam();}
+function toggleProvisionTeamEmpId(id){
+  var visIds=employees.filter(function(e){return !e.isPureCoach&&e.active!==false;}).map(function(e){return e.id;});
+  if(!provisionTeamSelectedIds)provisionTeamSelectedIds=visIds.slice();
+  var idx=provisionTeamSelectedIds.indexOf(id);
+  if(idx>=0)provisionTeamSelectedIds.splice(idx,1);else provisionTeamSelectedIds.push(id);
+  renderProvisionTeam();
+}
+function setProvisionTeamSelectAll(allIds){provisionTeamSelectedIds=allIds.slice();renderProvisionTeam();}
+function setProvisionTeamSelectNone(){provisionTeamSelectedIds=[];renderProvisionTeam();}
+function filterProvisionTeamEmpList(q){
+  q=(q||'').toLowerCase();
+  document.querySelectorAll('#provisionTeamEmpScrollList .emp-opt-row').forEach(function(row){
+    row.style.display=row.dataset.search.indexOf(q)>=0?'grid':'none';
+  });
+}
 var overviewRenderTarget='team'; // 'team' | 'emp' - steuert ob die Performance-Tabelle im Team-Kontext (renderTeam) oder eingebettet auf der Mitarbeiterseite (renderTab) neu gerendert wird
 function rerenderOverviewContext(){
   if(overviewRenderTarget==='emp'){
@@ -3945,9 +3965,10 @@ function renderSidebar(){
   var nto=document.getElementById('nav-team-overview');if(nto)nto.classList.toggle('active',view==='team'&&wiegandView==='overview');
   var ntc=document.getElementById('nav-team-coaching');if(ntc)ntc.classList.toggle('active',view==='coaching'&&coachFilterView==='overview');
   var ntz=document.getElementById('nav-team-ziel');if(ntz)ntz.classList.toggle('active',view==='team'&&wiegandView==='ziel');
-  var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab||view==='activity');
+  var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab||view==='activity'||view==='provisionTeam');
   var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
   var na=document.getElementById('nav-coaching-activity');if(na)na.classList.toggle('active',view==='activity');
+  var ntp=document.getElementById('nav-team-provision');if(ntp)ntp.classList.toggle('active',view==='provisionTeam');
   if(view==='settings')document.getElementById('nav-settings').classList.add('active');
   ['users','integrations','data'].forEach(function(sv){
     var el=document.getElementById('nav-settings-'+sv);if(el)el.classList.toggle('active',view==='settings'&&settingsView===sv);
@@ -4055,6 +4076,7 @@ function showView(v){
   renderSidebar();renderMain();
 }
 function selectCoachingActivity(){view='activity';wiegandNavOpen=true;bannerViewMode='activity';resetBannerRotation();renderSidebar();renderMain();}
+function selectProvisionTeam(){view='provisionTeam';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function closeWiegandSubnav(){
   wiegandNavOpen=false;
   var sub=document.getElementById('wiegandSubNav');if(sub)sub.classList.add('hidden');
@@ -4093,7 +4115,7 @@ function toggleCoachingNav(){
   }
 }
 function selectCoachingTeam(){wiegandView='team';view='team';coachingNavOpen=true;renderSidebar();renderMain();}
-function renderMain(){if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
+function renderMain(){if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
 
 // ── TEAM VIEW ──
 
@@ -8163,6 +8185,168 @@ function calculateProvision(emp,monthKey,row,dayCount){
 
   var abzug=regulaer-finalProvision;
   return {basis:basis,umsatz:umsatz,regulaer:regulaer,abzug:abzug,provision:finalProvision,fehlendeKpis:fehlendeKpis.map(function(c){return c.label;}),mindestleistungGreift:mindestleistungGreift,beschaeftigungsmonat:bm};
+}
+function renderProvisionTeam(){
+  var ma=document.getElementById('mainArea');if(!ma)return;
+  var h='<div class="content">';
+  h+=buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
+  h+=buildProvisionTeamTable();
+  h+='</div>';
+  ma.innerHTML=h;
+}
+function buildProvisionTeamTable(){
+  function stackCell(main,sub){
+    var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
+    return '<div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.15">'
+      +'<span>'+main+'</span>'
+      +'<span style="font-size:11px;color:var(--text3);margin-top:1px;'+(hasSubValue?'':'visibility:hidden;')+'">'+(hasSubValue?sub:'0')+'</span>'
+      +'</div>';
+  }
+  function stackCellLeft(main,sub){
+    var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
+    return '<div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15">'
+      +'<span>'+main+'</span>'
+      +'<span style="font-size:11px;font-weight:400;color:var(--text3);margin-top:1px;'+(hasSubValue?'':'visibility:hidden;')+'">'+(hasSubValue?sub:'0')+'</span>'
+      +'</div>';
+  }
+  function fc(v,t,dir){if(t==null)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
+  function urlaubKrankTage(empId,monthKey){
+    var rec=(zielStore[monthKey]||{})[empId];
+    var urlaub=0,krank=0;
+    if(rec&&rec.arbeitstage){
+      Object.keys(rec.arbeitstage).forEach(function(ds){
+        if(rec.arbeitstage[ds]==='urlaub')urlaub++;
+        else if(rec.arbeitstage[ds]==='krank')krank++;
+      });
+    }
+    return {urlaub:urlaub,krank:krank};
+  }
+  var visible=employees.filter(function(e){return !e.isPureCoach&&e.active!==false;});
+  var selectedEmps=provisionTeamSelectedIds?visible.filter(function(e){return provisionTeamSelectedIds.indexOf(e.id)>=0;}):visible;
+  var isAll=!provisionTeamSelectedIds||provisionTeamSelectedIds.length===visible.length;
+  var selLabel=isAll?'Alle Mitarbeiter':(selectedEmps.length===1?selectedEmps[0].name:selectedEmps.length+' Mitarbeiter ausgewählt');
+  var yr=today().slice(0,4), curMk=today().slice(0,7);
+
+  var h='<div class="card">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
+  h+='<div class="card-title" style="margin:0"><i class="ti ti-cash"></i> Provision <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+selLabel+'</span></div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+  h+='<div style="position:relative" id="provisionTeamEmpDropdownWrap">';
+  h+='<button class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="toggleProvisionTeamDropdown()"><i class="ti ti-users"></i> '+selLabel+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>';
+  if(provisionTeamDropdownOpen){
+    h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:var(--bg-solid);border:1px solid var(--border2);border-radius:10px;box-shadow:0 10px 24px rgba(15,61,66,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
+    h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
+      +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
+      +'<input placeholder="Mitarbeiter suchen…" value="'+esc(provisionTeamSearchQuery)+'" oninput="provisionTeamSearchQuery=this.value;filterProvisionTeamEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
+      +'</div></div>';
+    h+='<div id="provisionTeamEmpScrollList" style="max-height:160px;overflow-y:auto;padding-top:4px">';
+    var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+    var sortedVisible=visible.slice().sort(function(a,b){
+      var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
+      return ra-rb||a.name.localeCompare(b.name);
+    });
+    sortedVisible.forEach(function(e){
+      var checked=isAll||selectedEmps.indexOf(e)>=0;
+      h+='<label class="emp-opt-row" data-search="'+esc(e.name).toLowerCase()+'" style="display:grid;grid-template-columns:20px 38px 1fr;align-items:center;gap:8px;padding:5px 12px;font-size:12.5px;cursor:pointer;border-radius:6px;white-space:nowrap" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">'
+        +'<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleProvisionTeamEmpId(\''+e.id+'\')" style="cursor:pointer;margin:0">'
+        +'<span style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.02em">'+e.role+'</span>'
+        +'<span>'+esc(e.name)+'</span>'
+        +'</label>';
+    });
+    h+='</div>';
+    var _visIds=visible.map(function(e){return e.id;});
+    h+='<div style="border-top:1px solid var(--border);margin:4px 0"></div>';
+    h+='<div style="padding:2px 8px 2px;display:flex;flex-wrap:wrap;gap:2px 6px">';
+    h+='<span onclick="setProvisionTeamSelectAll(['+_visIds.map(function(id){return '\''+id+'\'';}).join(',')+'])" style="font-size:11px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Alle</span>';
+    h+='<span onclick="setProvisionTeamSelectNone()" style="font-size:11px;font-weight:600;color:var(--text2);padding:3px 6px;cursor:pointer;border-radius:5px" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'">Keine</span>';
+    h+='</div></div>';
+  }
+  h+='</div>';
+  h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
+  [{k:'month',l:'Aktueller Monat'},{k:'year',l:'Aktuelles Jahr'}].forEach(function(it){
+    h+='<button style="padding:0 14px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(provisionMode===it.k?'#164e54':'transparent')+';color:'+(provisionMode===it.k?'#fff':'var(--text2)')+'" onclick="setProvisionMode(\''+it.k+'\')">'+it.l+'</button>';
+  });
+  h+='</div></div></div>';
+
+  // Alle Zeilen aller ausgewaehlten Mitarbeiter zusammenstellen (Mitarbeiter + Monat je Zeile)
+  var allRows=[];
+  selectedEmps.forEach(function(emp){
+    var rowsAll=(performance[emp.id]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
+    var grouped=groupPerfRows(rowsAll,'month');
+    var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):grouped;
+    rows.forEach(function(g){allRows.push({emp:emp,g:g});});
+  });
+  allRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
+
+  if(!allRows.length){
+    h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-file-upload" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Daten für diesen Zeitraum</div>';
+  } else {
+    h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse;table-layout:fixed"><thead><tr>';
+    ['Mitarbeiter','Monat','Krankheitstage','Urlaubstage','Akt./Std.','OEM','Upsells','WKA','Opt. Ges.','Opt./Std.','CR OEM','CR TW','CR SY/MY','CR SY','CR MY','Anteil OEM','Marge Ges.','Abzug','Provision'].forEach(function(lbl,i){
+      h+='<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:'+(i<=1?'left':'right')+';font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:'+(i===0?'150px':i===1?'130px':'80px')+'">'+lbl+'</th>';
+    });
+    h+='</tr></thead><tbody>';
+    allRows.forEach(function(item,ridx){
+      var emp=item.emp, g=item.g, row=g.row;
+      var convOEM=row.convOEM||0, ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
+      var optGes=row.optGesamt||(convOEM+ups+wka)||0;
+      var marge=row.margeGesamt||row.margin||0;
+      var crOEM=Math.round(row.crOEM||0), crTW=Math.round(row.crTeilweise||0), crSY=Math.round(row.crSuperYes||0), crMY=Math.round(row.crMegaYes||0);
+      var crSyMy=crSY+crMY;
+      var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
+      var abwTage=urlaubKrankTage(emp.id,g.key);
+      var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
+      var hoursPerDay=(emp.hours||40)/5;
+      var rowTotalHours=hoursPerDay*g.count;
+      var gesamtAktivitaeten=row.gesamtAktivitaeten||row.oem_aktivitaeten||0;
+      var aktPerHour_num=rowTotalHours>0?gesamtAktivitaeten/rowTotalHours:0;
+      var aktProStd=aktPerHour_num.toFixed(1);
+      var optPerH_num=rowTotalHours>0?optGes/rowTotalHours:0;
+      var optProStd=optPerH_num.toFixed(1);
+      var calc=calculateProvision(emp,g.key,row,g.count);
+      var rowPv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
+      var rowBm=beschaeftigungsmonat(emp,g.key);
+      var rowKpiSet=provisionKpiSetFor(rowPv,rowBm);
+      var abzug, provision, provisionTitle='', abzugPct=null, provisionPct=null;
+      if(calc.provision===null){
+        abzug='—';provision='<span style="font-size:10.5px;color:var(--text3);font-weight:400">Keine Vereinbarung</span>';
+      } else {
+        abzug='−€'+Math.round(calc.abzug).toLocaleString('de-DE');
+        provision='€'+Math.round(calc.provision).toLocaleString('de-DE');
+        provisionPct=calc.regulaer>0?Math.round(calc.provision/calc.regulaer*100):100;
+        abzugPct=100-provisionPct;
+        provisionTitle=' title="Regulär: €'+Math.round(calc.regulaer).toLocaleString('de-DE')
+          +' (Basis €'+Math.round(calc.basis).toLocaleString('de-DE')+' + Umsatz €'+Math.round(calc.umsatz).toLocaleString('de-DE')+')'
+          +(calc.mindestleistungGreift?' · Mindestleistung unterschritten (§5)':'')
+          +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
+      }
+      var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
+      h+='<tr class="perf-data-row" style="'+rowBg+'">'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCellLeft(g.label,g.count+' Einsatztage')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(abwTage.krank,null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(abwTage.urlaub,null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(aktProStd,gesamtAktivitaeten)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(convOEM/optGes*100)+'%':'—'),(optGes>0?convOEM:'—'))+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(wka/optGes*100)+'%':'—'),(optGes>0?wka:'—'))+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(optGes,null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+'">'+stackCell(optProStd,null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+'">'+stackCell(crOEM+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+'">'+stackCell(crTW+'%',rawTw)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSY,rowKpiSet.sy,'gte')+'">'+stackCell(crSY+'%',rawSy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+'">'+stackCell(crMY+'%',rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+'">'+stackCell(anteilOem+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text)">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+stackCell(abzug,(abzugPct!==null?abzugPct+'%':null))+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
+        +'</tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  h+='</div>';
+  return h;
 }
 function buildProvisionTable(empId){
   var emp=employees.find(function(e){return e.id===empId;});
