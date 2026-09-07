@@ -8106,9 +8106,10 @@ function calculateProvision(emp,monthKey,row){
   var basis=qualifizierendeOpt*(pv.basisProOpt||0);
 
   // §2 Abs. 2 - Umsatzabhaengige Provision
-  var pctOem=pv.divOEM?margeGesamt/pv.divOEM:0;
-  var pctUps=pv.divUpsell?margeGesamt/pv.divUpsell:0;
-  var pctWka=pv.divWka?margeGesamt/pv.divWka:0;
+  // "Prozentsatz X" ist eine Prozent-ZAHL (z.B. 3 = 3%), daher fuer die Multiplikation durch 100 teilen
+  var pctOem=pv.divOEM?(margeGesamt/pv.divOEM)/100:0;
+  var pctUps=pv.divUpsell?(margeGesamt/pv.divUpsell)/100:0;
+  var pctWka=pv.divWka?(margeGesamt/pv.divWka)/100:0;
   var provOem=margeOEM*pctOem;
   var provUps=margeUpsell*pctUps;
   var provWka=margeWKA*pctWka;
