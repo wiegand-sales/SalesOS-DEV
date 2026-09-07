@@ -833,7 +833,7 @@ function loadEmployeesFromSupabase(){
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
-        isPureCoach: e.is_pure_coach===true
+        isPureCoach: e.is_pure_coach===true, provisionSettings: e.provision_settings || {}
       };
     });
     return true;
@@ -7344,6 +7344,82 @@ function renderTab(){
 
       html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" onclick="saveEmpZiele()"><i class="ti ti-check"></i> Ziele speichern</button>';
       html+='</div>'; // close KPI card
+
+      // ── Provisionsvereinbarung (mitarbeiterspezifisch) ──
+      (function(){
+        var pv=(emp.provisionSettings)||{};
+        function pvNum(key,def){return pv[key]!=null?pv[key]:def;}
+        var m1=pv.monat1||{}, m2=pv.monat2||{}, m3=pv.monat3plus||{};
+        function pvMonatNum(mObj,key,def){return mObj[key]!=null?mObj[key]:def;}
+        html+='<div class="card"><div class="card-title"><i class="ti ti-cash"></i> Provisionsvereinbarung</div>';
+        html+='<p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Grundlage für die Berechnung der Spalten "Abzug" und "Provision" im Reiter Provision. Gültig ab dem hinterlegten Datum, ergänzend zum Arbeitsvertrag.</p>';
+
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px">GÜLTIGKEIT</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:16px">';
+        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
+        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Gültig ab</div>';
+        html+='<input type="date" id="pv-gueltigAb" value="'+(pv.gueltigAb||'')+'" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:13px">';
+        html+='</div></div>';
+
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">BASISPROVISION (§2 ABS. 1)</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:16px">';
+        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
+        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Pro qualifizierender Optimierung</div>';
+        html+='<div style="display:flex;align-items:center;gap:6px"><input type="number" id="pv-basisProOpt" value="'+pvNum('basisProOpt',1.00)+'" step="0.10" min="0" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center"><span style="font-size:12px;font-weight:600;color:var(--text2)">€</span></div>';
+        html+='</div></div>';
+
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">UMSATZABHÄNGIGE PROVISION (§2 ABS. 2) — DIVISOREN</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">';
+        [{lbl:'OEM',id:'divOEM',def:10000},{lbl:'Upsells',id:'divUpsell',def:20000},{lbl:'WKA',id:'divWka',def:20000}].forEach(function(f){
+          html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
+          html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">'+f.lbl+'</div>';
+          html+='<input type="number" id="pv-'+f.id+'" value="'+pvNum(f.id,f.def)+'" step="1000" min="1" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center">';
+          html+='</div>';
+        });
+        html+='</div>';
+
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">§3 KPI-VORGABEN JE BESCHÄFTIGUNGSMONAT</div>';
+        [{key:'monat1',label:'Kalendermonat 1',obj:m1,defs:{optH:2.00,crOem:45,tw:20,sy:30,my:10,oemAnteil:60}},
+         {key:'monat2',label:'Kalendermonat 2',obj:m2,defs:{optH:2.50,crOem:50,tw:20,sy:40,my:20,oemAnteil:80}},
+         {key:'monat3plus',label:'Ab Kalendermonat 3',obj:m3,defs:{optH:3.50,crOem:55,tw:15,sy:40,my:20,oemAnteil:80}}
+        ].forEach(function(mset){
+          html+='<div style="font-size:11px;font-weight:700;color:#206A72;margin:10px 0 6px">'+mset.label+'</div>';
+          html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">';
+          [{lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
+           {lbl:'CR OEM (mind.)',f:'crOem',unit:'%'},
+           {lbl:'TW-Anteil (max.)',f:'tw',unit:'%'},
+           {lbl:'SY-Anteil (mind.)',f:'sy',unit:'%'},
+           {lbl:'MY-Anteil (mind.)',f:'my',unit:'%'},
+           {lbl:'OEM-Anteil (mind.)',f:'oemAnteil',unit:'%'}
+          ].forEach(function(fld){
+            html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:8px 10px">';
+            html+='<div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:5px">'+fld.lbl+'</div>';
+            html+='<div style="display:flex;align-items:center;gap:5px"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:13px;font-weight:700;text-align:center">'+(fld.unit?'<span style="font-size:11px;font-weight:600;color:var(--text2)">'+fld.unit+'</span>':'')+'</div>';
+            html+='</div>';
+          });
+          html+='</div>';
+        });
+
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">§4/§5 REDUZIERUNG</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">';
+        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
+        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Reduzierung je nicht erfüllter KPI</div>';
+        html+='<div style="display:flex;align-items:center;gap:6px"><input type="number" id="pv-reduktionProKpi" value="'+pvNum('reduktionProKpi',20)+'" step="5" min="0" max="100" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center"><span style="font-size:12px;font-weight:600;color:var(--text2)">%</span></div>';
+        html+='</div>';
+        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
+        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Mindestprovision</div>';
+        html+='<div style="display:flex;align-items:center;gap:6px"><input type="number" id="pv-mindestprovision" value="'+pvNum('mindestprovision',20)+'" step="5" min="0" max="100" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center"><span style="font-size:12px;font-weight:600;color:var(--text2)">%</span></div>';
+        html+='</div>';
+        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
+        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Mindestleistung ab Monat 2</div>';
+        html+='<div style="display:flex;align-items:center;gap:6px"><input type="number" id="pv-mindestleistungOptH" value="'+pvNum('mindestleistungOptH',2.50)+'" step="0.1" min="0" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center"><span style="font-size:11px;font-weight:600;color:var(--text2)">Opt/Std</span></div>';
+        html+='</div>';
+        html+='</div>';
+
+        html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid)"><i class="ti ti-check"></i> Provisionsvereinbarung speichern</button>';
+        html+='<span id="pv-save-status" style="font-size:11px;color:var(--text3);margin-left:10px"></span>';
+        html+='</div>'; // close Provisionsvereinbarung card
+      })();
     }
 
     if(true){
@@ -9402,6 +9478,45 @@ function saveEmpEinstellungen(){
   // Hinweis: "location" wird aktuell nur lokal gehalten (kein Feld in employees-Tabelle)
 }
 var _savingEmpZiele=false;
+var _savingProvisionSettings=false;
+function saveProvisionSettings(empId){
+  if(_savingProvisionSettings)return;
+  var emp=employees.find(function(e){return e.id===empId;});
+  if(!emp)return;
+  function val(id){var el=document.getElementById(id);return el?parseFloat(el.value)||0:0;}
+  function dateVal(id){var el=document.getElementById(id);return el?el.value:null;}
+  var settings={
+    gueltigAb:dateVal('pv-gueltigAb'),
+    basisProOpt:val('pv-basisProOpt'),
+    divOEM:val('pv-divOEM'),
+    divUpsell:val('pv-divUpsell'),
+    divWka:val('pv-divWka'),
+    reduktionProKpi:val('pv-reduktionProKpi'),
+    mindestprovision:val('pv-mindestprovision'),
+    mindestleistungOptH:val('pv-mindestleistungOptH'),
+    monat1:{optH:val('pv-monat1-optH'),crOem:val('pv-monat1-crOem'),tw:val('pv-monat1-tw'),sy:val('pv-monat1-sy'),my:val('pv-monat1-my'),oemAnteil:val('pv-monat1-oemAnteil')},
+    monat2:{optH:val('pv-monat2-optH'),crOem:val('pv-monat2-crOem'),tw:val('pv-monat2-tw'),sy:val('pv-monat2-sy'),my:val('pv-monat2-my'),oemAnteil:val('pv-monat2-oemAnteil')},
+    monat3plus:{optH:val('pv-monat3plus-optH'),crOem:val('pv-monat3plus-crOem'),tw:val('pv-monat3plus-tw'),sy:val('pv-monat3plus-sy'),my:val('pv-monat3plus-my'),oemAnteil:val('pv-monat3plus-oemAnteil')}
+  };
+  emp.provisionSettings=settings;
+  _savingProvisionSettings=true;
+  var statusEl=document.getElementById('pv-save-status');
+  if(statusEl)statusEl.textContent='Speichere...';
+  sb.from('employees').update({provision_settings:settings}).eq('id',empId).then(function(res){
+    _savingProvisionSettings=false;
+    if(res.error){
+      if(statusEl)statusEl.textContent='Fehler: Spalte "provision_settings" fehlt evtl. in der employees-Tabelle (siehe Konsole)';
+      console.error('saveProvisionSettings error:',res.error);
+    } else {
+      if(statusEl){statusEl.textContent='Gespeichert ✓';setTimeout(function(){statusEl.textContent='';},2500);}
+      logAdminAction&&logAdminAction('provision_settings','Provisionsvereinbarung geändert: '+emp.name);
+    }
+  }).catch(function(err){
+    _savingProvisionSettings=false;
+    if(statusEl)statusEl.textContent='Fehler beim Speichern';
+    console.error('saveProvisionSettings exception:',err);
+  });
+}
 function saveEmpZiele(){
   if(_savingEmpZiele)return;
   var emp=employees.find(function(e){return e.id===selectedEmp;});
