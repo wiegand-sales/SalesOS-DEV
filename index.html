@@ -4723,15 +4723,31 @@ function buildGlobalBannerHtml(visible){
       _actDays.push(_actByDate[_ads]||0);
     }
     var _actMax=Math.max.apply(null,_actDays.concat([1]));
+    var _act30Sum=_actDays.reduce(function(a,b){return a+b;},0);
+    var _actPrev30Sum=0;
+    for(var _pi=59;_pi>=30;_pi--){
+      var _pds=addDaysUTC(_actHeute,-_pi);
+      _actPrev30Sum+=_actByDate[_pds]||0;
+    }
+    var _actTrendPct=_actPrev30Sum>0?Math.round((_act30Sum-_actPrev30Sum)/_actPrev30Sum*100):null;
+    var _actTrendArrow=_actTrendPct===null?'':(_actTrendPct>0?' ↑':_actTrendPct<0?' ↓':'');
+    var _actTrendCol=_actTrendPct===null?'#9fc9cd':(_actTrendPct>=0?'#7ED2DB':'#e57373');
+    var _actAvgPerDay=(_act30Sum/30).toFixed(1);
     h+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);box-shadow:0 12px 28px rgba(15,61,66,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:56px;height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
-    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;padding-left:14px">'
-      +renderOemTileHtml(visible)
+    h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
+      +'<div style="padding:4px 14px;width:100%">'
+      +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:6px">AKTIVITÄTEN (30 TAGE)</div>'
+      +'<div style="font-size:30px;font-weight:700;line-height:1">'+_act30Sum+' <span style="font-size:15px;font-weight:700;color:'+_actTrendCol+'">'+_actTrendArrow+'</span></div>'
+      +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:5px">vs. Vormonat ('+_actPrev30Sum+')'+(_actTrendPct!==null?': <span style="color:'+_actTrendCol+';font-weight:600">'+(_actTrendPct>=0?'+':'')+_actTrendPct+'%</span>':'')+'</div>'
+      +'</div>'
       +'</div>';
-    h+='<div style="min-height:60px;display:flex;align-items:center;padding-top:8px">'
-      +'<div style="padding:4px 14px;display:flex;justify-content:space-between;align-items:center;width:100%">'
-      +renderOptGesHeuteTileHtml(visible)
+    h+='<div style="min-height:60px;display:flex;align-items:center">'
+      +'<div style="padding:4px 14px;width:100%">'
+      +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em">Ø AKTIVITÄTEN/TAG</div>'
+      +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+_actAvgPerDay+'</div>'
+      +'<div style="font-size:9.5px;color:#8fb5b9;margin-top:3px">Ø der letzten 30 Tage</div>'
       +'</div>'
       +'</div>';
     h+='</div>';
