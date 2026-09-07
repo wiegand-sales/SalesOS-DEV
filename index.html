@@ -6053,6 +6053,7 @@ function renderEmpDetail(){
     +'<div class="tab-bar" id="empTabBar">'
     +'<div class="tab" data-tab="performance" onclick="switchTab(\'performance\')">KPI Performance</div>'
     +'<div class="tab" data-tab="call-performance" onclick="switchTab(\'call-performance\')">QA Performance</div>'
+    +'<div class="tab" data-tab="provision" onclick="switchTab(\'provision\')">Provision</div>'
     +'<div class="tab" data-tab="timeline" onclick="switchTab(\'timeline\')">Timeline</div>'
     +'<div class="tab" data-tab="session" onclick="switchTab(\'session\')">Coaching Sessions</div>'
     +'<div class="tab" data-tab="coaching-eval" onclick="switchTab(\'coaching-eval\')">Development</div>'
@@ -6322,6 +6323,10 @@ function renderTab(){
 
 
   // ── PERFORMANCE TAB ──
+  if(activeTab==='provision'){
+    overviewRenderTarget='emp';
+    html+='<div id="provisionTableContainer">'+buildOverviewTab([emp],'performance',true,true,true)+'</div>';
+  }
   if(activeTab==='performance'){
     var empT=empTargets(emp);
     var perf7=getPerf(emp.id,7);
