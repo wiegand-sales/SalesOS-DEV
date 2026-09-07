@@ -6516,6 +6516,8 @@ function renderTab(){
         html+='<span style="font-size:13px;color:var(--text2);background:var(--bg-solid);padding:2px 8px;border-radius:20px;flex-shrink:0">'+(r.b2b||'B2C')+'</span>';
         html+='<span style="font-size:13px;color:'+(r.status==='ja'?'var(--teal-dark)':'var(--red)')+';flex:1">'+(r.status==='ja'?'✓ Abschluss':'✗ Kein Abschluss')+(r.abschlussArt?' · Opt.: '+r.abschlussArt:'')+'</span>';
         html+='<span style="font-size:13px;font-weight:700;color:'+tcol+';flex-shrink:0">'+ts.toFixed(0)+'</span>';
+        if(canEditHistorie())html+='<button class="btn btn-sm" data-eid="'+emp.id+'" data-rid="'+r.id+'" onclick="event.stopPropagation();openQaBewertungModal(this.dataset.eid,this.dataset.rid)" style="padding:2px 8px;height:auto"><i class="ti ti-pencil" style="font-size:12px"></i></button>';
+        if(canEditHistorie())html+='<button class="btn btn-sm" data-eid="'+emp.id+'" data-rid="'+r.id+'" onclick="event.stopPropagation();deleteHistorieCallRating(this.dataset.eid,this.dataset.rid)" style="padding:2px 8px;height:auto;color:var(--red)"><i class="ti ti-trash" style="font-size:12px"></i></button>';
         html+='<span id="arr-'+cardId+'" style="color:var(--text3);font-size:12px;flex-shrink:0;transition:transform .2s">▾</span></div>';
         html+='<div id="body-'+cardId+'" style="display:none;border-top:1px solid var(--border)">';
         CALL_CATS.forEach(function(cat){
@@ -10108,7 +10110,11 @@ function saveInlineCallBewertung(empId){
     hinweis:hinweis?hinweis.value.trim():''
   };
   _savingCallBewertung=true;
-  sb.from('call_ratings').insert(payload).select().single().then(function(res){
+  var isEditing=!!_editingCallRatingId;
+  var upsertCall=isEditing
+    ? sb.from('call_ratings').update(payload).eq('id',_editingCallRatingId).select().single()
+    : sb.from('call_ratings').insert(payload).select().single();
+  upsertCall.then(function(res){
     if(res.error){_savingCallBewertung=false;alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     var scoreRows=Object.keys(scores).map(function(k){
@@ -10120,15 +10126,30 @@ function saveInlineCallBewertung(empId){
         status:r.status,b2b:r.b2b,abschlussArt:r.abschluss_art||'',einwand:r.einwand||'',hinweis:r.hinweis||'',scores:scores
       };
       if(!callRatings[selectedEmp])callRatings[selectedEmp]=[];
-      callRatings[selectedEmp].unshift(entry);
+      if(isEditing){
+        var idx=callRatings[selectedEmp].findIndex(function(x){return x.id===r.id;});
+        if(idx>=0)callRatings[selectedEmp][idx]=entry;else callRatings[selectedEmp].unshift(entry);
+      } else {
+        callRatings[selectedEmp].unshift(entry);
+      }
       var e0=employees.find(function(x){return x.id===selectedEmp;});
       var avgScore=Object.keys(scores).length?(Object.values(scores).reduce(function(a,b){return a+b;},0)/Object.keys(scores).length).toFixed(1):null;
-      logActivity('qa','created','Neuen Call bewertet'+(avgScore?' (Ø '+avgScore+'/4)':''),selectedEmp,e0?e0.name+' · '+fd(r.date):'');
-      _cbScores={};
+      logActivity('qa',isEditing?'updated':'created',(isEditing?'Call-Bewertung bearbeitet':'Neuen Call bewertet')+(avgScore?' (Ø '+avgScore+'/4)':''),selectedEmp,e0?e0.name+' · '+fd(r.date):'');
+      _cbScores={};_editingCallRatingId=null;
       closeModal('qaBewertungModal');
       renderTab();
     };
-    if(scoreRows.length){
+    if(isEditing){
+      sb.from('call_rating_scores').delete().eq('call_rating_id',r.id).then(function(){
+        if(scoreRows.length){
+          sb.from('call_rating_scores').insert(scoreRows).then(function(res2){
+            _savingCallBewertung=false;
+            if(res2.error)alert('Bewertung gespeichert, aber die Einzel-Scores konnten NICHT gespeichert werden: '+res2.error.message);
+            afterScores();
+          });
+        } else { _savingCallBewertung=false; afterScores(); }
+      });
+    } else if(scoreRows.length){
       sb.from('call_rating_scores').insert(scoreRows).then(function(res2){
         _savingCallBewertung=false;
         if(res2.error)alert('Bewertung gespeichert, aber die Einzel-Scores konnten NICHT gespeichert werden: '+res2.error.message);
@@ -10516,17 +10537,34 @@ function renderLastContinueBox(empId,boxId){
     +'<div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px">'+last.cont+'</div>'
     +'<div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:3px">Wurde daran gearbeitet?</div></div></div>';
 }
-function openQaBewertungModal(empId){
+function deleteHistorieCallRating(empId,ratingId){
+  if(!canEditHistorie())return;
+  if(!confirm('Diese Call-Bewertung wirklich löschen? Dies kann nicht rückgängig gemacht werden.'))return;
+  var list=callRatings[empId]||[];
+  var idx=list.findIndex(function(r){return r.id===ratingId;});
+  if(idx<0)return;
+  list.splice(idx,1);
+  sb.from('call_rating_scores').delete().eq('call_rating_id',ratingId).then(function(){
+    sb.from('call_ratings').delete().eq('id',ratingId).then(function(){renderTab();}).catch(function(){renderTab();});
+  }).catch(function(){
+    sb.from('call_ratings').delete().eq('id',ratingId).then(function(){renderTab();}).catch(function(){renderTab();});
+  });
+}
+var _editingCallRatingId=null;
+function openQaBewertungModal(empId,editRatingId){
   if(empId)selectedEmp=empId;
   _cbScores={};
+  _editingCallRatingId=editRatingId||null;
+  var editingRating=editRatingId?((callRatings[selectedEmp]||[]).find(function(r){return r.id===editRatingId;})):null;
   var dateEl=document.getElementById('cb-date');
-  if(dateEl)dateEl.value=today();
-  ['cb-auftrag','cb-bewerter','cb-einwand','cb-hinweis'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.value='';
+  if(dateEl)dateEl.value=editingRating?editingRating.date:today();
+  var fieldMap={'cb-auftrag':'auftragsnr','cb-bewerter':'bewertetVon','cb-einwand':'einwand','cb-hinweis':'hinweis'};
+  Object.keys(fieldMap).forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value=editingRating?(editingRating[fieldMap[id]]||''):'';
   });
-  var statusEl=document.getElementById('cb-status');if(statusEl)statusEl.value='nein';
-  var b2bEl=document.getElementById('cb-b2b');if(b2bEl)b2bEl.value='B2C';
-  var artEl=document.getElementById('cb-abschlussart');if(artEl)artEl.value='';
+  var statusEl=document.getElementById('cb-status');if(statusEl)statusEl.value=editingRating?editingRating.status:'nein';
+  var b2bEl=document.getElementById('cb-b2b');if(b2bEl)b2bEl.value=editingRating?editingRating.b2b:'B2C';
+  var artEl=document.getElementById('cb-abschlussart');if(artEl)artEl.value=editingRating?(editingRating.abschlussArt||''):'';
   var box=document.getElementById('qaScoringSection');
   if(box){
     var uniCol='#174C52',uniBg='rgba(23,76,82,0.10)';
@@ -10548,9 +10586,17 @@ function openQaBewertungModal(empId){
       h+='</div>';
     });
     box.innerHTML=h;
+    if(editingRating&&editingRating.scores){
+      Object.keys(editingRating.scores).forEach(function(k){setCbScore(k,editingRating.scores[k]);});
+    }
   }
+  var modalTitleEl=document.querySelector('#qaBewertungModal .modal-title');
+  if(modalTitleEl)modalTitleEl.innerHTML='<i class="ti ti-phone-plus" style="color:var(--purple)"></i> '+(editingRating?'Call-Bewertung bearbeiten':'Neuen Call bewerten');
   var saveBtn=document.getElementById('qaSaveBtn');
-  if(saveBtn)saveBtn.dataset.eid=selectedEmp;
+  if(saveBtn){
+    saveBtn.dataset.eid=selectedEmp;
+    saveBtn.innerHTML=editingRating?'<i class="ti ti-device-floppy"></i> Änderungen speichern':'<i class="ti ti-device-floppy"></i> Bewertung speichern';
+  }
   openModal('qaBewertungModal');
 }
 function openNeuesCoachingModal(empId){
