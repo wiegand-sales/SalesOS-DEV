@@ -8226,9 +8226,11 @@ function buildProvisionTable(empId){
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
       var abwTage=urlaubKrankTage(empId,g.key);
       var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
-      var aktProStd=row.oem_aktivitaeten&&row.gesamtStunden?(row.oem_aktivitaeten/row.gesamtStunden).toFixed(1):(row.oem_aktivitaeten||0).toFixed(1);
       var hoursPerDay=(emp.hours||40)/5;
       var rowTotalHours=hoursPerDay*g.count;
+      var gesamtAktivitaeten=row.gesamtAktivitaeten||row.oem_aktivitaeten||0;
+      var aktPerHour_num=rowTotalHours>0?gesamtAktivitaeten/rowTotalHours:0;
+      var aktProStd=aktPerHour_num.toFixed(1);
       var optPerH_num=rowTotalHours>0?optGes/rowTotalHours:0;
       var optProStd=optPerH_num.toFixed(1);
       var calc=calculateProvision(emp,g.key,row,g.count);
@@ -8257,12 +8259,12 @@ function buildProvisionTable(empId){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCellLeft(g.label,g.count+' Einsatztage')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(abwTage.krank,null)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(abwTage.urlaub,null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(aktProStd,row.oem_aktivitaeten||0)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(aktProStd,gesamtAktivitaeten)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(convOEM/optGes*100)+'%':'—'),(optGes>0?convOEM:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(wka/optGes*100)+'%':'—'),(optGes>0?wka:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(optGes,null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+'">'+optProStd+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+'">'+stackCell(optProStd,null)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+'">'+stackCell(crOEM+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+'">'+stackCell(crTW+'%',rawTw)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
