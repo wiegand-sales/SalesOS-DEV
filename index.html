@@ -6741,6 +6741,8 @@ function renderTab(){
             +'<span style="font-size:10px;font-weight:700;color:#fff;background:'+tcol+';padding:2px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:.03em">'+esc(c.commentType)+'</span>'
             +'<span style="flex:1"></span>'
             +(c.author?'<span style="font-size:11px;color:var(--text3)">'+esc(c.author)+'</span>':'')
+            +(canEditHistorie()?'<button class="btn btn-sm" data-eid="'+emp.id+'" data-cid="'+c.id+'" onclick="event.stopPropagation();openCommentModal(this.dataset.eid,this.dataset.cid)" style="padding:2px 8px;height:auto"><i class="ti ti-pencil" style="font-size:12px"></i></button>':'')
+            +(canEditHistorie()?'<button class="btn btn-sm" data-eid="'+emp.id+'" data-cid="'+c.id+'" onclick="event.stopPropagation();deleteHistorieComment(this.dataset.eid,this.dataset.cid)" style="padding:2px 8px;height:auto;color:var(--red)"><i class="ti ti-trash" style="font-size:12px"></i></button>':'')
             +'</div>'
             +'<div style="font-size:12.5px;color:var(--text2)">'+esc(c.note)+'</div>'
             +'</div>';
@@ -6755,6 +6757,7 @@ function renderTab(){
         html+='<span style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(ev.date)+'</span>';
         html+='<span style="flex:1"></span>';
         html+='<span style="font-size:13px;font-weight:700;color:'+avgCol+'">Ø '+overallAvg+'/10</span>';
+        if(canEditHistorie())html+='<button class="btn btn-sm" data-eid="'+emp.id+'" data-vid="'+ev.id+'" onclick="event.stopPropagation();deleteHistorieEval(this.dataset.eid,this.dataset.vid)" style="padding:2px 8px;height:auto;color:var(--red)"><i class="ti ti-trash" style="font-size:12px"></i></button>';
         html+='<span id="arr-'+eid+'" style="color:var(--text3);font-size:12px;flex-shrink:0;transition:transform .2s">▾</span></div>';
         html+='<div id="body-'+eid+'" style="display:none;border-top:1px solid var(--border)">';
         ['skill','will','result'].forEach(function(cat){
@@ -7981,8 +7984,37 @@ function renderEinstellungen(){
 // ── ACTIONS ──
 function setEvalDate(date){window._evalDate=date;renderTab();}
 
-function openCommentModal(empId){
+var BEWERTUNGSHISTORIE_ADMINS=['Peter Rode','Niklas Hojdem','Dogoro Dembele','Kathrin Steininger'];
+function canEditHistorie(){
+  var myName=null;
+  if(typeof currentCoach!=='undefined'&&currentCoach)myName=currentCoach.name;
+  else if(typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof appUsers!=='undefined'){
+    var matchUser=appUsers.find(function(u){return u.email===currentAuthUser.email;});
+    if(matchUser)myName=matchUser.name;
+  }
+  return myName&&BEWERTUNGSHISTORIE_ADMINS.indexOf(myName)>=0;
+}
+function deleteHistorieComment(empId,commentId){
+  if(!canEditHistorie())return;
+  if(!confirm('Diesen Kommentar wirklich löschen?'))return;
+  var list=reviews[empId]||[];
+  var idx=list.findIndex(function(r){return r.id===commentId;});
+  if(idx<0)return;
+  list.splice(idx,1);
+  sb.from('reviews').delete().eq('id',commentId).then(function(){renderTab();}).catch(function(){renderTab();});
+}
+function deleteHistorieEval(empId,evalId){
+  if(!canEditHistorie())return;
+  if(!confirm('Diese Bewertung wirklich löschen? Dies kann nicht rückgängig gemacht werden.'))return;
+  var list=reviews[empId]||[];
+  var idx=list.findIndex(function(r){return r.id===evalId;});
+  if(idx<0)return;
+  list.splice(idx,1);
+  sb.from('reviews').delete().eq('id',evalId).then(function(){renderTab();}).catch(function(){renderTab();});
+}
+function openCommentModal(empId,editCommentId){
   var emp=employees.find(function(e){return e.id===empId;});
+  var existingComment=editCommentId?(reviews[empId]||[]).find(function(r){return r.id===editCommentId;}):null;
   var overlay=document.createElement('div');
   overlay.id='commentModal';
   overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -7992,7 +8024,7 @@ function openCommentModal(empId){
 
   var hdr=document.createElement('div');
   hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:18px';
-  hdr.innerHTML='<div style="font-size:17px;font-weight:700">Kommentar hinzufügen</div>';
+  hdr.innerHTML='<div style="font-size:17px;font-weight:700">'+(existingComment?'Kommentar bearbeiten':'Kommentar hinzufügen')+'</div>';
   var closeBtn=document.createElement('button');
   closeBtn.textContent='×';
   closeBtn.style.cssText='background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1';
@@ -8016,7 +8048,7 @@ function openCommentModal(empId){
   sec1body.innerHTML='<label style="font-size:12px;font-weight:600;color:var(--text2)">Verfasser</label>'
     +'<div style="font-size:13px;margin-top:4px;color:var(--text)">'+esc(curName)+'</div>'
     +'<label style="font-size:12px;font-weight:600;color:var(--text2);margin-top:10px;display:block">Datum</label>'
-    +'<input type="date" id="comment-date" value="'+today()+'" style="display:block;margin-top:4px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);width:220px">';
+    +'<input type="date" id="comment-date" value="'+(existingComment?existingComment.date:today())+'" style="display:block;margin-top:4px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);width:220px">';
   box.appendChild(sec1body);
 
   var sec2=document.createElement('div');
@@ -8027,7 +8059,7 @@ function openCommentModal(empId){
   sec2body.style.cssText='border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px';
   var pillWrap=document.createElement('div');
   pillWrap.style.cssText='display:flex;gap:8px;margin-top:6px';
-  var commentType='diverses';
+  var commentType=existingComment?existingComment.commentType:'diverses';
   ['skill','will','result','diverses'].forEach(function(t){
     var p=document.createElement('div');
     p.textContent=t.charAt(0).toUpperCase()+t.slice(1);
@@ -8039,7 +8071,7 @@ function openCommentModal(empId){
     };
     p.style.cssText='padding:7px 16px;border-radius:20px;border:1.5px solid var(--border2);font-size:12.5px;font-weight:600;color:var(--text2);cursor:pointer;background:#fff';
     p.onclick=setActive;
-    if(t==='diverses')setActive();
+    if(t===commentType)setActive();
     pillWrap.appendChild(p);
   });
   sec2body.appendChild(pillWrap);
@@ -8054,6 +8086,7 @@ function openCommentModal(empId){
   var textarea=document.createElement('textarea');
   textarea.id='comment-text';
   textarea.placeholder='z.B. Kommt regelmäßig zu spät zum Stand-up...';
+  if(existingComment)textarea.value=existingComment.note;
   textarea.style.cssText='display:block;margin-top:4px;width:100%;font-size:13px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);min-height:100px;resize:vertical;font-family:inherit';
   sec3body.appendChild(textarea);
   box.appendChild(sec3body);
@@ -8067,20 +8100,28 @@ function openCommentModal(empId){
   var saveBtn=document.createElement('button');
   saveBtn.className='btn btn-primary';
   saveBtn.textContent='Speichern';
+  saveBtn.textContent=existingComment?'Speichern':'Speichern';
   saveBtn.onclick=function(){
     var txt=document.getElementById('comment-text').value.trim();
     if(!txt){alert('Bitte einen Kommentar eingeben.');return;}
     var dateVal=document.getElementById('comment-date').value||today();
     if(!reviews[empId])reviews[empId]=[];
-    reviews[empId].push({
-      id:'comment_'+Date.now(),
-      date:dateVal,
-      isComment:true,
-      commentType:commentType,
-      note:txt,
-      author:curName
-    });
-    // TODO: Supabase-Persistenz analog zu reviews-Speicherung ergaenzen, sobald Tabellen-Spalte vorhanden
+    if(existingComment){
+      existingComment.date=dateVal;
+      existingComment.commentType=commentType;
+      existingComment.note=txt;
+      // TODO: Supabase-Update analog ergaenzen, sobald Tabellen-Spalte vorhanden
+    } else {
+      reviews[empId].push({
+        id:'comment_'+Date.now(),
+        date:dateVal,
+        isComment:true,
+        commentType:commentType,
+        note:txt,
+        author:curName
+      });
+      // TODO: Supabase-Persistenz analog zu reviews-Speicherung ergaenzen, sobald Tabellen-Spalte vorhanden
+    }
     overlay.remove();
     var infoModalOpen=document.getElementById('coachingInfoModal')&&!document.getElementById('coachingInfoModal').classList.contains('hidden');
     if(infoModalOpen){openCoachingInfoModal(empId);}
