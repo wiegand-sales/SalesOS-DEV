@@ -2868,8 +2868,8 @@ function groupPerfRows(rows,mode){
     if(!groups[key]){groups[key]={label:label,items:[]};order.push(key);}
     groups[key].items.push(r);
   });
-  var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka_gesamt_yes','optGesamt','margeGesamt','margin','gesamtAktivitaeten','gesamtNichtErreicht','gesamtNichtMoeglich','gesamtNichtErfolgreich'];
-  var avgFields=['crOEM','crTeilweise','crSuperYes','crMegaYes'];
+  var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka_gesamt_yes','optGesamt','margeGesamt','margin','margeOEM','margeUpsell','margeWKA','gesamtAktivitaeten','gesamtNichtErreicht','gesamtNichtMoeglich','gesamtNichtErfolgreich'];
+  var avgFields=['crOEM','crTeilweise','crSuperYes','crMegaYes','optPerH'];
   return order.sort().reverse().map(function(key){
     var g=groups[key],agg={};
     sumFields.forEach(function(f){agg[f]=g.items.reduce(function(a,x){return a+(x[f]||0);},0);});
@@ -8074,6 +8074,80 @@ function openCommentModal(empId){
 // ── PROVISION: komplett eigenstaendige Tabelle, unabhaengig von buildOverviewTab (keine geteilte Zustandsvariable) ──
 var provisionMode='month'; // 'month' | 'year'
 function setProvisionMode(m){provisionMode=m;renderTab();}
+// ── Provisionsberechnung nach der Provisionsvereinbarung (§2-§5) ──
+function beschaeftigungsmonat(emp,monthKey){
+  if(!emp.startDate)return 1;
+  var start=new Date(emp.startDate+'T00:00:00');
+  var target=new Date(monthKey+'-01T00:00:00');
+  var diff=(target.getFullYear()-start.getFullYear())*12+(target.getMonth()-start.getMonth())+1;
+  return Math.max(1,diff);
+}
+function provisionKpiSetFor(pv,bm){
+  if(bm===1)return pv.monat1||{};
+  if(bm===2)return pv.monat2||{};
+  return pv.monat3plus||{};
+}
+function calculateProvision(emp,monthKey,row){
+  var pv=emp.provisionSettings||{};
+  if(!pv.basisProOpt&&pv.basisProOpt!==0){
+    return {basis:null,umsatz:null,regulaer:null,abzug:null,provision:null,fehlendeKpis:[],hinweis:'Keine Provisionsvereinbarung hinterlegt'};
+  }
+  var convTW=row.convTW||0, convYes=row.convYes||0, convSY=row.convSY||0, convMY=row.convMY||0;
+  var ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
+  var convOEM=row.convOEM||0, optGes=row.optGesamt||(convOEM+ups+wka)||0;
+  var margeOEM=row.margeOEM||0, margeUpsell=row.margeUpsell||0, margeWKA=row.margeWKA||0;
+  var margeGesamt=row.margeGesamt||row.margin||0;
+  var optPerH=row.optPerH||0;
+  var crOEM=row.crOEM||0, crTW=row.crTeilweise||0, crSY=row.crSuperYes||0, crMY=row.crMegaYes||0;
+  var anteilOem=optGes>0?(convOEM/optGes*100):0;
+
+  // §2 Abs. 1 - Basisprovision (Convertible Hardware existiert aktuell nicht im System, daher nicht enthalten)
+  var qualifizierendeOpt=convTW+convYes+convSY+convMY+ups+wka;
+  var basis=qualifizierendeOpt*(pv.basisProOpt||0);
+
+  // §2 Abs. 2 - Umsatzabhaengige Provision
+  var pctOem=pv.divOEM?margeGesamt/pv.divOEM:0;
+  var pctUps=pv.divUpsell?margeGesamt/pv.divUpsell:0;
+  var pctWka=pv.divWka?margeGesamt/pv.divWka:0;
+  var provOem=margeOEM*pctOem;
+  var provUps=margeUpsell*pctUps;
+  var provWka=margeWKA*pctWka;
+  var umsatz=provOem+provUps+provWka;
+
+  var regulaer=basis+umsatz;
+
+  // §3/§4 - KPI-Pruefung je Beschaeftigungsmonat
+  var bm=beschaeftigungsmonat(emp,monthKey);
+  var kpiSet=provisionKpiSetFor(pv,bm);
+  var checks=[
+    {label:'Opt./Std.',ist:optPerH,ziel:kpiSet.optH,dir:'gte'},
+    {label:'CR OEM',ist:crOEM,ziel:kpiSet.crOem,dir:'gte'},
+    {label:'TW-Anteil',ist:crTW,ziel:kpiSet.tw,dir:'lte'},
+    {label:'SY-Anteil',ist:crSY,ziel:kpiSet.sy,dir:'gte'},
+    {label:'MY-Anteil',ist:crMY,ziel:kpiSet.my,dir:'gte'},
+    {label:'OEM-Anteil',ist:anteilOem,ziel:kpiSet.oemAnteil,dir:'gte'}
+  ];
+  var fehlendeKpis=checks.filter(function(c){
+    if(c.ziel==null)return false;
+    return c.dir==='gte'?c.ist<c.ziel:c.ist>c.ziel;
+  });
+
+  var reduktionProKpi=(pv.reduktionProKpi!=null?pv.reduktionProKpi:20)/100;
+  var mindestprovisionPct=(pv.mindestprovision!=null?pv.mindestprovision:20)/100;
+  var reduktionGesamt=Math.min(fehlendeKpis.length*reduktionProKpi,1-mindestprovisionPct);
+  var provisionNachKpi=regulaer*(1-reduktionGesamt);
+
+  // §5 - Mindestleistung ab Beschaeftigungsmonat 2
+  var mindestleistung=pv.mindestleistungOptH!=null?pv.mindestleistungOptH:2.5;
+  var finalProvision=provisionNachKpi;
+  var mindestleistungGreift=(bm>=2&&optPerH<mindestleistung);
+  if(mindestleistungGreift){
+    finalProvision=regulaer*mindestprovisionPct;
+  }
+
+  var abzug=regulaer-finalProvision;
+  return {basis:basis,umsatz:umsatz,regulaer:regulaer,abzug:abzug,provision:finalProvision,fehlendeKpis:fehlendeKpis.map(function(c){return c.label;}),mindestleistungGreift:mindestleistungGreift,beschaeftigungsmonat:bm};
+}
 function buildProvisionTable(empId){
   var emp=employees.find(function(e){return e.id===empId;});
   if(!emp)return '<div class="card">Mitarbeiter nicht gefunden</div>';
@@ -8108,9 +8182,19 @@ function buildProvisionTable(empId){
       var crSyMy=crSY+crMY;
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
       var aktProStd=row.oem_aktivitaeten&&row.gesamtStunden?(row.oem_aktivitaeten/row.gesamtStunden).toFixed(1):(row.oem_aktivitaeten||0).toFixed(1);
-      var optProStd='—'; // TODO: Formel folgt
-      var abzug='—'; // TODO: Formel folgt
-      var provision='—'; // TODO: Formel folgt
+      var optProStd=(row.optPerH||0).toFixed(1);
+      var calc=calculateProvision(emp,g.key,row);
+      var abzug, provision, provisionTitle='';
+      if(calc.provision===null){
+        abzug='—';provision='<span style="font-size:10.5px;color:var(--text3);font-weight:400">Keine Vereinbarung</span>';
+      } else {
+        abzug='−€'+Math.round(calc.abzug).toLocaleString('de-DE');
+        provision='€'+Math.round(calc.provision).toLocaleString('de-DE');
+        provisionTitle=' title="Regulär: €'+Math.round(calc.regulaer).toLocaleString('de-DE')
+          +' (Basis €'+Math.round(calc.basis).toLocaleString('de-DE')+' + Umsatz €'+Math.round(calc.umsatz).toLocaleString('de-DE')+')'
+          +(calc.mindestleistungGreift?' · Mindestleistung unterschritten (§5)':'')
+          +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
+      }
       var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
       h+='<tr style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+g.label+(provisionMode==='year'?' <span style="font-weight:400;color:var(--text3);font-size:11px">('+g.count+' Tage)</span>':'')+'</td>'
@@ -8127,8 +8211,8 @@ function buildProvisionTable(empId){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+crMY+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:center">'+anteilOem+'%</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text3)">'+abzug+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--text3)">'+provision+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+abzug+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+provision+'</td>'
         +'</tr>';
     });
     h+='</tbody></table></div>';
