@@ -8094,7 +8094,7 @@ var PROVISION_DEFAULTS={
   monat2:{optH:2.50,crOem:50,tw:20,sy:40,my:20,oemAnteil:80},
   monat3plus:{optH:3.50,crOem:55,tw:15,sy:40,my:20,oemAnteil:80}
 };
-function calculateProvision(emp,monthKey,row){
+function calculateProvision(emp,monthKey,row,dayCount){
   // Solange fuer diesen Mitarbeiter noch keine individuelle Vereinbarung gespeichert wurde,
   // greifen automatisch die Standardwerte aus der Provisionsvereinbarung (Stand 01/2026)
   var pv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
@@ -8103,7 +8103,16 @@ function calculateProvision(emp,monthKey,row){
   var convOEM=row.convOEM||0, optGes=row.optGesamt||(convOEM+ups+wka)||0;
   var margeOEM=row.margeOEM||0, margeUpsell=row.margeUpsell||0, margeWKA=row.margeWKA||0;
   var margeGesamt=row.margeGesamt||row.margin||0;
-  var optPerH=row.optPerH||0;
+  // Opt./Std. konsistent mit der Tabelle berechnen (Opt.Gesamt / tatsaechliche Arbeitsstunden),
+  // nicht aus einem ggf. unzuverlaessigen Rohfeld - Fallback auf row.optPerH falls dayCount fehlt
+  var optPerH;
+  if(dayCount!=null){
+    var hoursPerDayCalc=(emp.hours||40)/5;
+    var totalHoursCalc=hoursPerDayCalc*dayCount;
+    optPerH=totalHoursCalc>0?optGes/totalHoursCalc:0;
+  } else {
+    optPerH=row.optPerH||0;
+  }
   var crOEM=row.crOEM||0, crTW=row.crTeilweise||0, crSY=row.crSuperYes||0, crMY=row.crMegaYes||0;
   var anteilOem=optGes>0?(convOEM/optGes*100):0;
 
@@ -8218,9 +8227,11 @@ function buildProvisionTable(empId){
       var abwTage=urlaubKrankTage(empId,g.key);
       var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
       var aktProStd=row.oem_aktivitaeten&&row.gesamtStunden?(row.oem_aktivitaeten/row.gesamtStunden).toFixed(1):(row.oem_aktivitaeten||0).toFixed(1);
-      var optPerH_num=row.optPerH||0;
+      var hoursPerDay=(emp.hours||40)/5;
+      var rowTotalHours=hoursPerDay*g.count;
+      var optPerH_num=rowTotalHours>0?optGes/rowTotalHours:0;
       var optProStd=optPerH_num.toFixed(1);
-      var calc=calculateProvision(emp,g.key,row);
+      var calc=calculateProvision(emp,g.key,row,g.count);
       var rowPv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
       var rowBm=beschaeftigungsmonat(emp,g.key);
       var rowKpiSet=provisionKpiSetFor(rowPv,rowBm);
