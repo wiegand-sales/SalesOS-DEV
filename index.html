@@ -8158,6 +8158,24 @@ function calculateProvision(emp,monthKey,row){
 function buildProvisionTable(empId){
   var emp=employees.find(function(e){return e.id===empId;});
   if(!emp)return '<div class="card">Mitarbeiter nicht gefunden</div>';
+  function stackCell(main,sub){
+    var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
+    return '<div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.15">'
+      +'<span>'+main+'</span>'
+      +'<span style="font-size:11px;color:var(--text3);margin-top:1px;'+(hasSubValue?'':'visibility:hidden;')+'">'+(hasSubValue?sub:'0')+'</span>'
+      +'</div>';
+  }
+  function urlaubKrankTage(empId,monthKey){
+    var rec=(zielStore[monthKey]||{})[empId];
+    var urlaub=0,krank=0;
+    if(rec&&rec.arbeitstage){
+      Object.keys(rec.arbeitstage).forEach(function(ds){
+        if(rec.arbeitstage[ds]==='urlaub')urlaub++;
+        else if(rec.arbeitstage[ds]==='krank')krank++;
+      });
+    }
+    return {urlaub:urlaub,krank:krank};
+  }
   var yr=today().slice(0,4), curMk=today().slice(0,7);
   var rowsAll=(performance[empId]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
   var grouped=groupPerfRows(rowsAll,'month'); // ein Eintrag je Monat, neueste zuerst
@@ -8176,7 +8194,7 @@ function buildProvisionTable(empId){
     h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-file-upload" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Daten für diesen Zeitraum</div>';
   } else {
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>';
-    ['Monat','Akt./Std.','OEM','Upsells','WKA','Opt. Ges.','Opt./Std.','CR OEM','CR TW','CR SY/MY','CR SY','CR MY','Anteil OEM','Marge Ges.','Abzug','Provision'].forEach(function(lbl,i){
+    ['Monat','Krankheitstage','Urlaubstage','Akt./Std.','OEM','Upsells','WKA','Opt. Ges.','Opt./Std.','CR OEM','CR TW','CR SY/MY','CR SY','CR MY','Anteil OEM','Marge Ges.','Abzug','Provision'].forEach(function(lbl,i){
       h+='<th style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:'+(i===0?'left':'right')+';font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">'+lbl+'</th>';
     });
     h+='</tr></thead><tbody>';
@@ -8188,6 +8206,8 @@ function buildProvisionTable(empId){
       var crOEM=Math.round(row.crOEM||0), crTW=Math.round(row.crTeilweise||0), crSY=Math.round(row.crSuperYes||0), crMY=Math.round(row.crMegaYes||0);
       var crSyMy=crSY+crMY;
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
+      var abwTage=urlaubKrankTage(empId,g.key);
+      var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
       var aktProStd=row.oem_aktivitaeten&&row.gesamtStunden?(row.oem_aktivitaeten/row.gesamtStunden).toFixed(1):(row.oem_aktivitaeten||0).toFixed(1);
       var optProStd=(row.optPerH||0).toFixed(1);
       var calc=calculateProvision(emp,g.key,row);
@@ -8205,18 +8225,20 @@ function buildProvisionTable(empId){
       var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
       h+='<tr style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+g.label+(provisionMode==='year'?' <span style="font-weight:400;color:var(--text3);font-size:11px">('+g.count+' Tage)</span>':'')+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+abwTage.krank+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+abwTage.urlaub+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+aktProStd+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--purple)">'+convOEM+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--blue-dark)">'+ups+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--blue-dark)">'+wka+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+optGes+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+optProStd+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+crOEM+'%</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+crTW+'%</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+crSyMy+'%</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+crSY+'%</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+crMY+'%</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+anteilOem+'%</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(crOEM+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crTW+'%',rawTw)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crSY+'%',rawSy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(crMY+'%',rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--blue-dark)">€'+Math.round(marge).toLocaleString('de-DE')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+abzug+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+provision+'</td>'
