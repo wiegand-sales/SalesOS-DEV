@@ -6619,6 +6619,7 @@ function renderTab(){
       });
       html+='</select>';
     }
+    html+='<button class="btn" data-eid="'+emp.id+'" onclick="openCommentModal(this.dataset.eid)" style="margin-right:8px"><i class="ti ti-message-plus"></i> Kommentar</button>';
     html+='<button class="btn btn-primary" data-eid="'+emp.id+'" onclick="openCoachingEval(this.dataset.eid)"><i class="ti ti-clipboard-plus"></i> Mitarbeiterentwicklung bewerten</button>';
     html+='</div>';
     html+='</div>'; // Ende Entwicklungsprofil-Karte
@@ -6693,13 +6694,33 @@ function renderTab(){
     })();
 
     // ── Bewertungs-Historie (weiße Box, aufklappbare Zeilen) ──
+    var comments=(reviews[emp.id]||[]).filter(function(r){return r.isComment;});
+    var historyItems=evals.map(function(ev){return {type:'eval',data:ev};})
+      .concat(comments.map(function(c){return {type:'comment',data:c};}))
+      .sort(function(a,b){return b.data.date.localeCompare(a.data.date);});
     html+='<div class="card" style="margin-bottom:22px">';
-    html+='<div class="card-title"><i class="ti ti-history"></i> Bewertungs-Historie <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+evals.length+')</span></div>';
-    if(!evals.length){
+    html+='<div class="card-title"><i class="ti ti-history"></i> Bewertungs-Historie <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+historyItems.length+')</span></div>';
+    if(!historyItems.length){
       html+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-clipboard-off" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Bewertungen</div>';
     } else {
       html+='<div style="display:flex;flex-direction:column;gap:6px">';
-      evals.forEach(function(ev,idx){
+      var commentTypeCol={skill:'#0c3b40',will:'#164e54',result:'#1d6169',diverses:'#5c7070'};
+      historyItems.forEach(function(item,idx){
+        if(item.type==='comment'){
+          var c=item.data;
+          var tcol=commentTypeCol[c.commentType]||'#5c7070';
+          html+='<div style="background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px">'
+            +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
+            +'<span style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(c.date)+'</span>'
+            +'<span style="font-size:10px;font-weight:700;color:#fff;background:'+tcol+';padding:2px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:.03em">'+esc(c.commentType)+'</span>'
+            +'<span style="flex:1"></span>'
+            +(c.author?'<span style="font-size:11px;color:var(--text3)">'+esc(c.author)+'</span>':'')
+            +'</div>'
+            +'<div style="font-size:12.5px;color:var(--text2)">'+esc(c.note)+'</div>'
+            +'</div>';
+          return;
+        }
+        var ev=item.data;
         var eid='ev'+emp.id+'x'+idx;
         var overallAvg=(DIMS.reduce(function(a,d){return a+(ev[d.key]||0);},0)/DIMS.length).toFixed(1);
         var avgCol=overallAvg>=7?'var(--teal-dark)':overallAvg>=4?'var(--purple)':'var(--amber-dark)';
@@ -7858,6 +7879,116 @@ function renderEinstellungen(){
 // ── ACTIONS ──
 function setEvalDate(date){window._evalDate=date;renderTab();}
 
+function openCommentModal(empId){
+  var emp=employees.find(function(e){return e.id===empId;});
+  var overlay=document.createElement('div');
+  overlay.id='commentModal';
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
+
+  var box=document.createElement('div');
+  box.style.cssText='background:rgba(255,255,255,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:14px;padding:24px 28px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18)';
+
+  var hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:18px';
+  hdr.innerHTML='<div style="font-size:17px;font-weight:700">Kommentar hinzufügen</div>';
+  var closeBtn=document.createElement('button');
+  closeBtn.textContent='×';
+  closeBtn.style.cssText='background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1';
+  closeBtn.onclick=function(){overlay.remove();};
+  hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  var curName='Unbekannt';
+  if(typeof currentCoach!=='undefined'&&currentCoach)curName=currentCoach.name;
+  else if(typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof appUsers!=='undefined'){
+    var matchUser=appUsers.find(function(u){return u.email===currentAuthUser.email;});
+    if(matchUser)curName=matchUser.name;
+  }
+
+  var sec1=document.createElement('div');
+  sec1.style.cssText='font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
+  sec1.textContent='① Wer & Wann';
+  box.appendChild(sec1);
+  var sec1body=document.createElement('div');
+  sec1body.style.cssText='border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px';
+  sec1body.innerHTML='<label style="font-size:12px;font-weight:600;color:var(--text2)">Verfasser</label>'
+    +'<div style="font-size:13px;margin-top:4px;color:var(--text)">'+esc(curName)+'</div>'
+    +'<label style="font-size:12px;font-weight:600;color:var(--text2);margin-top:10px;display:block">Datum</label>'
+    +'<input type="date" id="comment-date" value="'+today()+'" style="display:block;margin-top:4px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);width:220px">';
+  box.appendChild(sec1body);
+
+  var sec2=document.createElement('div');
+  sec2.style.cssText='font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
+  sec2.textContent='② Art des Kommentars';
+  box.appendChild(sec2);
+  var sec2body=document.createElement('div');
+  sec2body.style.cssText='border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px';
+  var pillWrap=document.createElement('div');
+  pillWrap.style.cssText='display:flex;gap:8px;margin-top:6px';
+  var commentType='diverses';
+  ['skill','will','result','diverses'].forEach(function(t){
+    var p=document.createElement('div');
+    p.textContent=t.charAt(0).toUpperCase()+t.slice(1);
+    p.dataset.type=t;
+    var setActive=function(){
+      pillWrap.querySelectorAll('div').forEach(function(el){el.style.background='#fff';el.style.borderColor='var(--border2)';el.style.color='var(--text2)';});
+      p.style.background='#164e54';p.style.borderColor='#164e54';p.style.color='#fff';
+      commentType=t;
+    };
+    p.style.cssText='padding:7px 16px;border-radius:20px;border:1.5px solid var(--border2);font-size:12.5px;font-weight:600;color:var(--text2);cursor:pointer;background:#fff';
+    p.onclick=setActive;
+    if(t==='diverses')setActive();
+    pillWrap.appendChild(p);
+  });
+  sec2body.appendChild(pillWrap);
+  box.appendChild(sec2body);
+
+  var sec3=document.createElement('div');
+  sec3.style.cssText='font-size:11px;font-weight:700;color:#206A72;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
+  sec3.textContent='③ Kommentar';
+  box.appendChild(sec3);
+  var sec3body=document.createElement('div');
+  sec3body.style.cssText='border-left:2px solid var(--border2);padding-left:14px;margin-bottom:6px';
+  var textarea=document.createElement('textarea');
+  textarea.id='comment-text';
+  textarea.placeholder='z.B. Kommt regelmäßig zu spät zum Stand-up...';
+  textarea.style.cssText='display:block;margin-top:4px;width:100%;font-size:13px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);min-height:100px;resize:vertical;font-family:inherit';
+  sec3body.appendChild(textarea);
+  box.appendChild(sec3body);
+
+  var footer=document.createElement('div');
+  footer.style.cssText='display:flex;justify-content:flex-end;gap:8px;margin-top:6px';
+  var cancelBtn=document.createElement('button');
+  cancelBtn.className='btn';
+  cancelBtn.textContent='Abbrechen';
+  cancelBtn.onclick=function(){overlay.remove();};
+  var saveBtn=document.createElement('button');
+  saveBtn.className='btn btn-primary';
+  saveBtn.textContent='Speichern';
+  saveBtn.onclick=function(){
+    var txt=document.getElementById('comment-text').value.trim();
+    if(!txt){alert('Bitte einen Kommentar eingeben.');return;}
+    var dateVal=document.getElementById('comment-date').value||today();
+    if(!reviews[empId])reviews[empId]=[];
+    reviews[empId].push({
+      id:'comment_'+Date.now(),
+      date:dateVal,
+      isComment:true,
+      commentType:commentType,
+      note:txt,
+      author:curName
+    });
+    // TODO: Supabase-Persistenz analog zu reviews-Speicherung ergaenzen, sobald Tabellen-Spalte vorhanden
+    overlay.remove();
+    renderTab();
+  };
+  footer.appendChild(cancelBtn);
+  footer.appendChild(saveBtn);
+  box.appendChild(footer);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
 function openCoachingEval(empId){
   var DIMS=[
     {key:'einwand',label:'Einwandsbehandlung',cat:'skill'},
