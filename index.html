@@ -7338,13 +7338,13 @@ function renderTab(){
             var mins=(+bp[0]*60+ +bp[1])-(+vp[0]*60+ +vp[1])-(pause||0);
             return Math.max(0,mins/60);
           }
-          html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:16px"><table style="width:100%;border-collapse:collapse;table-layout:fixed">';
+          html+='<div style="background:#fff;border-radius:10px;overflow-x:auto;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:16px"><table style="border-collapse:collapse;table-layout:fixed;min-width:100%">';
           html+='<thead><tr>'
             +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px;width:240px">Wochentag</th>'
-            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Von</th>'
-            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Bis</th>'
-            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Pause (Min.)</th>'
-            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Arbeitszeit</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Von</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Bis</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Pause (Min.)</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:130px">Arbeitszeit</th>'
             +'</tr></thead><tbody>';
           var weekTotal=0;
           days.forEach(function(d,ridx){
