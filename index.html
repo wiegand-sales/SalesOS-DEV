@@ -834,7 +834,7 @@ function loadEmployeesFromSupabase(){
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
-        isPureCoach: e.is_pure_coach===true, provisionSettings: e.provision_settings || {}
+        isPureCoach: e.is_pure_coach===true, provisionSettings: e.provision_settings || {}, email: e.email || ''
       };
     });
     return true;
@@ -7288,50 +7288,45 @@ function renderTab(){
     var ROLLEN=['Vertriebsmitarbeiter','Senior Vertriebsmitarbeiter','Sales Coach'];
 
     if(true){
-    html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i> Stammdaten</div>';
-    html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
-    html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+esc(emp.name)+'"></div>';
-    html+='<div><label>Position</label>'
-      +'<select id="es-role" onchange="var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}">'
-      +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
-      +'<option'+(emp.role==='SE'?' selected':'')+'>SE</option>'
-      +'<option'+(emp.role==='VLC'?' selected':'')+'>VLC</option>'
-      +'<option'+(emp.role==='SDM'?' selected':'')+'>SDM</option>'
-      +'<option'+(emp.role==='SC'?' selected':'')+'>SC</option>'
-      +'<option value="__new__">+ Neue Position hinzufügen</option>'
-      +'</select></div>';
-    html+='<div><label>Phase</label><select id="es-phase">'
-      +'<option'+(emp.phase==='Onboarding'?' selected':'')+'>Onboarding</option>'
-      +'<option'+(emp.phase==='Aktiv'?' selected':'')+'>Aktiv</option>'
-      +'<option'+(emp.phase==='Inaktiv'?' selected':'')+'>Inaktiv</option>'
-      +'</select></div>';
-    html+='<div><label>Anstellung</label><select id="es-contract">'
-      +'<option value="Vollzeit"'+(emp.contract==='Vollzeit'||emp.contract==='full'?' selected':'')+'>Vollzeit</option>'
-      +'<option value="Teilzeit"'+(emp.contract==='Teilzeit'||emp.contract==='part'?' selected':'')+'>Teilzeit</option>'
-      +'</select></div>';
-    html+='</div>';
-    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
-    html+='<div><label>Stunden / Woche</label><input type="number" id="es-hours" value="'+(emp.hours||40)+'" min="1" max="60"></div>';
-    html+='<div><label>Vertragsbeginn</label><input type="date" id="es-start" value="'+(emp.startDate||'')+'"></div>';
-    html+='<div><label>Vertragsende</label><input type="date" id="es-end" value="'+(emp.endDate||'')+'"></div>';
-    html+='</div>';
-    html+='<div style="margin-bottom:14px"><label>Avatar-Farbe</label><div style="margin-top:6px">'+swatches+'</div></div>';
-    html+='<div style="margin-bottom:16px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
-      +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+(emp.notes||'')+'</textarea></div>';
-    html+='<button class="btn btn-primary btn-sm" style="width:auto" onclick="saveEmpEinstellungen()"><i class="ti ti-check"></i> Änderungen speichern</button>';
-    html+='</div>';
-    }
 
-    if(true){
-
-      // ── Provisionsvereinbarung (mitarbeiterspezifisch) ──
+      // ── Provisionsvereinbarung (jetzt inkl. Stammdaten, mitarbeiterspezifisch) ──
       (function(){
         var pv=(emp.provisionSettings)||{};
         function pvNum(key,def){return pv[key]!=null?pv[key]:def;}
         var m1=pv.monat1||{}, m2=pv.monat2||{}, m3=pv.monat3plus||{};
         function pvMonatNum(mObj,key,def){return mObj[key]!=null?mObj[key]:def;}
-        html+='<div class="card"><div class="card-title"><i class="ti ti-cash"></i> Provisionsvereinbarung</div>';
-        html+='<p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Grundlage für die Berechnung der Spalten "Abzug" und "Provision" im Reiter Provision, sowie der überlappenden individuellen KPI-Ziele oben (CR-Werte, Anteile, Opt./Stunde). Gültig ab dem hinterlegten Datum, ergänzend zum Arbeitsvertrag.</p>';
+        html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i> Stammdaten &amp; Provisionsvereinbarung</div>';
+
+        html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
+        html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+esc(emp.name)+'"></div>';
+        html+='<div><label>Position</label>'
+          +'<select id="es-role" onchange="var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}">'
+          +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
+          +'<option'+(emp.role==='SE'?' selected':'')+'>SE</option>'
+          +'<option'+(emp.role==='VLC'?' selected':'')+'>VLC</option>'
+          +'<option'+(emp.role==='SDM'?' selected':'')+'>SDM</option>'
+          +'<option'+(emp.role==='SC'?' selected':'')+'>SC</option>'
+          +'<option value="__new__">+ Neue Position hinzufügen</option>'
+          +'</select></div>';
+        html+='<div><label>Phase</label><select id="es-phase">'
+          +'<option'+(emp.phase==='Onboarding'?' selected':'')+'>Onboarding</option>'
+          +'<option'+(emp.phase==='Aktiv'?' selected':'')+'>Aktiv</option>'
+          +'<option'+(emp.phase==='Inaktiv'?' selected':'')+'>Inaktiv</option>'
+          +'</select></div>';
+        html+='<div><label>Anstellung</label><select id="es-contract">'
+          +'<option value="Vollzeit"'+(emp.contract==='Vollzeit'||emp.contract==='full'?' selected':'')+'>Vollzeit</option>'
+          +'<option value="Teilzeit"'+(emp.contract==='Teilzeit'||emp.contract==='part'?' selected':'')+'>Teilzeit</option>'
+          +'</select></div>';
+        html+='</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+        html+='<div><label>Stunden / Woche</label><input type="number" id="es-hours" value="'+(emp.hours||40)+'" min="1" max="60"></div>';
+        html+='<div><label>E-Mail</label><input type="email" id="es-email" value="'+esc(emp.email||'')+'" placeholder="name@wiegand-gmbh.de"></div>';
+        html+='<div><label>Avatar-Farbe</label><div style="margin-top:6px">'+swatches+'</div></div>';
+        html+='</div>';
+        html+='<div style="margin-bottom:16px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
+          +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+(emp.notes||'')+'</textarea></div>';
+
+        html+='<p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Grundlage für die Berechnung der Spalten "Abzug" und "Provision" im Reiter Provision, sowie der überlappenden individuellen KPI-Ziele (CR-Werte, Anteile, Opt./Stunde) weiter unten.</p>';
 
         function stripField(lbl,id,def,unit,step){
           return '<div style="padding:4px 16px;border-right:1px solid rgba(255,255,255,0.14)">'
@@ -7345,8 +7340,10 @@ function renderTab(){
         html+=stripField('Basisprov./Opt.','pv-basisProOpt',1.00,'€',0.10);
         html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5).replace('border-right:1px solid rgba(255,255,255,0.14)','');
         html+='</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
-        html+='<div><label>Gültig ab</label><input type="date" id="pv-gueltigAb" value="'+(pv.gueltigAb||'')+'"></div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+        html+='<div><label>Vertragsbeginn</label><input type="date" id="es-start" value="'+(emp.startDate||'')+'"></div>';
+        html+='<div><label>Gültig ab (Provision)</label><input type="date" id="pv-gueltigAb" value="'+(pv.gueltigAb||'')+'"></div>';
+        html+='<div><label>Vertragsende</label><input type="date" id="es-end" value="'+(emp.endDate||'')+'"></div>';
         html+='</div>';
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:4px;border-top:1px solid #eef1f1">UMSATZABHÄNGIGE PROVISION (§2 ABS. 2) — DIVISOREN</div>';
@@ -7408,7 +7405,7 @@ function renderTab(){
           {crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
           {crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
 
-        html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid)"><i class="ti ti-check"></i> Provisionsvereinbarung speichern</button>';
+        html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" data-eid="'+emp.id+'" onclick="saveEmpEinstellungen();saveProvisionSettings(this.dataset.eid)"><i class="ti ti-check"></i> Alles speichern</button>';
         html+='<span id="pv-save-status" style="font-size:11px;color:var(--text3);margin-left:10px"></span>';
         html+='</div>'; // close Provisionsvereinbarung card
       })();
@@ -9903,6 +9900,8 @@ function saveEmpEinstellungen(){
   emp.endDate=document.getElementById('es-end').value||null;
   emp.contract=document.getElementById('es-contract').value;
   emp.hours=parseInt(document.getElementById('es-hours').value)||40;
+  var emailEl=document.getElementById('es-email');
+  if(emailEl)emp.email=emailEl.value.trim()||null;
   var notesEl=document.getElementById('es-notes');
   if(notesEl)emp.notes=notesEl.value;
   renderSidebar();renderEmpDetail();  lsSave();
@@ -9910,7 +9909,7 @@ function saveEmpEinstellungen(){
   sb.from('employees').update({
     name:emp.name,role:emp.role,phase:emp.phase,team:emp.team,active:emp.active,
     start_date:emp.startDate||null,end_date:emp.endDate||null,
-    contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color
+    contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color,email:emp.email||null
   }).eq('id',emp.id).then(function(res){
     _savingEmpEinstellungen=false;
     if(res.error){alert('Fehler beim Speichern in Supabase: '+res.error.message+'\n\nDie Änderung ist lokal sichtbar, aber NICHT gespeichert -- bitte nochmal versuchen.');return;}
