@@ -7420,7 +7420,7 @@ function renderTab(){
           {crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
           {crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
 
-        html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" data-eid="'+emp.id+'" onclick="saveEmpEinstellungen();saveProvisionSettings(this.dataset.eid)"><i class="ti ti-check"></i> Alles speichern</button>';
+        html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid);saveEmpEinstellungen()"><i class="ti ti-check"></i> Alles speichern</button>';
         html+='<span id="pv-save-status" style="font-size:11px;color:var(--text3);margin-left:10px"></span>';
         html+='</div>'; // close Provisionsvereinbarung card
       })();
