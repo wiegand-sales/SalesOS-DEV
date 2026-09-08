@@ -7332,23 +7332,38 @@ function renderTab(){
           };
           var wh=emp.workHours||{};
           var days=[{key:'mo',lbl:'Montag'},{key:'di',lbl:'Dienstag'},{key:'mi',lbl:'Mittwoch'},{key:'do',lbl:'Donnerstag'},{key:'fr',lbl:'Freitag'},{key:'sa',lbl:'Samstag'},{key:'so',lbl:'Sonntag'}];
+          function calcNetHours(von,bis,pause){
+            if(!von||!bis)return 0;
+            var vp=von.split(':'),bp=bis.split(':');
+            var mins=(+bp[0]*60+ +bp[1])-(+vp[0]*60+ +vp[1])-(pause||0);
+            return Math.max(0,mins/60);
+          }
           html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:16px"><table style="width:100%;border-collapse:collapse;table-layout:fixed">';
           html+='<thead><tr>'
             +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px;width:110px">Wochentag</th>'
             +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Von</th>'
             +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Bis</th>'
             +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Pause (Min.)</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Arbeitszeit</th>'
             +'</tr></thead><tbody>';
+          var weekTotal=0;
           days.forEach(function(d,ridx){
             var dv=wh[d.key]||DEFAULT_WH[d.key];
             var rowBg=ridx%2===1?'background:#fafcfc;':'';
+            var netH=calcNetHours(dv.von,dv.bis,dv.pause);
+            weekTotal+=netH;
             html+='<tr style="'+rowBg+'">'
               +'<td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1">'+d.lbl+'</td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-von" value="'+(dv.von||'')+'" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-bis" value="'+(dv.bis||'')+'" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="es-wh-'+d.key+'-pause" value="'+(dv.pause!=null?dv.pause:30)+'" step="5" min="0" max="180" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-von" value="'+(dv.von||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-bis" value="'+(dv.bis||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="es-wh-'+d.key+'-pause" value="'+(dv.pause!=null?dv.pause:30)+'" step="5" min="0" max="180" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><span id="es-wh-'+d.key+'-result" style="font-size:13px;font-weight:700;color:var(--text)">'+netH.toFixed(1)+' Std.</span></td>'
               +'</tr>';
           });
+          html+='<tr style="background:#0c3b40">'
+            +'<td colspan="4" style="padding:9px 8px;padding-left:12px;font-weight:700;color:#fff;font-size:12.5px">Summe</td>'
+            +'<td style="padding:8px;text-align:center"><span id="es-wh-summe-result" style="font-size:14px;font-weight:700;color:#fff">'+weekTotal.toFixed(1)+' Std.</span></td>'
+            +'</tr>';
           html+='</tbody></table></div>';
         })();
 
@@ -9936,6 +9951,30 @@ function deleteEmpDocument(docId){
   }).catch(function(err){_deletingEmpDoc=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 var _savingEmpEinstellungen=false;
+function updateWorkHoursRow(dayKey){
+  var whDaysAll=['mo','di','mi','do','fr','sa','so'];
+  function timeToMinLocal(t){if(!t)return null;var p=t.split(':');return (+p[0])*60+(+p[1]);}
+  function calcNet(von,bis,pause){
+    if(!von||!bis)return 0;
+    var mins=timeToMinLocal(bis)-timeToMinLocal(von)-(pause||0);
+    return Math.max(0,mins/60);
+  }
+  var vonEl=document.getElementById('es-wh-'+dayKey+'-von');
+  var bisEl=document.getElementById('es-wh-'+dayKey+'-bis');
+  var pauseEl=document.getElementById('es-wh-'+dayKey+'-pause');
+  var resultEl=document.getElementById('es-wh-'+dayKey+'-result');
+  if(resultEl){
+    var net=calcNet(vonEl?vonEl.value:'',bisEl?bisEl.value:'',pauseEl?parseInt(pauseEl.value)||0:0);
+    resultEl.textContent=net.toFixed(1)+' Std.';
+  }
+  var weekTotal=0;
+  whDaysAll.forEach(function(d){
+    var v=document.getElementById('es-wh-'+d+'-von'), b=document.getElementById('es-wh-'+d+'-bis'), p=document.getElementById('es-wh-'+d+'-pause');
+    weekTotal+=calcNet(v?v.value:'',b?b.value:'',p?parseInt(p.value)||0:0);
+  });
+  var summeEl=document.getElementById('es-wh-summe-result');
+  if(summeEl)summeEl.textContent=weekTotal.toFixed(1)+' Std.';
+}
 function saveEmpEinstellungen(){
   if(_savingEmpEinstellungen)return;
   var emp=employees.find(function(e){return e.id===selectedEmp;});
