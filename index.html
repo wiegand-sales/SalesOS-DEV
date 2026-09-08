@@ -834,7 +834,7 @@ function loadEmployeesFromSupabase(){
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
-        isPureCoach: e.is_pure_coach===true, provisionSettings: e.provision_settings || {}, email: e.email || ''
+        isPureCoach: e.is_pure_coach===true, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null
       };
     });
     return true;
@@ -7318,11 +7318,26 @@ function renderTab(){
           +'<option value="Teilzeit"'+(emp.contract==='Teilzeit'||emp.contract==='part'?' selected':'')+'>Teilzeit</option>'
           +'</select></div>';
         html+='</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
-        html+='<div><label>Stunden / Woche</label><input type="number" id="es-hours" value="'+(emp.hours||40)+'" min="1" max="60"></div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
         html+='<div><label>E-Mail</label><input type="email" id="es-email" value="'+esc(emp.email||'')+'" placeholder="name@wiegand-gmbh.de"></div>';
         html+='<div><label>Avatar-Farbe</label><div style="margin-top:6px">'+swatches+'</div></div>';
         html+='</div>';
+
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px">WOCHENARBEITSZEITEN</div>';
+        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Stunden je Wochentag – ermöglicht präzise Teilzeit-Steuerung und eine korrekte Optimierungen/Std.-Berechnung (z.B. kürzerer Freitag, längerer Montag).</p>';
+        (function(){
+          var wh=emp.workHours||{mo:9.5,di:8.5,mi:8.5,do:8.5,fr:7.5};
+          var days=[{key:'mo',lbl:'Montag'},{key:'di',lbl:'Dienstag'},{key:'mi',lbl:'Mittwoch'},{key:'do',lbl:'Donnerstag'},{key:'fr',lbl:'Freitag'}];
+          html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:16px"><table style="width:100%;border-collapse:collapse;table-layout:fixed">';
+          html+='<thead><tr>';
+          days.forEach(function(d){html+='<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+d.lbl+'</th>';});
+          html+='</tr></thead><tbody><tr>';
+          days.forEach(function(d){
+            html+='<td style="padding:10px 8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="es-wh-'+d.key+'" value="'+(wh[d.key]!=null?wh[d.key]:8)+'" step="0.5" min="0" max="14" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>';
+          });
+          html+='</tr></tbody></table></div>';
+        })();
+
         html+='<div style="margin-bottom:16px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
           +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+(emp.notes||'')+'</textarea></div>';
 
@@ -8112,6 +8127,20 @@ var provisionCustomMonth=today().slice(0,7);
 function setProvisionCustomMonth(val){provisionMode='custom';provisionCustomMonth=val;if(view==='provisionTeam')renderMain();else renderTab();}
 function setProvisionMode(m){provisionMode=m;if(view==='provisionTeam')renderMain();else renderTab();}
 // ── Provisionsberechnung nach der Provisionsvereinbarung (§2-§5) ──
+var WEEKDAY_KEYS=['so','mo','di','mi','do','fr','sa']; // JS getDay(): 0=So,1=Mo,...6=Sa
+function workHoursForDate(emp,dateStr){
+  var wh=emp.workHours||{mo:9.5,di:8.5,mi:8.5,do:8.5,fr:7.5};
+  var d=new Date(dateStr+'T00:00:00');
+  var key=WEEKDAY_KEYS[d.getDay()];
+  if(key==='sa'||key==='so')return 0; // Wochenende zaehlt nicht
+  return wh[key]!=null?wh[key]:8;
+}
+function totalWorkHoursForMonth(emp,monthKey,dateList){
+  // dateList: Array der tatsaechlichen Datums-Strings (YYYY-MM-DD) mit Performance-Daten in diesem Monat
+  var sum=0;
+  (dateList||[]).forEach(function(ds){sum+=workHoursForDate(emp,ds);});
+  return sum;
+}
 function beschaeftigungsmonat(emp,monthKey){
   if(!emp.startDate)return 1;
   var start=new Date(emp.startDate+'T00:00:00');
@@ -8314,8 +8343,8 @@ function buildProvisionTeamTable(){
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
       var abwTage=urlaubKrankTage(emp.id,g.key);
       var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
-      var hoursPerDay=(emp.hours||40)/5;
-      var rowTotalHours=hoursPerDay*g.count;
+      var monthDates=rowsAll.filter(function(x){return (x.date||'').slice(0,7)===g.key;}).map(function(x){return x.date;});
+      var rowTotalHours=totalWorkHoursForMonth(emp,g.key,monthDates);
       var gesamtAktivitaeten=row.gesamtAktivitaeten||row.oem_aktivitaeten||0;
       var aktPerHour_num=rowTotalHours>0?gesamtAktivitaeten/rowTotalHours:0;
       var aktProStd=aktPerHour_num.toFixed(1);
@@ -8489,8 +8518,8 @@ function buildProvisionTable(empId){
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
       var abwTage=urlaubKrankTage(empId,g.key);
       var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
-      var hoursPerDay=(emp.hours||40)/5;
-      var rowTotalHours=hoursPerDay*g.count;
+      var monthDates=rowsAll.filter(function(x){return (x.date||'').slice(0,7)===g.key;}).map(function(x){return x.date;});
+      var rowTotalHours=totalWorkHoursForMonth(emp,g.key,monthDates);
       var gesamtAktivitaeten=row.gesamtAktivitaeten||row.oem_aktivitaeten||0;
       var aktPerHour_num=rowTotalHours>0?gesamtAktivitaeten/rowTotalHours:0;
       var aktProStd=aktPerHour_num.toFixed(1);
@@ -9907,7 +9936,11 @@ function saveEmpEinstellungen(){
   emp.startDate=document.getElementById('es-start').value;
   emp.endDate=document.getElementById('es-end').value||null;
   emp.contract=document.getElementById('es-contract').value;
-  emp.hours=parseInt(document.getElementById('es-hours').value)||40;
+  var whDays=['mo','di','mi','do','fr'];
+  var newWorkHours={};
+  whDays.forEach(function(d){var el=document.getElementById('es-wh-'+d);newWorkHours[d]=el?(parseFloat(el.value)||0):8;});
+  emp.workHours=newWorkHours;
+  emp.hours=whDays.reduce(function(sum,d){return sum+newWorkHours[d];},0);
   var emailEl=document.getElementById('es-email');
   if(emailEl)emp.email=emailEl.value.trim()||null;
   var notesEl=document.getElementById('es-notes');
@@ -9917,7 +9950,7 @@ function saveEmpEinstellungen(){
   sb.from('employees').update({
     name:emp.name,role:emp.role,phase:emp.phase,team:emp.team,active:emp.active,
     start_date:emp.startDate||null,end_date:emp.endDate||null,
-    contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color,email:emp.email||null
+    contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color,email:emp.email||null,work_hours:emp.workHours||null
   }).eq('id',emp.id).then(function(res){
     _savingEmpEinstellungen=false;
     if(res.error){alert('Fehler beim Speichern in Supabase: '+res.error.message+'\n\nDie Änderung ist lokal sichtbar, aber NICHT gespeichert -- bitte nochmal versuchen.');return;}
