@@ -3935,16 +3935,16 @@ function empTargets(emp){
     crMegaYes:  {val:pval('crMegaYes','my',8),        dir:dir('crMYDir','crMegaYes','gte')},
     optPerH:     {val:pval('optPerH','optH',2.0),         dir:dir('optPerHDir','optPerH','gte')},
     optPerDay:   {val:val('optPerDay',16),          dir:dir('optPerDayDir','optPerDay','gte')},
-    crYes:       {val:val('crYes',null),             dir:dir('crYesDir','crYes','gte')},
+    crYes:       {val:pval('crYes','crYes',null),             dir:dir('crYesDir','crYes','gte')},
     crSyMy:      {val:pval('crSyMy','syMy',null),             dir:dir('crSyMyDir','crSyMy','gte')},
     anteilOEM:   {val:pval('anteilOEM','oemAnteil',null),          dir:dir('anteilOEMDir','anteilOEM','gte')},
-    notReached:  {val:val('notReached',null),         dir:dir('notReachedDir','notReached','lte')},
-    notPossible: {val:val('notPossible',null),        dir:dir('notPossibleDir','notPossible','lte')},
-    notSuccessful:{val:val('notSuccessful',null),     dir:dir('notSuccessfulDir','notSuccessful','lte')},
-    oem_aktivitaeten:{val:val('oem_aktivitaeten',null),       dir:dir('aktivDir','oem_aktivitaeten','gte')},
-    convOEM:     {val:val('convOEM',null),            dir:dir('convOEMDir','convOEM','gte')},
-    optGesamt:   {val:val('optGesamt',null)!=null?val('optGesamt',null):val('optPerDay',null), dir:dir('optGesamtDir','optGesamt','gte')},
-    margeGesamt: {val:val('margeGesamt',null),        dir:dir('margeDir','margeGesamt','gte')}
+    notReached:  {val:pval('notReached','notReached',null),         dir:dir('notReachedDir','notReached','lte')},
+    notPossible: {val:pval('notPossible','notPossible',null),        dir:dir('notPossibleDir','notPossible','lte')},
+    notSuccessful:{val:pval('notSuccessful','notSuccessful',null),     dir:dir('notSuccessfulDir','notSuccessful','lte')},
+    oem_aktivitaeten:{val:pval('oem_aktivitaeten','aktivitaeten',null),       dir:dir('aktivDir','oem_aktivitaeten','gte')},
+    convOEM:     {val:pval('convOEM','convOEM',null),            dir:dir('convOEMDir','convOEM','gte')},
+    optGesamt:   {val:pval('optGesamt','optGesamt',null)!=null?pval('optGesamt','optGesamt',null):val('optPerDay',null), dir:dir('optGesamtDir','optGesamt','gte')},
+    margeGesamt: {val:pval('margeGesamt','margeZiel',null),        dir:dir('margeDir','margeGesamt','gte')}
   };
 }
 
@@ -7323,64 +7323,6 @@ function renderTab(){
     }
 
     if(true){
-      html+='<div class="card"><div class="card-title"><i class="ti ti-target"></i> Individuelle KPI-Ziele</div>'
-      html+='<p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Diese Werte überschreiben die globalen Standards für diesen Mitarbeiter und werden in allen Alerts und der Teamübersicht verwendet. <b>CR OEM/TW/SY/MY, SY/MY-Anteil, OEM-Anteil und Opt./Stunde</b> werden für Sales Agents automatisch aus der Provisionsvereinbarung unten übernommen (je nach Beschäftigungsmonat gestaffelt) – hier lassen sich nur die übrigen Kennzahlen individuell einstellen.</p>'
-      
-
-      // ── CR Kategorie ──
-      html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px">CR-WERTE (%)</div>';
-      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">';
-      [{lbl:'CR Yes',id:'crYes',did:'crYesDir',fv:_tr.crYes!=null?_tr.crYes:(t.crYes&&t.crYes.val!=null?t.crYes.val:''),fd:_tr.crYesDir||(t.crYes?t.crYes.dir:'gte')},
-       {lbl:'NE (nicht erreicht)',id:'notReached',did:'notReachedDir',fv:_tr.notReached!=null?_tr.notReached:(t.notReached&&t.notReached.val!=null?t.notReached.val:''),fd:_tr.notReachedDir||(t.notReached?t.notReached.dir:'lte')},
-       {lbl:'NM (nicht möglich)',id:'notPossible',did:'notPossibleDir',fv:_tr.notPossible!=null?_tr.notPossible:(t.notPossible&&t.notPossible.val!=null?t.notPossible.val:''),fd:_tr.notPossibleDir||(t.notPossible?t.notPossible.dir:'lte')},
-       {lbl:'NErr (nicht erfolgreich)',id:'notSuccessful',did:'notSuccessfulDir',fv:_tr.notSuccessful!=null?_tr.notSuccessful:(t.notSuccessful&&t.notSuccessful.val!=null?t.notSuccessful.val:''),fd:_tr.notSuccessfulDir||(t.notSuccessful?t.notSuccessful.dir:'lte')}
-      ].forEach(function(f){
-        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
-        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">'+f.lbl+'</div>';
-        html+='<div style="display:flex;align-items:center;gap:6px">';
-        html+='<select id="es-d-'+f.id+'" style="width:72px;flex-shrink:0;padding:5px 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:12px;font-weight:600"><option value="gte"'+(f.fd==='gte'?' selected':'')+'>mind.</option><option value="lte"'+(f.fd==='lte'?' selected':'')+'>max.</option></select>';
-        html+='<input type="number" id="es-'+f.id+'" value="'+f.fv+'" step="1" min="0" max="100" placeholder="—" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center">';
-        html+='<span style="font-size:12px;font-weight:600;color:var(--text2);flex-shrink:0">%</span>';
-        html+='</div></div>';
-      });
-      html+='</div>';
-
-      // ── Zahlen Kategorie ──
-      html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">TAGESWERTE</div>';
-      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">';
-      [{lbl:'Aktivitäten/Tag',id:'aktiv',did:'aktivDir',fv:_tr.oem_aktivitaeten!=null?_tr.oem_aktivitaeten:(t.oem_aktivitaeten&&t.oem_aktivitaeten.val!=null?t.oem_aktivitaeten.val:''),fd:_tr.aktivDir||(t.oem_aktivitaeten?t.oem_aktivitaeten.dir:'gte'),unit:''},
-       {lbl:'Conv. OEM/Tag',id:'convOEM',did:'convOEMDir',fv:_tr.convOEM!=null?_tr.convOEM:(t.convOEM&&t.convOEM.val!=null?t.convOEM.val:''),fd:_tr.convOEMDir||(t.convOEM?t.convOEM.dir:'gte'),unit:''},
-       {lbl:'Opt. Gesamt/Tag',id:'optDay',did:'optPerDayDir',fv:_tr.optGesamt!=null?_tr.optGesamt:(t.optGesamt&&t.optGesamt.val!=null?t.optGesamt.val:''),fd:_tr.optGesamtDir||(t.optGesamt?t.optGesamt.dir:'gte'),unit:''}
-      ].forEach(function(f){
-        var step=f.step||1;
-        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
-        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">'+f.lbl+'</div>';
-        html+='<div style="display:flex;align-items:center;gap:6px">';
-        html+='<select id="es-d-'+f.id+'" style="width:72px;flex-shrink:0;padding:5px 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:12px;font-weight:600"><option value="gte"'+(f.fd==='gte'?' selected':'')+'>mind.</option><option value="lte"'+(f.fd==='lte'?' selected':'')+'>max.</option></select>';
-        html+='<input type="number" id="es-'+f.id+'" value="'+f.fv+'" step="'+step+'" min="0" placeholder="—" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center">';
-        if(f.unit)html+='<span style="font-size:12px;font-weight:600;color:var(--text2);flex-shrink:0">'+f.unit+'</span>';
-        html+='</div></div>';
-      });
-      html+='</div>';
-
-      // ── Marge ──
-      html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">MARGE</div>';
-      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
-      (function(){
-        var fv=_tr.margeGesamt!=null?_tr.margeGesamt:(t.margeGesamt&&t.margeGesamt.val!=null?t.margeGesamt.val:'');
-        var fd=_tr.margeDir||(t.margeGesamt?t.margeGesamt.dir:'gte');
-        html+='<div style="background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-md);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);padding:10px 12px">';
-        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Marge Ziel</div>';
-        html+='<div style="display:flex;align-items:center;gap:6px">';
-        html+='<select id="es-d-marge" style="width:72px;flex-shrink:0;padding:5px 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:12px;font-weight:600"><option value="gte"'+(fd==='gte'?' selected':'')+'>mind.</option><option value="lte"'+(fd==='lte'?' selected':'')+'>max.</option></select>';
-        html+='<input type="number" id="es-marge" value="'+fv+'" step="10" min="0" placeholder="—" style="flex:1;min-width:0;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;text-align:center">';
-        html+='<span style="font-size:12px;font-weight:600;color:var(--text2);flex-shrink:0">€</span>';
-        html+='</div></div>';
-      })();
-      html+='</div>';
-
-      html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" onclick="saveEmpZiele()"><i class="ti ti-check"></i> Ziele speichern</button>';
-      html+='</div>'; // close KPI card
 
       // ── Provisionsvereinbarung (mitarbeiterspezifisch) ──
       (function(){
@@ -7421,9 +7363,9 @@ function renderTab(){
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">§3 KPI-VORGABEN JE BESCHÄFTIGUNGSMONAT</div>';
         (function(){
-          var monatSets=[{key:'monat1',label:'Monat 1',obj:m1,defs:{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60}},
-           {key:'monat2',label:'Monat 2',obj:m2,defs:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80}},
-           {key:'monat3plus',label:'Ab Monat 3',obj:m3,defs:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80}}
+          var monatSets=[{key:'monat1',label:'Monat 1',obj:m1,defs:{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60,crYes:15,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000}},
+           {key:'monat2',label:'Monat 2',obj:m2,defs:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500}},
+           {key:'monat3plus',label:'Ab Monat 3',obj:m3,defs:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000}}
           ];
           var fieldRows=[
             {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
@@ -7432,7 +7374,15 @@ function renderTab(){
             {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
             {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
             {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
-            {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'}
+            {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'},
+            {lbl:'CR Yes (mind.) %',f:'crYes',unit:'%'},
+            {lbl:'NE - nicht erreicht (max.) %',f:'notReached',unit:'%'},
+            {lbl:'NM - nicht möglich (max.) %',f:'notPossible',unit:'%'},
+            {lbl:'NErr - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
+            {lbl:'Aktivitäten/Tag (mind.)',f:'aktivitaeten',unit:''},
+            {lbl:'Conv. OEM/Tag (mind.)',f:'convOEM',unit:''},
+            {lbl:'Opt. Gesamt/Tag (mind.)',f:'optGesamt',unit:''},
+            {lbl:'Marge Ziel (mind.)',f:'margeZiel',unit:'€',step:10}
           ];
           html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:8px"><table style="width:100%;border-collapse:collapse">';
           html+='<thead><tr><th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px">Kennzahl</th>';
@@ -8175,9 +8125,9 @@ function provisionKpiSetFor(pv,bm){
 var PROVISION_DEFAULTS={
   basisProOpt:1.00,divOEM:10000,divUpsell:20000,divWka:20000,
   reduktionProKpi:20,mindestprovision:20,mindestleistungOptH:2.50,
-  monat1:{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},
-  monat2:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},
-  monat3plus:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80}
+  monat1:{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60,crYes:15,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000},
+  monat2:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
+  monat3plus:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000}
 };
 function calculateProvision(emp,monthKey,row,dayCount){
   // Solange fuer diesen Mitarbeiter noch keine individuelle Vereinbarung gespeichert wurde,
@@ -10009,9 +9959,9 @@ function saveProvisionSettings(empId){
     reduktionProKpi:val('pv-reduktionProKpi'),
     mindestprovision:val('pv-mindestprovision'),
     mindestleistungOptH:val('pv-mindestleistungOptH'),
-    monat1:{optH:val('pv-monat1-optH'),crOem:val('pv-monat1-crOem'),tw:val('pv-monat1-tw'),sy:val('pv-monat1-sy'),my:val('pv-monat1-my'),syMy:val('pv-monat1-syMy'),oemAnteil:val('pv-monat1-oemAnteil')},
-    monat2:{optH:val('pv-monat2-optH'),crOem:val('pv-monat2-crOem'),tw:val('pv-monat2-tw'),sy:val('pv-monat2-sy'),my:val('pv-monat2-my'),syMy:val('pv-monat2-syMy'),oemAnteil:val('pv-monat2-oemAnteil')},
-    monat3plus:{optH:val('pv-monat3plus-optH'),crOem:val('pv-monat3plus-crOem'),tw:val('pv-monat3plus-tw'),sy:val('pv-monat3plus-sy'),my:val('pv-monat3plus-my'),syMy:val('pv-monat3plus-syMy'),oemAnteil:val('pv-monat3plus-oemAnteil')}
+    monat1:{optH:val('pv-monat1-optH'),crOem:val('pv-monat1-crOem'),tw:val('pv-monat1-tw'),sy:val('pv-monat1-sy'),my:val('pv-monat1-my'),syMy:val('pv-monat1-syMy'),oemAnteil:val('pv-monat1-oemAnteil'),crYes:val('pv-monat1-crYes'),notReached:val('pv-monat1-notReached'),notPossible:val('pv-monat1-notPossible'),notSuccessful:val('pv-monat1-notSuccessful'),aktivitaeten:val('pv-monat1-aktivitaeten'),convOEM:val('pv-monat1-convOEM'),optGesamt:val('pv-monat1-optGesamt'),margeZiel:val('pv-monat1-margeZiel')},
+    monat2:{optH:val('pv-monat2-optH'),crOem:val('pv-monat2-crOem'),tw:val('pv-monat2-tw'),sy:val('pv-monat2-sy'),my:val('pv-monat2-my'),syMy:val('pv-monat2-syMy'),oemAnteil:val('pv-monat2-oemAnteil'),crYes:val('pv-monat2-crYes'),notReached:val('pv-monat2-notReached'),notPossible:val('pv-monat2-notPossible'),notSuccessful:val('pv-monat2-notSuccessful'),aktivitaeten:val('pv-monat2-aktivitaeten'),convOEM:val('pv-monat2-convOEM'),optGesamt:val('pv-monat2-optGesamt'),margeZiel:val('pv-monat2-margeZiel')},
+    monat3plus:{optH:val('pv-monat3plus-optH'),crOem:val('pv-monat3plus-crOem'),tw:val('pv-monat3plus-tw'),sy:val('pv-monat3plus-sy'),my:val('pv-monat3plus-my'),syMy:val('pv-monat3plus-syMy'),oemAnteil:val('pv-monat3plus-oemAnteil'),crYes:val('pv-monat3plus-crYes'),notReached:val('pv-monat3plus-notReached'),notPossible:val('pv-monat3plus-notPossible'),notSuccessful:val('pv-monat3plus-notSuccessful'),aktivitaeten:val('pv-monat3plus-aktivitaeten'),convOEM:val('pv-monat3plus-convOEM'),optGesamt:val('pv-monat3plus-optGesamt'),margeZiel:val('pv-monat3plus-margeZiel')}
   };
   emp.provisionSettings=settings;
   _savingProvisionSettings=true;
