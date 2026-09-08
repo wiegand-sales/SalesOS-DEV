@@ -7465,11 +7465,18 @@ function renderTab(){
         var FIELD_LABELS={team:'Team',role:'Rolle',name:'Name',phase:'Phase',contract:'Anstellung',hours:'Stunden/Woche',startDate:'Vertragsbeginn',endDate:'Vertragsende',email:'E-Mail',
           provision_gueltigAb:'Gültig ab',provision_grundgehalt:'Grundgehalt',provision_agSozialabgaben:'AG-Sozialabgaben',provision_basisProOpt:'Basisprovision/Opt.',
           provision_divOEM:'Divisor OEM',provision_divUpsell:'Divisor Upsells',provision_divWka:'Divisor WKA',provision_reduktionProKpi:'Reduzierung je KPI',
-          provision_mindestprovision:'Mindestprovision',provision_mindestleistungOptH:'Mindestleistung Opt/Std',
-          provision_kpis_monat1:'KPI-Ziele Monat 1',provision_kpis_monat2:'KPI-Ziele Monat 2',provision_kpis_monat3plus:'KPI-Ziele ab Monat 3'};
+          provision_mindestprovision:'Mindestprovision',provision_mindestleistungOptH:'Mindestleistung Opt/Std'};
+        var MONAT_SUBFIELD_LABELS_DISPLAY={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NErr',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
+        var MONAT_LABELS_DISPLAY={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
+        function resolveFieldLabel(field){
+          if(FIELD_LABELS[field])return FIELD_LABELS[field];
+          var m=field.match(/^provision_kpi_(monat1|monat2|monat3plus)_(.+)$/);
+          if(m)return (MONAT_SUBFIELD_LABELS_DISPLAY[m[2]]||m[2])+' ('+MONAT_LABELS_DISPLAY[m[1]]+')';
+          return field;
+        }
         html+='<div style="display:flex;flex-direction:column;gap:6px">';
         hist.forEach(function(h){
-          var fieldLabel=FIELD_LABELS[h.field]||h.field;
+          var fieldLabel=resolveFieldLabel(h.field);
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border-radius:var(--r-md);font-size:12px;flex-wrap:wrap">'
             +'<span style="font-weight:600;width:150px;flex-shrink:0">'+fieldLabel+'</span>'
             +'<span style="color:var(--text2)">'+esc(h.oldValue||'—')+' → '+esc(h.newValue||'—')+'</span>'
@@ -10103,12 +10110,20 @@ function saveProvisionSettings(empId){
   var TOPFIELD_LABELS={gueltigAb:'Gültig ab',grundgehalt:'Grundgehalt',agSozialabgaben:'AG-Sozialabgaben',basisProOpt:'Basisprovision/Opt.',divOEM:'Divisor OEM',divUpsell:'Divisor Upsells',divWka:'Divisor WKA',reduktionProKpi:'Reduzierung je KPI',mindestprovision:'Mindestprovision',mindestleistungOptH:'Mindestleistung Opt/Std'};
   Object.keys(TOPFIELD_LABELS).forEach(function(k){
     var ov=oldSettings[k], nv=settings[k];
-    if(ov!==nv&&!(ov==null&&nv==null))pvHistRows.push({employee_id:empId,field:'provision_'+k,old_value:ov!=null?String(ov):null,new_value:nv!=null?String(nv):null,changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorNamePv});
+    var ovNorm=(ov==null||ov==='')?null:ov, nvNorm=(nv==null||nv==='')?null:nv;
+    if(String(ovNorm)!==String(nvNorm))pvHistRows.push({employee_id:empId,field:'provision_'+k,old_value:ovNorm!=null?String(ovNorm):null,new_value:nvNorm!=null?String(nvNorm):null,changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorNamePv});
   });
+  var MONAT_SUBFIELD_LABELS={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NErr',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
+  var MONAT_LABELS={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
   ['monat1','monat2','monat3plus'].forEach(function(mk){
-    if(JSON.stringify(oldSettings[mk]||{})!==JSON.stringify(settings[mk])){
-      pvHistRows.push({employee_id:empId,field:'provision_kpis_'+mk,old_value:'geändert',new_value:'geändert',changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorNamePv});
-    }
+    var oldM=oldSettings[mk]||{}, newM=settings[mk]||{};
+    Object.keys(MONAT_SUBFIELD_LABELS).forEach(function(sk){
+      var ov=oldM[sk], nv=newM[sk];
+      var ovNorm=(ov==null||ov==='')?null:ov, nvNorm=(nv==null||nv==='')?null:nv;
+      if(String(ovNorm)!==String(nvNorm)){
+        pvHistRows.push({employee_id:empId,field:'provision_kpi_'+mk+'_'+sk,old_value:ovNorm!=null?String(ovNorm):null,new_value:nvNorm!=null?String(nvNorm):null,changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorNamePv});
+      }
+    });
   });
   if(pvHistRows.length){
     sb.from('employee_history').insert(pvHistRows).then(function(res){
