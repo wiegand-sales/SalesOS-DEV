@@ -7331,7 +7331,7 @@ function renderTab(){
         function stripField(lbl,id,def,unit,step){
           return '<div style="padding:4px 16px;border-right:1px solid rgba(255,255,255,0.14)">'
             +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">'+lbl+'</div>'
-            +'<div style="display:flex;align-items:baseline;gap:3px"><input type="number" id="'+id+'" value="'+pvNum(id.replace('pv-',''),def)+'" step="'+(step||1)+'" min="0" style="border:none;background:none;font-size:19px;font-weight:700;color:#fff;width:60px;padding:0"><span style="font-size:12px;color:#bcdadd;font-weight:600">'+unit+'</span></div>'
+            +'<div style="display:flex;align-items:baseline;gap:3px"><input type="number" id="'+id+'" value="'+pvNum(id.replace('pv-',''),def)+'" step="'+(step||1)+'" min="0" style="border:none;background:none;font-size:19px;font-weight:700;color:#fff;width:85px;padding:0"><span style="font-size:12px;color:#bcdadd;font-weight:600">'+unit+'</span></div>'
             +'</div>';
         }
         html+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
