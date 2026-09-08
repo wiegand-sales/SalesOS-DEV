@@ -7324,18 +7324,32 @@ function renderTab(){
         html+='</div>';
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px">WOCHENARBEITSZEITEN</div>';
-        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Stunden je Wochentag – ermöglicht präzise Teilzeit-Steuerung und eine korrekte Optimierungen/Std.-Berechnung (z.B. kürzerer Freitag, längerer Montag).</p>';
+        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Arbeitszeiten je Wochentag – ermöglicht präzise Teilzeit-Steuerung und eine korrekte Optimierungen/Std.-Berechnung (z.B. kürzerer Freitag, längerer Montag).</p>';
         (function(){
-          var wh=emp.workHours||{mo:9.5,di:8.5,mi:8.5,do:8.5,fr:7.5};
-          var days=[{key:'mo',lbl:'Montag'},{key:'di',lbl:'Dienstag'},{key:'mi',lbl:'Mittwoch'},{key:'do',lbl:'Donnerstag'},{key:'fr',lbl:'Freitag'}];
+          var DEFAULT_WH={
+            mo:{von:'08:30',bis:'18:00',pause:30},di:{von:'08:30',bis:'17:00',pause:30},mi:{von:'08:30',bis:'17:00',pause:30},
+            do:{von:'08:30',bis:'17:00',pause:30},fr:{von:'08:30',bis:'16:00',pause:30},sa:{von:'',bis:'',pause:0},so:{von:'',bis:'',pause:0}
+          };
+          var wh=emp.workHours||{};
+          var days=[{key:'mo',lbl:'Montag'},{key:'di',lbl:'Dienstag'},{key:'mi',lbl:'Mittwoch'},{key:'do',lbl:'Donnerstag'},{key:'fr',lbl:'Freitag'},{key:'sa',lbl:'Samstag'},{key:'so',lbl:'Sonntag'}];
           html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:16px"><table style="width:100%;border-collapse:collapse;table-layout:fixed">';
-          html+='<thead><tr>';
-          days.forEach(function(d){html+='<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+d.lbl+'</th>';});
-          html+='</tr></thead><tbody><tr>';
-          days.forEach(function(d){
-            html+='<td style="padding:10px 8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="es-wh-'+d.key+'" value="'+(wh[d.key]!=null?wh[d.key]:8)+'" step="0.5" min="0" max="14" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>';
+          html+='<thead><tr>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px;width:110px">Wochentag</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Von</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Bis</th>'
+            +'<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">Pause (Min.)</th>'
+            +'</tr></thead><tbody>';
+          days.forEach(function(d,ridx){
+            var dv=wh[d.key]||DEFAULT_WH[d.key];
+            var rowBg=ridx%2===1?'background:#fafcfc;':'';
+            html+='<tr style="'+rowBg+'">'
+              +'<td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1">'+d.lbl+'</td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-von" value="'+(dv.von||'')+'" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-bis" value="'+(dv.bis||'')+'" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="es-wh-'+d.key+'-pause" value="'+(dv.pause!=null?dv.pause:30)+'" step="5" min="0" max="180" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'</tr>';
           });
-          html+='</tr></tbody></table></div>';
+          html+='</tbody></table></div>';
         })();
 
         html+='<div style="margin-bottom:16px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
@@ -8128,12 +8142,19 @@ function setProvisionCustomMonth(val){provisionMode='custom';provisionCustomMont
 function setProvisionMode(m){provisionMode=m;if(view==='provisionTeam')renderMain();else renderTab();}
 // ── Provisionsberechnung nach der Provisionsvereinbarung (§2-§5) ──
 var WEEKDAY_KEYS=['so','mo','di','mi','do','fr','sa']; // JS getDay(): 0=So,1=Mo,...6=Sa
+var DEFAULT_WORK_HOURS={
+  mo:{von:'08:30',bis:'18:00',pause:30},di:{von:'08:30',bis:'17:00',pause:30},mi:{von:'08:30',bis:'17:00',pause:30},
+  do:{von:'08:30',bis:'17:00',pause:30},fr:{von:'08:30',bis:'16:00',pause:30},sa:{von:'',bis:'',pause:0},so:{von:'',bis:'',pause:0}
+};
+function timeStrToMin(t){if(!t)return null;var p=t.split(':');return (+p[0])*60+(+p[1]);}
 function workHoursForDate(emp,dateStr){
-  var wh=emp.workHours||{mo:9.5,di:8.5,mi:8.5,do:8.5,fr:7.5};
+  var wh=emp.workHours||DEFAULT_WORK_HOURS;
   var d=new Date(dateStr+'T00:00:00');
   var key=WEEKDAY_KEYS[d.getDay()];
-  if(key==='sa'||key==='so')return 0; // Wochenende zaehlt nicht
-  return wh[key]!=null?wh[key]:8;
+  var dv=wh[key]||DEFAULT_WORK_HOURS[key];
+  if(!dv||!dv.von||!dv.bis)return 0;
+  var mins=timeStrToMin(dv.bis)-timeStrToMin(dv.von)-(dv.pause||0);
+  return Math.max(0,mins/60);
 }
 function totalWorkHoursForMonth(emp,monthKey,dateList){
   // dateList: Array der tatsaechlichen Datums-Strings (YYYY-MM-DD) mit Performance-Daten in diesem Monat
@@ -9936,11 +9957,23 @@ function saveEmpEinstellungen(){
   emp.startDate=document.getElementById('es-start').value;
   emp.endDate=document.getElementById('es-end').value||null;
   emp.contract=document.getElementById('es-contract').value;
-  var whDays=['mo','di','mi','do','fr'];
+  var whDays=['mo','di','mi','do','fr','sa','so'];
   var newWorkHours={};
-  whDays.forEach(function(d){var el=document.getElementById('es-wh-'+d);newWorkHours[d]=el?(parseFloat(el.value)||0):8;});
+  function timeToMin(t){if(!t)return null;var p=t.split(':');return (+p[0])*60+(+p[1]);}
+  whDays.forEach(function(d){
+    var vonEl=document.getElementById('es-wh-'+d+'-von');
+    var bisEl=document.getElementById('es-wh-'+d+'-bis');
+    var pauseEl=document.getElementById('es-wh-'+d+'-pause');
+    var von=vonEl?vonEl.value:'', bis=bisEl?bisEl.value:'', pause=pauseEl?(parseInt(pauseEl.value)||0):0;
+    newWorkHours[d]={von:von,bis:bis,pause:pause};
+  });
   emp.workHours=newWorkHours;
-  emp.hours=whDays.reduce(function(sum,d){return sum+newWorkHours[d];},0);
+  emp.hours=whDays.reduce(function(sum,d){
+    var dv=newWorkHours[d];
+    if(!dv.von||!dv.bis)return sum;
+    var mins=timeToMin(dv.bis)-timeToMin(dv.von)-(dv.pause||0);
+    return sum+Math.max(0,mins/60);
+  },0);
   var emailEl=document.getElementById('es-email');
   if(emailEl)emp.email=emailEl.value.trim()||null;
   var notesEl=document.getElementById('es-notes');
