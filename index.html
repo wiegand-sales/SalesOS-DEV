@@ -7334,16 +7334,16 @@ function renderTab(){
         html+='<p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Grundlage für die Berechnung der Spalten "Abzug" und "Provision" im Reiter Provision, sowie der überlappenden individuellen KPI-Ziele oben (CR-Werte, Anteile, Opt./Stunde). Gültig ab dem hinterlegten Datum, ergänzend zum Arbeitsvertrag.</p>';
 
         function stripField(lbl,id,def,unit,step){
-          return '<div style="background:#f4f9f9;border-radius:9px;padding:10px 12px">'
-            +'<div style="font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:5px">'+lbl+'</div>'
-            +'<div style="display:flex;align-items:baseline;gap:4px"><input type="number" id="'+id+'" value="'+pvNum(id.replace('pv-',''),def)+'" step="'+(step||1)+'" min="0" style="width:70%;border:none;background:none;font-size:15px;font-weight:700;color:#0c3b40;padding:0;text-align:left"><span style="font-size:11.5px;font-weight:600;color:var(--text2)">'+unit+'</span></div>'
+          return '<div style="padding:4px 16px;border-right:1px solid rgba(255,255,255,0.14)">'
+            +'<div style="font-size:9.5px;font-weight:600;color:#9fc9cd;letter-spacing:.04em;margin-bottom:4px">'+lbl+'</div>'
+            +'<div style="display:flex;align-items:baseline;gap:3px"><input type="number" id="'+id+'" value="'+pvNum(id.replace('pv-',''),def)+'" step="'+(step||1)+'" min="0" style="border:none;background:none;font-size:19px;font-weight:700;color:#fff;width:60px;padding:0"><span style="font-size:12px;color:#bcdadd;font-weight:600">'+unit+'</span></div>'
             +'</div>';
         }
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:8px">';
+        html+='<div style="background:linear-gradient(160deg,#0c3b40 0%,#164e54 55%,#1d6169 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
         html+=stripField('Grundgehalt/Mon.','pv-grundgehalt',2800,'€',10);
         html+=stripField('Steuerl. Abzug','pv-steuerAbzug',28,'%',1);
         html+=stripField('Basisprov./Opt.','pv-basisProOpt',1.00,'€',0.10);
-        html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5);
+        html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5).replace('border-right:1px solid rgba(255,255,255,0.14)','');
         html+='</div>';
         html+='<div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px">';
         html+='<div style="background:#f4f9f9;border-radius:9px;padding:10px 12px">';
@@ -7362,42 +7362,35 @@ function renderTab(){
         html+='</div>';
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid var(--border)">§3 KPI-VORGABEN JE BESCHÄFTIGUNGSMONAT</div>';
-        (function(){
-          var monatSets=[{key:'monat1',label:'Monat 1',obj:m1,defs:{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60,crYes:15,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000}},
-           {key:'monat2',label:'Monat 2',obj:m2,defs:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500}},
-           {key:'monat3plus',label:'Ab Monat 3',obj:m3,defs:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000}}
+        function buildKpiTable(fieldRows,defsKey1,defsKey2,defsKey3){
+          var monatSets=[{key:'monat1',label:'Monat 1',obj:m1,defs:defsKey1},
+           {key:'monat2',label:'Monat 2',obj:m2,defs:defsKey2},
+           {key:'monat3plus',label:'Ab Monat 3',obj:m3,defs:defsKey3}
           ];
-          var fieldRows=[
-            {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
-            {lbl:'CR OEM (mind.) %',f:'crOem',unit:'%'},
-            {lbl:'TW-Anteil (max.) %',f:'tw',unit:'%'},
-            {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
-            {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
-            {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
-            {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'},
-            {lbl:'CR Yes (mind.) %',f:'crYes',unit:'%'},
-            {lbl:'NE - nicht erreicht (max.) %',f:'notReached',unit:'%'},
-            {lbl:'NM - nicht möglich (max.) %',f:'notPossible',unit:'%'},
-            {lbl:'NErr - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
-            {lbl:'Aktivitäten/Tag (mind.)',f:'aktivitaeten',unit:''},
-            {lbl:'Conv. OEM/Tag (mind.)',f:'convOEM',unit:''},
-            {lbl:'Opt. Gesamt/Tag (mind.)',f:'optGesamt',unit:''},
-            {lbl:'Marge Ziel (mind.)',f:'margeZiel',unit:'€',step:10}
-          ];
-          html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:8px"><table style="width:100%;border-collapse:collapse">';
-          html+='<thead><tr><th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px">Kennzahl</th>';
-          monatSets.forEach(function(mset){html+='<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+mset.label+'</th>';});
-          html+='</tr></thead><tbody>';
+          var tbl='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:8px"><table style="width:100%;border-collapse:collapse">';
+          tbl+='<thead><tr><th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px">Kennzahl</th>';
+          monatSets.forEach(function(mset){tbl+='<th style="background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+mset.label+'</th>';});
+          tbl+='</tr></thead><tbody>';
           fieldRows.forEach(function(fld,ridx){
             var rowBg=ridx%2===1?'background:#fafcfc;':'';
-            html+='<tr style="'+rowBg+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1">'+fld.lbl+'</td>';
+            tbl+='<tr style="'+rowBg+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1">'+fld.lbl+'</td>';
             monatSets.forEach(function(mset){
-              html+='<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>';
+              tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>';
             });
-            html+='</tr>';
+            tbl+='</tr>';
           });
-          html+='</tbody></table></div>';
-        })();
+          tbl+='</tbody></table></div>';
+          return tbl;
+        }
+        html+=buildKpiTable([
+          {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
+          {lbl:'CR OEM (mind.) %',f:'crOem',unit:'%'},
+          {lbl:'TW-Anteil (max.) %',f:'tw',unit:'%'},
+          {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
+          {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
+          {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
+          {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'}
+        ],{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80});
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #eef1f1">§4/§5 REDUZIERUNG</div>';
         html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
@@ -7410,6 +7403,21 @@ function renderTab(){
         html+='<div style="display:flex;align-items:center;gap:6px"><input type="number" id="pv-mindestleistungOptH" value="'+pvNum('mindestleistungOptH',2.50)+'" step="0.1" min="0" style="flex:1;padding:5px 8px;border:1px solid #c8d2d4;border-radius:6px;background:#fff;color:var(--text);font-size:14px;font-weight:700;text-align:center"><span style="font-size:11px;font-weight:600;color:var(--text2)">Opt/Std</span></div>';
         html+='</div>';
         html+='</div>';
+
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #eef1f1">ERGÄNZENDE KPI-ZIELE (NICHT PROVISIONSRELEVANT)</div>';
+        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet.</p>';
+        html+=buildKpiTable([
+          {lbl:'CR Yes (mind.) %',f:'crYes',unit:'%'},
+          {lbl:'NE - nicht erreicht (max.) %',f:'notReached',unit:'%'},
+          {lbl:'NM - nicht möglich (max.) %',f:'notPossible',unit:'%'},
+          {lbl:'NErr - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
+          {lbl:'Aktivitäten/Tag (mind.)',f:'aktivitaeten',unit:''},
+          {lbl:'Conv. OEM/Tag (mind.)',f:'convOEM',unit:''},
+          {lbl:'Opt. Gesamt/Tag (mind.)',f:'optGesamt',unit:''},
+          {lbl:'Marge Ziel (mind.)',f:'margeZiel',unit:'€',step:10}
+        ],{crYes:15,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000},
+          {crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
+          {crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
 
         html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid)"><i class="ti ti-check"></i> Provisionsvereinbarung speichern</button>';
         html+='<span id="pv-save-status" style="font-size:11px;color:var(--text3);margin-left:10px"></span>';
