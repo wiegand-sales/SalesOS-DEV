@@ -8386,7 +8386,7 @@ function buildProvisionTeamTable(){
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
       var abwTage=urlaubKrankTage(emp.id,g.key);
       var rawTw=row.convTW||0, rawYes=row.convYes||0, rawSy=row.convSY||0, rawMy=row.convMY||0;
-      var monthDates=rowsAll.filter(function(x){return (x.date||'').slice(0,7)===g.key;}).map(function(x){return x.date;});
+      var monthDates=(performance[emp.id]||[]).filter(function(x){return (x.date||'').slice(0,7)===g.key;}).map(function(x){return x.date;});
       var rowTotalHours=totalWorkHoursForMonth(emp,g.key,monthDates);
       var gesamtAktivitaeten=row.gesamtAktivitaeten||row.oem_aktivitaeten||0;
       var aktPerHour_num=rowTotalHours>0?gesamtAktivitaeten/rowTotalHours:0;
