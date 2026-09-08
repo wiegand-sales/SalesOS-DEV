@@ -7345,19 +7345,14 @@ function renderTab(){
         html+=stripField('Basisprov./Opt.','pv-basisProOpt',1.00,'€',0.10);
         html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5).replace('border-right:1px solid rgba(255,255,255,0.14)','');
         html+='</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px">';
-        html+='<div style="background:#f4f9f9;border-radius:9px;padding:10px 12px">';
-        html+='<div style="font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:5px">Gültig ab</div>';
-        html+='<input type="date" id="pv-gueltigAb" value="'+(pv.gueltigAb||'')+'" style="border:none;background:none;font-size:14px;font-weight:600;color:var(--text);padding:0">';
-        html+='</div></div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+        html+='<div><label>Gültig ab</label><input type="date" id="pv-gueltigAb" value="'+(pv.gueltigAb||'')+'"></div>';
+        html+='</div>';
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:4px;border-top:1px solid #eef1f1">UMSATZABHÄNGIGE PROVISION (§2 ABS. 2) — DIVISOREN</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
         [{lbl:'OEM',id:'divOEM',def:10000},{lbl:'Upsells',id:'divUpsell',def:20000},{lbl:'WKA',id:'divWka',def:20000}].forEach(function(f){
-          html+='<div style="background:#fbfcfc;border:1px solid #e3e8e8;border-radius:9px;padding:10px 12px">';
-          html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">'+f.lbl+'</div>';
-          html+='<input type="number" id="pv-'+f.id+'" value="'+pvNum(f.id,f.def)+'" step="1000" min="1" style="width:100%;padding:5px 8px;border:1px solid #c8d2d4;border-radius:6px;background:#fff;color:var(--text);font-size:14px;font-weight:700;text-align:center">';
-          html+='</div>';
+          html+='<div><label>'+f.lbl+'</label><input type="number" id="pv-'+f.id+'" value="'+pvNum(f.id,f.def)+'" step="1000" min="1"></div>';
         });
         html+='</div>';
 
@@ -7393,15 +7388,9 @@ function renderTab(){
         ],{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80});
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #eef1f1">§4/§5 REDUZIERUNG</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
-        html+='<div style="background:#fbfcfc;border:1px solid #e3e8e8;border-radius:9px;padding:10px 12px">';
-        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Reduzierung je nicht erfüllter KPI</div>';
-        html+='<div style="display:flex;align-items:center;gap:6px"><input type="number" id="pv-reduktionProKpi" value="'+pvNum('reduktionProKpi',20)+'" step="5" min="0" max="100" style="flex:1;padding:5px 8px;border:1px solid #c8d2d4;border-radius:6px;background:#fff;color:var(--text);font-size:14px;font-weight:700;text-align:center"><span style="font-size:12px;font-weight:600;color:var(--text2)">%</span></div>';
-        html+='</div>';
-        html+='<div style="background:#fbfcfc;border:1px solid #e3e8e8;border-radius:9px;padding:10px 12px">';
-        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Mindestleistung ab Monat 2</div>';
-        html+='<div style="display:flex;align-items:center;gap:6px"><input type="number" id="pv-mindestleistungOptH" value="'+pvNum('mindestleistungOptH',2.50)+'" step="0.1" min="0" style="flex:1;padding:5px 8px;border:1px solid #c8d2d4;border-radius:6px;background:#fff;color:var(--text);font-size:14px;font-weight:700;text-align:center"><span style="font-size:11px;font-weight:600;color:var(--text2)">Opt/Std</span></div>';
-        html+='</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+        html+='<div><label>Reduzierung je nicht erfüllter KPI</label><input type="number" id="pv-reduktionProKpi" value="'+pvNum('reduktionProKpi',20)+'" step="5" min="0" max="100"></div>';
+        html+='<div><label>Mindestleistung ab Monat 2 (Opt/Std)</label><input type="number" id="pv-mindestleistungOptH" value="'+pvNum('mindestleistungOptH',2.50)+'" step="0.1" min="0"></div>';
         html+='</div>';
 
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #eef1f1">ERGÄNZENDE KPI-ZIELE (NICHT PROVISIONSRELEVANT)</div>';
