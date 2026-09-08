@@ -7336,7 +7336,7 @@ function renderTab(){
         }
         html+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
         html+=stripField('Grundgehalt/Mon.','pv-grundgehalt',2800,'€',10);
-        html+=stripField('Steuerl. Abzug','pv-steuerAbzug',28,'%',1);
+        html+=stripField('AG-Sozialabgaben','pv-agSozialabgaben',21,'%',1);
         html+=stripField('Basisprov./Opt.','pv-basisProOpt',1.00,'€',0.10);
         html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5).replace('border-right:1px solid rgba(255,255,255,0.14)','');
         html+='</div>';
@@ -9947,7 +9947,7 @@ function saveProvisionSettings(empId){
   var settings={
     gueltigAb:dateVal('pv-gueltigAb'),
     grundgehalt:val('pv-grundgehalt'),
-    steuerAbzug:val('pv-steuerAbzug'),
+    agSozialabgaben:val('pv-agSozialabgaben'),
     basisProOpt:val('pv-basisProOpt'),
     divOEM:val('pv-divOEM'),
     divUpsell:val('pv-divUpsell'),
