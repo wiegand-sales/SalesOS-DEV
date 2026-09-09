@@ -5162,7 +5162,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   });
   h+='</div>';
   h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#206A72">';
-  [{k:'akt',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR OEM'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
+  [{k:'akt',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR Ges.'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
     h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
   });
   h+='</select>';
@@ -5935,7 +5935,7 @@ function renderTeam(){
         {k:'convOEM',    l:'Opt. OEM',    c:'#206A72'},
         {k:'ups_yes',    l:'Opt. Upsell', c:'#206A72'},
         {k:'wka_gesamt_yes',        l:'Opt. WKA',    c:'#206A72'},
-        {k:'crOEM',      l:'CR OEM',      c:'#206A72'},
+        {k:'crOEM',      l:'CR Ges.',      c:'#206A72'},
         {k:'crTeilweise',l:'CR TW',       c:'#206A72'},
         {k:'crYes',      l:'CR Yes',      c:'#206A72'},
         {k:'crSuperYes', l:'CR SY',       c:'#206A72'},
@@ -6027,11 +6027,6 @@ function renderTeam(){
     });
     var dates=Object.keys(byDate).sort();
     if(!dates.length){return;}
-    var vals=dates.map(function(d){
-      var arr=byDate[d];
-      if(!arr.length)return null;
-      return +(arr.reduce(function(a,b){return a+b;},0)/arr.length).toFixed(1);
-    });
     var labels=dates.map(function(d){return fd(d);});
     var tKeys={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes'};
     var tk=tKeys[metric];
@@ -6045,11 +6040,46 @@ function renderTeam(){
       margeGesamt:{min:0,max:5000,step:1000}
     };
     var yS=yScales[metric]||{min:0,max:100,step:20};
-    var datasets=[{
-      label:m.l,data:vals,borderColor:m.c,backgroundColor:m.c+'22',
-      fill:true,tension:0.35,pointRadius:dates.length<=10?4:2,
-      pointBackgroundColor:m.c,borderWidth:2,order:1
-    }];
+    var datasets;
+    if(metric==='crOEM'){
+      var byDateRaw={};
+      allRows.forEach(function(row){
+        if(!byDateRaw[row.date])byDateRaw[row.date]={oem:0,nerrOem:0,ups:0,nerrUps:0,wka:0,nerrWkaOem:0,nerrWkaUps:0,wkaOemBeendet:0,wkaUpsBeendet:0};
+        var b=byDateRaw[row.date];
+        b.oem+=row.convOEM||0; b.nerrOem+=row.notSuccessful||0;
+        b.ups+=row.ups_yes||0; b.nerrUps+=row.upsNichtErfolgreich||0;
+        b.wka+=row.wka_gesamt_yes||0; b.nerrWkaOem+=row.wkaOemNichtErfolgreich||0; b.nerrWkaUps+=row.wkaUpsNichtErfolgreich||0;
+        b.wkaOemBeendet+=row.wkaOemBeendet||0; b.wkaUpsBeendet+=row.wkaUpsBeendet||0;
+      });
+      var bdVals=dates.map(function(d){
+        var b=byDateRaw[d];
+        var oemD=b.oem+b.nerrOem, upsD=b.ups+b.nerrUps, wkaFail=b.nerrWkaOem+b.wkaOemBeendet+b.nerrWkaUps+b.wkaUpsBeendet;
+        var optGesTotal=b.oem+b.ups+b.wka, gesFail=b.nerrOem+b.nerrUps+b.nerrWkaOem+b.nerrWkaUps;
+        return {
+          gesamt:(optGesTotal+gesFail)>0?+(optGesTotal/(optGesTotal+gesFail)*100).toFixed(1):null,
+          oem:oemD>0?+(b.oem/oemD*100).toFixed(1):null,
+          ups:upsD>0?+(b.ups/upsD*100).toFixed(1):null,
+          wka:(b.wka+wkaFail)>0?+(b.wka/(b.wka+wkaFail)*100).toFixed(1):null
+        };
+      });
+      datasets=[
+        {label:'CR Gesamt',data:bdVals.map(function(v){return v.gesamt;}),borderColor:'#0c3b40',backgroundColor:'#0c3b4022',fill:false,tension:0.35,pointRadius:dates.length<=10?4:2,pointBackgroundColor:'#0c3b40',borderWidth:2,order:1},
+        {label:'CR OEM',data:bdVals.map(function(v){return v.oem;}),borderColor:'#206A72',backgroundColor:'#206A7222',fill:false,tension:0.35,pointRadius:dates.length<=10?4:2,pointBackgroundColor:'#206A72',borderWidth:2,order:1},
+        {label:'CR Upsells',data:bdVals.map(function(v){return v.ups;}),borderColor:'#4A90A4',backgroundColor:'#4A90A422',fill:false,tension:0.35,pointRadius:dates.length<=10?4:2,pointBackgroundColor:'#4A90A4',borderWidth:2,order:1},
+        {label:'CR WKA',data:bdVals.map(function(v){return v.wka;}),borderColor:'#8FBFC7',backgroundColor:'#8FBFC722',fill:false,tension:0.35,pointRadius:dates.length<=10?4:2,pointBackgroundColor:'#8FBFC7',borderWidth:2,order:1}
+      ];
+    } else {
+      var vals=dates.map(function(d){
+        var arr=byDate[d];
+        if(!arr.length)return null;
+        return +(arr.reduce(function(a,b){return a+b;},0)/arr.length).toFixed(1);
+      });
+      datasets=[{
+        label:m.l,data:vals,borderColor:m.c,backgroundColor:m.c+'22',
+        fill:true,tension:0.35,pointRadius:dates.length<=10?4:2,
+        pointBackgroundColor:m.c,borderWidth:2,order:1
+      }];
+    }
     if(target!==null){
       datasets.push({
         label:'Ziel ('+target+')',
