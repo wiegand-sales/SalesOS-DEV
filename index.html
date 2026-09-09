@@ -2888,7 +2888,7 @@ function groupPerfRows(rows,mode){
     if(!groups[key]){groups[key]={label:label,items:[]};order.push(key);}
     groups[key].items.push(r);
   });
-  var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka_gesamt_yes','optGesamt','margeGesamt','margin','margeOEM','margeUpsell','margeWKA','gesamtAktivitaeten','gesamtNichtErreicht','gesamtNichtMoeglich','gesamtNichtErfolgreich'];
+  var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka_gesamt_yes','optGesamt','margeGesamt','margin','margeOEM','margeUpsell','margeWKA','gesamtAktivitaeten','gesamtNichtErreicht','gesamtNichtMoeglich','gesamtNichtErfolgreich','upsNichtErfolgreich','wkaOemNichtErfolgreich','wkaUpsNichtErfolgreich','wkaOemBeendet','wkaUpsBeendet'];
   var avgFields=['crOEM','crTeilweise','crSuperYes','crMegaYes','optPerH'];
   return order.sort().reverse().map(function(key){
     var g=groups[key],agg={};
@@ -5054,6 +5054,36 @@ function buildGlobalBannerHtml(visible){
 }
 
 // ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
+function showCrTooltip(ev,crGesamt,crOem,crUps,crWka){
+  var el=document.getElementById('crBreakdownTooltip');
+  if(!el){
+    el=document.createElement('div');
+    el.id='crBreakdownTooltip';
+    el.style.cssText='position:fixed;z-index:99999;background:#0c3b40;color:#fff;border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:0 8px 20px rgba(0,0,0,0.25);pointer-events:none;white-space:nowrap;line-height:1.7';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<div style="font-weight:700;margin-bottom:4px;color:#9fc9cd;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase">CR-Aufschlüsselung</div>'
+    +'<div><span style="color:#bcdadd">CR Gesamt:</span> <b>'+crGesamt+'%</b></div>'
+    +'<div><span style="color:#bcdadd">CR OEM:</span> <b>'+crOem+'%</b></div>'
+    +'<div><span style="color:#bcdadd">CR Upsells:</span> <b>'+crUps+'%</b></div>'
+    +'<div><span style="color:#bcdadd">CR WKA:</span> <b>'+crWka+'%</b></div>';
+  el.style.display='block';
+  positionCrTooltip(ev);
+}
+function positionCrTooltip(ev){
+  var el=document.getElementById('crBreakdownTooltip');
+  if(!el)return;
+  var x=ev.clientX+14, y=ev.clientY+14;
+  var rect=el.getBoundingClientRect();
+  if(x+rect.width>window.innerWidth-8)x=ev.clientX-rect.width-14;
+  if(y+rect.height>window.innerHeight-8)y=ev.clientY-rect.height-14;
+  el.style.left=x+'px';
+  el.style.top=y+'px';
+}
+function hideCrTooltip(){
+  var el=document.getElementById('crBreakdownTooltip');
+  if(el)el.style.display='none';
+}
 function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   // section: undefined = komplettes Overview wie bisher, UNVERAENDERT (Banner+Kacheln+Rest+Tabelle).
   // 'performance' = nur Banner + Kacheln + Performance-Tabelle (fuer den neuen Performance-Reiter, zeigt dieselben Daten 1:1, keine Aufteilung von Overview).
@@ -5448,8 +5478,17 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       var crMY=(yes+sy+my)>0?Math.round(my/(yes+sy+my)*100):0;
       var crYes=(yes+sy+my)>0?Math.round(yes/(yes+sy+my)*100):0;
       var crSyMy=(yes+sy+my)>0?Math.round((sy+my)/(yes+sy+my)*100):0;
+      // CR-Aufschlüsselung fuer den Hover-Tooltip (CR Gesamt/OEM/Upsells/WKA)
+      var upsNerf=row.upsNichtErfolgreich||0, wkaOemNerf=row.wkaOemNichtErfolgreich||0, wkaUpsNerf=row.wkaUpsNichtErfolgreich||0;
+      var wkaOemBeendet=row.wkaOemBeendet||0, wkaUpsBeendet=row.wkaUpsBeendet||0;
+      var crUpsTooltip=(ups+upsNerf)>0?Math.round(ups/(ups+upsNerf)*100):0;
+      var crWkaDenomFail=wkaOemNerf+wkaOemBeendet+wkaUpsNerf+wkaUpsBeendet;
+      var crWkaTooltip=(wka_gesamt_yes+crWkaDenomFail)>0?Math.round(wka_gesamt_yes/(wka_gesamt_yes+crWkaDenomFail)*100):0;
+      var crGesamtDenomFail=notSOem+upsNerf+wkaOemNerf+wkaUpsNerf;
+      var crGesamtTooltip=(optGes+crGesamtDenomFail)>0?Math.round(optGes/(optGes+crGesamtDenomFail)*100):0;
       return {item:item,rowEmp:rowEmp,rowEmpT:rowEmpT,g:g,name:rowEmp.name,period:g.label,periodKey:g.key,akt:akt,notR:notR,notP:notP,notS:notS,notROem:notROem,notPOem:notPOem,notSOem:notSOem,
-        convOEM:convOEM,tw:tw,yes:yes,sy:sy,my:my,crOEM:crOEM,crTW:crTW,crYes:crYes,crSY:crSY,crMY:crMY,crSyMy:crSyMy,ups:ups,wka_gesamt_yes:wka_gesamt_yes,optGes:optGes,marge:marge};
+        convOEM:convOEM,tw:tw,yes:yes,sy:sy,my:my,crOEM:crOEM,crTW:crTW,crYes:crYes,crSY:crSY,crMY:crMY,crSyMy:crSyMy,ups:ups,wka_gesamt_yes:wka_gesamt_yes,optGes:optGes,marge:marge,
+        crGesamtTooltip:crGesamtTooltip,crUpsTooltip:crUpsTooltip,crWkaTooltip:crWkaTooltip};
     });
     if(overviewPerfSortKey){
       var sortField=overviewPerfSortKey==='period'?'periodKey':overviewPerfSortKey;
@@ -5488,7 +5527,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
     var sumAkt=0,sumNotR=0,sumNotP=0,sumNotS=0,sumNotROem=0,sumNotPOem=0,sumNotSOem=0,sumConvOEM=0,sumTw=0,sumYes=0,sumSy=0,sumMy=0,sumUps=0,sumWka=0,sumOptGes=0,sumMarge=0,sumCrOEM=0,sumCrTW=0,sumCrSY=0,sumCrMY=0,sumTotalHours=0;
     sortableRows.forEach(function(sr,ridx){
       var rowEmp=sr.rowEmp,rowEmpT=sr.rowEmpT,g=sr.g;
-      var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,notROem=sr.notROem,notPOem=sr.notPOem,notSOem=sr.notSOem,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy;
+      var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,notROem=sr.notROem,notPOem=sr.notPOem,notSOem=sr.notSOem,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy,crGesamtTooltip=sr.crGesamtTooltip,crUpsTooltip=sr.crUpsTooltip,crWkaTooltip=sr.crWkaTooltip;
       var hoursPerDay=(rowEmp.hours||40)/5;
       // Die "heute ist unvollstaendig"-Anpassung wird bewusst NUR in der Tag-Ansicht angewendet:
       // dort lässt sich per exaktem Datumsvergleich sicher feststellen, dass diese Zeile heute ist.
@@ -5516,7 +5555,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
           var colStyle=rowTotalHours>0?fc(Math.round(optPerHVal*10)/10,rowEmpT.optPerH.val,rowEmpT.optPerH.dir):'';
           return '<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+colStyle+'">'+stackCell((rowTotalHours>0?optPerHVal.toFixed(1):'—'),null)+'</td>';
         })()
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+'">'+stackCell(crOEM+'%',null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+';cursor:help" onmouseenter="showCrTooltip(event,'+crGesamtTooltip+','+crOEM+','+crUpsTooltip+','+crWkaTooltip+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',null)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+'">'+stackCell(crTW+'%',tw)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+'">'+stackCell(crYes+'%',yes)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSyMy,rowEmpT.crSyMy.val,rowEmpT.crSyMy.dir)+'">'+stackCell(crSyMy+'%',sy+my)+'</td>'
@@ -9279,7 +9318,9 @@ function loadPerformanceFromSupabase(){
         convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
         crOEM:r.oem_cr,crTeilweise:r.oem_tw_cr,crYes:r.oem_yes_cr,crSuperYes:r.oem_sy_cr,crMegaYes:r.oem_my_cr,
         gesamtAktivitaeten:r.gesamt_aktivitaeten,gesamtNichtErreicht:r.gesamt_nicht_erreicht,
-        gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich
+        gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich,
+        upsNichtErfolgreich:r.ups_nicht_erfolgreich,wkaOemNichtErfolgreich:r.wka_oem_nicht_erfolgreich,
+        wkaUpsNichtErfolgreich:r.wka_ups_nicht_erfolgreich,wkaOemBeendet:r.wka_oem_beendet,wkaUpsBeendet:r.wka_ups_beendet
       });
     });
     Object.keys(byEmp).forEach(function(k){byEmp[k].sort(function(a,b){return b.date.localeCompare(a.date);});});
