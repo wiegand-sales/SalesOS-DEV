@@ -5933,7 +5933,7 @@ function renderTeam(){
         {k:'convOEM',    l:'Opt. OEM',    c:'#206A72'},
         {k:'ups_yes',    l:'Opt. Upsell', c:'#206A72'},
         {k:'wka_gesamt_yes',        l:'Opt. WKA',    c:'#206A72'},
-        {k:'crOEM',      l:'CR OEM',      c:'#206A72'},
+        {k:'crOEM',      l:'CR Ges.',      c:'#206A72'},
         {k:'crTeilweise',l:'CR TW',       c:'#206A72'},
         {k:'crYes',      l:'CR Yes',      c:'#206A72'},
         {k:'crSuperYes', l:'CR SY',       c:'#206A72'},
@@ -6003,7 +6003,7 @@ function renderTeam(){
   window._teamChartData=null;
   (function(allRows,metric,days,kpiTargets){
     var mMap={
-      crOEM:      {f:'crOEM',      l:'CR OEM %', c:'#206A72'},
+      crOEM:      {f:'crOEM',      l:'CR Ges. %', c:'#206A72'},
       crTeilweise:{f:'crTeilweise',l:'CR TW %',  c:'#206A72'},
       crYes:      {f:'crYes',      l:'CR Yes %', c:'#206A72'},
       crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#206A72'},
@@ -6017,19 +6017,47 @@ function renderTeam(){
     };
     var m=mMap[metric]||mMap.crOEM;
     if(!allRows||!allRows.length){return;}
-    var byDate={};
-    allRows.forEach(function(row){
-      if(!byDate[row.date])byDate[row.date]=[];
-      var v=row[m.f];
-      if(v!==undefined&&v!==null)byDate[row.date].push(v);
-    });
-    var dates=Object.keys(byDate).sort();
+    var dates,vals,crBreakdownByDate={};
+    if(metric==='crOEM'){
+      // CR Ges. = Opt.Ges. / (Opt.Ges. + NERR_OEM + NERR_UPS + NERR_WKA_OEM + NERR_WKA_UPS), gewichtete Summe ueber alle Mitarbeiter je Tag
+      // Aufschluesselung (CR OEM/Ups/WKA) wird pro Tag mitberechnet und fuer den Tooltip vorgehalten
+      var sumsByDate={};
+      allRows.forEach(function(row){
+        if(!sumsByDate[row.date])sumsByDate[row.date]={optGes:0,convOEM:0,ups:0,wka:0,notSOem:0,upsNerf:0,wkaOemNerf:0,wkaUpsNerf:0,wkaOemBeendet:0,wkaUpsBeendet:0};
+        var s=sumsByDate[row.date];
+        s.optGes+=row.optGesamt||0; s.convOEM+=row.convOEM||0; s.ups+=row.ups_yes||0; s.wka+=row.wka_gesamt_yes||0;
+        s.notSOem+=row.notSuccessful||0; s.upsNerf+=row.upsNichtErfolgreich||0;
+        s.wkaOemNerf+=row.wkaOemNichtErfolgreich||0; s.wkaUpsNerf+=row.wkaUpsNichtErfolgreich||0;
+        s.wkaOemBeendet+=row.wkaOemBeendet||0; s.wkaUpsBeendet+=row.wkaUpsBeendet||0;
+      });
+      dates=Object.keys(sumsByDate).sort();
+      vals=dates.map(function(d){
+        var s=sumsByDate[d];
+        var failGesamt=s.notSOem+s.upsNerf+s.wkaOemNerf+s.wkaUpsNerf;
+        var crGesamt=(s.optGes+failGesamt)>0?(s.optGes/(s.optGes+failGesamt)*100):0;
+        var crOemD=(s.convOEM+s.notSOem)>0?Math.round(s.convOEM/(s.convOEM+s.notSOem)*100):0;
+        var crUpsD=(s.ups+s.upsNerf)>0?Math.round(s.ups/(s.ups+s.upsNerf)*100):0;
+        var wkaFail=s.wkaOemNerf+s.wkaOemBeendet+s.wkaUpsNerf+s.wkaUpsBeendet;
+        var crWkaD=(s.wka+wkaFail)>0?Math.round(s.wka/(s.wka+wkaFail)*100):0;
+        crBreakdownByDate[d]={crGesamt:Math.round(crGesamt),crOem:crOemD,crUps:crUpsD,crWka:crWkaD};
+        return +crGesamt.toFixed(1);
+      });
+    } else {
+      var byDate={};
+      allRows.forEach(function(row){
+        if(!byDate[row.date])byDate[row.date]=[];
+        var v=row[m.f];
+        if(v!==undefined&&v!==null)byDate[row.date].push(v);
+      });
+      dates=Object.keys(byDate).sort();
+      if(!dates.length){return;}
+      vals=dates.map(function(d){
+        var arr=byDate[d];
+        if(!arr.length)return null;
+        return +(arr.reduce(function(a,b){return a+b;},0)/arr.length).toFixed(1);
+      });
+    }
     if(!dates.length){return;}
-    var vals=dates.map(function(d){
-      var arr=byDate[d];
-      if(!arr.length)return null;
-      return +(arr.reduce(function(a,b){return a+b;},0)/arr.length).toFixed(1);
-    });
     var labels=dates.map(function(d){return fd(d);});
     var tKeys={crOEM:'crOEM',crTeilweise:'crTeilweise',crYes:'crYes',crSuperYes:'crSuperYes',crMegaYes:'crMegaYes'};
     var tk=tKeys[metric];
@@ -6056,7 +6084,7 @@ function renderTeam(){
         pointRadius:0,fill:false,order:2
       });
     }
-    window._teamChartData={labels:labels,datasets:datasets,yS:yS};
+    window._teamChartData={labels:labels,datasets:datasets,yS:yS,crBreakdownByDate:crBreakdownByDate,dates:dates,metric:metric};
   })(allP, teamPerfMetric, teamRange||7, KPI_TARGETS);
 
   setTimeout(function(){
@@ -6077,7 +6105,16 @@ function renderTeam(){
         interaction:{mode:'index',intersect:false},
         plugins:{
           legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:20,padding:12}},
-          tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+formatMetricValue(teamPerfMetric,ctx.parsed.y);}}}
+          tooltip:{callbacks:{
+            label:function(ctx){return ctx.dataset.label+': '+formatMetricValue(teamPerfMetric,ctx.parsed.y);},
+            afterLabel:function(ctx){
+              if(teamPerfMetric!=='crOEM'||ctx.datasetIndex!==0)return '';
+              var dateKey=d.dates?d.dates[ctx.dataIndex]:null;
+              var bd=dateKey&&d.crBreakdownByDate?d.crBreakdownByDate[dateKey]:null;
+              if(!bd)return '';
+              return ['  CR OEM: '+bd.crOem+'%','  CR Upsells: '+bd.crUps+'%','  CR WKA: '+bd.crWka+'%'];
+            }
+          }}
         },
         scales:{
           x:{ticks:{font:{size:11},maxTicksLimit:12},grid:{display:false}},
