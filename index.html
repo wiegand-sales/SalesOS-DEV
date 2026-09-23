@@ -3919,7 +3919,7 @@ function empTargets(emp){
   // sofern kein manueller Mitarbeiter-Override (t[key]) gesetzt wurde
   var provKpi=null;
   if(emp&&emp.startDate){
-    var pv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:(typeof PROVISION_DEFAULTS!=='undefined'?PROVISION_DEFAULTS:null);
+    var pv=typeof effectiveProvisionSettings!=='undefined'?effectiveProvisionSettings(emp):null;
     if(pv){
       var bm=beschaeftigungsmonat(emp,today().slice(0,7));
       provKpi=provisionKpiSetFor(pv,bm);
@@ -8298,10 +8298,18 @@ var PROVISION_DEFAULTS={
   monat2:{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
   monat3plus:{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80,crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000}
 };
+// Feldweises Zusammenfuehren mit den Standardwerten: fehlt ein einzelnes Feld (z.B. weil nur
+// "grundgehalt" explizit gespeichert wurde), greift dafuer trotzdem der jeweilige Standardwert,
+// statt bei einem nicht-leeren aber unvollstaendigen Objekt ALLE Standardwerte zu verlieren
+function effectiveProvisionSettings(emp){
+  var pv=Object.assign({},PROVISION_DEFAULTS,(emp&&emp.provisionSettings)||{});
+  ['monat1','monat2','monat3plus'].forEach(function(mk){
+    pv[mk]=Object.assign({},PROVISION_DEFAULTS[mk],(emp&&emp.provisionSettings&&emp.provisionSettings[mk])||{});
+  });
+  return pv;
+}
 function calculateProvision(emp,monthKey,row,dayCount){
-  // Solange fuer diesen Mitarbeiter noch keine individuelle Vereinbarung gespeichert wurde,
-  // greifen automatisch die Standardwerte aus der Provisionsvereinbarung (Stand 01/2026)
-  var pv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
+  var pv=effectiveProvisionSettings(emp);
   var convTW=row.convTW||0, convYes=row.convYes||0, convSY=row.convSY||0, convMY=row.convMY||0;
   var ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
   var convOEM=row.convOEM||0, optGes=row.optGesamt||(convOEM+ups+wka)||0;
@@ -8489,7 +8497,7 @@ function buildProvisionTeamTable(){
       var optPerH_num=rowTotalHours>0?optGes/rowTotalHours:0;
       var optProStd=optPerH_num.toFixed(1);
       var calc=calculateProvision(emp,g.key,row,g.count);
-      var rowPv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
+      var rowPv=effectiveProvisionSettings(emp);
       var rowBm=beschaeftigungsmonat(emp,g.key);
       var rowKpiSet=provisionKpiSetFor(rowPv,rowBm);
       var abzug, provision, provisionTitle='', abzugPct=null, provisionPct=null;
@@ -8664,7 +8672,7 @@ function buildProvisionTable(empId){
       var optPerH_num=rowTotalHours>0?optGes/rowTotalHours:0;
       var optProStd=optPerH_num.toFixed(1);
       var calc=calculateProvision(emp,g.key,row,g.count);
-      var rowPv=(emp.provisionSettings&&Object.keys(emp.provisionSettings).length)?emp.provisionSettings:PROVISION_DEFAULTS;
+      var rowPv=effectiveProvisionSettings(emp);
       var rowBm=beschaeftigungsmonat(emp,g.key);
       var rowKpiSet=provisionKpiSetFor(rowPv,rowBm);
       var abzug, provision, provisionTitle='', abzugPct=null, provisionPct=null;
