@@ -5056,6 +5056,21 @@ function buildGlobalBannerHtml(visible){
 }
 
 // ── SFP Wiegand > Overview: 5 Kacheln + Performance-Tabelle für einen wählbaren Mitarbeiter ──
+function showBreakdownTooltip(ev,title,v1,v2,v3){
+  var el=document.getElementById('crBreakdownTooltip');
+  if(!el){
+    el=document.createElement('div');
+    el.id='crBreakdownTooltip';
+    el.style.cssText='position:fixed;z-index:99999;background:#0c3b40;color:#fff;border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:0 8px 20px rgba(0,0,0,0.25);pointer-events:none;white-space:nowrap;line-height:1.7';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<div style="font-weight:700;margin-bottom:4px;color:#9fc9cd;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase">'+title+'</div>'
+    +'<div><span style="color:#bcdadd">OEM:</span> <b>'+v1+'</b></div>'
+    +'<div><span style="color:#bcdadd">Upsells:</span> <b>'+v2+'</b></div>'
+    +'<div><span style="color:#bcdadd">WKA:</span> <b>'+v3+'</b></div>';
+  el.style.display='block';
+  positionCrTooltip(ev);
+}
 function showCrTooltip(ev,crGesamt,crOem,crUps,crWka){
   var el=document.getElementById('crBreakdownTooltip');
   if(!el){
@@ -5473,6 +5488,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       var ups=row.ups_yes||0,wka_gesamt_yes=row.wka_gesamt_yes||0;
       var optGes=row.optGesamt||(convOEM+ups+wka_gesamt_yes)||0;
       var marge=row.margeGesamt||row.margin||0;
+      var margeOEMVal=row.margeOEM||0, margeUpsVal=row.margeUpsell||0, margeWkaVal=row.margeWKA||0;
       var oemDenom=notSOem+convOEM;
       var crOEM=oemDenom>0?Math.round(convOEM/oemDenom*100):0;
       var crTW=(tw+yes+sy+my)>0?Math.round(tw/(tw+yes+sy+my)*100):0;
@@ -5490,7 +5506,8 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       var crGesamtTooltip=(optGes+crGesamtDenomFail)>0?Math.round(optGes/(optGes+crGesamtDenomFail)*100):0;
       return {item:item,rowEmp:rowEmp,rowEmpT:rowEmpT,g:g,name:rowEmp.name,period:g.label,periodKey:g.key,akt:akt,notR:notR,notP:notP,notS:notS,notROem:notROem,notPOem:notPOem,notSOem:notSOem,
         convOEM:convOEM,tw:tw,yes:yes,sy:sy,my:my,crOEM:crOEM,crTW:crTW,crYes:crYes,crSY:crSY,crMY:crMY,crSyMy:crSyMy,ups:ups,wka_gesamt_yes:wka_gesamt_yes,optGes:optGes,marge:marge,
-        crGesamtTooltip:crGesamtTooltip,crUpsTooltip:crUpsTooltip,crWkaTooltip:crWkaTooltip};
+        crGesamtTooltip:crGesamtTooltip,crUpsTooltip:crUpsTooltip,crWkaTooltip:crWkaTooltip,
+        margeOEMVal:margeOEMVal,margeUpsVal:margeUpsVal,margeWkaVal:margeWkaVal};
     });
     if(overviewPerfSortKey){
       var sortField=overviewPerfSortKey==='period'?'periodKey':overviewPerfSortKey;
@@ -5529,7 +5546,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
     var sumAkt=0,sumNotR=0,sumNotP=0,sumNotS=0,sumNotROem=0,sumNotPOem=0,sumNotSOem=0,sumConvOEM=0,sumTw=0,sumYes=0,sumSy=0,sumMy=0,sumUps=0,sumWka=0,sumOptGes=0,sumMarge=0,sumCrOEM=0,sumCrTW=0,sumCrSY=0,sumCrMY=0,sumTotalHours=0;
     sortableRows.forEach(function(sr,ridx){
       var rowEmp=sr.rowEmp,rowEmpT=sr.rowEmpT,g=sr.g;
-      var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,notROem=sr.notROem,notPOem=sr.notPOem,notSOem=sr.notSOem,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy,crGesamtTooltip=sr.crGesamtTooltip,crUpsTooltip=sr.crUpsTooltip,crWkaTooltip=sr.crWkaTooltip;
+      var akt=sr.akt,convOEM=sr.convOEM,tw=sr.tw,yes=sr.yes,sy=sr.sy,my=sr.my,notR=sr.notR,notP=sr.notP,notS=sr.notS,notROem=sr.notROem,notPOem=sr.notPOem,notSOem=sr.notSOem,ups=sr.ups,wka_gesamt_yes=sr.wka_gesamt_yes,optGes=sr.optGes,marge=sr.marge,crOEM=sr.crOEM,crTW=sr.crTW,crYes=sr.crYes,crSY=sr.crSY,crMY=sr.crMY,crSyMy=sr.crSyMy,crGesamtTooltip=sr.crGesamtTooltip,crUpsTooltip=sr.crUpsTooltip,crWkaTooltip=sr.crWkaTooltip,margeOEMVal=sr.margeOEMVal,margeUpsVal=sr.margeUpsVal,margeWkaVal=sr.margeWkaVal;
       var hoursPerDay=(rowEmp.hours||40)/5;
       // Die "heute ist unvollstaendig"-Anpassung wird bewusst NUR in der Tag-Ansicht angewendet:
       // dort lässt sich per exaktem Datumsvergleich sicher feststellen, dass diese Zeile heute ist.
@@ -5551,7 +5568,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(convOEM/optGes*100)+'%':'—'),(optGes>0?convOEM:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)">'+stackCell((optGes>0?Math.round(wka_gesamt_yes/optGes*100)+'%':'—'),(optGes>0?wka_gesamt_yes:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(optGes,null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;cursor:help" onmouseenter="showBreakdownTooltip(event,\'Opt. Ges. Aufschlüsselung\','+convOEM+','+ups+','+wka_gesamt_yes+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optGes,null)+'</td>'
         +(function(){
           var optPerHVal=rowTotalHours>0?optGes/rowTotalHours:0;
           var colStyle=rowTotalHours>0?fc(Math.round(optPerHVal*10)/10,rowEmpT.optPerH.val,rowEmpT.optPerH.dir):'';
@@ -5565,7 +5582,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+'">'+stackCell(crMY+'%',my)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(Math.round(convOEM+ups+wka_gesamt_yes>0?convOEM/(convOEM+ups+wka_gesamt_yes)*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+'">'+stackCell((convOEM+ups+wka_gesamt_yes>0?Math.round(convOEM/(convOEM+ups+wka_gesamt_yes)*100):0)+'%',null)+'</td>'
         +(rowEmp.id==='__agg__'?'<td style="padding:16px 14px;border-bottom:1px solid var(--border)"></td>':'<td style="padding:16px 14px;border-bottom:1px solid var(--border);white-space:nowrap"><div style="display:flex;gap:6px">'+(hideMemberCol?'':'<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button>')+'<button class="btn btn-sm" onclick="event.stopPropagation();openCoachingInfoModal(\''+rowEmp.id+'\')"><i class="ti ti-info-circle"></i> Info</button></div></td>')
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text)">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—'))+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(margeOEMVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeUpsVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeWkaVal).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—'))+'</td>'
         +'</tr>';
       sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumNotROem+=notROem;sumNotPOem+=notPOem;sumNotSOem+=notSOem;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;sumTotalHours+=rowTotalHours;
       sumUps+=ups;sumWka+=wka_gesamt_yes;sumOptGes+=optGes;sumMarge+=marge;
