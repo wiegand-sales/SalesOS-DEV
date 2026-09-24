@@ -8348,16 +8348,11 @@ function calculateProvision(emp,monthKey,row,dayCount){
   var convOEM=row.convOEM||0, optGes=row.optGesamt||(convOEM+ups+wka)||0;
   var margeOEM=row.margeOEM||0, margeUpsell=row.margeUpsell||0, margeWKA=row.margeWKA||0;
   var margeGesamt=row.margeGesamt||row.margin||0;
-  // Opt./Std. konsistent mit der Tabelle berechnen (Opt.Gesamt / tatsaechliche Arbeitsstunden),
-  // nicht aus einem ggf. unzuverlaessigen Rohfeld - Fallback auf row.optPerH falls dayCount fehlt
-  var optPerH;
-  if(dayCount!=null){
-    var hoursPerDayCalc=(emp.hours||40)/5;
-    var totalHoursCalc=hoursPerDayCalc*dayCount;
-    optPerH=totalHoursCalc>0?optGes/totalHoursCalc:0;
-  } else {
-    optPerH=row.optPerH||0;
-  }
+  // Opt./Std. konsistent mit der Tabelle berechnen: echte tagesgenaue Arbeitsstunden
+  // (Wochenarbeitszeiten je Wochentag), nicht die grobe "Stunden/5 * Tage"-Naeherung
+  var monthDatesCalc=(performance[emp.id]||[]).filter(function(x){return (x.date||'').slice(0,7)===monthKey;}).map(function(x){return x.date;});
+  var totalHoursCalc=totalWorkHoursForMonth(emp,monthKey,monthDatesCalc);
+  var optPerH=totalHoursCalc>0?optGes/totalHoursCalc:0;
   var notSOemCalc=row.notSuccessful||0;
   var oemDenomCalc=convOEM+notSOemCalc;
   var crOEM=oemDenomCalc>0?(convOEM/oemDenomCalc*100):0;
