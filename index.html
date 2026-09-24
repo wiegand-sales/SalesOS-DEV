@@ -8507,7 +8507,7 @@ function buildProvisionTeamTable(){
     rows.forEach(function(g){allRows.push({emp:emp,g:g});});
   });
   allRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
-  var sumKrank=0,sumUrlaub=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumGesamtAkt=0,sumTotalHoursAll=0;
+  var sumKrank=0,sumUrlaub=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumGesamtAkt=0,sumTotalHoursAll=0,sumNotSOem=0;
 
   if(!allRows.length){
     h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-file-upload" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Daten für diesen Zeitraum</div>';
@@ -8556,7 +8556,7 @@ function buildProvisionTeamTable(){
           +(calc.mindestleistungGreift?' · Mindestleistung unterschritten (§5)':'')
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
-      sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;
+      sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;sumNotSOem+=notSOemVal;
       sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
       sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0);
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
@@ -8585,7 +8585,7 @@ function buildProvisionTeamTable(){
     });
     if(allRows.length>=1){
       var n=allRows.length;
-      var sumCrOEM=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
+      var sumCrOEM=(sumOEM+sumNotSOem)>0?Math.round(sumOEM/(sumOEM+sumNotSOem)*100):0;
       var sumCrTW=(sumRawTw+sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawTw/(sumRawTw+sumRawYes+sumRawSy+sumRawMy)*100):0;
       var sumCrSY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawSy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
       var sumCrMY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawMy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
@@ -8675,7 +8675,7 @@ function buildProvisionTable(empId){
   var rowsAll=(performance[empId]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
   var grouped=groupPerfRows(rowsAll,'month'); // ein Eintrag je Monat, neueste zuerst
   var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):(provisionMode==='custom'?grouped.filter(function(g){return g.key===provisionCustomMonth;}):grouped);
-  var sumKrank=0,sumUrlaub=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumAktivitaeten=0,sumGesamtAkt=0,sumTotalHoursAll=0;
+  var sumKrank=0,sumUrlaub=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumAktivitaeten=0,sumGesamtAkt=0,sumTotalHoursAll=0,sumNotSOem=0;
 
   var h='<div class="card">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
@@ -8737,7 +8737,7 @@ function buildProvisionTable(empId){
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
       var margeOEM=row.margeOEM||0;
-      sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;
+      sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;sumNotSOem+=notSOemVal;
       sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
       sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0);sumAktivitaeten+=optPerH_num;
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
@@ -8765,7 +8765,7 @@ function buildProvisionTable(empId){
     });
     if(rows.length>1){
       var n=rows.length;
-      var sumCrOEM=sumOptGes>0?Math.round(sumOEM/sumOptGes*100):0;
+      var sumCrOEM=(sumOEM+sumNotSOem)>0?Math.round(sumOEM/(sumOEM+sumNotSOem)*100):0;
       var sumCrTW=(sumRawTw+sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawTw/(sumRawTw+sumRawYes+sumRawSy+sumRawMy)*100):0;
       var sumCrSY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawSy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
       var sumCrMY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawMy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
