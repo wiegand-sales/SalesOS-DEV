@@ -1549,9 +1549,10 @@ function wizardPerformanceScore(empId){
   var cutoff=addDaysUTC(today(),-30);
   var rows=(performance[empId]||[]).filter(function(x){return(x.date||'')>=cutoff;});
   if(!rows.length)return null;
-  var sum=0,n=0;
-  rows.forEach(function(x){if(x.crOEM!=null){sum+=x.crOEM;n++;}});
-  return n?sum/n:null;
+  var oem=0,notS=0;
+  rows.forEach(function(x){oem+=x.convOEM||0;notS+=x.notSuccessful||0;});
+  var d=oem+notS;
+  return d>0?(oem/d*100):null;
 }
 function wizardTopWorst(scopeList,count){
   var scored=scopeList.map(function(e){return{e:e,score:wizardPerformanceScore(e.id)};}).filter(function(x){return x.score!==null;});
@@ -2394,11 +2395,23 @@ function exportEmpSummary(empId){
   var t=empTargets(emp);
   var perf30=getPerf(emp.id,30);
   function avg(key){if(!perf30.length)return null;return perf30.reduce(function(a,x){return a+(x[key]||0);},0)/perf30.length;}
+  function crAvg30(metric){
+    var oem=0,notS=0,tw=0,yes=0,sy=0,my=0;
+    perf30.forEach(function(x){
+      oem+=x.convOEM||0;notS+=x.notSuccessful||0;
+      tw+=x.convTW||0;yes+=x.convYes||0;sy+=x.convSY||0;my+=x.convMY||0;
+    });
+    if(metric==='crOEM'){var d=oem+notS;return d>0?(oem/d*100):null;}
+    if(metric==='crTeilweise'){var d=tw+yes+sy+my;return d>0?(tw/d*100):null;}
+    if(metric==='crSuperYes'){var d=yes+sy+my;return d>0?(sy/d*100):null;}
+    if(metric==='crMegaYes'){var d=yes+sy+my;return d>0?(my/d*100):null;}
+    return null;
+  }
   var kpiRows=[
-    {l:'CR OEM',v:avg('crOEM'),tgt:t.crOEM},
-    {l:'CR Teilweise',v:avg('crTeilweise'),tgt:t.crTeilweise},
-    {l:'CR Super Yes',v:avg('crSuperYes'),tgt:t.crSuperYes},
-    {l:'CR Mega Yes',v:avg('crMegaYes'),tgt:t.crMegaYes}
+    {l:'CR OEM',v:crAvg30('crOEM'),tgt:t.crOEM},
+    {l:'CR Teilweise',v:crAvg30('crTeilweise'),tgt:t.crTeilweise},
+    {l:'CR Super Yes',v:crAvg30('crSuperYes'),tgt:t.crSuperYes},
+    {l:'CR Mega Yes',v:crAvg30('crMegaYes'),tgt:t.crMegaYes}
   ];
   var kpiHtml=kpiRows.map(function(r){
     var bench=roleBenchmark(emp.id,{'CR OEM':'crOEM','CR Teilweise':'crTeilweise','CR Super Yes':'crSuperYes','CR Mega Yes':'crMegaYes'}[r.l],30);
@@ -3872,6 +3885,25 @@ function getPerf(id,days){
 function pavg(id,key,days){
   var p=getPerf(id,days||7);
   if(!p.length)return null;
+  var crMetrics={crOEM:1,crTeilweise:1,crSuperYes:1,crMegaYes:1};
+  if(crMetrics[key]){
+    var oem=0,notS=0,tw=0,yes=0,sy=0,my=0;
+    p.forEach(function(x){
+      oem+=x.convOEM||0;notS+=x.notSuccessful||0;
+      tw+=x.convTW||0;yes+=x.convYes||0;sy+=x.convSY||0;my+=x.convMY||0;
+    });
+    if(key==='crOEM'){var d=oem+notS;return d>0?(oem/d*100):null;}
+    if(key==='crTeilweise'){var d=tw+yes+sy+my;return d>0?(tw/d*100):null;}
+    if(key==='crSuperYes'){var d=yes+sy+my;return d>0?(sy/d*100):null;}
+    if(key==='crMegaYes'){var d=yes+sy+my;return d>0?(my/d*100):null;}
+  }
+  if(key==='optPerH'){
+    var emp=employees.find(function(e){return e.id===id;});
+    var optGesSum=p.reduce(function(a,x){return a+(x.optGesamt||0);},0);
+    var dates=p.map(function(x){return x.date;});
+    var hoursSum=emp?totalWorkHoursForMonth(emp,null,dates):0;
+    return hoursSum>0?(optGesSum/hoursSum):null;
+  }
   return p.reduce(function(a,x){return a+x[key];},0)/p.length;
 }
 function checkAlerts(id){
@@ -5698,13 +5730,25 @@ function renderTeam(){
   var list=teamFilter==='INAKTIV'?inactiveAll:teamFilter==='ALL'?allVisibleActive:teamFilter==='OB'?allVisibleActive.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';}):teamFilter==='VLC'?allVisibleActive.filter(function(e){return e.role==='VLC';}):allVisibleActive.filter(function(e){return e.role===teamFilter&&e.phase!=='Onboarding';});
   var allP=list.map(function(e){return teamGetPerf(e.id);}).reduce(function(a,b){return a.concat(b);},[]);
   function tAvg(key){if(!allP.length)return null;return allP.reduce(function(a,x){return a+x[key];},0)/allP.length;}
+  function crFromRows(rows,metric){
+    var oem=0,notS=0,tw=0,yes=0,sy=0,my=0;
+    rows.forEach(function(x){
+      oem+=x.convOEM||0;notS+=x.notSuccessful||0;
+      tw+=x.convTW||0;yes+=x.convYes||0;sy+=x.convSY||0;my+=x.convMY||0;
+    });
+    if(metric==='crOEM'){var d=oem+notS;return d>0?(oem/d*100):null;}
+    if(metric==='crTeilweise'){var d=tw+yes+sy+my;return d>0?(tw/d*100):null;}
+    if(metric==='crSuperYes'){var d=yes+sy+my;return d>0?(sy/d*100):null;}
+    if(metric==='crMegaYes'){var d=yes+sy+my;return d>0?(my/d*100):null;}
+    return null;
+  }
   var totalAlerts=list.reduce(function(a,e){return a+checkAlerts(e.id).length;},0);
   var totalMargin=list.reduce(function(a,e){return a+teamGetPerf(e.id).reduce(function(b,x){return b+(x.margeGesamt||x.margin||0);},0);},0);
-  var oem7=tAvg('crOEM'),sy7=tAvg('crSuperYes'),my7=tAvg('crMegaYes');
+  var oem7=crFromRows(allP,'crOEM'),sy7=crFromRows(allP,'crSuperYes'),my7=crFromRows(allP,'crMegaYes');
   // Für Zeitraum-Vergleich: immer auch 7d berechnen (nur relevant im Quick-Filter-Modus)
   var allP7=(!customActive&&days===7)?allP:list.map(function(e){return getPerf(e.id,7);}).reduce(function(a,b){return a.concat(b);},[]);
   function tAvg7(key){if(!allP7.length)return null;return allP7.reduce(function(a,x){return a+x[key];},0)/allP7.length;}
-  var oemD=tAvg('crOEM'),syD=tAvg('crSuperYes'),myD=tAvg('crMegaYes');
+  var oemD=crFromRows(allP,'crOEM'),syD=crFromRows(allP,'crSuperYes'),myD=crFromRows(allP,'crMegaYes');
   var totalMargin7=(!customActive&&days===7)?totalMargin:list.reduce(function(a,e){return a+getPerf(e.id,7).reduce(function(b,x){return b+(x.margeGesamt||x.margin||0);},0);},0);
   var showTrend=!customActive&&days!==7;
   function delta(vD,v7){
@@ -5731,7 +5775,21 @@ function renderTeam(){
     var r=lastRating(e.id); var rs=r?RS[r]:null;
     var al=checkAlerts(e.id);
     var ep=teamGetPerf(e.id);
-    function ea(key){return ep.length?ep.reduce(function(a,x){return a+x[key];},0)/ep.length:null;}
+    function ea(key){
+      var crMetrics={crOEM:1,crTeilweise:1,crSuperYes:1,crMegaYes:1};
+      if(crMetrics[key]){
+        var oem=0,notS=0,tw=0,yes=0,sy=0,my=0;
+        ep.forEach(function(x){
+          oem+=x.convOEM||0;notS+=x.notSuccessful||0;
+          tw+=x.convTW||0;yes+=x.convYes||0;sy+=x.convSY||0;my+=x.convMY||0;
+        });
+        if(key==='crOEM'){var d=oem+notS;return d>0?(oem/d*100):null;}
+        if(key==='crTeilweise'){var d=tw+yes+sy+my;return d>0?(tw/d*100):null;}
+        if(key==='crSuperYes'){var d=yes+sy+my;return d>0?(sy/d*100):null;}
+        if(key==='crMegaYes'){var d=yes+sy+my;return d>0?(my/d*100):null;}
+      }
+      return ep.length?ep.reduce(function(a,x){return a+x[key];},0)/ep.length:null;
+    }
     var em=ep.reduce(function(a,x){return a+(x.margeGesamt||x.margin||0);},0);
     var sCount=(protocols[e.id]||[]).length;
     var tage=tageSeitLetzterSession(e.id);
@@ -5901,6 +5959,26 @@ function renderTeam(){
     +(function(){
       var oemOk2=KPI_TARGETS.crOEM.dir==='lte'?(oemD!==null&&oemD<=KPI_TARGETS.crOEM.val):(oemD!==null&&oemD>=KPI_TARGETS.crOEM.val);var oemCol=oemD!==null&&oemOk2?'#206A72':'var(--amber-dark)';
       function teamDailySeries(key,n,mode){
+        var crMetrics={crOEM:1,crTeilweise:1,crSuperYes:1,crMegaYes:1};
+        if(crMetrics[key]){
+          var byDateRaw={};
+          allP.forEach(function(r){
+            if(!byDateRaw[r.date])byDateRaw[r.date]={oem:0,notS:0,tw:0,yes:0,sy:0,my:0};
+            var b=byDateRaw[r.date];
+            b.oem+=r.convOEM||0;b.notS+=r.notSuccessful||0;
+            b.tw+=r.convTW||0;b.yes+=r.convYes||0;b.sy+=r.convSY||0;b.my+=r.convMY||0;
+          });
+          var dates2=Object.keys(byDateRaw).sort();
+          var series2=dates2.map(function(d){
+            var b=byDateRaw[d];
+            if(key==='crOEM'){var den=b.oem+b.notS;return den>0?b.oem/den*100:null;}
+            if(key==='crTeilweise'){var den=b.tw+b.yes+b.sy+b.my;return den>0?b.tw/den*100:null;}
+            if(key==='crSuperYes'){var den=b.yes+b.sy+b.my;return den>0?b.sy/den*100:null;}
+            if(key==='crMegaYes'){var den=b.yes+b.sy+b.my;return den>0?b.my/den*100:null;}
+            return null;
+          }).filter(function(v){return v!==null;});
+          return series2.slice(-(n||7));
+        }
         var byDate={};
         allP.forEach(function(r){if(!byDate[r.date])byDate[r.date]=[];if(r[key]!==undefined&&r[key]!==null)byDate[r.date].push(r[key]);});
         var dates=Object.keys(byDate).sort();
@@ -5929,17 +6007,17 @@ function renderTeam(){
       var oemVal=oemD!==null?Math.round(oemD)+'%':'—';
       var syVal=syD!==null?Math.round(syD)+'%':'—';
       var myVal=myD!==null?Math.round(myD)+'%':'—';
-      var dOEM=showTrend&&oemD!==null&&tAvg7('crOEM')!==null?Math.round(oemD)-Math.round(tAvg7('crOEM')):null;
-      var dSY=showTrend&&syD!==null&&tAvg7('crSuperYes')!==null?Math.round(syD)-Math.round(tAvg7('crSuperYes')):null;
-      var dMY=showTrend&&myD!==null&&tAvg7('crMegaYes')!==null?Math.round(myD)-Math.round(tAvg7('crMegaYes')):null;
+      var dOEM=showTrend&&oemD!==null&&crFromRows(allP7,'crOEM')!==null?Math.round(oemD)-Math.round(crFromRows(allP7,'crOEM')):null;
+      var dSY=showTrend&&syD!==null&&crFromRows(allP7,'crSuperYes')!==null?Math.round(syD)-Math.round(crFromRows(allP7,'crSuperYes')):null;
+      var dMY=showTrend&&myD!==null&&crFromRows(allP7,'crMegaYes')!==null?Math.round(myD)-Math.round(crFromRows(allP7,'crMegaYes')):null;
       var dMargin=showTrend?(totalMargin-totalMargin7):null;
-      var twD=allP.length?allP.reduce(function(a,x){return a+(x.crTeilweise||0);},0)/allP.length:null;
+      var twD=crFromRows(allP,'crTeilweise');
       var twTarget=KPI_TARGETS.crTeilweise?KPI_TARGETS.crTeilweise.val:25;
       var twDir=KPI_TARGETS.crTeilweise?KPI_TARGETS.crTeilweise.dir:'lte';
       var twOk=twD!==null&&(twDir==='lte'?twD<=twTarget:twD>=twTarget);
       var twFarbe=twD!==null?(twOk?'#206A72':'var(--red)'):'var(--amber-dark)';
       var twVal=twD!==null?Math.round(twD)+'%':'—';
-      var dTW=showTrend&&twD!==null&&tAvg7('crTeilweise')!==null?Math.round(twD)-Math.round(tAvg7('crTeilweise')):null;
+      var dTW=showTrend&&twD!==null&&crFromRows(allP7,'crTeilweise')!==null?Math.round(twD)-Math.round(crFromRows(allP7,'crTeilweise')):null;
       var syTarget=KPI_TARGETS.crSuperYes.val;
       var myTarget=KPI_TARGETS.crMegaYes.val;
       var syOk=syD!==null&&(KPI_TARGETS.crSuperYes.dir==='lte'?syD<=syTarget:syD>=syTarget);
@@ -5951,10 +6029,10 @@ function renderTeam(){
         return '<div style="display:flex;align-items:baseline;gap:6px"><div style="font-size:20px;font-weight:700;color:'+col2+'">'+val+'</div><div style="font-size:13px;font-weight:700;color:'+t.col+'">'+t.arrow+'</div></div>';
       }
       var html5='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px">';
-      html5+=tile('TEAM CR OEM',oemCol,valArrow(oemVal,tOEM,oemCol),'Ziel ≥ '+CR_GOOD+'%'+(oemD!==null?(oemOk2?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(tAvg7('crOEM')!==null?Math.round(tAvg7('crOEM'))+'%':'—'):'\u00A0'),teamDailySeries('crOEM',7));
-      html5+=tile('TEAM TW',twFarbe,valArrow(twVal,tTW,twFarbe),'Ziel '+(twDir==='gte'?'≥':'≤')+twTarget+'%'+(twD!==null?(twOk?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(tAvg7('crTeilweise')!==null?Math.round(tAvg7('crTeilweise'))+'%':'—'):'\u00A0'),teamDailySeries('crTeilweise',7));
-      html5+=tile('TEAM SY',syFarbe,valArrow(syVal,tSY,syFarbe),'Ziel '+(KPI_TARGETS.crSuperYes.dir==='gte'?'≥':'≤')+syTarget+'%'+(syD!==null?(syOk?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(tAvg7('crSuperYes')!==null?Math.round(tAvg7('crSuperYes'))+'%':'—'):'\u00A0'),teamDailySeries('crSuperYes',7));
-      html5+=tile('TEAM MY',myFarbe,valArrow(myVal,tMY,myFarbe),'Ziel '+(KPI_TARGETS.crMegaYes.dir==='gte'?'≥':'≤')+myTarget+'%'+(myD!==null?(myOk?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(tAvg7('crMegaYes')!==null?Math.round(tAvg7('crMegaYes'))+'%':'—'):'\u00A0'),teamDailySeries('crMegaYes',7));
+      html5+=tile('TEAM CR OEM',oemCol,valArrow(oemVal,tOEM,oemCol),'Ziel ≥ '+CR_GOOD+'%'+(oemD!==null?(oemOk2?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(crFromRows(allP7,'crOEM')!==null?Math.round(crFromRows(allP7,'crOEM'))+'%':'—'):'\u00A0'),teamDailySeries('crOEM',7));
+      html5+=tile('TEAM TW',twFarbe,valArrow(twVal,tTW,twFarbe),'Ziel '+(twDir==='gte'?'≥':'≤')+twTarget+'%'+(twD!==null?(twOk?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(crFromRows(allP7,'crTeilweise')!==null?Math.round(crFromRows(allP7,'crTeilweise'))+'%':'—'):'\u00A0'),teamDailySeries('crTeilweise',7));
+      html5+=tile('TEAM SY',syFarbe,valArrow(syVal,tSY,syFarbe),'Ziel '+(KPI_TARGETS.crSuperYes.dir==='gte'?'≥':'≤')+syTarget+'%'+(syD!==null?(syOk?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(crFromRows(allP7,'crSuperYes')!==null?Math.round(crFromRows(allP7,'crSuperYes'))+'%':'—'):'\u00A0'),teamDailySeries('crSuperYes',7));
+      html5+=tile('TEAM MY',myFarbe,valArrow(myVal,tMY,myFarbe),'Ziel '+(KPI_TARGETS.crMegaYes.dir==='gte'?'≥':'≤')+myTarget+'%'+(myD!==null?(myOk?' ✓':' ↓'):''),(showTrend?'Vormonat: '+(crFromRows(allP7,'crMegaYes')!==null?Math.round(crFromRows(allP7,'crMegaYes'))+'%':'—'):'\u00A0'),teamDailySeries('crMegaYes',7));
       html5+=tile('MARGE','#7ED2DB',valArrow('€'+totalMargin.toLocaleString('de-DE'),tMG,'#7ED2DB'),periodLabel+' gesamt',(showTrend?'Vormonat: €'+totalMargin7.toLocaleString('de-DE'):'\u00A0'),teamDailySeries('margeGesamt',7,'sum'));
       html5+='</div>';
       return html5;
