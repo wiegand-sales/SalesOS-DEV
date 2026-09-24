@@ -8358,7 +8358,12 @@ function calculateProvision(emp,monthKey,row,dayCount){
   } else {
     optPerH=row.optPerH||0;
   }
-  var crOEM=row.crOEM||0, crTW=row.crTeilweise||0, crSY=row.crSuperYes||0, crMY=row.crMegaYes||0;
+  var notSOemCalc=row.notSuccessful||0;
+  var oemDenomCalc=convOEM+notSOemCalc;
+  var crOEM=oemDenomCalc>0?(convOEM/oemDenomCalc*100):0;
+  var crTW=(convTW+convYes+convSY+convMY)>0?(convTW/(convTW+convYes+convSY+convMY)*100):0;
+  var crSY=(convYes+convSY+convMY)>0?(convSY/(convYes+convSY+convMY)*100):0;
+  var crMY=(convYes+convSY+convMY)>0?(convMY/(convYes+convSY+convMY)*100):0;
   var anteilOem=optGes>0?(convOEM/optGes*100):0;
 
   // §2 Abs. 1 - Basisprovision (Convertible Hardware existiert aktuell nicht im System, daher nicht enthalten)
