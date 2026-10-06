@@ -1341,6 +1341,7 @@ function initAppAfterLogin(){
     Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase()]).then(function(){
       lsLoad();               // Rest der Daten (protocols, ...) bleibt vorerst lokal
       runAppInit();
+      logAppOpen(); // Zugriff protokollieren (max. 1 Eintrag je 30 Min. und Nutzer)
       if(window._freshLoginClick){
         window._freshLoginClick=false;
         openLoginWizard();
@@ -3052,6 +3053,26 @@ function resolveNonEmployeeName(email){
 }
 // Zentrale Protokollierungsfunktion – von allen mutierenden Aktionen aufgerufen.
 // Feuert asynchron (kein await nötig), fügt lokal sofort ein optimistisches Eintrag hinzu.
+// Protokolliert das Oeffnen von Sales OS als Aktivitaet 'login'. Mehrere Aufrufe innerhalb von 30 Minuten
+// werden zu einem Eintrag zusammengefasst. Nutzt _sbRaw, damit auch Betrachter (Schreibsperre) erfasst werden.
+function logAppOpen(){
+  try{
+    if(!currentAuthUser)return;
+    var key='lastAppOpenLog:'+(currentAuthUser.id||currentAuthUser.email||'');
+    var last=parseInt(localStorage.getItem(key)||'0',10);
+    if(Date.now()-last<30*60*1000)return;
+    localStorage.setItem(key,String(Date.now()));
+    var actorId=currentCoach?currentCoach.id:null;
+    var actorName=currentCoach?null:resolveNonEmployeeName(currentAuthUser.email);
+    var payload={actor_id:actorId,actor_name:actorName,category:'login',action:'opened',description:'Sales OS geöffnet',target_employee_id:null,target_label:null};
+    _sbRaw.from('activity_log').insert(payload).select().single().then(function(res){
+      if(res.error){console.warn('activity_log (Zugriff) insert failed:',res.error);localStorage.removeItem(key);return;}
+      var r=res.data;
+      activityLog.unshift({id:r.id,createdAt:r.created_at,actorId:r.actor_id,actorName:r.actor_name,category:r.category,action:r.action,description:r.description,targetEmployeeId:r.target_employee_id,targetLabel:r.target_label});
+      if(view==='activity')renderMain();
+    });
+  }catch(err){console.warn('logAppOpen failed:',err);}
+}
 function logActivity(category,action,description,targetEmployeeId,targetLabel){
   var actorId=currentCoach?currentCoach.id:null;
   var actorName=currentCoach?null:(currentAuthUser?resolveNonEmployeeName(currentAuthUser.email):null);
@@ -4960,7 +4981,7 @@ function buildGlobalBannerHtml(visible){
   if(_bvMode==='activity'){
     var _actHeute=today();
     var _actAuditAsActivity=(typeof adminAuditLog!=='undefined'?(adminAuditLog||[]):[]).map(function(a){return {createdAt:a.changedAt};});
-    var _actCombined=(typeof activityLog!=='undefined'?(activityLog||[]):[]).concat(_actAuditAsActivity);
+    var _actCombined=(typeof activityLog!=='undefined'?(activityLog||[]):[]).filter(function(a){return a.category!=='login';}).concat(_actAuditAsActivity);
     var _actByDate={};
     _actCombined.forEach(function(a){var d=(a.createdAt||'').slice(0,10);if(d)_actByDate[d]=(_actByDate[d]||0)+1;});
     var _actDays=[];
@@ -8058,7 +8079,8 @@ var CATEGORY_META={
   employee:{label:'MITARBEITER',col:'var(--red)',bg:'rgba(189,45,41,0.12)'},
   document:{label:'DOKUMENT',col:'var(--text2)',bg:'var(--bg2)'},
   solidroad:{label:'SOLIDROAD',col:'var(--purple)',bg:'var(--purple-bg)'},
-  criteria:{label:'QA-KRITERIUM',col:'#5FBAC4',bg:'rgba(95,186,196,0.15)'}
+  criteria:{label:'QA-KRITERIUM',col:'#5FBAC4',bg:'rgba(95,186,196,0.15)'},
+  login:{label:'ZUGRIFF',col:'var(--text2)',bg:'var(--bg2)'}
 };
 function renderActivity(){
   var ma=document.getElementById('mainArea');if(!ma)return;
@@ -8089,7 +8111,7 @@ function renderActivity(){
 
   // Aktivitäten pro Tag (Balken)
   var byDate={};
-  filtered.forEach(function(a){var d=(a.createdAt||'').slice(0,10);byDate[d]=(byDate[d]||0)+1;});
+  filtered.forEach(function(a){if(a.category==='login')return;var d=(a.createdAt||'').slice(0,10);byDate[d]=(byDate[d]||0)+1;});
   var days=[];
   for(var i=activityFilterDays-1;i>=0;i--){
     var d=new Date(today()+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-i);
@@ -8106,6 +8128,7 @@ function renderActivity(){
       var d=(a.createdAt||'').slice(0,10);
       if(!d||d<fromD||d>toD)return false;
       if(cat!=='all'&&a.category!==cat)return false;
+      if(cat==='all'&&a.category==='login')return false;
       return true;
     }).length;
   }
