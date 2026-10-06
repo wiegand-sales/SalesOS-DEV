@@ -8148,10 +8148,22 @@ function renderActivity(){
   h+='<div style="display:flex;align-items:center;gap:8px">';
   h+='<select onchange="setActivityFilterPerson(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
   h+='<option value="ALL"'+(activityFilterPerson==='ALL'?' selected':'')+'>Alle Personen</option>';
-  coachList.forEach(function(c){h+='<option value="'+c.id+'"'+(activityFilterPerson===c.id?' selected':'')+'>'+esc(c.name)+'</option>';});
-  var adminNames=[];
+  if(coachList.length){
+    h+='<optgroup label="Coaches">';
+    coachList.forEach(function(c){h+='<option value="'+c.id+'"'+(activityFilterPerson===c.id?' selected':'')+'>'+esc(c.name)+'</option>';});
+    h+='</optgroup>';
+  }
+  // Admins & Betrachter: alle aus app_users (auch ohne bisherigen Eintrag) + Admin-Fallbacks + Namen aus dem Protokoll
+  var adminNames=[],roleOf={};
+  (appUsers||[]).forEach(function(u){var nm=u.name||u.email;if(nm&&adminNames.indexOf(nm)<0){adminNames.push(nm);roleOf[nm]=u.role;}});
+  Object.keys(ADMIN_NAME_MAP||{}).forEach(function(k){var nm=ADMIN_NAME_MAP[k];if(nm&&adminNames.indexOf(nm)<0){adminNames.push(nm);roleOf[nm]='admin';}});
   activityLog.forEach(function(a){if(!a.actorId&&a.actorName&&adminNames.indexOf(a.actorName)<0)adminNames.push(a.actorName);});
-  adminNames.forEach(function(nm){var val='NAME:'+nm;h+='<option value="'+esc(val)+'"'+(activityFilterPerson===val?' selected':'')+'>'+esc(nm)+'</option>';});
+  adminNames.sort(function(a,b){return a.localeCompare(b);});
+  if(adminNames.length){
+    h+='<optgroup label="Admins &amp; Betrachter">';
+    adminNames.forEach(function(nm){var val='NAME:'+nm;var rl=roleOf[nm]==='viewer'?' (Betrachter)':(roleOf[nm]==='admin'?' (Admin)':'');h+='<option value="'+esc(val)+'"'+(activityFilterPerson===val?' selected':'')+'>'+esc(nm)+rl+'</option>';});
+    h+='</optgroup>';
+  }
   h+='</select>';
   h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
   [7,30,90].forEach(function(d){
