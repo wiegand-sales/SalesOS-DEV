@@ -16,6 +16,7 @@ import sys
 import csv
 import io
 import re
+import unicodedata
 import paramiko
 import requests
 
@@ -89,11 +90,35 @@ def parse_de_date(s):
     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
 
 
+def normalize_name(name):
+    """Vereinheitlicht Namen fuer den Abgleich: Unicode-NFKC, geschuetzte Leerzeichen,
+    mehrfache Leerzeichen, Gross-/Kleinschreibung."""
+    name = unicodedata.normalize("NFKC", name or "").replace("\u00a0", " ")
+    return re.sub(r"\s+", " ", name).strip().lower()
+
+
+# Kennungen im CRM, die kein Verkaeufer sind (Head Office, Sales Operations Manager):
+# werden nicht importiert und nicht als "nicht zugeordnet" gemeldet
+IGNORE_PREFIXES = {"HO", "SOM"}
+
+
+def split_role_prefix(name):
+    """'SE - Johann Breuer' -> ('SE', 'Johann Breuer'); 'Inaktiv - SE - Melanie Murad' -> ('SE', 'Melanie Murad').
+    Entfernt beliebig viele vorangestellte Kennungen (Inaktiv, SE, OB, ...)."""
+    name = (name or "").replace("\u00a0", " ").strip()
+    role = None
+    while True:
+        m = re.match(r"^(Inaktiv|[A-Z]{2,4})\s*-\s*(.+)$", name)
+        if not m:
+            break
+        if m.group(1) != "Inaktiv":
+            role = m.group(1)
+        name = m.group(2).strip()
+    return role, name
+
+
 def strip_role_prefix(name):
-    """'SE - Johann Breuer' -> 'Johann Breuer' (auch mit Leerzeichen-Resten robust)"""
-    name = name.strip()
-    m = re.match(r"^[A-Z]{2,4}\s*-\s*(.+)$", name)
-    return (m.group(1) if m else name).strip()
+    return split_role_prefix(name)[1]
 
 
 def load_employees():
@@ -106,7 +131,7 @@ def load_employees():
     r.raise_for_status()
     rows = r.json()
     # Name (kleingeschrieben, getrimmt) -> id
-    by_name = {row["name"].strip().lower(): row["id"] for row in rows}
+    by_name = {normalize_name(row["name"]): row["id"] for row in rows}
     log(f"{len(by_name)} Mitarbeiter geladen.")
     return by_name
 
@@ -269,8 +294,10 @@ def main():
         if not row or not row[0].strip():
             continue
         raw_name = row[COL["mitarbeiter"]]
-        clean_name = strip_role_prefix(raw_name)
-        emp_id = employees_by_name.get(clean_name.lower())
+        role, clean_name = split_role_prefix(raw_name)
+        if role in IGNORE_PREFIXES:
+            continue
+        emp_id = employees_by_name.get(normalize_name(clean_name))
         if not emp_id:
             not_found.add(raw_name.strip())
             continue
