@@ -210,7 +210,7 @@
     if (p.mindestleistungGreift) { tip.textContent = 'Mindestleistung: ab ' + dec(p.mindestleistung) + ' Opt./Std. im Monat gilt wieder die volle Berechnung.'; return; }
     var closest = miss.slice().sort(function (a, b) { return Math.abs(a.ziel - a.ist) / (a.ziel || 1) - Math.abs(b.ziel - b.ist) / (b.ziel || 1); })[0];
     var gap = Math.abs(closest.ziel - closest.ist);
-    tip.textContent = 'Am nächsten dran: ' + closest.label + ' – noch ' + (closest.fmt === 'pct' ? Math.max(1, Math.ceil(gap)) + ' Prozentpunkte' : dec(gap) + ' Opt./Std.');
+    tip.textContent = 'Am nächsten dran: ' + closest.label + ' – noch ' + (closest.fmt === 'pct' ? (Math.max(1, Math.ceil(gap)) === 1 ? '1 Prozentpunkt' : Math.ceil(gap) + ' Prozentpunkte') : dec(gap) + ' Opt./Std.');
   }
 
   // Das Popup rechnet selbst (immer mit dem aktuellen Code) und stoesst danach nur die Icon-Zahl im Hintergrund an
