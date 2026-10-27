@@ -7,7 +7,7 @@ body { width: 400px; height: 600px; overflow: hidden; font-family: "Segoe UI", R
 /* Seitenleiste */
 .rail { width: 72px; flex-shrink: 0; background: linear-gradient(180deg, #113c41, #1f6a72); display: flex; flex-direction: column; align-items: center; padding: 14px 0 12px; gap: 8px; }
 .logo { width: 36px; height: 36px; border-radius: 10px; background: #7ed2db; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-.tab { width: 58px; height: 58px; border: none; border-radius: 14px; background: transparent; color: #c3dcd9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: inherit; font-size: 9.5px; font-weight: 600; cursor: pointer; }
+.tab { width: 58px; height: 54px; border: none; border-radius: 14px; background: transparent; color: #c3dcd9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: inherit; font-size: 9.5px; font-weight: 600; cursor: pointer; }
 .tab:hover { background: rgba(255,255,255,0.08); }
 .tab.on { background: #f4f7f6; color: #113c41; font-weight: 800; }
 .logout { margin-top: auto; font-size: 10px; color: #c3dcd9; text-decoration: none; font-weight: 700; }
@@ -100,3 +100,17 @@ form input:focus { outline: 2px solid #7ed2db; border-color: #136c72; }
 .preview label { font-size: 10.5px; font-weight: 700; color: #7a5410; }
 .preview select { height: 28px; border: 1px solid #e3cf9f; border-radius: 6px; font-size: 12px; background: #fff; }
 .stalebar { background: #eef1f1; border-radius: 8px; padding: 6px 8px; font-size: 11px; color: #3d4f52; }
+
+/* Verlauf */
+.hbars { position: relative; display: flex; gap: 4px; align-items: flex-end; height: 92px; }
+.hb { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; height: 100%; }
+.hb b { font-size: 10px; }
+.hb i { display: block; width: 100%; border-radius: 3px; background: #9fcfd4; }
+.hb.now i { background: #136c72; }
+.hb.unk i { background: #e3eae9; height: 4px; }
+.sollLine { position: absolute; left: 0; right: 0; border-top: 2px dashed #142a2e; opacity: 0.5; pointer-events: none; }
+.axis { display: flex; justify-content: space-between; font-size: 10px; color: #56676a; }
+.mrow { display: flex; gap: 4px; }
+.mrow div { flex: 1; text-align: center; font-size: 10px; color: #56676a; }
+.mrow b { display: block; font-size: 10.5px; color: #142a2e; }
+#vCum svg { display: block; overflow: visible; }

@@ -15,7 +15,7 @@
   function stand(m) { var ts = m.lastSync ? new Date(m.lastSync) : new Date(m.loadedAt); return ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2); }
 
   function showOnly(id) {
-    ['vLoading', 'vLogin', 'vError', 'pHeute', 'pKennzahlen', 'pProvision'].forEach(function (v) { $(v).hidden = v !== id; });
+    ['vLoading', 'vLogin', 'vError', 'pHeute', 'pVerlauf', 'pKennzahlen', 'pProvision'].forEach(function (v) { $(v).hidden = v !== id; });
     var data = id.charAt(0) === 'p';
     $('rail').classList.toggle('locked', !data && id !== 'vError');
     if (!data) { $('previewBar').hidden = true; $('staleBar').hidden = true; }
@@ -44,6 +44,7 @@
   function renderPage() {
     var m = model, first = (m.emp.name || '').split(' ')[0], monat = MONATE[+m.monthKey.slice(5, 7) - 1];
     if (tab === 'heute') { showOnly('pHeute'); $('title').textContent = 'Hallo ' + first; $('sub').textContent = 'heute · ' + stand(m); renderHeute(m); }
+    if (tab === 'verlauf') { showOnly('pVerlauf'); $('title').textContent = 'Verlauf'; $('sub').textContent = 'heute · ' + stand(m); renderVerlauf(m); }
     if (tab === 'kennzahlen') { showOnly('pKennzahlen'); $('title').textContent = 'Kennzahlen'; $('sub').textContent = stand(m); renderKennzahlen(m, monat); }
     if (tab === 'provision') { showOnly('pProvision'); $('title').textContent = 'Provision'; $('sub').textContent = monat + ' · ' + stand(m); renderProvision(m); }
     $('staleBar').hidden = !m.stale; $('previewBar').hidden = !m.preview;
@@ -83,6 +84,65 @@
     var ak = clear('hAkt');
     [['Aktivitäten', n0(d.akt)], ['Opt./Std.', dec(d.optPerH)], ['n. erreicht', n0(d.notR)], ['n. erfolgr.', n0(d.notErf)]].forEach(function (c) {
       var x = el('div'); x.appendChild(el('b', null, c[1])); x.appendChild(el('span', null, c[0])); ak.appendChild(x);
+    });
+  }
+
+  // ── Verlauf ──
+  function renderVerlauf(m) {
+    var p = m.dayPlan || { startMin: 510, endMin: 1020, planned: 8, optTag: 0 };
+    var fromH = Math.floor(p.startMin / 60), toH = Math.max(fromH, Math.ceil(p.endMin / 60) - 1);
+    var nowH = new Date().getHours();
+    SOS.storageGet(['snapshots']).then(function (st) {
+      var snaps = st.snapshots && st.snapshots.date === m.today && st.snapshots.empId === m.emp.id ? st.snapshots : null;
+      var hrs = SOS.hourly(snaps, fromH, toH);
+      var known = hrs.filter(function (x) { return x.known; });
+      var sollH = p.optTag > 0 && p.planned > 0 ? p.optTag / p.planned : null;
+      // Beste Stunde
+      var best = known.slice().sort(function (a, b) { return b.opt - a.opt; })[0];
+      $('vBest').textContent = best ? n0(best.opt) : '–';
+      $('vBestSub').textContent = best ? best.h + '–' + (best.h + 1) + ' Uhr' + (m.todayDetail.optPerH != null ? ' · Ø ' + dec(m.todayDetail.optPerH) + ' je Stunde' : '') : 'noch keine volle Stunde aufgezeichnet';
+      // Balken je Stunde
+      var bars = clear('vBars'), maxV = Math.max(1, sollH || 0, Math.max.apply(null, known.map(function (x) { return x.opt; }).concat([0])));
+      var H = 92 - 14;
+      hrs.forEach(function (x) {
+        var c = el('div', 'hb' + (!x.known ? ' unk' : x.h === nowH ? ' now' : ''));
+        if (x.known) { c.appendChild(el('b', null, n0(x.opt))); var i = el('i'); i.style.height = Math.max(3, Math.round(x.opt / maxV * H)) + 'px'; c.appendChild(i); }
+        else c.appendChild(el('i'));
+        c.title = x.h + ' Uhr: ' + (x.known ? x.opt + ' Opt.' : x.baseline ? 'Aufzeichnung gestartet' : 'kein Wert');
+        bars.appendChild(c);
+      });
+      if (sollH) { var sl = el('div', 'sollLine'); sl.style.bottom = Math.round(sollH / maxV * H) + 'px'; bars.appendChild(sl); }
+      $('vSollLbl').textContent = sollH ? '- - Soll ' + dec(sollH) + ' je Stunde' : 'kein Tagesziel';
+      ['vAxis1', 'vAxis2'].forEach(function (id) { var a = clear(id); a.appendChild(el('span', null, fromH + ' Uhr')); a.appendChild(el('span', null, Math.round((fromH + toH + 1) / 2) + '')); a.appendChild(el('span', null, (toH + 1) + ' Uhr')); });
+      // Kumuliert gegen Soll
+      var W = 296, HH = 64, n = hrs.length, NS = 'http://www.w3.org/2000/svg';
+      var maxC = Math.max(1, p.optTag || 0, m.todayDetail.opt || 0);
+      var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('width', W); svg.setAttribute('height', HH); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + HH);
+      svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Optimierungen kumuliert gegen Soll');
+      function xAt(i) { return Math.round((i + 1) / n * W * 10) / 10; }
+      function yAt(v) { return Math.round((HH - v / maxC * HH) * 10) / 10; }
+      if (sollH) {
+        var sp = ['0,' + HH]; hrs.forEach(function (x, i) { sp.push(xAt(i) + ',' + yAt(Math.min(p.optTag, sollH * (i + 1)))); });
+        var s = document.createElementNS(NS, 'polyline'); s.setAttribute('points', sp.join(' ')); s.setAttribute('fill', 'none'); s.setAttribute('stroke', '#142a2e'); s.setAttribute('stroke-width', '2'); s.setAttribute('stroke-dasharray', '5 4'); s.setAttribute('opacity', '0.5'); svg.appendChild(s);
+      }
+      var cp = [], last = null;
+      hrs.forEach(function (x, i) { if (x.cumOpt != null && x.h <= nowH) { cp.push(xAt(i) + ',' + yAt(x.cumOpt)); last = [xAt(i), yAt(x.cumOpt)]; } });
+      if (cp.length) {
+        var l = document.createElementNS(NS, 'polyline'); l.setAttribute('points', cp.join(' ')); l.setAttribute('fill', 'none'); l.setAttribute('stroke', '#136c72'); l.setAttribute('stroke-width', '3'); l.setAttribute('stroke-linecap', 'round'); l.setAttribute('stroke-linejoin', 'round'); svg.appendChild(l);
+        var dot = document.createElementNS(NS, 'circle'); dot.setAttribute('cx', last[0]); dot.setAttribute('cy', last[1]); dot.setAttribute('r', '4'); dot.setAttribute('fill', '#136c72'); svg.appendChild(dot);
+      }
+      var cum = clear('vCum'); cum.appendChild(svg);
+      var lbl = $('vCumLbl'), sollNow = m.todayDetail.soll;
+      if (sollNow != null) { lbl.textContent = n0(m.todayDetail.opt) + ' / ' + n0(sollNow) + ' bis jetzt'; lbl.style.color = m.todayDetail.opt >= sollNow ? COL.ok : COL.bad; lbl.style.fontWeight = '700'; }
+      else { lbl.textContent = n0(m.todayDetail.opt) + ' bisher'; lbl.style.color = ''; }
+      // Marge je Stunde
+      var mr = clear('vMarge'), withM = known.filter(function (x) { return x.marge != null; });
+      hrs.filter(function (x) { return x.h <= nowH; }).forEach(function (x) {
+        var c = el('div'); c.appendChild(el('b', null, x.known && x.marge != null ? n0(x.marge) : '–')); c.appendChild(document.createTextNode(String(x.h))); mr.appendChild(c);
+      });
+      var bm = withM.slice().sort(function (a, b) { return b.marge - a.marge; })[0];
+      $('vMargeLbl').textContent = bm ? 'beste: ' + bm.h + '–' + (bm.h + 1) + ' Uhr · ' + eur(bm.marge) : '';
+      $('vHint').textContent = known.length ? 'Aufgezeichnet, solange Chrome geöffnet ist.' : 'Der Verlauf füllt sich im Laufe des Tages, solange Chrome geöffnet ist.';
     });
   }
 

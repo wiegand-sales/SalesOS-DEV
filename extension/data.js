@@ -265,6 +265,8 @@ var SOS = (function () {
       akt: sT.akt, optPerH: elapsedH > 0 ? sT.optGes / elapsedH : null, notR: sT.notR, notErf: sT.notErf,
       soll: optTag > 0 && worksToday ? soll.optToday : null
     };
+    var whT = (emp.workHours || DEFAULT_WORK_HOURS)[WEEKDAY_KEYS[new Date(t + 'T00:00:00').getDay()]] || {};
+    var dayPlan = { startMin: timeStrToMin(whT.von) || 510, endMin: timeStrToMin(whT.bis) || 1020, planned: planned, optTag: optTag, margeOpt: margeOpt, worksToday: worksToday };
     var crK = kpis.filter(function (k) { return k.fmt === 'pct'; });
     var crCount = {
       today: crK.filter(function (k) { return k.okToday === true; }).length, todayKnown: crK.filter(function (k) { return k.okToday !== null; }).length,
@@ -272,7 +274,7 @@ var SOS = (function () {
     };
     var paceRatio = soll.optToday > 0 ? sT.opt / soll.optToday : null;
     var stale = !lastSync || (Date.now() - new Date(lastSync).getTime() > 2 * 3600 * 1000);
-    return { emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
+    return { emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, dayPlan: dayPlan, margeToday: sT.marge, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
   }
 
   // Stundenverlauf: Die Datenbank kennt nur Tagessummen. Die Erweiterung merkt sich deshalb bei jedem
@@ -280,18 +282,26 @@ var SOS = (function () {
   async function recordSnapshot(model) {
     var st = await storageGet(['snapshots']); var s = st.snapshots;
     if (!s || s.date !== model.today || s.empId !== model.emp.id) s = { date: model.today, empId: model.emp.id, byHour: {} };
-    var h = new Date().getHours(); s.byHour[h] = model.optToday;
+    var h = new Date().getHours(); s.byHour[h] = { opt: model.optToday, marge: model.margeToday || 0 };
     await storageSet({ snapshots: s });
   }
-  function hourlyBars(snapshots, fromH, toH) {
-    var out = [], prev = 0, has = false;
+  // Stundenwerte aus den Snapshots: Zuwachs zwischen zwei bekannten Stunden. Die erste Aufzeichnung des Tages
+  // zaehlt nur als eigener Wert, wenn sie vor/zu Arbeitsbeginn lag; sonst ist sie nur der Ausgangsstand.
+  function hourly(snapshots, fromH, toH) {
+    var by = (snapshots && snapshots.byHour) || {}, out = [], prev = null;
     for (var h = fromH; h <= toH; h++) {
-      var v = snapshots && snapshots.byHour && snapshots.byHour[h];
-      if (v != null) { out.push({ h: h, val: Math.max(0, v - prev), known: true }); prev = v; has = true; }
-      else out.push({ h: h, val: 0, known: false });
+      var raw = by[h], v = raw == null ? null : (typeof raw === 'number' ? { opt: raw, marge: null } : raw);
+      if (v === null) { out.push({ h: h, known: false, cumOpt: prev ? prev.opt : null }); continue; }
+      if (prev === null) {
+        if (h <= fromH) out.push({ h: h, known: true, opt: v.opt, marge: v.marge, cumOpt: v.opt });
+        else out.push({ h: h, known: false, baseline: true, cumOpt: v.opt });
+      } else {
+        out.push({ h: h, known: true, opt: Math.max(0, v.opt - prev.opt), marge: (v.marge != null && prev.marge != null) ? Math.max(0, v.marge - prev.marge) : null, cumOpt: v.opt });
+      }
+      prev = v;
     }
-    return { bars: out, has: has };
+    return out;
   }
 
-  return { load: load, login: login, logout: logout, getSession: getSession, hourlyBars: hourlyBars, storageGet: storageGet, storageSet: storageSet, config: C };
+  return { load: load, login: login, logout: logout, getSession: getSession, hourly: hourly, storageGet: storageGet, storageSet: storageSet, config: C };
 })();
