@@ -1321,13 +1321,32 @@ function resolveCurrentCoach(){
     var match = employees.find(function(e){return e.auth_user_id===uid;});
     currentCoach = match || null;
     coachFilterView = currentCoach ? currentCoach.id : 'overview';
-    if(currentCoach){
+    if(currentCoach && !(currentCoach.isPureCoach || currentCoach.role==='SC' || currentCoach.role==='SDM')){
+      // Mitarbeiter mit Login, aber kein Coach: Agent (nutzt nur die Chrome-Erweiterung, kein Board-Zugang)
+      currentUserRole='agent';
+    } else if(currentCoach){
       currentUserRole='coach';
     } else {
       var au=appUsers.find(function(u){return u.authUserId===uid;})||appUsers.find(function(u){return u.email===email;});
       currentUserRole = au ? au.role : 'admin'; // unbekannter Login ohne Eintrag: sicherheitshalber wie Admin behandeln, nicht wie Viewer
     }
   }).catch(function(){currentCoach=null;currentAuthUser=null;currentUserRole=null;});
+}
+// Agents haben keinen Board-Zugang: Hinweis auf die Chrome-Erweiterung statt leerer Seiten
+function showAgentLock(){
+  var name=(currentCoach&&currentCoach.name)?currentCoach.name.split(' ')[0]:'';
+  var d=document.createElement('div');
+  d.id='agentLock';
+  d.style.cssText='position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#113c41,#1b5a61);display:flex;align-items:center;justify-content:center;padding:24px;font-family:inherit';
+  d.innerHTML='<div style="background:#fff;border-radius:18px;max-width:440px;width:100%;padding:36px 32px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.25)">'
+    +'<div style="width:56px;height:56px;border-radius:14px;background:#136c72;display:flex;align-items:center;justify-content:center;margin:0 auto 18px">'
+    +'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 3 7-7"/></svg></div>'
+    +'<h2 style="margin:0 0 10px;font-size:22px;color:#142a2e">Hallo '+esc(name)+'</h2>'
+    +'<p style="margin:0 0 22px;font-size:15px;line-height:1.5;color:#3d4f52">Das Board ist für Coaches und Führung. <b>Deine Kennzahlen und deine Provision</b> siehst du jederzeit in der <b>Sales-OS-Erweiterung</b> oben rechts in Chrome.</p>'
+    +'<button id="agentLockLogout" style="height:42px;padding:0 22px;border:none;border-radius:10px;background:#e2efee;color:#136c72;font-weight:700;font-size:14px;cursor:pointer">Abmelden</button>'
+    +'</div>';
+  document.body.appendChild(d);
+  document.getElementById('agentLockLogout').onclick=function(){ d.remove(); logout(); };
 }
 function initAppAfterLogin(){
   if(_appInitStarted)return;   // verhindert doppelten Init durch ueberlappende Auth-Events
@@ -1338,6 +1357,7 @@ function initAppAfterLogin(){
   }).then(function(){
     return resolveCurrentCoach();
   }).then(function(){
+    if(currentUserRole==='agent'){ showAgentLock(); return; }
     Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase()]).then(function(){
       lsLoad();               // Rest der Daten (protocols, ...) bleibt vorerst lokal
       runAppInit();

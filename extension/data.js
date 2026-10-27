@@ -238,8 +238,10 @@ var SOS = (function () {
     function okVal(v, target) { if (v === null || target == null || target.val == null) return null; return target.dir === 'lte' ? v <= target.val : v >= target.val; }
     function okSoll(v, s) { return s > 0 ? v >= s : null; }
     var kpis = [
-      { key: 'opt', label: 'Optimierungen', today: sT.opt, month: sM.opt, okToday: okSoll(sT.opt, soll.optToday), okMonth: okSoll(sM.opt, soll.optMonth), fmt: 'int', ziel: 'Soll bis jetzt' },
-      { key: 'marge', label: 'Marge', today: sT.marge, month: sM.marge, okToday: okSoll(sT.marge, soll.margeToday), okMonth: okSoll(sM.marge, soll.margeMonth), fmt: 'eur', ziel: 'Soll bis jetzt' }
+      { key: 'opt', label: 'Optimierungen', today: sT.opt, month: sM.opt, okToday: okSoll(sT.opt, soll.optToday), okMonth: okSoll(sM.opt, soll.optMonth), fmt: 'int',
+        sollToday: optTag > 0 && worksToday ? soll.optToday : null, sollMonth: optTag > 0 ? soll.optMonth : null, ziel: optTag > 0 ? 'Soll bis jetzt' : 'kein Ziel' },
+      { key: 'marge', label: 'Marge', today: sT.marge, month: sM.marge, okToday: okSoll(sT.marge, soll.margeToday), okMonth: okSoll(sM.marge, soll.margeMonth), fmt: 'eur',
+        sollToday: optTag > 0 && margeOpt > 0 && worksToday ? soll.margeToday : null, sollMonth: optTag > 0 && margeOpt > 0 ? soll.margeMonth : null, ziel: optTag > 0 && margeOpt > 0 ? 'Soll bis jetzt' : 'kein Ziel' }
     ];
     [['crOEM', 'CR OEM'], ['crTW', 'CR TW'], ['crSyMy', 'CR SY/MY'], ['crMY', 'CR MY']].forEach(function (p) {
       var tv = cr(sT, p[0]), mv = cr(sM, p[0]), target = tg[p[0]];

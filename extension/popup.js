@@ -44,8 +44,13 @@
     m.kpis.forEach(function (k) {
       var r = el('div', 'kgrid krow');
       r.appendChild(el('span', 'n', k.label));
-      r.appendChild(el('span', cls(k.okToday), fmt(k.today, k.fmt)));
-      r.appendChild(el('span', cls(k.okMonth), fmt(k.month, k.fmt)));
+      function valCell(v, ok, s) {
+        var w = el('span', 'vcell'); w.appendChild(el('span', cls(ok), fmt(v, k.fmt)));
+        if (s != null) w.appendChild(el('span', 'sub', 'Soll ' + fmt(s, k.fmt)));
+        return w;
+      }
+      r.appendChild(valCell(k.today, k.okToday, k.sollToday));
+      r.appendChild(valCell(k.month, k.okMonth, k.sollMonth));
       r.appendChild(el('span', 'z', k.ziel));
       box.appendChild(r);
     });
