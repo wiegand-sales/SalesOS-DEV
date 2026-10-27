@@ -213,8 +213,10 @@
     tip.textContent = 'Am nächsten dran: ' + closest.label + ' – noch ' + (closest.fmt === 'pct' ? Math.max(1, Math.ceil(gap)) + ' Prozentpunkte' : dec(gap) + ' Opt./Std.');
   }
 
+  // Das Popup rechnet selbst (immer mit dem aktuellen Code) und stoesst danach nur die Icon-Zahl im Hintergrund an
   function refresh() {
-    return new Promise(function (res) { chrome.runtime.sendMessage({ type: 'refresh' }, function (m) { render(m); res(m); }); });
+    return SOS.load().catch(function (e) { return { state: 'error', error: String(e.message || e) }; })
+      .then(function (m) { render(m); try { chrome.runtime.sendMessage({ type: 'refresh' }); } catch (e) {} return m; });
   }
 
   Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
@@ -235,7 +237,7 @@
   SOS.storageGet(['model', 'session', 'lastTab']).then(function (st) {
     setTab(st.lastTab || 'heute');
     if (!st.session) { render({ state: 'login' }); return; }
-    if (st.model && st.model.state === 'ok' && st.model.todayDetail) render(st.model);
+    if (st.model && st.model.state === 'ok' && st.model.todayDetail && st.model.crCount && st.model.dayPlan) render(st.model);
     refresh();
   });
 })();
