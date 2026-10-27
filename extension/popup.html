@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Sales OS</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div id="app" class="card">
+  <header class="head">
+    <div class="row">
+      <span class="eyebrow" id="hdrName">SALES OS</span>
+      <span class="stand" id="hdrStand"></span>
+    </div>
+    <div class="row nav" id="nav" hidden>
+      <button class="navbtn" id="prev" aria-label="Vorherige Seite">‹</button>
+      <span class="title" id="slideTitle">Deine Kennzahlen</span>
+      <button class="navbtn" id="next" aria-label="Nächste Seite">›</button>
+    </div>
+    <div class="dots" id="dots" hidden><span class="dot on"></span><span class="dot"></span></div>
+  </header>
+
+  <main class="body">
+    <div id="vLoading" class="muted center">Lade deine Zahlen …</div>
+
+    <form id="vLogin" hidden>
+      <p class="intro">Melde dich mit deinem Sales-OS-Zugang an. Du siehst danach nur deine eigenen Zahlen.</p>
+      <label for="email">E-Mail</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="pw">Passwort</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button type="submit" class="primary" id="loginBtn">Anmelden</button>
+      <p class="error" id="loginErr" hidden></p>
+    </form>
+
+    <div id="vError" hidden>
+      <p class="error" id="errText"></p>
+      <button class="secondary" id="retry">Erneut versuchen</button>
+    </div>
+
+    <div id="vData" hidden>
+      <div id="previewBar" class="preview" hidden>
+        <label for="previewSel">Testmodus · Vorschau als</label>
+        <select id="previewSel"></select>
+      </div>
+      <div id="staleBar" class="stalebar" hidden>Seit über 2 Stunden kein Daten-Sync – die Zahlen sind evtl. nicht aktuell.</div>
+
+      <section id="s1">
+        <div class="kgrid khead"><span>KENNZAHL</span><span class="r">HEUTE</span><span class="r" id="monthHead">MONAT</span><span class="r">ZIEL</span></div>
+        <div id="kRows"></div>
+        <button class="toggle" id="toggleHourly">Stundenverlauf anzeigen ▾</button>
+        <div id="hourly" hidden>
+          <span class="label">OPTIMIERUNGEN JE STUNDE · HEUTE</span>
+          <div class="bars" id="bars"></div>
+          <div class="axis"><span>8 Uhr</span><span>12</span><span>17 Uhr</span></div>
+          <p class="hint" id="hourlyHint"></p>
+        </div>
+      </section>
+
+      <section id="s2" hidden>
+        <div class="provtop">
+          <div>
+            <span class="label" id="provLabel">DEINE PROVISION</span>
+            <div class="big" id="provBig">–</div>
+          </div>
+          <span class="muted small r" id="provMeta"></span>
+        </div>
+        <div class="provbox" id="provBox"></div>
+        <span class="label">KPIS FÜR DIE PROVISION · MONAT</span>
+        <div id="provKpis"></div>
+        <div class="tip" id="provTip"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot" id="foot" hidden>
+    <span class="muted small">Nur deine eigenen Zahlen · <a href="#" id="logout">Abmelden</a></span>
+    <a href="#" id="openBoard">Im Board öffnen</a>
+  </footer>
+</div>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
