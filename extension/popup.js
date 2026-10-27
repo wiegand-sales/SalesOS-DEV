@@ -1,153 +1,181 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-  var slide = 0, hourlyOpen = false;
+  var COL = { ok: '#136c72', bad: '#c62828', ups: '#c97f1c', wka: '#7a62c9', rest: '#e3eae9', lost: '#f2a7a7' };
+  var tab = 'heute', model = null;
 
-  function eur(v) { return Math.round(v || 0).toLocaleString('de-DE') + ' €'; }
-  function fmt(v, f) {
-    if (v === null || v === undefined) return '—';
-    if (f === 'pct') return Math.round(v) + '%';
-    if (f === 'eur') return eur(v);
-    if (f === 'dec') return (Math.round(v * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return Math.round(v).toLocaleString('de-DE');
+  function n0(v) { return v == null ? '–' : Math.round(v).toLocaleString('de-DE'); }
+  function eur(v) { return v == null ? '–' : Math.round(v).toLocaleString('de-DE') + ' €'; }
+  function pct(v) { return v == null ? '–' : Math.round(v) + '%'; }
+  function dec(v) { return v == null ? '–' : (Math.round(v * 10) / 10).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function colOf(ok) { return ok === true ? COL.ok : ok === false ? COL.bad : '#142a2e'; }
+  function clear(id) { var e = $(id); e.textContent = ''; return e; }
+  function seg(parent, flex, color) { var d = el('div'); d.style.flex = flex + ' 1 0'; d.style.background = color; parent.appendChild(d); }
+  function stand(m) { var ts = m.lastSync ? new Date(m.lastSync) : new Date(m.loadedAt); return ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2); }
+
+  function showOnly(id) {
+    ['vLoading', 'vLogin', 'vError', 'pHeute', 'pKennzahlen', 'pProvision'].forEach(function (v) { $(v).hidden = v !== id; });
+    var data = id.charAt(0) === 'p';
+    $('rail').classList.toggle('locked', !data && id !== 'vError');
+    if (!data) { $('previewBar').hidden = true; $('staleBar').hidden = true; }
   }
-  function cls(ok) { return ok === true ? 'v ok' : ok === false ? 'v bad' : 'v na'; }
-  function el(tag, className, text) { var e = document.createElement(tag); if (className) e.className = className; if (text != null) e.textContent = text; return e; }
-  function show(view) {
-    ['vLoading', 'vLogin', 'vError', 'vData'].forEach(function (v) { $(v).hidden = v !== view; });
-    var data = view === 'vData';
-    $('nav').hidden = !data; $('dots').hidden = !data; $('foot').hidden = !(data || view === 'vError');
+
+  function setTab(t) {
+    tab = t;
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.classList.toggle('on', b.dataset.tab === t); });
+    if (model && model.state === 'ok') renderPage();
   }
 
   function render(m) {
-    if (!m || m.state === 'login') { show('vLogin'); $('hdrName').textContent = 'SALES OS'; $('hdrStand').textContent = SOS.config.env === 'DEV' ? 'Testsystem' : ''; return; }
-    if (m.state === 'noemp') { show('vError'); $('errText').textContent = 'Zu deinem Zugang (' + m.email + ') ist kein Mitarbeiter hinterlegt.'; return; }
-    if (m.state === 'error') { show('vError'); $('errText').textContent = m.error || 'Unbekannter Fehler'; return; }
-    show('vData');
-    var first = (m.emp.name || '').split(' ')[0];
-    $('hdrName').textContent = 'SALES OS · ' + first.toUpperCase();
-    var ts = m.lastSync ? new Date(m.lastSync) : new Date(m.loadedAt);
-    $('hdrStand').textContent = 'Stand ' + ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2) + ' Uhr';
+    model = m;
+    if (!m || m.state === 'login') { showOnly('vLogin'); $('title').textContent = 'Sales OS'; $('sub').textContent = SOS.config.env === 'DEV' ? 'Testsystem' : ''; return; }
+    if (m.state === 'noemp') { showOnly('vError'); $('title').textContent = 'Sales OS'; $('errText').textContent = 'Zu deinem Zugang (' + m.email + ') ist kein Mitarbeiter hinterlegt.'; return; }
+    if (m.state === 'error') { showOnly('vError'); $('title').textContent = 'Sales OS'; $('errText').textContent = m.error || 'Unbekannter Fehler'; return; }
     $('staleBar').hidden = !m.stale;
-    var monat = MONATE[+m.monthKey.slice(5, 7) - 1];
-    $('monthHead').textContent = monat.toUpperCase();
-
-    // Testmodus fuer Admins ohne eigenen Mitarbeiter-Datensatz
     $('previewBar').hidden = !m.preview;
     if (m.preview && m.choices) {
-      var sel = $('previewSel'); sel.textContent = '';
+      var sel = clear('previewSel');
       m.choices.forEach(function (c) { var o = el('option', null, c.name); o.value = c.id; if (c.id === m.emp.id) o.selected = true; sel.appendChild(o); });
     }
+    renderPage();
+  }
 
-    // Seite 1: Kennzahlen heute / Monat
-    var box = $('kRows'); box.textContent = '';
-    m.kpis.forEach(function (k) {
-      var r = el('div', 'kgrid krow');
-      r.appendChild(el('span', 'n', k.label));
-      function valCell(v, ok, s) {
-        var w = el('span', 'vcell'); w.appendChild(el('span', cls(ok), fmt(v, k.fmt)));
-        if (s != null) w.appendChild(el('span', 'sub', 'Soll ' + fmt(s, k.fmt)));
-        return w;
-      }
-      r.appendChild(valCell(k.today, k.okToday, k.sollToday));
-      r.appendChild(valCell(k.month, k.okMonth, k.sollMonth));
-      r.appendChild(el('span', 'z', k.ziel));
-      box.appendChild(r);
+  function renderPage() {
+    var m = model, first = (m.emp.name || '').split(' ')[0], monat = MONATE[+m.monthKey.slice(5, 7) - 1];
+    if (tab === 'heute') { showOnly('pHeute'); $('title').textContent = 'Hallo ' + first; $('sub').textContent = 'heute · ' + stand(m); renderHeute(m); }
+    if (tab === 'kennzahlen') { showOnly('pKennzahlen'); $('title').textContent = 'Kennzahlen'; $('sub').textContent = stand(m); renderKennzahlen(m, monat); }
+    if (tab === 'provision') { showOnly('pProvision'); $('title').textContent = 'Provision'; $('sub').textContent = monat + ' · ' + stand(m); renderProvision(m); }
+    $('staleBar').hidden = !m.stale; $('previewBar').hidden = !m.preview;
+  }
+
+  // ── Heute ──
+  function renderHeute(m) {
+    var d = m.todayDetail;
+    $('hOpt').textContent = n0(d.opt);
+    var soll = $('hSoll');
+    if (d.soll != null) {
+      var diff = Math.ceil(d.soll - d.opt);
+      soll.textContent = 'Soll ' + n0(d.soll) + (diff > 0 ? ' · noch ' + diff : ' · im Plan');
+      soll.style.color = diff > 0 ? COL.bad : COL.ok;
+    } else { soll.textContent = 'kein Tagesziel'; soll.style.color = '#56676a'; }
+    $('hMarge').textContent = eur(d.marge);
+    var sp = clear('hSplit'), total = Math.max(d.opt, d.soll || 0, 1);
+    if (d.oem.n) seg(sp, d.oem.n, COL.ok);
+    if (d.ups.n) seg(sp, d.ups.n, COL.ups);
+    if (d.wka.n) seg(sp, d.wka.n, COL.wka);
+    if (total - d.opt > 0) seg(sp, total - d.opt, COL.rest);
+    $('hAvg').textContent = d.avgMarge != null ? 'Ø ' + eur(d.avgMarge) + ' / Opt.' : '';
+    var cats = clear('hCats');
+    [['OEM', COL.ok, d.oem, d.oem.cr != null ? 'CR ' + pct(d.oem.cr) : ''],
+     ['Upsells', COL.ups, d.ups, d.ups.ne + ' nicht erfolgr.'],
+     ['WKA', COL.wka, d.wka, d.wka.ne + ' nicht erfolgr.']].forEach(function (c) {
+      var r = el('div', 'cat'), dot = el('span', 'dot'); dot.style.background = c[1]; r.appendChild(dot);
+      var mid = el('div', 'col'); mid.appendChild(el('span', 'n', c[0]));
+      mid.appendChild(el('span', 'xs muted', (c[2].avg != null ? 'Ø ' + eur(c[2].avg) : 'Ø –') + (c[3] ? ' · ' + c[3] : '')));
+      r.appendChild(mid); r.appendChild(el('span', 'v', n0(c[2].n))); r.appendChild(el('span', 'm', eur(c[2].marge)));
+      cats.appendChild(r);
     });
+    var st = clear('hStufen'), s = d.stufen, twBad = m.targets && m.targets.crTW && d.oem.n > 0 && (s.tw / Math.max(1, s.tw + s.yes + s.sy + s.my) * 100) > m.targets.crTW.val;
+    [['TW', s.tw, twBad], ['Yes', s.yes], ['SY', s.sy], ['MY', s.my]].forEach(function (c) {
+      var ch = el('div', 'chip' + (c[2] ? ' bad' : '')); ch.appendChild(el('b', null, n0(c[1]))); ch.appendChild(el('span', null, c[0])); st.appendChild(ch);
+    });
+    var ak = clear('hAkt');
+    [['Aktivitäten', n0(d.akt)], ['Opt./Std.', dec(d.optPerH)], ['n. erreicht', n0(d.notR)], ['n. erfolgr.', n0(d.notErf)]].forEach(function (c) {
+      var x = el('div'); x.appendChild(el('b', null, c[1])); x.appendChild(el('span', null, c[0])); ak.appendChild(x);
+    });
+  }
 
-    // Seite 2: Provision
+  // ── Kennzahlen ──
+  function renderKennzahlen(m, monat) {
+    var big = clear('kCount');
+    big.appendChild(document.createTextNode(String(m.crCount.today)));
+    big.appendChild(el('small', null, '/' + (m.crCount.todayKnown || 4)));
+    $('kMonth').textContent = monat + ': ' + m.crCount.month + ' von ' + (m.crCount.monthKnown || 4);
+    var list = clear('kCr');
+    m.kpis.filter(function (k) { return k.fmt === 'pct'; }).forEach(function (k) {
+      var t = m.targets[k.key] || {}, c = colOf(k.okToday);
+      var row = el('div', 'cr'), top = el('div', 'crTop');
+      top.appendChild(el('span', 'n', k.label));
+      var z = el('span', 'z', 'Ziel ' + k.ziel + ' · ' + monat.slice(0, 3) + '. ');
+      var mb = el('b', null, pct(k.month)); mb.style.color = colOf(k.okMonth); z.appendChild(mb);
+      top.appendChild(z); row.appendChild(top);
+      var bar = el('div', 'crBar'), tr = el('div', 'track'), f = el('div', 'fill');
+      f.style.width = Math.max(0, Math.min(100, k.today || 0)) + '%'; f.style.background = c; tr.appendChild(f);
+      if (t.val != null) { var tk = el('div', 'tick'); tk.style.left = Math.min(99, t.val) + '%'; tr.appendChild(tk); }
+      bar.appendChild(tr); var v = el('span', 'crVal', pct(k.today)); v.style.color = c; bar.appendChild(v);
+      row.appendChild(bar); list.appendChild(row);
+    });
+    var vol = clear('kVol');
+    m.kpis.filter(function (k) { return k.fmt !== 'pct'; }).forEach(function (k) {
+      var f = k.fmt === 'eur' ? eur : n0, r = el('div', 'vol');
+      r.appendChild(el('span', 'n', k.key === 'opt' ? 'Opt.' : 'Marge'));
+      [[k.today, k.okToday, k.sollToday, 'heute'], [k.month, k.okMonth, k.sollMonth, monat.slice(0, 3) + '.']].forEach(function (x) {
+        var c = el('div'), b = el('b', null, f(x[0])); b.style.color = colOf(x[1]); c.appendChild(b);
+        c.appendChild(el('span', null, x[3] + (x[2] != null ? ' · Soll ' + f(x[2]) : ' · kein Ziel'))); r.appendChild(c);
+      });
+      vol.appendChild(r);
+    });
+  }
+
+  // ── Provision ──
+  function renderProvision(m) {
     var p = m.prov;
-    $('provLabel').textContent = 'DEINE PROVISION · ' + monat.toUpperCase();
-    $('provBig').textContent = eur(p.provision);
-    $('provMeta').textContent = 'Stand heute, vorläufig · Beschäftigungsmonat ' + (p.bm >= 3 ? '3+' : p.bm);
-    var pb = $('provBox'); pb.textContent = '';
-    function line(a, b, extra) { var d = el('div', 'pl' + (extra ? ' ' + extra : '')); d.appendChild(el('span', null, a)); d.appendChild(el('b', null, b)); pb.appendChild(d); }
-    line('Basisprovision (' + p.qualOpt + ' Opt. × ' + p.basisProOpt.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €)', eur(p.basis));
+    $('pBig').textContent = eur(p.provision);
+    $('pMax').textContent = 'von ' + eur(p.regulaer) + ' möglich';
+    $('pAbzug').textContent = p.abzug > 0.5 ? '−' + eur(p.abzug) + ' Abzug' : 'kein Abzug';
+    $('pAbzug').className = 'xs b ' + (p.abzug > 0.5 ? 'red' : 'ok');
+    var bar = clear('pBar');
+    if (p.regulaer > 0) { seg(bar, Math.max(p.provision, 0.01), COL.ok); if (p.abzug > 0.5) seg(bar, p.abzug, COL.lost); } else seg(bar, 1, COL.rest);
+    var erreicht = p.checks.filter(function (c) { return c.ok; }).length;
+    $('pMeta').textContent = 'vorläufig · Stand heute · ' + erreicht + ' von ' + p.checks.length + ' KPIs erreicht';
+    var calc = clear('pCalc');
+    function line(a, b, cls) { var d = el('div', 'pl' + (cls ? ' ' + cls : '')); d.appendChild(el('span', null, a)); var v = el('b', null, b); if (cls === 'neg') v.style.color = COL.bad; d.appendChild(v); calc.appendChild(d); }
+    line('Basisprovision (' + n0(p.qualOpt) + ' × ' + p.basisProOpt.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €)', eur(p.basis));
     line('Umsatzprovision', eur(p.umsatz));
     line('Reguläre Provision', eur(p.regulaer), 'sum');
-    var abzText = p.mindestleistungGreift ? 'Abzug: Mindestleistung Opt./Std. nicht erreicht' : (p.verfehlt ? 'Abzug: ' + p.verfehlt + (p.verfehlt === 1 ? ' KPI' : ' KPIs') + ' verfehlt (je −20 %)' : 'Abzug: alle KPIs erreicht');
-    line(abzText, (p.abzug > 0.5 ? '−' : '') + eur(p.abzug), p.abzug > 0.5 ? 'red' : '');
-    line('Provision', eur(p.provision), 'sum');
-    var pk = $('provKpis'); pk.textContent = '';
-    p.checks.forEach(function (c) {
-      var r = el('div', 'pgrid');
-      var ic = el('span', 'ico ' + (c.ok ? 'ok' : 'bad'), c.ok ? '✓' : '✕'); ic.setAttribute('aria-label', c.ok ? 'erreicht' : 'unter Ziel');
-      r.appendChild(ic); r.appendChild(el('span', null, c.label));
-      r.appendChild(el('span', cls(c.ok), fmt(c.ist, c.fmt)));
-      r.appendChild(el('span', 'z', (c.dir === 'lte' ? '≤ ' : '≥ ') + fmt(c.ziel, c.fmt)));
-      pk.appendChild(r);
+    if (p.mindestleistungGreift) line('Abzug (Mindestleistung)', '−' + eur(p.abzug), 'neg');
+    else line('Abzug (' + p.verfehlt + ' × 20 %)', p.abzug > 0.5 ? '−' + eur(p.abzug) : '0 €', p.abzug > 0.5 ? 'neg' : '');
+    var miss = p.checks.filter(function (c) { return !c.ok; }), box = clear('pMiss'), tip = $('pTip');
+    $('pMissHead').textContent = miss.length ? 'NICHT ERREICHT' : 'KPIS';
+    if (!miss.length) { box.appendChild(el('div', 'allok', 'Alle ' + p.checks.length + ' KPIs erreicht – volle Provision.')); tip.textContent = ''; return; }
+    miss.forEach(function (c) {
+      var r = el('div', 'miss');
+      r.appendChild(el('span', 'n', c.label));
+      r.appendChild(el('span', 'v', c.fmt === 'pct' ? pct(c.ist) : dec(c.ist)));
+      r.appendChild(el('span', 'z', (c.dir === 'lte' ? '≤ ' : '≥ ') + (c.fmt === 'pct' ? Math.round(c.ziel) + ' %' : dec(c.ziel))));
+      r.appendChild(el('span', 'w', '+' + eur(p.wertProKpi)));
+      box.appendChild(r);
     });
-    var tip = $('provTip'); tip.textContent = '';
-    var missed = p.checks.filter(function (c) { return !c.ok; });
-    if (p.mindestleistungGreift) {
-      tip.appendChild(el('b', null, 'Mindestleistung: '));
-      tip.appendChild(document.createTextNode('Ab ' + fmt(p.mindestleistung, 'dec') + ' Opt./Std. im Monat gilt wieder die volle Berechnung.'));
-    } else if (missed.length) {
-      var closest = missed.slice().sort(function (a, b) { return Math.abs(a.ziel - a.ist) / (a.ziel || 1) - Math.abs(b.ziel - b.ist) / (b.ziel || 1); })[0];
-      var gap = Math.abs(closest.ziel - closest.ist);
-      tip.appendChild(el('b', null, 'Jede erreichte KPI bringt dir +' + eur(p.wertProKpi) + '. '));
-      tip.appendChild(document.createTextNode('Am nächsten dran: ' + closest.label + ' (noch ' + (closest.fmt === 'pct' ? Math.ceil(gap) + ' Prozentpunkte' : fmt(gap, 'dec')) + ').'));
-    } else {
-      tip.appendChild(el('b', null, 'Alle KPIs erreicht – '));
-      tip.appendChild(document.createTextNode('volle Provision, weiter so!'));
-    }
-    setSlide(slide);
-    renderHourly();
-  }
-
-  function renderHourly() {
-    SOS.storageGet(['snapshots']).then(function (st) {
-      var res = SOS.hourlyBars(st.snapshots, 8, 17);
-      var bars = $('bars'); bars.textContent = '';
-      var max = Math.max.apply(null, res.bars.map(function (b) { return b.val; }).concat([1]));
-      var nowH = new Date().getHours();
-      res.bars.forEach(function (b) {
-        var d = el('div', 'bar' + (!b.known ? ' unknown' : b.h === nowH ? ' now' : ''));
-        d.style.height = b.known ? Math.max(6, Math.round(b.val / max * 100)) + '%' : '6%';
-        d.title = b.h + ' Uhr: ' + (b.known ? b.val + ' Opt.' : 'kein Wert');
-        bars.appendChild(d);
-      });
-      $('hourlyHint').textContent = res.has ? 'Erfasst, solange Chrome geöffnet ist.' : 'Der Verlauf füllt sich im Laufe des Tages, solange Chrome geöffnet ist.';
-    });
-  }
-
-  function setSlide(i) {
-    slide = (i + 2) % 2;
-    $('s1').hidden = slide !== 0; $('s2').hidden = slide !== 1;
-    $('slideTitle').textContent = slide === 0 ? 'Deine Kennzahlen' : 'Deine Provision';
-    var dots = $('dots').children; dots[0].className = 'dot' + (slide === 0 ? ' on' : ''); dots[1].className = 'dot' + (slide === 1 ? ' on' : '');
+    if (p.mindestleistungGreift) { tip.textContent = 'Mindestleistung: ab ' + dec(p.mindestleistung) + ' Opt./Std. im Monat gilt wieder die volle Berechnung.'; return; }
+    var closest = miss.slice().sort(function (a, b) { return Math.abs(a.ziel - a.ist) / (a.ziel || 1) - Math.abs(b.ziel - b.ist) / (b.ziel || 1); })[0];
+    var gap = Math.abs(closest.ziel - closest.ist);
+    tip.textContent = 'Am nächsten dran: ' + closest.label + ' – noch ' + (closest.fmt === 'pct' ? Math.max(1, Math.ceil(gap)) + ' Prozentpunkte' : dec(gap) + ' Opt./Std.');
   }
 
   function refresh() {
     return new Promise(function (res) { chrome.runtime.sendMessage({ type: 'refresh' }, function (m) { render(m); res(m); }); });
   }
 
-  $('prev').addEventListener('click', function () { setSlide(slide - 1); });
-  $('next').addEventListener('click', function () { setSlide(slide + 1); });
-  document.addEventListener('keydown', function (e) { if (!$('vData').hidden) { if (e.key === 'ArrowLeft') setSlide(slide - 1); if (e.key === 'ArrowRight') setSlide(slide + 1); } });
-  $('toggleHourly').addEventListener('click', function () {
-    hourlyOpen = !hourlyOpen; $('hourly').hidden = !hourlyOpen;
-    $('toggleHourly').textContent = hourlyOpen ? 'Stundenverlauf ausblenden ▴' : 'Stundenverlauf anzeigen ▾';
-    SOS.storageSet({ hourlyOpen: hourlyOpen });
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
+    b.addEventListener('click', function () { setTab(b.dataset.tab); SOS.storageSet({ lastTab: b.dataset.tab }); });
   });
   $('vLogin').addEventListener('submit', function (e) {
     e.preventDefault();
     $('loginBtn').disabled = true; $('loginErr').hidden = true;
-    SOS.login($('email').value.trim(), $('pw').value).then(function () { show('vLoading'); return refresh(); })
+    SOS.login($('email').value.trim(), $('pw').value).then(function () { showOnly('vLoading'); return refresh(); })
       .catch(function (err) { $('loginErr').textContent = err.message === 'Invalid login credentials' ? 'E-Mail oder Passwort falsch.' : err.message; $('loginErr').hidden = false; })
       .finally(function () { $('loginBtn').disabled = false; });
   });
-  $('retry').addEventListener('click', function () { show('vLoading'); refresh(); });
+  $('retry').addEventListener('click', function () { showOnly('vLoading'); refresh(); });
   $('logout').addEventListener('click', function (e) { e.preventDefault(); SOS.logout().then(refresh); });
-  $('openBoard').addEventListener('click', function (e) { e.preventDefault(); chrome.tabs.create({ url: SOS.config.boardUrl }); });
-  $('previewSel').addEventListener('change', function () { show('vLoading'); SOS.storageSet({ previewEmpId: this.value }).then(refresh); });
+  $('previewSel').addEventListener('change', function () { showOnly('vLoading'); SOS.storageSet({ previewEmpId: this.value }).then(refresh); });
 
   // Sofort den letzten Stand zeigen, dann im Hintergrund aktualisieren
-  SOS.storageGet(['model', 'session', 'hourlyOpen']).then(function (st) {
-    hourlyOpen = !!st.hourlyOpen; $('hourly').hidden = !hourlyOpen;
-    $('toggleHourly').textContent = hourlyOpen ? 'Stundenverlauf ausblenden ▴' : 'Stundenverlauf anzeigen ▾';
+  SOS.storageGet(['model', 'session', 'lastTab']).then(function (st) {
+    setTab(st.lastTab || 'heute');
     if (!st.session) { render({ state: 'login' }); return; }
-    if (st.model && st.model.state === 'ok') render(st.model);
+    if (st.model && st.model.state === 'ok' && st.model.todayDetail) render(st.model);
     refresh();
   });
 })();

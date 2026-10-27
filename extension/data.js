@@ -77,12 +77,17 @@ var SOS = (function () {
   function kpiSetFor(pv, bm) { return bm === 1 ? pv.monat1 : bm === 2 ? pv.monat2 : pv.monat3plus; }
 
   function sumRows(rows) {
-    var s = { oem: 0, notS: 0, tw: 0, yes: 0, sy: 0, my: 0, ups: 0, wka: 0, marge: 0, margeOEM: 0, margeUps: 0, margeWKA: 0, optGesamtRaw: 0, dates: [] };
+    var s = { oem: 0, notS: 0, tw: 0, yes: 0, sy: 0, my: 0, ups: 0, wka: 0, marge: 0, margeOEM: 0, margeUps: 0, margeWKA: 0, optGesamtRaw: 0, dates: [], akt: 0, notR: 0, notErf: 0, upsNE: 0, wkaNE: 0 };
     rows.forEach(function (r) {
       s.oem += r.oem_gesamt || 0; s.notS += r.oem_nicht_erfolgreich || 0; s.tw += r.oem_tw || 0; s.yes += r.oem_yes || 0;
       s.sy += r.oem_sy || 0; s.my += r.oem_my || 0; s.ups += r.ups_yes || 0; s.wka += r.wka_gesamt_yes || 0;
       s.marge += r.gesamt_margenerhoehung || 0; s.margeOEM += r.oem_margenerhoehung || 0; s.margeUps += r.ups_margenerhoehung || 0; s.margeWKA += r.wka_margenerhoehung || 0;
       s.optGesamtRaw += r.gesamt_optimierungen || 0; s.dates.push(r.date);
+      s.akt += (r.gesamt_aktivitaeten != null ? r.gesamt_aktivitaeten : r.oem_aktivitaeten) || 0;
+      s.notR += (r.gesamt_nicht_erreicht != null ? r.gesamt_nicht_erreicht : r.oem_nicht_erreicht) || 0;
+      s.notErf += (r.gesamt_nicht_erfolgreich != null ? r.gesamt_nicht_erfolgreich : r.oem_nicht_erfolgreich) || 0;
+      s.upsNE += r.ups_nicht_erfolgreich || 0;
+      s.wkaNE += (r.wka_oem_nicht_erfolgreich || 0) + (r.wka_ups_nicht_erfolgreich || 0);
     });
     s.opt = s.oem + s.ups + s.wka;
     s.optGes = s.optGesamtRaw || s.opt;
@@ -249,9 +254,25 @@ var SOS = (function () {
         ziel: target && target.val != null ? (target.dir === 'lte' ? '≤ ' : '≥ ') + Math.round(target.val) + '%' : '—' });
     });
     var prov = calcProvision(emp, mk, sM);
+    var elapsedH = worksToday || sT.dates.length ? elapsedWorkHoursTodayFor(emp, lastSync) : 0;
+    function avg(m, n) { return n > 0 ? m / n : null; }
+    var todayDetail = {
+      opt: sT.opt, marge: sT.marge, avgMarge: avg(sT.marge, sT.opt),
+      oem: { n: sT.oem, marge: sT.margeOEM, avg: avg(sT.margeOEM, sT.oem), cr: cr(sT, 'crOEM') },
+      ups: { n: sT.ups, marge: sT.margeUps, avg: avg(sT.margeUps, sT.ups), ne: sT.upsNE },
+      wka: { n: sT.wka, marge: sT.margeWKA, avg: avg(sT.margeWKA, sT.wka), ne: sT.wkaNE },
+      stufen: { tw: sT.tw, yes: sT.yes, sy: sT.sy, my: sT.my },
+      akt: sT.akt, optPerH: elapsedH > 0 ? sT.optGes / elapsedH : null, notR: sT.notR, notErf: sT.notErf,
+      soll: optTag > 0 && worksToday ? soll.optToday : null
+    };
+    var crK = kpis.filter(function (k) { return k.fmt === 'pct'; });
+    var crCount = {
+      today: crK.filter(function (k) { return k.okToday === true; }).length, todayKnown: crK.filter(function (k) { return k.okToday !== null; }).length,
+      month: crK.filter(function (k) { return k.okMonth === true; }).length, monthKnown: crK.filter(function (k) { return k.okMonth !== null; }).length
+    };
     var paceRatio = soll.optToday > 0 ? sT.opt / soll.optToday : null;
     var stale = !lastSync || (Date.now() - new Date(lastSync).getTime() > 2 * 3600 * 1000);
-    return { emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
+    return { emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
   }
 
   // Stundenverlauf: Die Datenbank kennt nur Tagessummen. Die Erweiterung merkt sich deshalb bei jedem
