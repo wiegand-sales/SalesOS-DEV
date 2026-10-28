@@ -14,7 +14,7 @@ async function refresh() {
   var model;
   try { model = await SOS.load(); }
   catch (e) { model = { state: 'error', error: String(e.message || e) }; }
-  try { if (model && model.state === 'ok') await checkHints(model); } catch (e) { console.warn('Hinweise:', e); }
+  try { if (model && model.state === 'ok' && model.forecast && model.crMy) await checkHints(model); } catch (e) { console.warn('Hinweise:', e); }
   var b = badgeFor(model);
   await chrome.action.setBadgeText({ text: b.text });
   await chrome.action.setBadgeBackgroundColor({ color: b.color });

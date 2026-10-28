@@ -210,6 +210,9 @@
       $('retry').onclick = function () { refresh(); };
       return;
     }
+    // Daten aus einer aelteren Version (z. B. direkt nach einem Update): neu laden statt abstuerzen
+    if (!m.forecast || !m.crMy || !m.prov || !m.todayDetail) { $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>'; if (!render._retry) { render._retry = true; refresh(); } return; }
+    render._retry = false;
     renderTabs(); renderSub(m);
     var v = VIEWS[tab];
     $('title').textContent = tab === 'heute' ? 'Hallo ' + (m.emp.name || '').split(' ')[0] : v[0];
