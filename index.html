@@ -1332,6 +1332,40 @@ function resolveCurrentCoach(){
     }
   }).catch(function(){currentCoach=null;currentAuthUser=null;currentUserRole=null;});
 }
+// ── Zugaenge fuer die Sales-OS-Erweiterung (ueber die Edge Function "agent-login") ──
+function genAgentPassword(){
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  var a=new Uint32Array(12); crypto.getRandomValues(a);
+  var s=''; for(var i=0;i<12;i++) s+=chars[a[i]%chars.length];
+  return s.slice(0,4)+'-'+s.slice(4,8)+'-'+s.slice(8,12);
+}
+function agentLogin(action,empId){
+  var emp=employees.find(function(e){return e.id===empId;}); if(!emp) return;
+  var pwEl=document.getElementById('al-pw'), msg=document.getElementById('al-msg');
+  var pw=pwEl?pwEl.value.trim():'';
+  if((action==='create'||action==='reset')&&pw.length<10){ msg.innerHTML='<span style="color:var(--red)">Bitte ein Passwort mit mindestens 10 Zeichen eingeben oder mit dem Zauberstab erzeugen.</span>'; return; }
+  if(action==='remove'&&!confirm('Zugang von '+emp.name+' zur Erweiterung wirklich entfernen? Der Login wird gelöscht.')) return;
+  msg.innerHTML='<span style="color:var(--text3)">Wird ausgeführt …</span>';
+  sb.functions.invoke('agent-login',{body:{action:action,employee_id:empId,password:pw}}).then(function(res){
+    var err=res.error, data=res.data||{};
+    if(err||data.error){
+      var t=data.error||'';
+      if(!t&&err&&err.context&&typeof err.context.json==='function'){ return err.context.json().then(function(j){ msg.innerHTML='<span style="color:var(--red)">'+esc(j.error||err.message)+'</span>'; }).catch(function(){ msg.innerHTML='<span style="color:var(--red)">'+esc(err.message)+'</span>'; }); }
+      msg.innerHTML='<span style="color:var(--red)">'+esc(t||(err&&err.message)||'Fehler')+'</span>'; return;
+    }
+    if(action==='create'){ emp.auth_user_id=data.auth_user_id; logActivity('employee','agent_login_created','Erweiterungs-Zugang angelegt',emp.id,emp.name); }
+    if(action==='remove'){ emp.auth_user_id=null; logActivity('employee','agent_login_removed','Erweiterungs-Zugang entfernt',emp.id,emp.name); }
+    if(action==='reset'){ logActivity('employee','agent_login_reset','Erweiterungs-Passwort neu gesetzt',emp.id,emp.name); }
+    renderMain();
+    setTimeout(function(){
+      var m2=document.getElementById('al-msg'); if(!m2) return;
+      if(action==='remove'){ m2.innerHTML='<span style="color:var(--purple)">Zugang entfernt.</span>'; return; }
+      m2.innerHTML='<div style="background:rgba(32,106,114,0.08);border-radius:10px;padding:10px 12px"><b>'+(action==='create'?'Zugang angelegt.':'Passwort neu gesetzt.')+'</b> Bitte jetzt notieren und dem Mitarbeiter persönlich geben – es wird nicht gespeichert:<br>'
+        +'E-Mail: <b>'+esc(emp.email||'')+'</b> · Passwort: <b style="font-family:monospace">'+esc(pw)+'</b></div>';
+    },50);
+  }).catch(function(e){ msg.innerHTML='<span style="color:var(--red)">Server nicht erreichbar: '+esc(e.message||String(e))+'. Ist die Funktion „agent-login“ in Supabase eingerichtet?</span>'; });
+}
+
 // Agents haben keinen Board-Zugang: Hinweis auf die Chrome-Erweiterung statt leerer Seiten
 function showAgentLock(){
   var name=(currentCoach&&currentCoach.name)?currentCoach.name.split(' ')[0]:'';
@@ -7589,6 +7623,25 @@ function renderTab(){
     var ROLLEN=['Vertriebsmitarbeiter','Senior Vertriebsmitarbeiter','Sales Coach'];
 
     if(true){
+
+      // ── Zugang zur Sales-OS-Erweiterung (nur Admins, nur fuer Agents) ──
+      if(currentUserRole==='admin' && !(emp.isPureCoach||emp.role==='SC'||emp.role==='SDM')){
+        var hasLogin=!!emp.auth_user_id;
+        html+='<div class="card" id="agentLoginCard"><div class="card-title"><i class="ti ti-puzzle"></i> Zugang zur Sales-OS-Erweiterung</div>';
+        html+='<p style="font-size:12px;color:var(--text2);margin:0 0 12px;line-height:1.5">'+(hasLogin
+          ?'<span class="badge" style="background:rgba(32,106,114,0.10);color:var(--purple);padding:3px 9px;border-radius:20px;font-weight:600">Zugang aktiv</span> &nbsp;Anmeldung mit <b>'+esc(emp.email||'')+'</b>. Der Mitarbeiter sieht in der Erweiterung nur seine eigenen Zahlen und kommt nicht ins Board.'
+          :(emp.email?'Noch kein Zugang. Der Login wird mit <b>'+esc(emp.email)+'</b> angelegt.':'<b style="color:var(--red)">Bitte zuerst unten eine E-Mail-Adresse hinterlegen und speichern.</b>'))+'</p>';
+        if(emp.email||hasLogin){
+          html+='<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">'
+            +'<div style="flex:1;min-width:200px"><label>'+(hasLogin?'Neues Passwort':'Startpasswort')+'</label><div style="display:flex;gap:6px"><input type="text" id="al-pw" placeholder="mind. 10 Zeichen" autocomplete="off" style="font-family:monospace"><button class="btn btn-sm" type="button" onclick="document.getElementById(\'al-pw\').value=genAgentPassword()" title="Sicheres Passwort erzeugen"><i class="ti ti-wand"></i></button></div></div>'
+            +(hasLogin
+              ?'<button class="btn btn-primary btn-sm" style="width:auto" onclick="agentLogin(\'reset\',\''+emp.id+'\')"><i class="ti ti-key"></i> Passwort neu setzen</button>'
+               +'<button class="btn btn-sm" style="width:auto;color:var(--red)" onclick="agentLogin(\'remove\',\''+emp.id+'\')"><i class="ti ti-user-x"></i> Zugang entfernen</button>'
+              :'<button class="btn btn-primary btn-sm" style="width:auto" onclick="agentLogin(\'create\',\''+emp.id+'\')"><i class="ti ti-user-plus"></i> Zugang anlegen</button>')
+            +'</div><div id="al-msg" style="font-size:12px;margin-top:10px;line-height:1.5"></div>';
+        }
+        html+='</div>';
+      }
 
       // ── Provisionsvereinbarung (jetzt inkl. Stammdaten, mitarbeiterspezifisch) ──
       (function(){
