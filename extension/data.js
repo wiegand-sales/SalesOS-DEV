@@ -205,17 +205,20 @@ var SOS = (function () {
     }
     var t = today(), mk = t.slice(0, 7);
     var res = await Promise.all([
-      rest('performance?select=*&employee_id=eq.' + emp.id + '&date=gte.' + mk + '-01&date=lte.' + t, session),
+      rest('performance?select=*&employee_id=eq.' + emp.id + '&date=lte.' + t + '&order=date.asc', session),
       rest('zielvereinbarung?select=*&employee_id=eq.' + emp.id + '&month=eq.' + mk, session).catch(function () { return []; }),
       rest('kpi_targets?select=*', session).catch(function () { return []; }),
       rest('employee_kpi_targets?select=*&employee_id=eq.' + emp.id, session).catch(function () { return []; }),
       rest('settings?select=key,value&key=eq.ftpLastSync', session).catch(function () { return []; })
     ]);
+    var coaching = await loadCoaching(emp, preview, session);
+    var bestHour = (await storageGet(['bestHour'])).bestHour || null;
     var globals = {}; res[2].forEach(function (r) { globals[r.metric_key] = { val: r.val, dir: r.dir }; });
     var ownT = {}; res[3].forEach(function (r) { ownT[r.metric_key] = r.val; if (r.dir) ownT[r.metric_key + 'Dir'] = r.dir; });
     var ziel = res[1][0] || null;
     var lastSync = res[4][0] ? res[4][0].value : null;
     var model = compute(emp, res[0], ziel, globals, ownT, lastSync);
+    model.coaching = coaching; model.timeline = buildTimeline(emp, res[0], bestHour); model.coachingImpact = coachingImpact(res[0], coaching);
     model.preview = preview; model.choices = choices; model.email = session.user.email;
     model.state = 'ok'; model.loadedAt = new Date().toISOString();
     await storageSet({ model: model });
@@ -226,7 +229,7 @@ var SOS = (function () {
   function compute(emp, rows, ziel, globals, ownT, lastSync) {
     var t = today(), mk = t.slice(0, 7);
     var sT = sumRows(rows.filter(function (r) { return r.date === t; }));
-    var sM = sumRows(rows);
+    var sM = sumRows(rows.filter(function (r) { return (r.date || '').slice(0, 7) === mk; }));
     var optTag = ziel && ziel.opt_per_tag != null ? +ziel.opt_per_tag : 0;
     var margeOpt = ziel && ziel.marge_per_opt != null ? +ziel.marge_per_opt : 0;
     var days = workDaysOfMonth(mk, ziel && ziel.arbeitstage);
@@ -274,7 +277,16 @@ var SOS = (function () {
     };
     var paceRatio = soll.optToday > 0 ? sT.opt / soll.optToday : null;
     var stale = !lastSync || (Date.now() - new Date(lastSync).getTime() > 2 * 3600 * 1000);
-    return { emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, dayPlan: dayPlan, margeToday: sT.marge, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
+    // Prognose bis Feierabend (Tempo seit Arbeitsbeginn hochgerechnet)
+    var plannedH = planned, elapsedNow = worksToday || sT.dates.length ? elapsedWorkHoursTodayFor(emp, lastSync) : 0;
+    var factor = plannedH > 0 && elapsedNow > 0 && elapsedNow < plannedH ? plannedH / elapsedNow : 1;
+    // Erst ab 1 Stunde Arbeitszeit ist eine Hochrechnung aussagekraeftig
+    var fcOk = elapsedNow >= 1;
+    var forecast = { opt: fcOk ? sT.opt * factor : null, marge: fcOk ? sT.marge * factor : null, perHour: fcOk ? sT.opt / elapsedNow : null, goal: optTag > 0 ? optTag : null };
+    // Werte der 6 Provisions-KPIs heute (gleiche Definition wie im Monat)
+    var kpiToday = { 'Opt./Std.': fcOk ? sT.optGes / elapsedNow : null, 'CR OEM': cr(sT, 'crOEM'), 'TW-Anteil': cr(sT, 'crTW'), 'SY-Anteil': cr(sT, 'crSY'), 'MY-Anteil': cr(sT, 'crMY'), 'OEM-Anteil': sT.optGes > 0 ? sT.oem / sT.optGes * 100 : null };
+    var crMy = { today: cr(sT, 'crMY'), month: cr(sM, 'crMY'), my: sT.my, closers: sT.yes + sT.sy + sT.my };
+    return { forecast: forecast, kpiToday: kpiToday, crMy: crMy, emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, dayPlan: dayPlan, margeToday: sT.marge, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
   }
 
   // Stundenverlauf: Die Datenbank kennt nur Tagessummen. Die Erweiterung merkt sich deshalb bei jedem
@@ -282,7 +294,11 @@ var SOS = (function () {
   async function recordSnapshot(model) {
     var st = await storageGet(['snapshots']); var s = st.snapshots;
     if (!s || s.date !== model.today || s.empId !== model.emp.id) s = { date: model.today, empId: model.emp.id, byHour: {} };
-    var h = new Date().getHours(); s.byHour[h] = { opt: model.optToday, marge: model.margeToday || 0 };
+    var h = new Date().getHours(); s.byHour[h] = { opt: model.optToday, marge: model.margeToday || 0, akt: model.todayDetail ? model.todayDetail.akt : 0 };
+    // Beste Stunde ueber alle Tage lokal merken (Rekord 'Opt. in einer Stunde')
+    var hrs = hourly(s, 0, 23), bestToday = 0; hrs.forEach(function (x) { if (x.known && x.opt > bestToday) bestToday = x.opt; });
+    var bh = (await storageGet(['bestHour'])).bestHour || { val: 0, date: null };
+    if (bestToday > bh.val) await storageSet({ bestHour: { val: bestToday, date: model.today } });
     await storageSet({ snapshots: s });
   }
   // Stundenwerte aus den Snapshots: Zuwachs zwischen zwei bekannten Stunden. Die erste Aufzeichnung des Tages
@@ -293,14 +309,68 @@ var SOS = (function () {
       var raw = by[h], v = raw == null ? null : (typeof raw === 'number' ? { opt: raw, marge: null } : raw);
       if (v === null) { out.push({ h: h, known: false, cumOpt: prev ? prev.opt : null }); continue; }
       if (prev === null) {
-        if (h <= fromH) out.push({ h: h, known: true, opt: v.opt, marge: v.marge, cumOpt: v.opt });
+        if (h <= fromH) out.push({ h: h, known: true, opt: v.opt, marge: v.marge, akt: v.akt != null ? v.akt : null, cumOpt: v.opt });
         else out.push({ h: h, known: false, baseline: true, cumOpt: v.opt });
       } else {
-        out.push({ h: h, known: true, opt: Math.max(0, v.opt - prev.opt), marge: (v.marge != null && prev.marge != null) ? Math.max(0, v.marge - prev.marge) : null, cumOpt: v.opt });
+        out.push({ h: h, known: true, opt: Math.max(0, v.opt - prev.opt), marge: (v.marge != null && prev.marge != null) ? Math.max(0, v.marge - prev.marge) : null, akt: (v.akt != null && prev.akt != null) ? Math.max(0, v.akt - prev.akt) : null, cumOpt: v.opt });
       }
       prev = v;
     }
     return out;
+  }
+
+  // Coaching: Agents ueber die Funktion my_coaching() (nur eigene Sessions, ohne interne Coach-Notizen),
+  // Admins im Testmodus direkt aus protocols.
+  async function loadCoaching(emp, preview, session) {
+    try {
+      if (preview) {
+        var rows = await rest('protocols?select=date,uhrzeit,art,status,start_note,stop_note,continue_note,focus,focus_metric,coach_id&employee_id=eq.' + emp.id + '&order=date.desc&limit=30', session);
+        var ids = rows.map(function (r) { return r.coach_id; }).filter(Boolean);
+        var names = {};
+        if (ids.length) (await rest('employees?select=id,name&id=in.(' + ids.join(',') + ')', session)).forEach(function (e) { names[e.id] = e.name; });
+        return { ok: true, sessions: rows.map(function (r) { r.coach_name = names[r.coach_id] || null; return r; }) };
+      }
+      var r = await fetch(C.supabaseUrl + '/rest/v1/rpc/my_coaching', { method: 'POST', headers: { apikey: C.anonKey, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }, body: '{}' });
+      if (!r.ok) return { ok: false, sessions: [] };
+      return { ok: true, sessions: await r.json() };
+    } catch (e) { return { ok: false, sessions: [] }; }
+  }
+  var FOCUS_CR = { crOEM: 'crOEM', crTeilweise: 'crTW', crTW: 'crTW', crSyMy: 'crSyMy', crSuperYes: 'crSY', crMegaYes: 'crMY', crMY: 'crMY' };
+  var FOCUS_LABEL = { crOEM: 'CR OEM', crTeilweise: 'CR TW', crTW: 'CR TW', crSyMy: 'CR SY/MY', crSuperYes: 'CR SY', crMegaYes: 'CR MY', crMY: 'CR MY' };
+  function addDays(ds, n) { var d = new Date(ds + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  // Wirkung der letzten abgeschlossenen Session: 14 Tage vorher vs. seitdem (max. 14 Tage), CR aus Rohzahlen
+  function coachingImpact(rows, coaching) {
+    if (!coaching || !coaching.sessions) return null;
+    var t = today();
+    var done = coaching.sessions.filter(function (s) { return s.status !== 'geplant' && s.date <= t && FOCUS_CR[s.focus_metric]; });
+    if (!done.length) return null;
+    var s = done[0], key = FOCUS_CR[s.focus_metric];
+    var before = sumRows(rows.filter(function (r) { return r.date >= addDays(s.date, -14) && r.date < s.date; }));
+    var after = sumRows(rows.filter(function (r) { return r.date >= s.date && r.date < addDays(s.date, 14); }));
+    var b = cr(before, key), a = cr(after, key);
+    if (b === null || a === null) return { label: FOCUS_LABEL[s.focus_metric], date: s.date, before: b, after: a, delta: null };
+    return { label: FOCUS_LABEL[s.focus_metric], date: s.date, before: b, after: a, delta: a - b, lte: key === 'crTW' };
+  }
+  // Timeline aus der eigenen Historie: Rekorde, Bestwerte, Meilensteine
+  function buildTimeline(emp, rows, bestHour) {
+    var items = [], t = today();
+    var days = rows.map(function (r) { var s = sumRows([r]); return { date: r.date, opt: s.opt, marge: s.marge, my: cr(s, 'crMY'), closers: s.yes + s.sy + s.my }; });
+    function maxBy(arr, f) { var best = null; arr.forEach(function (x) { var v = f(x); if (v != null && (best === null || v > f(best))) best = x; }); return best; }
+    var past = days.filter(function (x) { return x.date < t; });
+    var rOpt = maxBy(days, function (x) { return x.opt; }); if (rOpt && rOpt.opt > 0) items.push({ date: rOpt.date, title: 'Opt. an einem Tag', kind: 'rec', value: String(rOpt.opt) });
+    var rMarge = maxBy(days, function (x) { return x.marge; }); if (rMarge && rMarge.marge > 0) items.push({ date: rMarge.date, title: 'Marge an einem Tag', kind: 'rec', value: Math.round(rMarge.marge).toLocaleString('de-DE') + ' €' });
+    if (bestHour && bestHour.val > 0) items.push({ date: bestHour.date, title: 'Opt. in einer Stunde', kind: 'rec', value: String(bestHour.val) });
+    var rMy = maxBy(days.filter(function (x) { return x.closers >= 5; }), function (x) { return x.my; }); if (rMy) items.push({ date: rMy.date, title: 'CR MY an einem Tag', kind: 'best', value: Math.round(rMy.my) + ' %' });
+    // Meilenstein: erstmals 100 Optimierungen in einem Monat (je Monat)
+    var byMonth = {};
+    var first100 = null;
+    days.forEach(function (x) { var m = x.date.slice(0, 7); byMonth[m] = (byMonth[m] || 0) + x.opt; if (!first100 && byMonth[m] >= 100) first100 = x.date; });
+    if (first100) items.push({ date: first100, title: 'Erstmals 100 Opt./Monat', kind: 'mile', value: '100' });
+    var first = days.find(function (x) { return x.opt > 0; }); if (first) items.push({ date: first.date, title: 'Erste Optimierung', kind: 'mile', value: '' });
+    if (emp.startDate) items.push({ date: emp.startDate, title: 'Start bei Wiegand', kind: 'mile', value: '' });
+    items.sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var recOptPast = maxBy(past, function (x) { return x.opt; });
+    return { items: items, recordOpt: rOpt ? rOpt.opt : 0, recordOptBeforeToday: recOptPast ? recOptPast.opt : 0 };
   }
 
   return { load: load, login: login, logout: logout, getSession: getSession, hourly: hourly, storageGet: storageGet, storageSet: storageSet, config: C };

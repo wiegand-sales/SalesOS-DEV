@@ -8,137 +8,14 @@
 <body>
 <div class="shell">
   <nav class="rail" id="rail">
-    <div class="logo" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#113c41" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 3 7-7"/></svg>
-    </div>
-    <button class="tab" data-tab="heute" aria-label="Heute">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
-      <span>Heute</span>
-    </button>
-    <button class="tab" data-tab="verlauf" aria-label="Verlauf">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-      <span>Verlauf</span>
-    </button>
-    <button class="tab" data-tab="kennzahlen" aria-label="Kennzahlen">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-      <span>Kennzahlen</span>
-    </button>
-    <button class="tab" data-tab="provision" aria-label="Provision">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 6.5A7 7 0 1 0 17 17.5"/><path d="M4 10h9M4 14h9"/></svg>
-      <span>Provision</span>
-    </button>
-    <a href="#" class="logout" id="logout">Abmelden</a>
+    <div class="logo" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c3b40" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 3 7-7"/></svg></div>
+    <div id="tabs"></div>
+    <a href="#" class="logout" id="logout" title="Abmelden" aria-label="Abmelden"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></a>
   </nav>
-
   <main class="content">
-    <div class="topline"><span class="title" id="title">Sales OS</span><span class="muted xs" id="sub"></span></div>
-
-    <div id="previewBar" class="preview" hidden>
-      <label for="previewSel">Testmodus · Vorschau als</label>
-      <select id="previewSel"></select>
-    </div>
-    <div id="staleBar" class="stalebar" hidden>Seit über 2 Stunden kein Daten-Sync – die Zahlen sind evtl. nicht aktuell.</div>
-
-    <div id="vLoading" class="muted center">Lade deine Zahlen …</div>
-
-    <form id="vLogin" hidden>
-      <p class="intro">Melde dich mit deinem Sales-OS-Zugang an. Du siehst danach nur deine eigenen Zahlen.</p>
-      <label for="email">E-Mail</label>
-      <input id="email" type="email" autocomplete="username" required>
-      <label for="pw">Passwort</label>
-      <input id="pw" type="password" autocomplete="current-password" required>
-      <button type="submit" class="primary" id="loginBtn">Anmelden</button>
-      <p class="error" id="loginErr" hidden></p>
-    </form>
-
-    <div id="vError" hidden>
-      <p class="error" id="errText"></p>
-      <button class="secondary" id="retry">Erneut versuchen</button>
-    </div>
-
-    <section id="pHeute" class="page" hidden>
-      <div class="hero">
-        <div class="heroRow">
-          <span class="big" id="hOpt">–</span>
-          <div class="col"><span class="b12">Optimierungen</span><span class="xs b" id="hSoll"></span></div>
-          <span class="heroRight" id="hMarge">–</span>
-        </div>
-        <div class="split" id="hSplit"></div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>AUFTEILUNG</span><span id="hAvg"></span></div>
-        <div class="rows" id="hCats"></div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>OEM NACH STUFE</span><span></span></div>
-        <div class="chips" id="hStufen"></div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>AKTIVITÄT</span><span></span></div>
-        <div class="stats" id="hAkt"></div>
-      </div>
-    </section>
-
-    <section id="pVerlauf" class="page" hidden>
-      <div class="hero">
-        <div class="heroRow">
-          <span class="big" id="vBest">–</span>
-          <div class="col"><span class="b12">Opt. in deiner besten Stunde</span><span class="xs muted" id="vBestSub"></span></div>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>OPTIMIERUNGEN JE STUNDE</span><span id="vSollLbl">- - Soll je Stunde</span></div>
-        <div class="hbars" id="vBars"></div>
-        <div class="axis" id="vAxis1"></div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>KUMULIERT GEGEN SOLL</span><span id="vCumLbl"></span></div>
-        <div id="vCum"></div>
-        <div class="axis" id="vAxis2"></div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>MARGE JE STUNDE</span><span id="vMargeLbl"></span></div>
-        <div class="mrow" id="vMarge"></div>
-      </div>
-      <span class="xs muted" id="vHint"></span>
-    </section>
-
-    <section id="pKennzahlen" class="page" hidden>
-      <div class="hero">
-        <div class="heroRow">
-          <span class="big" id="kCount">–</span>
-          <div class="col"><span class="b12">Conversion-Ziele erreicht</span><span class="xs muted" id="kMonth"></span></div>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>CONVERSION · HEUTE</span><span>Strich = Ziel</span></div>
-        <div class="crList" id="kCr"></div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>VOLUMEN</span><span>Soll bis jetzt</span></div>
-        <div class="rows" id="kVol"></div>
-      </div>
-    </section>
-
-    <section id="pProvision" class="page" hidden>
-      <div class="hero">
-        <div class="heroRow">
-          <span class="big" id="pBig">–</span>
-          <div class="col"><span class="b12" id="pMax"></span><span class="xs red b" id="pAbzug"></span></div>
-        </div>
-        <div class="split" id="pBar"></div>
-        <span class="xs muted" id="pMeta"></span>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span>BERECHNUNG</span><span></span></div>
-        <div id="pCalc"></div>
-      </div>
-      <div class="sec">
-        <div class="secHead"><span id="pMissHead">NICHT ERREICHT</span><span></span></div>
-        <div class="rows" id="pMiss"></div>
-        <span class="xs muted" id="pTip"></span>
-      </div>
-    </section>
+    <div class="topline"><span class="title" id="title">Sales OS</span><span class="stand" id="sub"></span></div>
+    <div id="previewBar" class="preview" hidden><label for="previewSel">Testmodus · Vorschau als</label><select id="previewSel"></select></div>
+    <div id="view"></div>
   </main>
 </div>
 <script src="config.js"></script>
