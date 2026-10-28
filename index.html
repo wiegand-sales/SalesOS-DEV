@@ -8534,7 +8534,7 @@ function renderEinstellungen(){
 
   var STABS=[['users','Benutzer'],['roles','Rollen &amp; Rechte'],['wizards','Wizards'],['integrations','Integrationen'],['data','Daten &amp; Backup']];
   var curTab=STABS.find(function(t){return t[0]===settingsView;})||STABS[0];
-  ma.innerHTML='<div class="content" style="max-width:1280px;margin:0 auto;padding-top:28px">'
+  ma.innerHTML='<div class="content" style="max-width:100%;padding-top:28px">'
     +'<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px"><span style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Einstellungen</span><h1 style="margin:0;font-size:24px;font-weight:600">'+curTab[1]+'</h1></div>'
     +'<nav aria-label="Einstellungen" style="display:flex;gap:24px;border-bottom:1px solid var(--border2);margin-bottom:20px;flex-wrap:wrap">'
     +STABS.map(function(t){var on=t[0]===settingsView;return '<a href="#" onclick="selectSettingsSub(\''+t[0]+'\');return false" style="font-size:13px;font-weight:'+(on?600:500)+';color:'+(on?'var(--purple)':'var(--text2)')+';text-decoration:none;padding:10px 2px;border-bottom:2px solid '+(on?'var(--purple)':'transparent')+';margin-bottom:-1px">'+t[1]+'</a>';}).join('')
