@@ -7854,9 +7854,8 @@ function renderTab(){
           {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
           {lbl:'CR OEM (mind.) %',f:'crOem',unit:'%'},
           {lbl:'TW-Anteil (max.) %',f:'tw',unit:'%'},
-          {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
-          {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
           {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
+          {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
           {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'}
         ],{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80});
 
@@ -8814,6 +8813,7 @@ function calculateProvision(emp,monthKey,row,dayCount){
   var crTW=(convTW+convYes+convSY+convMY)>0?(convTW/(convTW+convYes+convSY+convMY)*100):0;
   var crSY=(convYes+convSY+convMY)>0?(convSY/(convYes+convSY+convMY)*100):0;
   var crMY=(convYes+convSY+convMY)>0?(convMY/(convYes+convSY+convMY)*100):0;
+  var crSyMy=(convYes+convSY+convMY)>0?((convSY+convMY)/(convYes+convSY+convMY)*100):0;
   var anteilOem=optGes>0?(convOEM/optGes*100):0;
 
   // §2 Abs. 1 - Basisprovision (Convertible Hardware existiert aktuell nicht im System, daher nicht enthalten)
@@ -8839,7 +8839,7 @@ function calculateProvision(emp,monthKey,row,dayCount){
     {label:'Opt./Std.',ist:optPerH,ziel:kpiSet.optH,dir:'gte'},
     {label:'CR OEM',ist:crOEM,ziel:kpiSet.crOem,dir:'gte'},
     {label:'TW-Anteil',ist:crTW,ziel:kpiSet.tw,dir:'lte'},
-    {label:'SY-Anteil',ist:crSY,ziel:kpiSet.sy,dir:'gte'},
+    {label:'SY/MY-Anteil',ist:crSyMy,ziel:kpiSet.syMy,dir:'gte'},
     {label:'MY-Anteil',ist:crMY,ziel:kpiSet.my,dir:'gte'},
     {label:'OEM-Anteil',ist:anteilOem,ziel:kpiSet.oemAnteil,dir:'gte'}
   ];
