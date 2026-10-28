@@ -7854,8 +7854,7 @@ function renderTab(){
           {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
           {lbl:'CR OEM (mind.) %',f:'crOem',unit:'%'},
           {lbl:'TW-Anteil (max.) %',f:'tw',unit:'%'},
-          {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
-          {lbl:'… oder SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
+          {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
           {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
           {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'}
         ],{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80});
@@ -7870,6 +7869,7 @@ function renderTab(){
         html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet.</p>';
         html+=buildKpiTable([
           {lbl:'CR Yes (mind.) %',f:'crYes',unit:'%'},
+          {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
           {lbl:'NE - nicht erreicht (max.) %',f:'notReached',unit:'%'},
           {lbl:'NM - nicht möglich (max.) %',f:'notPossible',unit:'%'},
           {lbl:'NErr - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
@@ -7877,9 +7877,9 @@ function renderTab(){
           {lbl:'Conv. OEM/Tag (mind.)',f:'convOEM',unit:''},
           {lbl:'Opt. Gesamt/Tag (mind.)',f:'optGesamt',unit:''},
           {lbl:'Marge Ziel (mind.)',f:'margeZiel',unit:'€',step:10}
-        ],{crYes:15,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000},
-          {crYes:15,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
-          {crYes:15,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
+        ],{crYes:15,sy:30,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000},
+          {crYes:15,sy:40,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
+          {crYes:15,sy:40,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
 
         html+='<button class="btn btn-primary btn-sm" style="width:auto;margin-top:12px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid);saveEmpEinstellungen()"><i class="ti ti-check"></i> Alles speichern</button>';
         html+='<span id="pv-save-status" style="font-size:11px;color:var(--text3);margin-left:10px"></span>';
@@ -8840,13 +8840,12 @@ function calculateProvision(emp,monthKey,row,dayCount){
     {label:'Opt./Std.',ist:optPerH,ziel:kpiSet.optH,dir:'gte'},
     {label:'CR OEM',ist:crOEM,ziel:kpiSet.crOem,dir:'gte'},
     {label:'TW-Anteil',ist:crTW,ziel:kpiSet.tw,dir:'lte'},
-    {label:'SY-Anteil',ist:crSY,ziel:kpiSet.sy,dir:'gte',alt:{ist:crSyMy,ziel:kpiSet.syMy}}, // erreicht auch, wenn SY/MY das Ziel schafft
+    {label:'SY/MY-Anteil',ist:crSyMy,ziel:kpiSet.syMy,dir:'gte'},
     {label:'MY-Anteil',ist:crMY,ziel:kpiSet.my,dir:'gte'},
     {label:'OEM-Anteil',ist:anteilOem,ziel:kpiSet.oemAnteil,dir:'gte'}
   ];
   var fehlendeKpis=checks.filter(function(c){
     if(c.ziel==null)return false;
-    if(c.alt&&c.alt.ziel!=null&&c.alt.ist>=c.alt.ziel)return false;
     return c.dir==='gte'?c.ist<c.ziel:c.ist>c.ziel;
   });
 
@@ -9027,7 +9026,7 @@ function buildProvisionTeamTable(){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR OEM = Opt.OEM / (Opt.OEM + NERR OEM)\',\'Opt.OEM\','+convOEM+',\'Opt.OEM + NERR OEM\','+oemDenomVal+',\'CR OEM\',\''+crOEM+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+rawTw+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',rawTw)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSyMy,rowKpiSet.syMy,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(rawSy+rawMy)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+((rowKpiSet.syMy!=null&&crSyMy>=rowKpiSet.syMy)?'':fc(crSY,rowKpiSet.sy,'gte'))+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY) – erreicht auch, wenn SY/MY das Ziel schafft\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+rawMy+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',rawMy)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(row.margeOEM||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeUpsell||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeWKA||0).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'
@@ -9207,7 +9206,7 @@ function buildProvisionTable(empId){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR OEM = Opt.OEM / (Opt.OEM + NERR OEM)\',\'Opt.OEM\','+convOEM+',\'Opt.OEM + NERR OEM\','+oemDenomVal+',\'CR OEM\',\''+crOEM+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+rawTw+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',rawTw)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSyMy,rowKpiSet.syMy,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(rawSy+rawMy)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+((rowKpiSet.syMy!=null&&crSyMy>=rowKpiSet.syMy)?'':fc(crSY,rowKpiSet.sy,'gte'))+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY) – erreicht auch, wenn SY/MY das Ziel schafft\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+rawMy+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',rawMy)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(row.margeOEM||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeUpsell||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeWKA||0).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'

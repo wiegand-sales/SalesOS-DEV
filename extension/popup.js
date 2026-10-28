@@ -99,7 +99,7 @@
   }
 
   // Bezeichnungen der 6 Provisions-KPIs (Berechnung wie im Board)
-  var KLABEL = { 'Opt./Std.': 'Opt./Std.', 'CR OEM': 'CR OEM', 'TW-Anteil': 'CR TW', 'SY-Anteil': 'CR SY', 'MY-Anteil': 'CR MY', 'OEM-Anteil': 'OEM' };
+  var KLABEL = { 'Opt./Std.': 'Opt./Std.', 'CR OEM': 'CR OEM', 'TW-Anteil': 'CR TW', 'SY/MY-Anteil': 'CR SY/MY', 'MY-Anteil': 'CR MY', 'OEM-Anteil': 'OEM' };
   function kfmt(c, v) { return c.fmt === 'pct' ? pct(v) : dec(v); }
   function focusOf(p) {
     var miss = p.checks.filter(function (c) { return !c.ok; });

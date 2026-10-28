@@ -116,8 +116,7 @@ var SOS = (function () {
       { label: 'Opt./Std.', ist: optPerH, ziel: k.optH, dir: 'gte', fmt: 'dec' },
       { label: 'CR OEM', ist: cr(s, 'crOEM') || 0, ziel: k.crOem, dir: 'gte', fmt: 'pct' },
       { label: 'TW-Anteil', ist: cr(s, 'crTW') || 0, ziel: k.tw, dir: 'lte', fmt: 'pct' },
-      // CR SY gilt auch als erreicht, wenn SY/MY das Ziel schafft (wie im Board)
-      { label: 'SY-Anteil', ist: cr(s, 'crSY') || 0, ziel: k.sy, dir: 'gte', fmt: 'pct', alt: { ist: cr(s, 'crSyMy') || 0, ziel: k.syMy } },
+      { label: 'SY/MY-Anteil', ist: cr(s, 'crSyMy') || 0, ziel: k.syMy, dir: 'gte', fmt: 'pct' },
       { label: 'MY-Anteil', ist: cr(s, 'crMY') || 0, ziel: k.my, dir: 'gte', fmt: 'pct' },
       { label: 'OEM-Anteil', ist: s.optGes > 0 ? s.oem / s.optGes * 100 : 0, ziel: k.oemAnteil, dir: 'gte', fmt: 'pct' }
     ];
@@ -287,7 +286,7 @@ var SOS = (function () {
     var fcOk = elapsedNow >= 1;
     var forecast = { opt: fcOk ? sT.opt * factor : null, marge: fcOk ? sT.marge * factor : null, perHour: fcOk ? sT.opt / elapsedNow : null, goal: optTag > 0 ? optTag : null };
     // Werte der 6 Provisions-KPIs heute (gleiche Definition wie im Monat)
-    var kpiToday = { 'Opt./Std.': fcOk ? sT.optGes / elapsedNow : null, 'CR OEM': cr(sT, 'crOEM'), 'TW-Anteil': cr(sT, 'crTW'), 'SY-Anteil': cr(sT, 'crSY'), 'MY-Anteil': cr(sT, 'crMY'), 'OEM-Anteil': sT.optGes > 0 ? sT.oem / sT.optGes * 100 : null };
+    var kpiToday = { 'Opt./Std.': fcOk ? sT.optGes / elapsedNow : null, 'CR OEM': cr(sT, 'crOEM'), 'TW-Anteil': cr(sT, 'crTW'), 'SY/MY-Anteil': cr(sT, 'crSyMy'), 'MY-Anteil': cr(sT, 'crMY'), 'OEM-Anteil': sT.optGes > 0 ? sT.oem / sT.optGes * 100 : null };
     var crMy = { today: cr(sT, 'crMY'), month: cr(sM, 'crMY'), my: sT.my, closers: sT.yes + sT.sy + sT.my };
     return { forecast: forecast, kpiToday: kpiToday, crMy: crMy, emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, dayPlan: dayPlan, margeToday: sT.marge, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
   }
