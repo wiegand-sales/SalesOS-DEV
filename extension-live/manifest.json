@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Sales OS – Deine Kennzahlen",
   "short_name": "Sales OS",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Zeigt Vertriebsmitarbeitern der Wiegand GmbH ihre eigenen Kennzahlen und ihre vorläufige Provision aus Sales OS.",
   "action": {
     "default_popup": "popup.html",
