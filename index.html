@@ -1009,10 +1009,10 @@ function buildUserOverviewHtml(){
   var persons=allPersons(), q=userSearch.trim().toLowerCase();
   var counts={all:0,Admin:0,Coach:0,Betrachter:0,'Sales Agent':0};
   persons.forEach(function(p){ if(p.kind==='emp'&&p.active===false&&personRole(p)==='Sales Agent')return; counts.all++; counts[personRole(p)]++; });
-  function chip(key,label){ var on=userFilter===key; return '<button onclick="setUserFilter(\''+key+'\')" style="font-family:inherit;font-size:12.5px;font-weight:'+(on?600:500)+';color:'+(on?'#fff':'var(--text2)')+';background:'+(on?'var(--purple)':'#fff')+';border:1px solid '+(on?'transparent':'var(--border2)')+';border-radius:20px;padding:6px 12px;cursor:pointer">'+label+' <span style="opacity:.7">'+counts[key]+'</span></button>'; }
+  function chip(key,label){ return '<button class="'+(userFilter===key?'active':'')+'" onclick="setUserFilter(\''+key+'\')">'+label+'&nbsp;<span style="opacity:.7">'+counts[key]+'</span></button>'; }
   var h='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'+chip('all','Alle')+chip('Admin','Admin')+chip('Coach','Coach')+chip('Betrachter','Betrachter')+chip('Sales Agent','Sales Agents')+'</div>'
-    +'<div style="display:flex;gap:8px;align-items:center"><input id="userSearch" value="'+esc(userSearch)+'" oninput="setUserSearch(this.value)" placeholder="Name oder E-Mail suchen" aria-label="Suchen" style="height:36px;width:230px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px">'
+    +'<div class="chart-toggle">'+chip('all','Alle')+chip('Admin','Admin')+chip('Coach','Coach')+chip('Betrachter','Betrachter')+chip('Sales Agent','Sales Agents')+'</div>'
+    +'<div style="display:flex;gap:8px;align-items:center"><input id="userSearch" value="'+esc(userSearch)+'" oninput="setUserSearch(this.value)" placeholder="Name oder E-Mail suchen" aria-label="Suchen" style="width:230px">'
     +'<button class="btn btn-primary" style="width:auto" onclick="openModal(\'addAppUserModal\')"><i class="ti ti-plus"></i> Admin / Betrachter</button></div></div>';
   if(userMsg) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:13px;line-height:1.5">'+userMsg+' <button class="btn btn-sm" style="width:auto;margin-left:8px" onclick="userMsg=\'\';renderMain()">Ausblenden</button></div>';
   if(loginInfo&&loginInfo.error) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:12.5px;color:var(--text2)">Login-Status nicht verfügbar: '+esc(loginInfo.msg||'')+' <button class="btn btn-sm" style="width:auto;margin-left:8px" onclick="loginInfo=null;renderMain()">Erneut versuchen</button></div>';
@@ -1022,12 +1022,12 @@ function buildUserOverviewHtml(){
     var r=personRole(p), rc=RC[r], acc=ACC[r], lg=loginOf(p);
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
     var roleCell=p.kind==='app'
-      ?'<select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="font-family:inherit;font-size:12px;font-weight:600;color:'+rc[0]+';background:'+rc[1]+';border:none;border-radius:20px;padding:5px 10px;cursor:pointer"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select>'
-      :'<span title="Ergibt sich aus der Position (SC/SDM = Coach) – änderbar im Mitarbeiter unter Einstellungen" style="font-size:12px;font-weight:600;color:'+rc[0]+';background:'+rc[1]+';border-radius:20px;padding:5px 10px;white-space:nowrap">'+r+'</span>';
+      ?'<select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:140px;padding:6px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select>'
+      :'<span class="badge" title="Ergibt sich aus der Position (SC/SDM = Coach) – änderbar im Mitarbeiter unter Einstellungen" style="color:'+rc[0]+';background:'+rc[1]+'">'+r+'</span>';
     var target=p.kind==='app'?'app':'emp';
     var lgCell=lg===null?'<span style="font-size:12px;color:var(--text3)">…</span>'
       :lg?'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:4px;background:var(--purple)"></span>Aktiv <span style="color:var(--text3)">· '+relTime(lg.last_sign_in_at)+'</span></span>'
-      :(p.email?'<button onclick="personLogin(\'create\',\''+target+'\',\''+p.id+'\')" style="font-family:inherit;font-size:12px;font-weight:600;color:var(--purple);background:rgba(32,106,114,0.08);border:1px dashed rgba(32,106,114,0.45);border-radius:8px;padding:6px 10px;cursor:pointer">+ Zugang anlegen</button>':'<span style="font-size:12px;color:var(--text3)">E-Mail fehlt</span>');
+      :(p.email?'<button class="btn btn-sm" style="width:auto" onclick="personLogin(\'create\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-plus"></i> Zugang anlegen</button>':'<span style="font-size:12px;color:var(--text3)">E-Mail fehlt</span>');
     var actions='';
     if(lg) actions+='<button class="btn btn-sm" style="width:auto" title="Passwort neu setzen" aria-label="Passwort neu setzen" onclick="personLogin(\'reset\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-key"></i></button>'
       +'<button class="btn btn-sm" style="width:auto" title="Login entfernen" aria-label="Login entfernen" onclick="personLogin(\'remove\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-x"></i></button>';
@@ -8397,6 +8397,12 @@ function hiddenTabsForRole(){
 function applyPermsToNav(){
   PERM_ROWS.forEach(function(r){ (r.nav||[]).forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display=canSeeArea(r.key)?'':'none'; }); });
 }
+function setPerm(role,key,val){
+  var row=PERM_ROWS.find(function(r){return r.key===key;}); if(!row||row.fixed||row.adminOnly)return;
+  var p=rolePerms(); p[role][key]=val; settings.rolePermissions=p;
+  saveSettingJson('rolePermissions',p,'Rechte geändert: '+row.label+' ('+(role==='coach'?'Coach':'Betrachter')+')');
+  renderMain();
+}
 function cyclePerm(role,key){
   var row=PERM_ROWS.find(function(r){return r.key===key;}); if(!row||row.fixed||row.adminOnly)return;
   var opts=role==='viewer'||row.seeOnly?['S','-']:['E','S','-'];
@@ -8418,7 +8424,10 @@ function buildRolesHtml(){
   function cell(role,row){
     var v=role==='admin'?'E':permFor(row.key,role), m=M[v], fixed=role==='admin'||row.fixed||row.adminOnly;
     if(role==='agent') return '<td style="padding:9px 12px;border-top:1px solid var(--border);text-align:center"><span style="font-size:12px;color:var(--text3)">'+(row.key==='performance'||row.key==='provision'?'nur eigene (Erweiterung)':'–')+'</span></td>';
-    return '<td style="padding:9px 12px;border-top:1px solid var(--border);text-align:center"><button '+(fixed?'disabled title="Fest vorgegeben"':'onclick="cyclePerm(\''+role+'\',\''+row.key+'\')"')+' style="font-family:inherit;font-size:12px;font-weight:600;color:'+m[1]+';background:'+m[2]+';border:none;border-radius:8px;padding:5px 10px;min-width:96px;cursor:'+(fixed?'default':'pointer')+';opacity:'+(fixed?0.75:1)+'">'+m[0]+'</button></td>';
+    if(fixed) return '<td style="padding:9px 12px;border-top:1px solid var(--border);text-align:center"><span class="badge" title="Fest vorgegeben" style="color:'+m[1]+';background:'+m[2]+'">'+m[0]+'</span></td>';
+    var opts=(role==='viewer'||row.seeOnly)?['S','-']:['E','S','-'];
+    return '<td style="padding:6px 12px;border-top:1px solid var(--border);text-align:center"><div class="chart-toggle" style="display:inline-flex;height:30px" role="group" aria-label="'+esc(row.label)+' – '+(role==='coach'?'Coach':'Betrachter')+'">'
+      +opts.map(function(o){return '<button class="'+(o===v?'active':'')+'" onclick="setPerm(\''+role+'\',\''+row.key+'\',\''+o+'\')">'+M[o][0]+'</button>';}).join('')+'</div></td>';
   }
   var TH='padding:11px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#cfe6e8;text-align:center';
   var rows='',g='';
@@ -8426,7 +8435,7 @@ function buildRolesHtml(){
     if(r.group!==g){g=r.group;rows+='<tr><th colspan="5" scope="colgroup" style="text-align:left;padding:14px 16px 6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">'+g+'</th></tr>';}
     rows+='<tr><td style="padding:9px 16px;border-top:1px solid var(--border);font-size:13px">'+esc(r.label)+'</td>'+cell('admin',r)+cell('coach',r)+cell('viewer',r)+cell('agent',r)+'</tr>';
   });
-  return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div style="padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:13px;font-weight:600">Was darf welche Rolle?</span><span style="font-size:12px;color:var(--text3)">Klick auf ein Feld wechselt: Bearbeiten → Ansehen → –</span></div>'
+  return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div style="padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:13px;font-weight:600">Was darf welche Rolle?</span><span style="font-size:12px;color:var(--text3)">Je Bereich und Rolle: Bearbeiten, Ansehen oder – (kein Zugriff)</span></div>'
     +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)"><th scope="col" style="'+TH+';text-align:left;padding-left:16px">Recht</th><th scope="col" style="'+TH+'">Admin</th><th scope="col" style="'+TH+'">Coach</th><th scope="col" style="'+TH+'">Betrachter</th><th scope="col" style="'+TH+'">Sales Agent</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
     +'<div class="card" style="padding:14px 16px;font-size:12.5px;line-height:1.55;color:var(--text2)"><b style="color:var(--text)">So wird es durchgesetzt:</b> Betrachter können in der Datenbank grundsätzlich nichts speichern. Was ein Coach bearbeiten darf, prüft das Board vor jedem Speichern. Bereiche mit „–“ werden in Menü und Mitarbeiterprofil ausgeblendet. Sales Agents kommen nicht ins Board und sehen in der Erweiterung nur ihre eigenen Zahlen.</div>';
 }
@@ -8441,18 +8450,18 @@ function setWiz(path,val){
 }
 function buildWizardsHtml(){
   var c=wizCfg();
-  var tg='<button aria-label="13-Uhr-Tagesüberblick ein- oder ausschalten" onclick="setWiz(\'on\','+(!c.on)+')" style="border:none;background:none;padding:0;cursor:pointer"><span style="width:34px;height:20px;border-radius:10px;background:'+(c.on?'var(--purple)':'#cfd6d4')+';position:relative;display:inline-block"><span style="position:absolute;top:2px;'+(c.on?'right':'left')+':2px;width:16px;height:16px;border-radius:8px;background:#fff"></span></span></button>';
+  var tg='<div class="chart-toggle" role="group" aria-label="Tagesüberblick ein- oder ausschalten"><button class="'+(c.on?'active':'')+'" onclick="setWiz(\'on\',true)">An</button><button class="'+(!c.on?'active':'')+'" onclick="setWiz(\'on\',false)">Aus</button></div>';
   function cb(path,label,on){return '<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)" style="accent-color:#206A72;width:16px;height:16px">'+label+'</label>';}
   var L='font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)';
   var card1='<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:14px;margin-bottom:16px">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">Tagesüberblick</span><span style="font-size:12.5px;color:var(--text2)">Slides mit Optimierungen, Marge, Conversion Rates und den schwächsten 3 je KPI</span></div>'+tg+'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">'
-    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Wann</span><div style="display:flex;gap:8px;align-items:center"><label for="wizTime" style="font-size:12.5px;color:var(--text2)">täglich ab</label><input id="wizTime" type="time" value="'+c.time+'" onchange="setWiz(\'time\',this.value)" style="height:32px;border:1px solid var(--border2);border-radius:8px;padding:0 8px;font-size:13px"></div><span style="font-size:12px;color:var(--text3)">einmal pro Tag und Gerät</span></div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Wann</span><div style="display:flex;gap:8px;align-items:center"><label for="wizTime" style="font-size:12.5px;color:var(--text2)">täglich ab</label><input id="wizTime" type="time" value="'+c.time+'" onchange="setWiz(\'time\',this.value)" style="width:120px"></div><span style="font-size:12px;color:var(--text3)">einmal pro Tag und Gerät</span></div>'
     +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Für wen</span>'+cb('roles.admin','Admin',c.roles.admin)+cb('roles.coach','Coach',c.roles.coach)+cb('roles.viewer','Betrachter',c.roles.viewer)+'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Inhalt</span>'+cb('slides.opt','Optimierungen &amp; Prognose',c.slides.opt)+cb('slides.marge','Marge &amp; Prognose',c.slides.marge)+cb('slides.cr','Conversion Rates (Team)',c.slides.cr)+cb('slides.worst','Schwächste 3 je KPI',c.slides.worst)
-    +'<div style="display:flex;gap:8px;align-items:center;font-size:12.5px"><label for="wizMin" style="color:var(--text2)">nur Verkäufer mit mehr als</label><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:56px;height:30px;border:1px solid var(--border2);border-radius:8px;padding:0 6px;font-size:13px"><span style="color:var(--text2)">Opt.</span></div></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;font-size:12.5px"><label for="wizMin" style="color:var(--text2)">nur Verkäufer mit mehr als</label><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:80px"><span style="color:var(--text2)">Opt.</span></div></div>'
     +'</div><div><button class="btn btn-sm" style="width:auto" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
-  var soon=function(t,d){return '<div class="card" style="padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;opacity:.7"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">'+t+'</span><span style="font-size:12.5px;color:var(--text2)">'+d+'</span></div><span style="font-size:11px;font-weight:600;color:var(--text3);background:rgba(0,0,0,0.05);border-radius:20px;padding:4px 10px">in Planung</span></div>';};
+  var soon=function(t,d){return '<div class="card" style="padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;opacity:.7"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">'+t+'</span><span style="font-size:12.5px;color:var(--text2)">'+d+'</span></div><span class="badge" style="color:var(--text3);background:rgba(0,0,0,0.05)">in Planung</span></div>';};
   return card1+soon('Wochenstart','Montags: Vorwoche im Rückblick und Fokus-KPI je Mitarbeiter')+soon('Coaching-Erinnerung','Hinweis, wenn ein Mitarbeiter länger kein Coaching hatte');
 }
 
@@ -8464,7 +8473,7 @@ function sCard(icon,title,desc,status,body){
 }
 function sStatus(t,kind){
   var c={ok:['var(--purple)','rgba(32,106,114,0.12)'],warn:['#B8420A','rgba(217,65,9,0.10)'],off:['var(--text2)','rgba(0,0,0,0.06)'],bad:['var(--red)','rgba(189,45,41,0.10)']}[kind];
-  return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:'+c[0]+';background:'+c[1]+';border-radius:20px;padding:4px 10px;white-space:nowrap"><span style="width:7px;height:7px;border-radius:4px;background:'+c[0]+'"></span>'+t+'</span>';
+  return '<span class="badge" style="color:'+c[0]+';background:'+c[1]+';white-space:nowrap">'+t+'</span>';
 }
 function sKv(k,v){return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border)"><span style="color:var(--text2)">'+k+'</span><span style="font-weight:500;text-align:right">'+v+'</span></div>';}
 function sGrid(inner){return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px">'+inner+'</div>';}
@@ -8505,9 +8514,9 @@ function buildIntegrationsHtml(){
 
 function buildDataHtml(){
   var imp=sCard('ti-file-upload','Performance-Daten importieren','Manuell nachladen, z. B. für vergangene Monate',sStatus('CSV','off'),
-    '<label style="border:1.5px dashed rgba(32,106,114,0.35);border-radius:12px;padding:22px;display:flex;flex-direction:column;align-items:center;gap:8px;background:rgba(32,106,114,0.03);cursor:pointer"><span style="font-size:13px;font-weight:600">CSV-Datei auswählen</span><span style="font-size:12px;color:var(--text3)">Bestehende Einträge für denselben Tag werden überschrieben, Coaching-Daten bleiben unberührt.</span><input type="file" accept=".csv,text/csv" onchange="importCSV(this.files[0])" style="display:none"></label>'
-    +'<div id="csv-status" style="font-size:12.5px"></div>'
-    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text3)">Der Mitarbeiter-Name muss genau wie in der Mitarbeiterliste geschrieben sein.</span><button class="btn btn-sm" style="width:auto" onclick="downloadCSVVorlage()">Vorlage laden</button></div>');
+    '<span style="font-size:12.5px;color:var(--text2)">Bestehende Einträge für denselben Tag werden überschrieben, Coaching-Daten bleiben unberührt. Der Mitarbeiter-Name muss genau wie in der Mitarbeiterliste geschrieben sein.</span>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn btn-primary btn-sm" style="width:auto;cursor:pointer;margin:0;color:#fff"><i class="ti ti-upload"></i> CSV hochladen<input type="file" accept=".csv,text/csv" onchange="importCSV(this.files[0])" style="display:none"></label><button class="btn btn-sm" style="width:auto" onclick="downloadCSVVorlage()"><i class="ti ti-download"></i> Vorlage laden</button></div>'
+    +'<div id="csv-status" style="font-size:12.5px"></div>');
   var noMail=employees.filter(function(e){return e.active!==false&&!e.email;}).length;
   var un=(settings.ftpUnmatched||[]).length;
   var dup=0; Object.keys(performance||{}).forEach(function(k){var seen={};(performance[k]||[]).forEach(function(r){if(seen[r.date])dup++;seen[r.date]=1;});});
@@ -8520,7 +8529,7 @@ function buildDataHtml(){
     +q('Doppelte Tage','Zwei Einträge für denselben Mitarbeiter und Tag',dup,!dup,''));
   var back=sCard('ti-database','Backups','Sicherung der Coaching-Daten als Datei',sStatus('manuell','off'),
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" style="width:auto" onclick="exportDaten()"><i class="ti ti-download"></i> Jetzt sichern (JSON)</button>'
-    +'<label class="btn btn-sm" style="width:auto;cursor:pointer"><i class="ti ti-upload"></i> Sicherung wiederherstellen<input type="file" accept=".json,application/json" onchange="if(this.files[0]&&confirm(\'Sicherung wirklich wiederherstellen? Bestehende Daten werden überschrieben.\'))importDaten(this.files[0])" style="display:none"></label></div>'
+    +'<label class="btn btn-sm" style="width:auto;cursor:pointer;margin:0;color:var(--text)"><i class="ti ti-upload"></i> Sicherung wiederherstellen<input type="file" accept=".json,application/json" onchange="if(this.files[0]&&confirm(\'Sicherung wirklich wiederherstellen? Bestehende Daten werden überschrieben.\'))importDaten(this.files[0])" style="display:none"></label></div>'
     +'<div id="restore-status" style="font-size:12.5px"></div>'
     +'<span style="font-size:12px;color:var(--text3)">Alle Daten liegen in der Datenbank (Supabase). Vor jedem Board-Update wird zusätzlich eine Sicherung der Seite angelegt. Ob Supabase automatische Tagessicherungen anlegt, hängt vom Tarif ab.</span>');
   var env=sCard('ti-device-desktop','Umgebung','Welche Version gerade läuft',SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0?sStatus('Testsystem','warn'):sStatus('Live','ok'),
