@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Sales OS – Deine Kennzahlen (DEV)",
   "short_name": "Sales OS",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Zeigt dir deine eigenen Kennzahlen und deine Provision aus Sales OS.",
   "action": {
     "default_popup": "popup.html",

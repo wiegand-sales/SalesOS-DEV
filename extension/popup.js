@@ -99,7 +99,7 @@
   }
 
   // Bezeichnungen der 6 Provisions-KPIs (Berechnung wie im Board)
-  var KLABEL = { 'Opt./Std.': 'Opt./Std.', 'CR OEM': 'CR OEM', 'TW-Anteil': 'CR TW', 'SY/MY-Anteil': 'CR SY/MY', 'MY-Anteil': 'CR MY', 'OEM-Anteil': 'OEM' };
+  var KLABEL = { 'Opt./Std.': 'Opt./Std.', 'CR OEM': 'CR OEM', 'TW-Anteil': 'CR TW', 'SY-Anteil': 'CR SY', 'MY-Anteil': 'CR MY', 'OEM-Anteil': 'OEM' };
   function kfmt(c, v) { return c.fmt === 'pct' ? pct(v) : dec(v); }
   function focusOf(p) {
     var miss = p.checks.filter(function (c) { return !c.ok; });
@@ -115,8 +115,9 @@
       h = banner('Fokus · ' + KLABEL[f.label], badge(ok + ' / ' + p.checks.length + ' erreicht', false), kfmt(f, f.ist), side(gapT, '+' + eur(p.wertProKpi)), segs);
     } else h = banner('Provisions-KPIs', badge('alle erreicht', true), ok + ' / ' + p.checks.length, side('volle Provision', eur(p.provision)), segs);
     var cells = p.checks.map(function (c) {
-      var col = c.ok ? P : RED, t = m.kpiToday[c.label], ratio = c.ziel ? (c.dir === 'lte' ? (c.ist <= c.ziel ? 1 : c.ziel / Math.max(c.ist, 0.01)) : c.ist / c.ziel) : 1;
-      return card('<div class="kpi"><div style="display:flex;flex-direction:column;gap:1px">' + lab(KLABEL[c.label]) + '<span class="val" style="color:' + col + '">' + kfmt(c, c.ist) + '</span><span class="xxs faint">heute ' + (t == null ? '–' : kfmt(c, t)) + '</span></div>' + ring(ratio, col) + '</div>');
+      var col = c.ok ? P : RED, t = m.kpiToday[c.label], ratio = c.ok ? 1 : c.ziel ? (c.dir === 'lte' ? c.ziel / Math.max(c.ist, 0.01) : c.ist / c.ziel) : 1;
+      var sub = c.alt ? 'SY/MY ' + pct(c.alt.ist) : 'heute ' + (t == null ? '–' : kfmt(c, t));
+      return card('<div class="kpi"><div style="display:flex;flex-direction:column;gap:1px">' + lab(KLABEL[c.label]) + '<span class="val" style="color:' + col + '">' + kfmt(c, c.ist) + '</span><span class="xxs faint">' + sub + '</span></div>' + ring(ratio, col) + '</div>');
     }).join('');
     return h + '<div class="tiles6">' + cells + '</div>';
   }
