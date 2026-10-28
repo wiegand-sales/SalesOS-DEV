@@ -744,6 +744,8 @@ function _viewerBlockedStorage(){
 }
 var sb = {
   auth: _sbRaw.auth,
+  functions: _sbRaw.functions,
+  rpc: function(){ return _sbRaw.rpc.apply(_sbRaw, arguments); },
   storage: {
     from: function(bucket){
       var real = _sbRaw.storage.from(bucket);
@@ -758,6 +760,12 @@ var sb = {
   },
   from: function(table){
     var real = _sbRaw.from(table);
+    if(currentUserRole === 'coach' && typeof canEditTable==='function' && !canEditTable(table)){
+      ['insert','update','upsert','delete'].forEach(function(m){
+        if(typeof real[m]==='function'){ real[m] = function(){ showPermBlockedToast(); return _viewerBlockedQuery(); }; }
+      });
+      return real;
+    }
     if(currentUserRole !== 'viewer') return real;
     ['insert','update','upsert','delete'].forEach(function(m){
       if(typeof real[m]==='function'){
@@ -1829,7 +1837,7 @@ function buildDailyWizardCr(){
 function dwWorstCandidates(){
   return employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&e.role!=='SC'&&e.role!=='SDM';})
     .map(function(e){return {e:e,s:dwSums(dwRowsToday(e.id))};})
-    .filter(function(x){return x.s.opt>5;});
+    .filter(function(x){return x.s.opt>wizCfg().minOpt;});
 }
 function dailyWizardWorstPage(title,metric){
   var isMarge=metric==='marge';
@@ -1850,7 +1858,7 @@ function dailyWizardWorstPage(title,metric){
       h+='<div style="height:40px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;font-size:12.5px;color:#9fc9cd">'+(i===0&&!rows.length?'Noch niemand mit mehr als 5 Optimierungen heute':'—')+'</div>';
     }
   }
-  return h+dwFoot('Nur Verkäufer mit mehr als 5 Optimierungen heute');
+  return h+dwFoot('Nur Verkäufer mit mehr als '+wizCfg().minOpt+' Optimierungen heute');
 }
 function renderDailyWizardPage(){
   document.getElementById('dailyWizardBody').innerHTML=dailyWizardPages[dailyWizardPage]();
@@ -1867,16 +1875,18 @@ function dailyWizardNext(){
   renderDailyWizardPage();
 }
 function showDailyWizard(){
-  dailyWizardPages=[
-    buildDailyWizardOpt,
-    buildDailyWizardMarge,
-    buildDailyWizardCr,
+  var ws=wizCfg().slides;
+  dailyWizardPages=[];
+  if(ws.opt)dailyWizardPages.push(buildDailyWizardOpt);
+  if(ws.marge)dailyWizardPages.push(buildDailyWizardMarge);
+  if(ws.cr)dailyWizardPages.push(buildDailyWizardCr);
+  if(ws.worst)dailyWizardPages.push(
     function(){return dailyWizardWorstPage('Marge','marge');},
     function(){return dailyWizardWorstPage('CR OEM','crOEM');},
     function(){return dailyWizardWorstPage('CR TW','crTW');},
     function(){return dailyWizardWorstPage('CR SY/MY','crSyMy');},
-    function(){return dailyWizardWorstPage('CR MY','crMY');}
-  ];
+    function(){return dailyWizardWorstPage('CR MY','crMY');});
+  if(!dailyWizardPages.length)dailyWizardPages.push(buildDailyWizardOpt);
   dailyWizardPage=0;
   renderDailyWizardPage();
   document.getElementById('dailyWizardOverlay').classList.remove('hidden');
@@ -1884,8 +1894,9 @@ function showDailyWizard(){
 function checkDailyWizard(){
   if(!currentUserRole)return; // nur fuer eingeloggte Nutzer
   var lastShown=localStorage.getItem('dailyWizardShownDate');
-  var now=new Date();
-  if(now.getHours()>=13&&lastShown!==today()){
+  var now=new Date(), wc=wizCfg(), tp=(wc.time||'13:00').split(':');
+  if(!wc.on||!wc.roles[currentUserRole])return;
+  if(now.getHours()*60+now.getMinutes()>=(+tp[0])*60+(+tp[1]||0)&&lastShown!==today()){
     showDailyWizard();
   }
 }
@@ -4194,6 +4205,7 @@ function renderSidebar(){
     var showSettings=currentUserRole==='admin';
     if(settingsNavEl)settingsNavEl.style.display=showSettings?'':'none';
     if(settingsSubEl&&!showSettings)settingsSubEl.classList.add('hidden');
+    if(typeof applyPermsToNav==='function')applyPermsToNav();
   })();
   (function(){
     var avatarEl=document.getElementById('sbProfileAvatar'),nameEl=document.getElementById('sbProfileName'),roleEl=document.getElementById('sbProfileRole');
@@ -6503,6 +6515,9 @@ function renderEmpDetail(){
 function renderTabBar(){
   var bar=document.getElementById('empTabBar');
   if(!bar)return;
+  var hid=typeof hiddenTabsForRole==='function'?hiddenTabsForRole():[];
+  if(hid.indexOf(activeTab)>=0){ activeTab='performance'; setTimeout(renderTab,0); }
+  bar.querySelectorAll('.tab').forEach(function(el){ el.style.display=hid.indexOf(el.dataset.tab)>=0?'none':''; });
   bar.querySelectorAll('.tab').forEach(function(el){
     el.classList.toggle('active',el.dataset.tab===activeTab);
   });
@@ -8336,6 +8351,183 @@ function renderActivity(){
   ma.innerHTML=h;
 }
 
+// ══ Rollen & Rechte ══════════════════════════════════════════════════════════
+// Werte je Bereich und Rolle: 'E' = bearbeiten, 'S' = ansehen, '-' = kein Zugriff. Admins immer 'E'.
+var PERM_ROWS=[
+  {key:'performance',label:'Dashboard & Performance-Tabelle',group:'Bereiche',fixed:true},
+  {key:'ziel',label:'Zielvereinbarung & Ziele',group:'Bereiche',tables:['zielvereinbarung','goals','kpi_targets','employee_kpi_targets'],nav:['nav-team-ziel']},
+  {key:'provision',label:'Provision & Gehälter',group:'Bereiche',seeOnly:true,nav:['nav-team-provision'],tabs:['provision']},
+  {key:'coaching',label:'Coaching-Sessions & Aufgaben',group:'Bereiche',tables:['protocols','tasks'],tabs:['session','tasks']},
+  {key:'qa',label:'QA-Bewertungen',group:'Bereiche',tables:['call_ratings','call_rating_scores'],tabs:['call-performance']},
+  {key:'dev',label:'Development / Halbjahresgespräch',group:'Bereiche',tables:['reviews','review_kpis'],tabs:['coaching-eval']},
+  {key:'timeline',label:'Timeline & Dokumente',group:'Bereiche',tables:['employee_documents','employee_history'],tabs:['timeline']},
+  {key:'solidroad',label:'SolidRoad',group:'Bereiche',tables:['solidroad_simulations'],tabs:['solidroad']},
+  {key:'activity',label:'Aktivitäten',group:'Bereiche',seeOnly:true,nav:['nav-coaching-activity']},
+  {key:'stammdaten',label:'Mitarbeiter anlegen & Stammdaten',group:'Verwaltung',tables:['employees'],tabs:['emp-settings']},
+  {key:'settings',label:'Einstellungen',group:'Verwaltung',adminOnly:true}
+];
+var PERM_DEFAULT={coach:{performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',settings:'-'},
+                  viewer:{performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',settings:'-'}};
+function rolePerms(){ var s=settings.rolePermissions||{}; return {coach:Object.assign({},PERM_DEFAULT.coach,s.coach||{}),viewer:Object.assign({},PERM_DEFAULT.viewer,s.viewer||{})}; }
+function permFor(key,role){
+  role=role||currentUserRole;
+  if(role==='admin')return 'E';
+  if(role!=='coach'&&role!=='viewer')return '-';
+  var row=PERM_ROWS.find(function(r){return r.key===key;});
+  if(row&&row.adminOnly)return '-';
+  if(row&&row.fixed)return 'S';
+  var v=rolePerms()[role][key]||'-';
+  if(role==='viewer'&&v==='E')v='S';
+  if(row&&row.seeOnly&&v==='E')v='S';
+  return v;
+}
+function canSeeArea(key){return permFor(key)!=='-';}
+function canEditTable(table){
+  if(currentUserRole!=='coach')return true;
+  var row=PERM_ROWS.find(function(r){return (r.tables||[]).indexOf(table)>=0;});
+  return !row||permFor(row.key)==='E';
+}
+function showPermBlockedToast(){
+  showViewerBlockedToast();
+  var el=document.getElementById('viewerToast'); if(el) el.innerHTML='<i class="ti ti-lock" style="margin-right:6px"></i>Keine Berechtigung – Änderung wird nicht gespeichert';
+}
+function hiddenTabsForRole(){
+  var out=[]; PERM_ROWS.forEach(function(r){ if((r.tabs||[]).length&&!canSeeArea(r.key)) out=out.concat(r.tabs); }); return out;
+}
+function applyPermsToNav(){
+  PERM_ROWS.forEach(function(r){ (r.nav||[]).forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display=canSeeArea(r.key)?'':'none'; }); });
+}
+function cyclePerm(role,key){
+  var row=PERM_ROWS.find(function(r){return r.key===key;}); if(!row||row.fixed||row.adminOnly)return;
+  var opts=role==='viewer'||row.seeOnly?['S','-']:['E','S','-'];
+  var p=rolePerms(), cur=p[role][key]; if(opts.indexOf(cur)<0)cur=opts[0];
+  p[role][key]=opts[(opts.indexOf(cur)+1)%opts.length];
+  settings.rolePermissions=p;
+  saveSettingJson('rolePermissions',p,'Rechte geändert: '+row.label+' ('+(role==='coach'?'Coach':'Betrachter')+')');
+  renderMain();
+}
+function saveSettingJson(key,val,logText){
+  return sb.from('settings').upsert({key:key,value:JSON.stringify(val)},{onConflict:'key'}).then(function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
+    if(logText)logActivity('employee','updated',logText);
+  });
+}
+function buildRolesHtml(){
+  var P=rolePerms();
+  var M={E:['Bearbeiten','var(--purple)','rgba(32,106,114,0.12)'],S:['Ansehen','#6b5a12','rgba(214,180,60,0.20)'],'-':['–','var(--text3)','rgba(0,0,0,0.04)']};
+  function cell(role,row){
+    var v=role==='admin'?'E':permFor(row.key,role), m=M[v], fixed=role==='admin'||row.fixed||row.adminOnly;
+    if(role==='agent') return '<td style="padding:9px 12px;border-top:1px solid var(--border);text-align:center"><span style="font-size:12px;color:var(--text3)">'+(row.key==='performance'||row.key==='provision'?'nur eigene (Erweiterung)':'–')+'</span></td>';
+    return '<td style="padding:9px 12px;border-top:1px solid var(--border);text-align:center"><button '+(fixed?'disabled title="Fest vorgegeben"':'onclick="cyclePerm(\''+role+'\',\''+row.key+'\')"')+' style="font-family:inherit;font-size:12px;font-weight:600;color:'+m[1]+';background:'+m[2]+';border:none;border-radius:8px;padding:5px 10px;min-width:96px;cursor:'+(fixed?'default':'pointer')+';opacity:'+(fixed?0.75:1)+'">'+m[0]+'</button></td>';
+  }
+  var TH='padding:11px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#cfe6e8;text-align:center';
+  var rows='',g='';
+  PERM_ROWS.forEach(function(r){
+    if(r.group!==g){g=r.group;rows+='<tr><th colspan="5" scope="colgroup" style="text-align:left;padding:14px 16px 6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">'+g+'</th></tr>';}
+    rows+='<tr><td style="padding:9px 16px;border-top:1px solid var(--border);font-size:13px">'+esc(r.label)+'</td>'+cell('admin',r)+cell('coach',r)+cell('viewer',r)+cell('agent',r)+'</tr>';
+  });
+  return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><div style="padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:13px;font-weight:600">Was darf welche Rolle?</span><span style="font-size:12px;color:var(--text3)">Klick auf ein Feld wechselt: Bearbeiten → Ansehen → –</span></div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)"><th scope="col" style="'+TH+';text-align:left;padding-left:16px">Recht</th><th scope="col" style="'+TH+'">Admin</th><th scope="col" style="'+TH+'">Coach</th><th scope="col" style="'+TH+'">Betrachter</th><th scope="col" style="'+TH+'">Sales Agent</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+    +'<div class="card" style="padding:14px 16px;font-size:12.5px;line-height:1.55;color:var(--text2)"><b style="color:var(--text)">So wird es durchgesetzt:</b> Betrachter können in der Datenbank grundsätzlich nichts speichern. Was ein Coach bearbeiten darf, prüft das Board vor jedem Speichern. Bereiche mit „–“ werden in Menü und Mitarbeiterprofil ausgeblendet. Sales Agents kommen nicht ins Board und sehen in der Erweiterung nur ihre eigenen Zahlen.</div>';
+}
+
+// ══ Wizards ══════════════════════════════════════════════════════════════════
+var WIZ_DEFAULT={on:true,time:'13:00',roles:{admin:true,coach:true,viewer:false},slides:{opt:true,marge:true,cr:true,worst:true},minOpt:5};
+function wizCfg(){ var s=settings.wizardSettings||{}; return {on:s.on!==false,time:s.time||WIZ_DEFAULT.time,roles:Object.assign({},WIZ_DEFAULT.roles,s.roles||{}),slides:Object.assign({},WIZ_DEFAULT.slides,s.slides||{}),minOpt:s.minOpt!=null?s.minOpt:WIZ_DEFAULT.minOpt}; }
+function setWiz(path,val){
+  var c=wizCfg(), p=path.split('.');
+  if(p.length===1)c[p[0]]=val; else c[p[0]][p[1]]=val;
+  settings.wizardSettings=c; saveSettingJson('wizardSettings',c,'Wizard-Einstellung geändert'); renderMain();
+}
+function buildWizardsHtml(){
+  var c=wizCfg();
+  var tg='<button aria-label="13-Uhr-Tagesüberblick ein- oder ausschalten" onclick="setWiz(\'on\','+(!c.on)+')" style="border:none;background:none;padding:0;cursor:pointer"><span style="width:34px;height:20px;border-radius:10px;background:'+(c.on?'var(--purple)':'#cfd6d4')+';position:relative;display:inline-block"><span style="position:absolute;top:2px;'+(c.on?'right':'left')+':2px;width:16px;height:16px;border-radius:8px;background:#fff"></span></span></button>';
+  function cb(path,label,on){return '<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)" style="accent-color:#206A72;width:16px;height:16px">'+label+'</label>';}
+  var L='font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)';
+  var card1='<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:14px;margin-bottom:16px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">Tagesüberblick</span><span style="font-size:12.5px;color:var(--text2)">Slides mit Optimierungen, Marge, Conversion Rates und den schwächsten 3 je KPI</span></div>'+tg+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">'
+    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Wann</span><div style="display:flex;gap:8px;align-items:center"><label for="wizTime" style="font-size:12.5px;color:var(--text2)">täglich ab</label><input id="wizTime" type="time" value="'+c.time+'" onchange="setWiz(\'time\',this.value)" style="height:32px;border:1px solid var(--border2);border-radius:8px;padding:0 8px;font-size:13px"></div><span style="font-size:12px;color:var(--text3)">einmal pro Tag und Gerät</span></div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Für wen</span>'+cb('roles.admin','Admin',c.roles.admin)+cb('roles.coach','Coach',c.roles.coach)+cb('roles.viewer','Betrachter',c.roles.viewer)+'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Inhalt</span>'+cb('slides.opt','Optimierungen &amp; Prognose',c.slides.opt)+cb('slides.marge','Marge &amp; Prognose',c.slides.marge)+cb('slides.cr','Conversion Rates (Team)',c.slides.cr)+cb('slides.worst','Schwächste 3 je KPI',c.slides.worst)
+    +'<div style="display:flex;gap:8px;align-items:center;font-size:12.5px"><label for="wizMin" style="color:var(--text2)">nur Verkäufer mit mehr als</label><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:56px;height:30px;border:1px solid var(--border2);border-radius:8px;padding:0 6px;font-size:13px"><span style="color:var(--text2)">Opt.</span></div></div>'
+    +'</div><div><button class="btn btn-sm" style="width:auto" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
+  var soon=function(t,d){return '<div class="card" style="padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;opacity:.7"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">'+t+'</span><span style="font-size:12.5px;color:var(--text2)">'+d+'</span></div><span style="font-size:11px;font-weight:600;color:var(--text3);background:rgba(0,0,0,0.05);border-radius:20px;padding:4px 10px">in Planung</span></div>';};
+  return card1+soon('Wochenstart','Montags: Vorwoche im Rückblick und Fokus-KPI je Mitarbeiter')+soon('Coaching-Erinnerung','Hinweis, wenn ein Mitarbeiter länger kein Coaching hatte');
+}
+
+// ══ Integrationen & Daten (gemeinsame Bausteine) ═════════════════════════════
+function sCard(icon,title,desc,status,body){
+  return '<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px;margin:0">'
+    +'<div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:10px;background:rgba(32,106,114,0.10);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--purple);font-size:19px"><i class="ti '+icon+'"></i></span>'
+    +'<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">'+title+'</span><span style="font-size:12.5px;color:var(--text2)">'+desc+'</span></div>'+(status||'')+'</div>'+body+'</div>';
+}
+function sStatus(t,kind){
+  var c={ok:['var(--purple)','rgba(32,106,114,0.12)'],warn:['#B8420A','rgba(217,65,9,0.10)'],off:['var(--text2)','rgba(0,0,0,0.06)'],bad:['var(--red)','rgba(189,45,41,0.10)']}[kind];
+  return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:'+c[0]+';background:'+c[1]+';border-radius:20px;padding:4px 10px;white-space:nowrap"><span style="width:7px;height:7px;border-radius:4px;background:'+c[0]+'"></span>'+t+'</span>';
+}
+function sKv(k,v){return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border)"><span style="color:var(--text2)">'+k+'</span><span style="font-weight:500;text-align:right">'+v+'</span></div>';}
+function sGrid(inner){return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px">'+inner+'</div>';}
+function daysUntil(ds){ if(!ds)return null; return Math.round((new Date(ds+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000); }
+
+function buildIntegrationsHtml(){
+  var last=settings.ftpLastSync?new Date(settings.ftpLastSync):null;
+  var ageMin=last?Math.round((Date.now()-last.getTime())/60000):null;
+  var st=ageMin===null?sStatus('Noch kein Sync','off'):ageMin<=90?sStatus('Läuft','ok'):ageMin<=360?sStatus('Verzögert','warn'):sStatus('Gestoppt','bad');
+  var ago=ageMin===null?'–':ageMin<60?'vor '+ageMin+' Min.':ageMin<1440?'vor '+Math.round(ageMin/60)+' Std.':last.toLocaleDateString('de-DE');
+  var sfp=sCard('ti-refresh','SFP-Daten (FTP)','Performance-Daten aus dem SFP, automatisch per SFTP-Datei',st,
+    '<div>'+sKv('Letzter Sync',last?last.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · '+ago:'–')+sKv('Rhythmus','alle 15 Minuten (cron-job.org)')+sKv('Datei',esc(settings.ftpFile||'user_activity.csv'))+'</div>'
+    +'<details><summary style="font-size:12.5px;font-weight:600;color:var(--purple);cursor:pointer">Verbindung bearbeiten</summary><div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px">'
+    +'<div><label for="ftpHost">SFTP-Host</label><input id="ftpHost" value="'+esc(settings.ftpHost||'')+'"></div><div><label for="ftpPort">Port</label><input id="ftpPort" value="'+esc(settings.ftpPort||'22')+'"></div>'
+    +'<div><label for="ftpUser">Benutzername</label><input id="ftpUser" value="'+esc(settings.ftpUser||'')+'"></div><div><label for="ftpFile">Dateiname</label><input id="ftpFile" value="'+esc(settings.ftpFile||'')+'"></div></div>'
+    +'<p style="font-size:11.5px;color:var(--text3);margin:8px 0">Das Passwort liegt nur verschlüsselt in den GitHub-Secrets, nicht in Sales OS.</p><button class="btn btn-primary btn-sm" style="width:auto" onclick="saveFTP()">Speichern</button></details>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-sm" style="width:auto;text-decoration:none" href="https://github.com/wiegand-sales/'+(SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0?'SalesOS-DEV':'SalesOS')+'/actions" target="_blank" rel="noopener">Sync-Protokoll ansehen ↗</a></div>');
+  var un=settings.ftpUnmatched||[];
+  var unRows=un.length?un.map(function(n){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(217,65,9,0.06);border-radius:10px;font-size:13px"><span style="flex:1;font-weight:600">'+esc(n)+'</span><button class="btn btn-sm" style="width:auto" onclick="openModal(\'addEmpModal\')">Als Mitarbeiter anlegen</button></div>';}).join('')
+    :'<div style="font-size:12.5px;color:var(--text2)">Alle Namen aus dem SFP sind zugeordnet.</div>';
+  var unC=sCard('ti-user-question','Nicht zugeordnete Namen','Zeilen aus dem SFP, die keinem Mitarbeiter zugeordnet werden konnten',un.length?sStatus(un.length+' offen','warn'):sStatus('Alles zugeordnet','ok'),
+    unRows+'<span style="font-size:12px;color:var(--text3)">Tipp: Meist weicht nur die Schreibweise ab – dann den Namen beim Mitarbeiter genau wie im SFP schreiben. HO- und SOM-Einträge werden bewusst übersprungen.</span>');
+  var d=daysUntil(settings.tokenExpiry);
+  var tokSt=d===null?sStatus('Ablaufdatum fehlt','warn'):d<0?sStatus('Abgelaufen','bad'):d<=30?sStatus('läuft in '+d+' Tagen ab','warn'):sStatus('ok','ok');
+  var tok=sCard('ti-key','Zugangsschlüssel','Ablaufende Schlüssel rechtzeitig erneuern, sonst stoppt der Sync',tokSt,
+    '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:200px"><label for="tokExp">GitHub-Token für cron-job.org läuft ab am</label><input id="tokExp" type="date" value="'+esc(settings.tokenExpiry||'')+'" onchange="settings.tokenExpiry=this.value;sb.from(\'settings\').upsert({key:\'tokenExpiry\',value:this.value},{onConflict:\'key\'}).then(function(){renderMain();})"></div></div>'
+    +'<div>'+sKv('SFTP-Passwort','in GitHub gespeichert')+sKv('Supabase Service-Schlüssel','nur auf dem Server')+'</div>');
+  var agentsAll=employees.filter(function(e){return e.active!==false&&!(e.isPureCoach||e.role==='SC'||e.role==='SDM');});
+  var withLogin=agentsAll.filter(function(e){return !!e.auth_user_id;}).length;
+  var ext=sCard('ti-puzzle','Chrome-Erweiterung','„Sales OS – Deine Kennzahlen“ für die Sales Agents',settings.extensionUrl?sStatus('Im Web Store','ok'):sStatus('Link fehlt','off'),
+    '<div>'+sKv('Agents mit Zugang',withLogin+' von '+agentsAll.length)+'</div>'
+    +'<div><label for="extUrl">Link zum Chrome Web Store (für die Agents)</label><input id="extUrl" placeholder="https://chromewebstore.google.com/detail/…" value="'+esc(settings.extensionUrl||'')+'" onchange="settings.extensionUrl=this.value.trim();sb.from(\'settings\').upsert({key:\'extensionUrl\',value:settings.extensionUrl},{onConflict:\'key\'}).then(function(){renderMain();})"></div>'
+    +(settings.extensionUrl?'<div><a class="btn btn-sm" style="width:auto;text-decoration:none" href="'+esc(settings.extensionUrl)+'" target="_blank" rel="noopener">Store-Seite öffnen ↗</a></div>':''));
+  var sr=sCard('ti-robot','SolidRoad','KI-Vertriebssimulationen, vor allem im Onboarding',settings.srApiKey?sStatus('Verbunden','ok'):sStatus('Nicht verbunden','off'),
+    '<div><button class="btn btn-sm" style="width:auto" onclick="openModal(\'srModal\')">'+(settings.srApiKey?'Verbindung bearbeiten':'Verbinden')+'</button></div>');
+  return sGrid(sfp+'<div style="display:flex;flex-direction:column;gap:16px">'+unC+tok+'</div>'+ext+sr);
+}
+
+function buildDataHtml(){
+  var imp=sCard('ti-file-upload','Performance-Daten importieren','Manuell nachladen, z. B. für vergangene Monate',sStatus('CSV','off'),
+    '<label style="border:1.5px dashed rgba(32,106,114,0.35);border-radius:12px;padding:22px;display:flex;flex-direction:column;align-items:center;gap:8px;background:rgba(32,106,114,0.03);cursor:pointer"><span style="font-size:13px;font-weight:600">CSV-Datei auswählen</span><span style="font-size:12px;color:var(--text3)">Bestehende Einträge für denselben Tag werden überschrieben, Coaching-Daten bleiben unberührt.</span><input type="file" accept=".csv,text/csv" onchange="importCSV(this.files[0])" style="display:none"></label>'
+    +'<div id="csv-status" style="font-size:12.5px"></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text3)">Der Mitarbeiter-Name muss genau wie in der Mitarbeiterliste geschrieben sein.</span><button class="btn btn-sm" style="width:auto" onclick="downloadCSVVorlage()">Vorlage laden</button></div>');
+  var noMail=employees.filter(function(e){return e.active!==false&&!e.email;}).length;
+  var un=(settings.ftpUnmatched||[]).length;
+  var dup=0; Object.keys(performance||{}).forEach(function(k){var seen={};(performance[k]||[]).forEach(function(r){if(seen[r.date])dup++;seen[r.date]=1;});});
+  function q(t,d,n,ok,btn){return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:500">'+t+'</span><span style="font-size:12px;color:var(--text3)">'+d+'</span></div>'+sStatus(String(n),ok?'ok':'warn')+(btn||'')+'</div>';}
+  var issues=(noMail?1:0)+(un?1:0)+(dup?1:0);
+  var qual=sCard('ti-shield-check','Datenqualität','Wird beim Öffnen dieser Seite geprüft',issues?sStatus(issues+' Hinweis'+(issues>1?'e':''),'warn'):sStatus('Alles in Ordnung','ok'),
+    q('Tage ohne Präsenz','Einsatztage mit 0 € Marge und nur einem abgelehnten Lead','prüfen',true,'<button class="btn btn-sm" style="width:auto" onclick="countZeroMargeRecords()">Zählen</button>')+'<div id="zero-marge-status" style="font-size:12.5px"></div>'
+    +q('Nicht zugeordnete Namen','Aus dem SFP-Import',un,!un,un?'<button class="btn btn-sm" style="width:auto" onclick="selectSettingsSub(\'integrations\')">Ansehen</button>':'')
+    +q('Mitarbeiter ohne E-Mail','Nötig für einen Login (Erweiterung)',noMail,!noMail,noMail?'<button class="btn btn-sm" style="width:auto" onclick="userFilter=\'all\';selectSettingsSub(\'users\')">Ansehen</button>':'')
+    +q('Doppelte Tage','Zwei Einträge für denselben Mitarbeiter und Tag',dup,!dup,''));
+  var back=sCard('ti-database','Backups','Sicherung der Coaching-Daten als Datei',sStatus('manuell','off'),
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" style="width:auto" onclick="exportDaten()"><i class="ti ti-download"></i> Jetzt sichern (JSON)</button>'
+    +'<label class="btn btn-sm" style="width:auto;cursor:pointer"><i class="ti ti-upload"></i> Sicherung wiederherstellen<input type="file" accept=".json,application/json" onchange="if(this.files[0]&&confirm(\'Sicherung wirklich wiederherstellen? Bestehende Daten werden überschrieben.\'))importDaten(this.files[0])" style="display:none"></label></div>'
+    +'<div id="restore-status" style="font-size:12.5px"></div>'
+    +'<span style="font-size:12px;color:var(--text3)">Alle Daten liegen in der Datenbank (Supabase). Vor jedem Board-Update wird zusätzlich eine Sicherung der Seite angelegt. Ob Supabase automatische Tagessicherungen anlegt, hängt vom Tarif ab.</span>');
+  var env=sCard('ti-device-desktop','Umgebung','Welche Version gerade läuft',SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0?sStatus('Testsystem','warn'):sStatus('Live','ok'),
+    '<div>'+sKv('Board','v4.1')+sKv('Datenbank',SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0?'DEV (Supabase)':'Live (Supabase)')+sKv('Testsystem','wiegand-sales.github.io/SalesOS-DEV')+'</div>');
+  return sGrid(imp+qual+back+env);
+}
+
 function renderEinstellungen(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   if(currentUserRole!=='admin'){ view='team'; wiegandView='overview'; renderSidebar(); renderTeam(); return; }
@@ -8354,110 +8546,11 @@ function renderEinstellungen(){
 
     // ══ MITARBEITERÜBERSICHT (Coaches + Admins/Betrachter, alles außer normale Sales Agents) ══
     +(settingsView==='users'?buildUserOverviewHtml():'')
-    +(settingsView==='roles'?'<div class="card" style="padding:18px 20px;font-size:13px;line-height:1.6"><b>Rollen &amp; Rechte</b> – die Rechte-Matrix kommt im nächsten Schritt.<br><span style="color:var(--text2)">Aktuell gilt: Admins und Coaches dürfen bearbeiten, Betrachter nur ansehen (in der Datenbank durchgesetzt), Sales Agents sehen nur die Erweiterung mit ihren eigenen Zahlen.</span></div>':'')
-    +(settingsView==='wizards'?'<div class="card" style="padding:18px 20px;font-size:13px;line-height:1.6"><b>Wizards</b> – die Einstellungen kommen nach Rollen &amp; Rechte.<br><span style="color:var(--text2)">Aktuell: Der 13-Uhr-Tagesüberblick erscheint täglich ab 13 Uhr für Admins und Coaches.</span></div>':'')
+    +(settingsView==='roles'?buildRolesHtml():'')
+    +(settingsView==='wizards'?buildWizardsHtml():'')
 
-    // ══ INTEGRATIONEN ══
-    +(settingsView==='integrations'?(
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'
-    // SolidRoad
-    +'<div class="card" style="cursor:pointer" onclick="openModal(\'srModal\')">'
-    +'<div class="card-title"><i class="ti ti-robot"></i> SolidRoad</div>'
-    +'<div style="display:flex;align-items:center;gap:14px">'
-    +'<div class="set-icon" style="background:var(--purple-bg);color:var(--purple);width:44px;height:44px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0"><i class="ti ti-robot"></i></div>'
-    +'<div style="flex:1"><div style="font-size:12px;color:var(--text2)">KI-gestützte Vertriebssimulationen für dein Team</div></div>'
-    +(settings.srApiKey
-      ?'<span style="background:var(--teal-bg);color:var(--teal);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Verbunden</span>'
-      :'<span style="background:var(--bg2);color:var(--text3);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Nicht verbunden</span>')
-    +'</div></div>'
-    // FTP Sync
-    +'<div class="card">'
-    +'<div class="card-title"><i class="ti ti-refresh"></i> FTP Datensync</div>'
-    +'<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">'
-    +'<div class="set-icon" style="background:var(--teal-bg);color:var(--teal);width:44px;height:44px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0"><i class="ti ti-refresh"></i></div>'
-    +'<div style="flex:1"><div style="font-size:12px;color:var(--text2)">Performance-Daten automatisch per CSV importieren</div>'
-    +'<div style="font-size:11px;color:var(--text3);margin-top:2px">Läuft stündlich automatisch über GitHub Actions'+(settings.ftpLastSync?' · zuletzt synchronisiert: '+new Date(settings.ftpLastSync).toLocaleString('de-DE'):'')+'</div></div>'
-    +'<span style="background:var(--teal-bg);color:var(--teal);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0">Aktiv · stündlich</span>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 100px;gap:10px;margin-bottom:10px">'
-    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">SFTP-Host</label><input type="text" id="ftpHost" placeholder="ftp.beispiel.de" value="'+esc(settings.ftpHost||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
-    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">Port</label><input type="text" id="ftpPort" placeholder="22" value="'+esc(settings.ftpPort||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
-    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">Benutzername</label><input type="text" id="ftpUser" placeholder="ftp-user" value="'+esc(settings.ftpUser||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
-    +'<div><label style="font-size:11px;color:var(--text2);font-weight:600">Dateiname</label><input type="text" id="ftpFile" placeholder="user_activity.csv" value="'+esc(settings.ftpFile||'')+'" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)"></div>'
-    +'</div>'
-    +'<div style="background:var(--amber-bg,#FCEFD8);border-radius:var(--r-md);padding:10px 12px;display:flex;gap:9px;align-items:flex-start;margin-bottom:12px">'
-    +'<i class="ti ti-lock" style="font-size:15px;color:var(--amber-dark,#a15c05);flex-shrink:0;margin-top:1px"></i>'
-    +'<div style="font-size:11px;color:var(--amber-dark,#a15c05);line-height:1.5">Das Passwort wird <strong>nicht</strong> in dieser App gespeichert (aus Sicherheitsgründen für alle eingeloggten Nutzer einsehbar). Es liegt ausschließlich verschlüsselt in den <strong>GitHub Actions Secrets</strong> des Repos <code>SalesOS-DEV</code> (Settings → Secrets and variables → Actions → <code>SFTP_PASSWORD</code>).</div>'
-    +'</div>'
-    +'<div style="display:flex;gap:8px;justify-content:space-between;align-items:center">'
-    +'<a href="https://github.com/wiegand-sales/SalesOS-DEV/actions/workflows/ftp-sync.yml" target="_blank" style="font-size:12px;color:var(--teal-dark);text-decoration:underline">Sync-Protokoll ansehen ↗</a>'
-    +'<button class="btn btn-sm btn-primary" onclick="saveFTP()">Speichern</button>'
-    +'</div></div>'
-    +'</div>'
-    ):'')
-
-    // ══ DATEN & BACKUP ══
-    +(settingsView==='data'?(
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'
-    // CSV Import
-    +'<div class="card">'
-    +'<div class="card-title"><i class="ti ti-file-upload"></i> Performance-Daten importieren</div>'
-    +'<p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">Lade eine CSV-Datei hoch um Leistungsdaten zu aktualisieren. Bestehende Einträge für das gleiche Datum werden überschrieben. Coaching-Daten bleiben unberührt.</p>'
-    +'<div style="background:var(--bg2);border-radius:var(--r-md);padding:10px 12px;margin-bottom:14px">'
-    +'<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">CSV-Spalten (deutsche Bezeichnungen, siehe „Vorlage laden"):</div>'
-    +'<div style="font-family:monospace;font-size:11px;color:var(--text2);line-height:1.8">'
-    +'Datum · Mitarbeiter · Aktivitäten<br>'
-    +'Nicht Erreicht · Nicht Möglich · Nicht Erfolgreich<br>'
-    +'Conv. OEM/TW/Yes/SY/MY · Upsells · WKA<br>'
-    +'Opt./Std. · Opt. Gesamt · Marge OEM/Upsells/WKA/Gesamt<br>'
-    +'CR OEM/TW/Yes/SY/MY %'
-    +'</div>'
-    +'<div style="font-size:10px;color:var(--text3);margin-top:4px">Mitarbeiter-Name muss exakt wie in der Mitarbeiterliste geschrieben sein.</div>'
-    +'</div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-    +'<label class="btn btn-primary btn-sm" style="cursor:pointer"><i class="ti ti-upload"></i> CSV hochladen<input type="file" accept=".csv" style="display:none" onchange="importCSV(this.files[0])"></label>'
-    +'<button class="btn btn-sm" onclick="downloadCSVVorlage()"><i class="ti ti-download"></i> Vorlage laden</button>'
-    +'</div>'
-    +'<div id="csv-status" style="margin-top:10px;font-size:12px;min-height:18px"></div>'
-    +'<div style="border-top:1px solid var(--border);margin:14px 0 12px"></div>'
-    +'<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Bestehende Datensätze bereinigen</div>'
-    +'<p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">Entfernt bereits importierte Einsatztage ohne Präsenz (Gesamtmarge = 0€, nur ein Lead wurde abgelehnt).</p>'
-    +'<button class="btn btn-sm" onclick="countZeroMargeRecords()"><i class="ti ti-search"></i> Betroffene Datensätze zählen</button>'
-    +'<div id="zero-marge-status" style="margin-top:10px;font-size:12px;min-height:18px"></div>'
-    +'</div>'
-    // Backup
-    +'<div class="card">'
-    +'<div class="card-title"><i class="ti ti-database"></i> Backup & Wiederherstellung</div>'
-    +'<p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">Alle Coaching-Daten werden automatisch im Browser gespeichert. Erstelle Backups vor Dashboard-Updates.</p>'
-    +'<div style="display:flex;flex-direction:column;gap:8px">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--r-md)">'
-    +'<div><div style="font-size:13px;font-weight:500">Backup exportieren</div><div style="font-size:11px;color:var(--text2)">JSON-Download aller Coaching-Daten</div></div>'
-    +'<button class="btn btn-sm btn-primary" onclick="exportDaten()"><i class="ti ti-download"></i> Download</button>'
-    +'</div>'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--r-md)">'
-    +'<div><div style="font-size:13px;font-weight:500">Backup wiederherstellen</div><div style="font-size:11px;color:var(--text2)">JSON-Datei vom vorherigen Export</div><div id="restore-status" style="font-size:11px;color:var(--purple);margin-top:4px"></div></div>'
-    +'<label class="btn btn-sm" style="cursor:pointer"><i class="ti ti-file-import"></i> JSON laden<input type="file" accept=".json" style="display:none" onchange="importDaten(this.files[0])"></label>'
-    +'</div>'
-    +'</div>'
-    +'</div>'
-    +'</div>'
-    ):'')
-
-    // ══ PROTOKOLL (entfernt, siehe Aktivitäten > Verlauf) ══
-
-    // ══ ÜBER (immer sichtbar, unabhängig vom Tab) ══
-    +'<div style="margin-top:24px;padding:16px 20px;background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-lg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(15,61,66,0.06);display:flex;align-items:center;gap:16px">'
-    +'<div style="width:44px;height:44px;border-radius:9px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--purple);flex-shrink:0"><i class="ti ti-chart-dots"></i></div>'
-    +'<div><div style="font-size:14px;font-weight:600">Sales OS Dashboard</div>'
-    +'<div style="font-size:12px;color:var(--text2);margin-top:2px">Wiegand &amp; Partner · v4.1 · Entwickelt für Peter Rode</div>'
-    +'<div style="font-size:11px;color:var(--text3);margin-top:3px">localStorage aktiv · GitHub Pages · Single-File HTML</div>'
-    +'</div>'
-    +'<div style="margin-left:auto;text-align:right">'
-    +'<div style="font-size:11px;color:var(--text3)">Staging: wiegand-sales-dev</div>'
-    +'<div style="font-size:11px;color:var(--text3)">Live: wiegand-sales</div>'
-    +'</div></div>'
+    +(settingsView==='integrations'?buildIntegrationsHtml():'')
+    +(settingsView==='data'?buildDataHtml():'')
     +'</div>';
 }
 
@@ -9867,6 +9960,9 @@ function loadSettingsFromSupabase(){
       if(r.key==='ftpUser')settings.ftpUser=r.value||'';
       if(r.key==='ftpFile')settings.ftpFile=r.value||'';
       if(r.key==='ftpLastSync')settings.ftpLastSync=r.value||'';
+      if(r.key==='tokenExpiry')settings.tokenExpiry=r.value||'';
+      if(r.key==='extensionUrl')settings.extensionUrl=r.value||'';
+      if(r.key==='rolePermissions'||r.key==='wizardSettings'||r.key==='ftpUnmatched'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
     return true;

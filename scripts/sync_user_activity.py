@@ -16,6 +16,7 @@ import sys
 import csv
 import io
 import re
+import json
 import unicodedata
 import paramiko
 import requests
@@ -331,7 +332,8 @@ def main():
     r = requests.post(
         f"{SUPABASE_URL}/rest/v1/settings?on_conflict=key",
         headers=HEADERS,
-        json=[{"key": "ftpLastSync", "value": now_iso}],
+        json=[{"key": "ftpLastSync", "value": now_iso},
+              {"key": "ftpUnmatched", "value": json.dumps(sorted(not_found), ensure_ascii=False)}],
     )
     if r.ok:
         log(f"Zeitstempel aktualisiert: {now_iso}")
