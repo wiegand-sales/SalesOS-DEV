@@ -1,6 +1,7 @@
 // Supabase Edge Function "agent-login"
-// Legt fuer einen Mitarbeiter einen Login fuer die Sales-OS-Erweiterung an, setzt das Passwort neu
-// oder entfernt den Zugang. Nur fuer Admins (app_users.role = 'admin'). Der Service-Schluessel bleibt auf dem Server.
+// Verwaltet Logins fuer Sales OS: anlegen, Passwort neu setzen, entfernen – fuer Mitarbeiter (Agents, Coaches)
+// und fuer Admins/Betrachter. Liefert ausserdem den Login-Status aller Personen (action 'list').
+// Nur fuer Admins (app_users.role = 'admin'). Der Service-Schluessel bleibt auf dem Server.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CORS = {
@@ -31,48 +32,68 @@ Deno.serve(async (req) => {
   if (!me || me.role !== "admin") return json({ error: "Nur Admins dürfen Zugänge verwalten" }, 403);
 
   // 2) Auftrag pruefen
-  let body: { action?: string; employee_id?: string; password?: string };
+  let body: { action?: string; employee_id?: string; app_user_id?: string; password?: string };
   try { body = await req.json(); } catch { return json({ error: "Ungültige Anfrage" }, 400); }
-  const { action, employee_id, password } = body;
-  if (!employee_id || !["create", "reset", "remove"].includes(action ?? "")) return json({ error: "Ungültige Anfrage" }, 400);
+  const { action, password } = body;
 
-  const { data: emp, error: eErr } = await admin.from("employees")
-    .select("id,name,email,auth_user_id,role,is_pure_coach").eq("id", employee_id).single();
-  if (eErr || !emp) return json({ error: "Mitarbeiter nicht gefunden" }, 404);
-  if (emp.is_pure_coach || emp.role === "SC" || emp.role === "SDM")
-    return json({ error: "Coaches haben bereits einen Board-Zugang – hier nur Agents" }, 400);
+  if (action === "list") {
+    const out: { id: string; email: string | undefined; last_sign_in_at: string | null }[] = [];
+    for (let page = 1; page <= 10; page++) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) return json({ error: error.message }, 400);
+      data.users.forEach((u) => out.push({ id: u.id, email: u.email, last_sign_in_at: u.last_sign_in_at ?? null }));
+      if (data.users.length < 200) break;
+    }
+    return json({ ok: true, users: out });
+  }
+  if (!["create", "reset", "remove"].includes(action ?? "")) return json({ error: "Ungültige Anfrage" }, 400);
+
+  // Ziel: Mitarbeiter (employees) oder Admin/Betrachter (app_users)
+  const table = body.app_user_id ? "app_users" : "employees";
+  const targetId = body.app_user_id ?? body.employee_id;
+  if (!targetId) return json({ error: "Ungültige Anfrage" }, 400);
+  const { data: tgt, error: tErr } = await admin.from(table).select("id,name,email,auth_user_id").eq("id", targetId).single();
+  if (tErr || !tgt) return json({ error: "Person nicht gefunden" }, 404);
   if ((action === "create" || action === "reset") && (!password || password.length < 10))
     return json({ error: "Das Passwort muss mindestens 10 Zeichen haben" }, 400);
 
-  const log = (what: string) => admin.from("admin_audit_log").insert({ changed_by: null, action: what, details: `${emp.name} (${me.email})` }).then(() => {}, () => {});
+  const log = (what: string) => admin.from("admin_audit_log").insert({ changed_by: null, action: what, details: `${tgt.name} (${me.email})` }).then(() => {}, () => {});
+  const email = (tgt.email ?? "").trim().toLowerCase();
+
+  // Login-ID ermitteln: verknuepft, sonst ueber die E-Mail (z. B. frueher manuell in Supabase angelegt)
+  let authId: string | null = tgt.auth_user_id ?? null;
+  if (!authId && email) {
+    for (let page = 1; page <= 10 && !authId; page++) {
+      const { data } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+      const hit = data?.users.find((u) => (u.email ?? "").toLowerCase() === email);
+      if (hit) authId = hit.id;
+      if (!data || data.users.length < 200) break;
+    }
+  }
 
   // 3) Ausfuehren
   if (action === "create") {
-    if (emp.auth_user_id) return json({ error: "Dieser Mitarbeiter hat bereits einen Zugang" }, 409);
-    if (!emp.email) return json({ error: "Beim Mitarbeiter ist keine E-Mail-Adresse hinterlegt" }, 400);
-    const { data: created, error } = await admin.auth.admin.createUser({
-      email: emp.email.trim().toLowerCase(), password, email_confirm: true, user_metadata: { employee_id: emp.id, rolle: "agent" },
-    });
-    if (error || !created.user) {
-      const msg = (error?.message ?? "").toLowerCase().includes("already") ? "Für diese E-Mail gibt es bereits einen Login (z. B. manuell in Supabase angelegt)" : (error?.message ?? "Login konnte nicht angelegt werden");
-      return json({ error: msg }, 400);
-    }
-    const { error: uErr } = await admin.from("employees").update({ auth_user_id: created.user.id }).eq("id", emp.id);
+    if (authId) return json({ error: "Für diese Person gibt es bereits einen Login" }, 409);
+    if (!email) return json({ error: "Bei dieser Person ist keine E-Mail-Adresse hinterlegt" }, 400);
+    const { data: created, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+    if (error || !created.user) return json({ error: error?.message ?? "Login konnte nicht angelegt werden" }, 400);
+    const { error: uErr } = await admin.from(table).update({ auth_user_id: created.user.id }).eq("id", tgt.id);
     if (uErr) { await admin.auth.admin.deleteUser(created.user.id); return json({ error: "Verknüpfung fehlgeschlagen, Login wurde wieder entfernt" }, 500); }
-    await log("agent_zugang_angelegt");
-    return json({ ok: true, auth_user_id: created.user.id, email: emp.email });
+    await log("login_angelegt");
+    return json({ ok: true, auth_user_id: created.user.id, email });
   }
-  if (!emp.auth_user_id) return json({ error: "Dieser Mitarbeiter hat noch keinen Zugang" }, 400);
+  if (!authId) return json({ error: "Für diese Person gibt es noch keinen Login" }, 400);
   if (action === "reset") {
-    const { error } = await admin.auth.admin.updateUserById(emp.auth_user_id, { password });
+    const { error } = await admin.auth.admin.updateUserById(authId, { password });
     if (error) return json({ error: error.message }, 400);
-    await log("agent_passwort_neu");
+    await log("login_passwort_neu");
     return json({ ok: true });
   }
-  // remove
-  const { error: dErr } = await admin.auth.admin.deleteUser(emp.auth_user_id);
+  // remove: eigenen Login nicht loeschen
+  if (authId === user.id) return json({ error: "Den eigenen Login kannst du nicht entfernen" }, 400);
+  const { error: dErr } = await admin.auth.admin.deleteUser(authId);
   if (dErr && !dErr.message.toLowerCase().includes("not found")) return json({ error: dErr.message }, 400);
-  await admin.from("employees").update({ auth_user_id: null }).eq("id", emp.id);
-  await log("agent_zugang_entfernt");
+  await admin.from(table).update({ auth_user_id: null }).eq("id", tgt.id);
+  await log("login_entfernt");
   return json({ ok: true });
 });
