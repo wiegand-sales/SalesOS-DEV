@@ -332,12 +332,7 @@ tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
       <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivitäten</div>
       <div class="sb-item sb-navsub" id="nav-team-ziel" onclick="selectWiegandSub('ziel')">Zielvereinbarung</div>
     </div>
-    <div class="sb-item" id="nav-settings" style="display:none" onclick="toggleSettingsNav()"><div class="sb-icon"><i class="ti ti-settings"></i></div> Settings <i class="ti ti-chevron-up" id="settingsNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
-    <div id="settingsSubNav" class="wiegand-subnav">
-      <div class="sb-item sb-navsub" id="nav-settings-users" onclick="selectSettingsSub('users')">Benutzer &amp; Rechte</div>
-      <div class="sb-item sb-navsub" id="nav-settings-integrations" onclick="selectSettingsSub('integrations')">Integrationen</div>
-      <div class="sb-item sb-navsub" id="nav-settings-data" onclick="selectSettingsSub('data')">Daten & Backup</div>
-    </div>
+    <div class="sb-item" id="nav-settings" style="display:none" onclick="selectSettingsSub(settingsView||'users')"><div class="sb-icon"><i class="ti ti-settings"></i></div> Einstellungen</div>
   </div>
   <div class="sb-divider"></div>
   <div class="sb-section">Staff</div>
@@ -952,7 +947,7 @@ function setEmpChartMetric(v){empChartMetric=v;renderTab();}
 function setEmpChartGroup(g){empChartGroup=g;renderTab();}
 var overviewChartEmpId=null; // null = Team (alle aktiven Mitarbeiter), sonst employee-id
 var bannerViewMode=null; // null = Standard je Reiter, sonst 'performance'|'overview' explizit ueberschrieben
-var settingsView='integrations'; // 'integrations' | 'data'
+var settingsView='users'; // 'users' | 'roles' | 'wizards' | 'integrations' | 'data'
 var activityFilterPerson='ALL'; // 'ALL' | employee-id (Coach)
 var activityFilterDays=7;
 function setActivityFilterPerson(v){activityFilterPerson=v;renderActivity();}
@@ -976,12 +971,16 @@ function allPersons(){
 function loadLoginInfo(){
   if(loginInfoLoading||currentUserRole!=='admin')return;
   loginInfoLoading=true;
-  sb.functions.invoke('agent-login',{body:{action:'list'}}).then(function(res){
+  var to=new Promise(function(_,rej){setTimeout(function(){rej(new Error('Zeitüberschreitung'));},12000);});
+  Promise.race([sb.functions.invoke('agent-login',{body:{action:'list'}}),to]).then(function(res){
     loginInfoLoading=false;
-    if(res.error||!res.data||!res.data.users){ loginInfo={error:true}; }
+    if(res.error||!res.data||!res.data.users){
+      loginInfo={error:true,msg:(res.data&&res.data.error)||(res.error&&res.error.message)||'keine Antwort'};
+      if(res.error&&res.error.context&&typeof res.error.context.status!=='undefined') loginInfo.msg+=' (Status '+res.error.context.status+')';
+    }
     else { var m={}; res.data.users.forEach(function(u){ if(u.email) m[u.email.toLowerCase()]=u; m['id:'+u.id]=u; }); loginInfo=m; }
     if(view==='settings'&&settingsView==='users')renderMain();
-  }).catch(function(){ loginInfoLoading=false; loginInfo={error:true}; });
+  }).catch(function(e){ loginInfoLoading=false; loginInfo={error:true,msg:e&&e.message}; if(view==='settings'&&settingsView==='users')renderMain(); });
 }
 function loginOf(p){
   if(!loginInfo||loginInfo.error) return null;
@@ -1008,7 +1007,7 @@ function buildUserOverviewHtml(){
     +'<div style="display:flex;gap:8px;align-items:center"><input id="userSearch" value="'+esc(userSearch)+'" oninput="setUserSearch(this.value)" placeholder="Name oder E-Mail suchen" aria-label="Suchen" style="height:36px;width:230px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px">'
     +'<button class="btn btn-primary" style="width:auto" onclick="openModal(\'addAppUserModal\')"><i class="ti ti-plus"></i> Admin / Betrachter</button></div></div>';
   if(userMsg) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:13px;line-height:1.5">'+userMsg+' <button class="btn btn-sm" style="width:auto;margin-left:8px" onclick="userMsg=\'\';renderMain()">Ausblenden</button></div>';
-  if(loginInfo&&loginInfo.error) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:12.5px;color:var(--text2)">Login-Status nicht verfügbar – ist die Funktion „agent-login“ in Supabase eingerichtet?</div>';
+  if(loginInfo&&loginInfo.error) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:12.5px;color:var(--text2)">Login-Status nicht verfügbar: '+esc(loginInfo.msg||'')+' <button class="btn btn-sm" style="width:auto;margin-left:8px" onclick="loginInfo=null;renderMain()">Erneut versuchen</button></div>';
   var TH='text-align:left;padding:11px 16px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#cfe6e8';
   var TD='padding:10px 16px;border-top:1px solid var(--border);vertical-align:middle';
   function row(p,i){
@@ -8341,11 +8340,13 @@ function renderEinstellungen(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   if(currentUserRole!=='admin'){ view='team'; wiegandView='overview'; renderSidebar(); renderTeam(); return; }
 
-  ma.innerHTML='<div class="topbar"><div class="tb-left">'
-    +'<div style="width:40px;height:40px;border-radius:9px;background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:16px"><i class="ti ti-settings"></i></div>'
-    +'<div><div class="tb-name">Einstellungen</div><div class="tb-meta">Integrationen · Daten · KPI-Konfiguration</div></div>'
-    +'</div></div>'
-    +'<div class="content" style="max-width:100%">'
+  var STABS=[['users','Benutzer'],['roles','Rollen &amp; Rechte'],['wizards','Wizards'],['integrations','Integrationen'],['data','Daten &amp; Backup']];
+  var curTab=STABS.find(function(t){return t[0]===settingsView;})||STABS[0];
+  ma.innerHTML='<div class="content" style="max-width:1280px;margin:0 auto;padding-top:28px">'
+    +'<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px"><span style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">Einstellungen</span><h1 style="margin:0;font-size:24px;font-weight:600">'+curTab[1]+'</h1></div>'
+    +'<nav aria-label="Einstellungen" style="display:flex;gap:24px;border-bottom:1px solid var(--border2);margin-bottom:20px;flex-wrap:wrap">'
+    +STABS.map(function(t){var on=t[0]===settingsView;return '<a href="#" onclick="selectSettingsSub(\''+t[0]+'\');return false" style="font-size:13px;font-weight:'+(on?600:500)+';color:'+(on?'var(--purple)':'var(--text2)')+';text-decoration:none;padding:10px 2px;border-bottom:2px solid '+(on?'var(--purple)':'transparent')+';margin-bottom:-1px">'+t[1]+'</a>';}).join('')
+    +'</nav>'
 
     // ══ KPI-ZIELE (verschoben nach SFP Wiegand > Zielvereinbarung, siehe kpiZieleHtml()) ══
 
@@ -8353,6 +8354,8 @@ function renderEinstellungen(){
 
     // ══ MITARBEITERÜBERSICHT (Coaches + Admins/Betrachter, alles außer normale Sales Agents) ══
     +(settingsView==='users'?buildUserOverviewHtml():'')
+    +(settingsView==='roles'?'<div class="card" style="padding:18px 20px;font-size:13px;line-height:1.6"><b>Rollen &amp; Rechte</b> – die Rechte-Matrix kommt im nächsten Schritt.<br><span style="color:var(--text2)">Aktuell gilt: Admins und Coaches dürfen bearbeiten, Betrachter nur ansehen (in der Datenbank durchgesetzt), Sales Agents sehen nur die Erweiterung mit ihren eigenen Zahlen.</span></div>':'')
+    +(settingsView==='wizards'?'<div class="card" style="padding:18px 20px;font-size:13px;line-height:1.6"><b>Wizards</b> – die Einstellungen kommen nach Rollen &amp; Rechte.<br><span style="color:var(--text2)">Aktuell: Der 13-Uhr-Tagesüberblick erscheint täglich ab 13 Uhr für Admins und Coaches.</span></div>':'')
 
     // ══ INTEGRATIONEN ══
     +(settingsView==='integrations'?(
