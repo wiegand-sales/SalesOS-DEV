@@ -67,6 +67,8 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(155deg,#f2f3f0 0%
 .btn-primary{background:linear-gradient(180deg,#27808a 0%,#206A72 100%);color:#fff;border-color:var(--purple);box-shadow:0 6px 16px rgba(32,106,114,.28);}
 .btn-primary:hover{background:linear-gradient(180deg,#1f6d76 0%,#174C52 100%);box-shadow:0 4px 14px rgba(32,106,114,.38);transform:translateY(-1px);}
 .btn-sm{padding:5px 10px;font-size:12px;}
+.sbtn{width:auto;height:30px;min-width:30px;justify-content:center;gap:6px;white-space:nowrap;}
+.sform select,.sform input{height:30px;padding:4px 10px;font-size:12.5px;}
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red);}
 /* TABS */
 .tab-bar{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:none;padding:0 24px 10px;display:flex;gap:3px;flex-shrink:0;}
@@ -1022,24 +1024,24 @@ function buildUserOverviewHtml(){
     var r=personRole(p), rc=RC[r], acc=ACC[r], lg=loginOf(p);
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
     var roleCell=p.kind==='app'
-      ?'<select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:140px;padding:6px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select>'
-      :'<span class="badge" title="Ergibt sich aus der Position (SC/SDM = Coach) – änderbar im Mitarbeiter unter Einstellungen" style="color:'+rc[0]+';background:'+rc[1]+'">'+r+'</span>';
+      ?'<select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:140px;height:30px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select>'
+      :'<span title="Ergibt sich aus der Position (SC/SDM = Coach) – änderbar im Mitarbeiter unter Einstellungen" style="display:inline-flex;align-items:center;width:140px;height:30px;box-sizing:border-box;padding:4px 10px;font-size:12.5px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2)">'+r+'</span>';
     var target=p.kind==='app'?'app':'emp';
     var lgCell=lg===null?'<span style="font-size:12px;color:var(--text3)">…</span>'
       :lg?'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:4px;background:var(--purple)"></span>Aktiv <span style="color:var(--text3)">· '+relTime(lg.last_sign_in_at)+'</span></span>'
-      :(p.email?'<button class="btn btn-sm" style="width:auto" onclick="personLogin(\'create\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-plus"></i> Zugang anlegen</button>':'<span style="font-size:12px;color:var(--text3)">E-Mail fehlt</span>');
+      :(p.email?'<button class="btn btn-sm sbtn" onclick="personLogin(\'create\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-plus"></i> Zugang anlegen</button>':'<span style="font-size:12px;color:var(--text3)">E-Mail fehlt</span>');
     var actions='';
-    if(lg) actions+='<button class="btn btn-sm" style="width:auto" title="Passwort neu setzen" aria-label="Passwort neu setzen" onclick="personLogin(\'reset\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-key"></i></button>'
-      +'<button class="btn btn-sm" style="width:auto" title="Login entfernen" aria-label="Login entfernen" onclick="personLogin(\'remove\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-x"></i></button>';
-    if(p.kind==='app') actions+='<button class="btn btn-sm" style="width:auto" title="Person entfernen" aria-label="Person entfernen" onclick="deleteAppUser(\''+p.id+'\',\''+String(p.name).replace(/'/g,"\\'")+'\')"><i class="ti ti-trash"></i></button>';
-    else actions+='<button class="btn btn-sm" style="width:auto" title="Mitarbeiter öffnen" aria-label="Mitarbeiter öffnen" onclick="selectEmp(\''+p.id+'\')"><i class="ti ti-arrow-right"></i></button>';
+    if(lg) actions+='<button class="btn btn-sm sbtn" title="Passwort neu setzen" aria-label="Passwort neu setzen" onclick="personLogin(\'reset\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-key"></i></button>'
+      +'<button class="btn btn-sm sbtn" title="Login entfernen" aria-label="Login entfernen" onclick="personLogin(\'remove\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-x"></i></button>';
+    if(p.kind==='app') actions+='<button class="btn btn-sm sbtn" title="Person entfernen" aria-label="Person entfernen" onclick="deleteAppUser(\''+p.id+'\',\''+String(p.name).replace(/'/g,"\\'")+'\')"><i class="ti ti-trash"></i></button>';
+    else actions+='<button class="btn btn-sm sbtn" title="Mitarbeiter öffnen" aria-label="Mitarbeiter öffnen" onclick="selectEmp(\''+p.id+'\')"><i class="ti ti-arrow-right"></i></button>';
     var bg=i%2?'background:rgba(32,106,114,0.035)':'';
     return '<tr style="'+bg+'"><td style="'+TD+'"><div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:6px;background:#e3ebea;color:var(--purple);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+esc(ini)+'</span><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">'+esc(p.name)+'</span><span style="font-size:11.5px;color:var(--text3)">'+esc(p.kind==='app'?(p.role==='admin'?'Admin':'Betrachter'):p.sub)+'</span></div></div></td>'
       +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+'</td>'
       +'<td style="'+TD+';font-size:12.5px;color:'+acc[1]+'">'+acc[0]+'</td><td style="'+TD+';text-align:right;white-space:nowrap"><div style="display:inline-flex;gap:6px">'+actions+'</div></td></tr>';
   }
   function table(list){
-    return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:860px"><thead><tr style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Board</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
+    return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:900px;table-layout:fixed"><colgroup><col style="width:24%"><col style="width:13%"><col style="width:22%"><col style="width:17%"><col style="width:11%"><col style="width:13%"></colgroup><thead><tr style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Board</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
   }
   var match=function(p){ return (!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.email||'').toLowerCase().indexOf(q)>=0) && (userFilter==='all'||personRole(p)===userFilter); };
   var order={'Admin':0,'Coach':1,'Betrachter':2};
@@ -8450,7 +8452,7 @@ function setWiz(path,val){
 }
 function buildWizardsHtml(){
   var c=wizCfg();
-  var tg='<div class="chart-toggle" role="group" aria-label="Tagesüberblick ein- oder ausschalten"><button class="'+(c.on?'active':'')+'" onclick="setWiz(\'on\',true)">An</button><button class="'+(!c.on?'active':'')+'" onclick="setWiz(\'on\',false)">Aus</button></div>';
+  var tg='<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;cursor:pointer;margin:0;color:var(--text)"><input type="checkbox" '+(c.on?'checked':'')+' onchange="setWiz(\'on\',this.checked)" style="accent-color:#206A72;width:16px;height:16px">Aktiv</label>';
   function cb(path,label,on){return '<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)" style="accent-color:#206A72;width:16px;height:16px">'+label+'</label>';}
   var L='font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)';
   var card1='<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:14px;margin-bottom:16px">'
@@ -8460,7 +8462,7 @@ function buildWizardsHtml(){
     +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Für wen</span>'+cb('roles.admin','Admin',c.roles.admin)+cb('roles.coach','Coach',c.roles.coach)+cb('roles.viewer','Betrachter',c.roles.viewer)+'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Inhalt</span>'+cb('slides.opt','Optimierungen &amp; Prognose',c.slides.opt)+cb('slides.marge','Marge &amp; Prognose',c.slides.marge)+cb('slides.cr','Conversion Rates (Team)',c.slides.cr)+cb('slides.worst','Schwächste 3 je KPI',c.slides.worst)
     +'<div style="display:flex;gap:8px;align-items:center;font-size:12.5px"><label for="wizMin" style="color:var(--text2)">nur Verkäufer mit mehr als</label><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:80px"><span style="color:var(--text2)">Opt.</span></div></div>'
-    +'</div><div><button class="btn btn-sm" style="width:auto" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
+    +'</div><div><button class="btn btn-sm sbtn" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
   var soon=function(t,d){return '<div class="card" style="padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;opacity:.7"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">'+t+'</span><span style="font-size:12.5px;color:var(--text2)">'+d+'</span></div><span class="badge" style="color:var(--text3);background:rgba(0,0,0,0.05)">in Planung</span></div>';};
   return card1+soon('Wochenstart','Montags: Vorwoche im Rückblick und Fokus-KPI je Mitarbeiter')+soon('Coaching-Erinnerung','Hinweis, wenn ein Mitarbeiter länger kein Coaching hatte');
 }
@@ -8476,7 +8478,7 @@ function sStatus(t,kind){
   return '<span class="badge" style="color:'+c[0]+';background:'+c[1]+';white-space:nowrap">'+t+'</span>';
 }
 function sKv(k,v){return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border)"><span style="color:var(--text2)">'+k+'</span><span style="font-weight:500;text-align:right">'+v+'</span></div>';}
-function sGrid(inner){return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px">'+inner+'</div>';}
+function sGrid(inner){return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(max(min(100%,440px),calc(50% - 8px)),1fr));gap:16px;align-items:start">'+inner+'</div>';}
 function daysUntil(ds){ if(!ds)return null; return Math.round((new Date(ds+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000); }
 
 function buildIntegrationsHtml(){
@@ -8489,10 +8491,10 @@ function buildIntegrationsHtml(){
     +'<details><summary style="font-size:12.5px;font-weight:600;color:var(--purple);cursor:pointer">Verbindung bearbeiten</summary><div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px">'
     +'<div><label for="ftpHost">SFTP-Host</label><input id="ftpHost" value="'+esc(settings.ftpHost||'')+'"></div><div><label for="ftpPort">Port</label><input id="ftpPort" value="'+esc(settings.ftpPort||'22')+'"></div>'
     +'<div><label for="ftpUser">Benutzername</label><input id="ftpUser" value="'+esc(settings.ftpUser||'')+'"></div><div><label for="ftpFile">Dateiname</label><input id="ftpFile" value="'+esc(settings.ftpFile||'')+'"></div></div>'
-    +'<p style="font-size:11.5px;color:var(--text3);margin:8px 0">Das Passwort liegt nur verschlüsselt in den GitHub-Secrets, nicht in Sales OS.</p><button class="btn btn-primary btn-sm" style="width:auto" onclick="saveFTP()">Speichern</button></details>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-sm" style="width:auto;text-decoration:none" href="https://github.com/wiegand-sales/'+(SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0?'SalesOS-DEV':'SalesOS')+'/actions" target="_blank" rel="noopener">Sync-Protokoll ansehen ↗</a></div>');
+    +'<p style="font-size:11.5px;color:var(--text3);margin:8px 0">Das Passwort liegt nur verschlüsselt in den GitHub-Secrets, nicht in Sales OS.</p><button class="btn btn-primary btn-sm sbtn" onclick="saveFTP()">Speichern</button></details>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-sm sbtn" style="text-decoration:none" href="https://github.com/wiegand-sales/'+(SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0?'SalesOS-DEV':'SalesOS')+'/actions" target="_blank" rel="noopener">Sync-Protokoll ansehen ↗</a></div>');
   var un=settings.ftpUnmatched||[];
-  var unRows=un.length?un.map(function(n){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(217,65,9,0.06);border-radius:10px;font-size:13px"><span style="flex:1;font-weight:600">'+esc(n)+'</span><button class="btn btn-sm" style="width:auto" onclick="openModal(\'addEmpModal\')">Als Mitarbeiter anlegen</button></div>';}).join('')
+  var unRows=un.length?un.map(function(n){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(217,65,9,0.06);border-radius:10px;font-size:13px"><span style="flex:1;font-weight:600">'+esc(n)+'</span><button class="btn btn-sm sbtn" onclick="openModal(\'addEmpModal\')">Als Mitarbeiter anlegen</button></div>';}).join('')
     :'<div style="font-size:12.5px;color:var(--text2)">Alle Namen aus dem SFP sind zugeordnet.</div>';
   var unC=sCard('ti-user-question','Nicht zugeordnete Namen','Zeilen aus dem SFP, die keinem Mitarbeiter zugeordnet werden konnten',un.length?sStatus(un.length+' offen','warn'):sStatus('Alles zugeordnet','ok'),
     unRows+'<span style="font-size:12px;color:var(--text3)">Tipp: Meist weicht nur die Schreibweise ab – dann den Namen beim Mitarbeiter genau wie im SFP schreiben. HO- und SOM-Einträge werden bewusst übersprungen.</span>');
@@ -8506,16 +8508,16 @@ function buildIntegrationsHtml(){
   var ext=sCard('ti-puzzle','Chrome-Erweiterung','„Sales OS – Deine Kennzahlen“ für die Sales Agents',settings.extensionUrl?sStatus('Im Web Store','ok'):sStatus('Link fehlt','off'),
     '<div>'+sKv('Agents mit Zugang',withLogin+' von '+agentsAll.length)+'</div>'
     +'<div><label for="extUrl">Link zum Chrome Web Store (für die Agents)</label><input id="extUrl" placeholder="https://chromewebstore.google.com/detail/…" value="'+esc(settings.extensionUrl||'')+'" onchange="settings.extensionUrl=this.value.trim();sb.from(\'settings\').upsert({key:\'extensionUrl\',value:settings.extensionUrl},{onConflict:\'key\'}).then(function(){renderMain();})"></div>'
-    +(settings.extensionUrl?'<div><a class="btn btn-sm" style="width:auto;text-decoration:none" href="'+esc(settings.extensionUrl)+'" target="_blank" rel="noopener">Store-Seite öffnen ↗</a></div>':''));
+    +(settings.extensionUrl?'<div><a class="btn btn-sm sbtn" style="text-decoration:none" href="'+esc(settings.extensionUrl)+'" target="_blank" rel="noopener">Store-Seite öffnen ↗</a></div>':''));
   var sr=sCard('ti-robot','SolidRoad','KI-Vertriebssimulationen, vor allem im Onboarding',settings.srApiKey?sStatus('Verbunden','ok'):sStatus('Nicht verbunden','off'),
-    '<div><button class="btn btn-sm" style="width:auto" onclick="openModal(\'srModal\')">'+(settings.srApiKey?'Verbindung bearbeiten':'Verbinden')+'</button></div>');
+    '<div><button class="btn btn-sm sbtn" onclick="openModal(\'srModal\')">'+(settings.srApiKey?'Verbindung bearbeiten':'Verbinden')+'</button></div>');
   return sGrid(sfp+'<div style="display:flex;flex-direction:column;gap:16px">'+unC+tok+'</div>'+ext+sr);
 }
 
 function buildDataHtml(){
   var imp=sCard('ti-file-upload','Performance-Daten importieren','Manuell nachladen, z. B. für vergangene Monate',sStatus('CSV','off'),
     '<span style="font-size:12.5px;color:var(--text2)">Bestehende Einträge für denselben Tag werden überschrieben, Coaching-Daten bleiben unberührt. Der Mitarbeiter-Name muss genau wie in der Mitarbeiterliste geschrieben sein.</span>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn btn-primary btn-sm" style="width:auto;cursor:pointer;margin:0;color:#fff"><i class="ti ti-upload"></i> CSV hochladen<input type="file" accept=".csv,text/csv" onchange="importCSV(this.files[0])" style="display:none"></label><button class="btn btn-sm" style="width:auto" onclick="downloadCSVVorlage()"><i class="ti ti-download"></i> Vorlage laden</button></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn btn-primary btn-sm sbtn" style="cursor:pointer;margin:0;color:#fff"><i class="ti ti-upload"></i> CSV hochladen<input type="file" accept=".csv,text/csv" onchange="importCSV(this.files[0])" style="display:none"></label><button class="btn btn-sm sbtn" onclick="downloadCSVVorlage()"><i class="ti ti-download"></i> Vorlage laden</button></div>'
     +'<div id="csv-status" style="font-size:12.5px"></div>');
   var noMail=employees.filter(function(e){return e.active!==false&&!e.email;}).length;
   var un=(settings.ftpUnmatched||[]).length;
@@ -8523,13 +8525,13 @@ function buildDataHtml(){
   function q(t,d,n,ok,btn){return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:500">'+t+'</span><span style="font-size:12px;color:var(--text3)">'+d+'</span></div>'+sStatus(String(n),ok?'ok':'warn')+(btn||'')+'</div>';}
   var issues=(noMail?1:0)+(un?1:0)+(dup?1:0);
   var qual=sCard('ti-shield-check','Datenqualität','Wird beim Öffnen dieser Seite geprüft',issues?sStatus(issues+' Hinweis'+(issues>1?'e':''),'warn'):sStatus('Alles in Ordnung','ok'),
-    q('Tage ohne Präsenz','Einsatztage mit 0 € Marge und nur einem abgelehnten Lead','prüfen',true,'<button class="btn btn-sm" style="width:auto" onclick="countZeroMargeRecords()">Zählen</button>')+'<div id="zero-marge-status" style="font-size:12.5px"></div>'
-    +q('Nicht zugeordnete Namen','Aus dem SFP-Import',un,!un,un?'<button class="btn btn-sm" style="width:auto" onclick="selectSettingsSub(\'integrations\')">Ansehen</button>':'')
-    +q('Mitarbeiter ohne E-Mail','Nötig für einen Login (Erweiterung)',noMail,!noMail,noMail?'<button class="btn btn-sm" style="width:auto" onclick="userFilter=\'all\';selectSettingsSub(\'users\')">Ansehen</button>':'')
+    q('Tage ohne Präsenz','Einsatztage mit 0 € Marge und nur einem abgelehnten Lead','prüfen',true,'<button class="btn btn-sm sbtn" onclick="countZeroMargeRecords()">Zählen</button>')+'<div id="zero-marge-status" style="font-size:12.5px"></div>'
+    +q('Nicht zugeordnete Namen','Aus dem SFP-Import',un,!un,un?'<button class="btn btn-sm sbtn" onclick="selectSettingsSub(\'integrations\')">Ansehen</button>':'')
+    +q('Mitarbeiter ohne E-Mail','Nötig für einen Login (Erweiterung)',noMail,!noMail,noMail?'<button class="btn btn-sm sbtn" onclick="userFilter=\'all\';selectSettingsSub(\'users\')">Ansehen</button>':'')
     +q('Doppelte Tage','Zwei Einträge für denselben Mitarbeiter und Tag',dup,!dup,''));
   var back=sCard('ti-database','Backups','Sicherung der Coaching-Daten als Datei',sStatus('manuell','off'),
-    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" style="width:auto" onclick="exportDaten()"><i class="ti ti-download"></i> Jetzt sichern (JSON)</button>'
-    +'<label class="btn btn-sm" style="width:auto;cursor:pointer;margin:0;color:var(--text)"><i class="ti ti-upload"></i> Sicherung wiederherstellen<input type="file" accept=".json,application/json" onchange="if(this.files[0]&&confirm(\'Sicherung wirklich wiederherstellen? Bestehende Daten werden überschrieben.\'))importDaten(this.files[0])" style="display:none"></label></div>'
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm sbtn" onclick="exportDaten()"><i class="ti ti-download"></i> Jetzt sichern (JSON)</button>'
+    +'<label class="btn btn-sm sbtn" style="cursor:pointer;margin:0;color:var(--text)"><i class="ti ti-upload"></i> Sicherung wiederherstellen<input type="file" accept=".json,application/json" onchange="if(this.files[0]&&confirm(\'Sicherung wirklich wiederherstellen? Bestehende Daten werden überschrieben.\'))importDaten(this.files[0])" style="display:none"></label></div>'
     +'<div id="restore-status" style="font-size:12.5px"></div>'
     +'<span style="font-size:12px;color:var(--text3)">Alle Daten liegen in der Datenbank (Supabase). Vor jedem Board-Update wird zusätzlich eine Sicherung der Seite angelegt. Ob Supabase automatische Tagessicherungen anlegt, hängt vom Tarif ab.</span>');
   var env=sCard('ti-device-desktop','Umgebung','Welche Version gerade läuft',SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0?sStatus('Testsystem','warn'):sStatus('Live','ok'),
