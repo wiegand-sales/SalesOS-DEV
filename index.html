@@ -14,7 +14,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --bg:rgba(255,255,255,0.55);--bg-solid:#fff;--bg2:#f2f3f0;--bg3:#eef1ef;
+  /* Feste Flaechen-Palette (Ebenen 3-6): nur diese hellen Toene innerhalb von Boxen verwenden */
+  --s-sub:#f2f3f0;--s-white:#ffffff;--s-tint:rgba(32,106,114,0.07);--s-tint-strong:rgba(32,106,114,0.14);
+  --bg:var(--s-white);--bg-solid:var(--s-white);--bg2:var(--s-sub);--bg3:var(--s-sub);
   --text:#1a1a18;--text2:#6b6b67;--text3:#9a9a96;
   --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.12);--glass-edge:rgba(255,255,255,0.5);
   --purple:#206A72;--purple-bg:rgba(32,106,114,0.10);--purple-dark:#174C52;
@@ -38,16 +40,16 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(155deg,#f2f3f0 0%
 .sb-sub{font-size:11px;color:var(--text2);padding-left:42px;}
 .sb-nav{padding:8px 10px 4px;}
 .sb-item{display:flex;align-items:center;gap:9px;padding:6px 10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);border-radius:8px;margin-bottom:2px;transition:all .12s;}
-.sb-item:hover{background:rgba(32,106,114,0.08);color:var(--text);}
-.sb-item.active{background:rgba(32,106,114,0.14);color:var(--purple-dark);font-weight:600;}.sb-navsub{padding:6px 10px 6px 20px;font-size:12.5px;}.wiegand-subnav{margin:2px 0 4px 14px;padding-left:6px;border-left:1px solid var(--border);display:flex;flex-direction:column;gap:1px;}.wiegand-subnav.hidden{display:none;}
+.sb-item:hover{background:var(--s-tint);color:var(--text);}
+.sb-item.active{background:var(--s-tint-strong);color:var(--purple-dark);font-weight:600;}.sb-navsub{padding:6px 10px 6px 20px;font-size:12.5px;}.wiegand-subnav{margin:2px 0 4px 14px;padding-left:6px;border-left:1px solid var(--border);display:flex;flex-direction:column;gap:1px;}.wiegand-subnav.hidden{display:none;}
 .sb-item i{font-size:15px;color:inherit;}
 .sb-icon{width:26px;height:26px;border-radius:8px;background:linear-gradient(180deg,#27808a 0%,#206A72 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;box-shadow:0 2px 6px rgba(32,106,114,.22);}
 .sb-divider{height:1px;background:var(--border);margin:8px 14px;}
 .sb-section{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);padding:4px 14px 6px;}
 .emp-list{flex:1;overflow-y:auto;padding:0 10px;}
 .emp-item{display:flex;align-items:center;gap:9px;padding:8px 9px;cursor:pointer;border-radius:9px;margin-bottom:2px;transition:all .12s;}
-.emp-item:hover{background:rgba(32,106,114,0.08);}
-.emp-item.active{background:rgba(32,106,114,0.12);box-shadow:0 8px 18px rgba(32,106,114,.10);}
+.emp-item:hover{background:var(--s-tint);}
+.emp-item.active{background:var(--s-tint-strong);box-shadow:0 8px 18px rgba(32,106,114,.10);}
 .av{border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;}
 .emp-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .emp-role{font-size:12px;color:var(--text2);}
@@ -73,8 +75,8 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(155deg,#f2f3f0 0%
 /* TABS */
 .tab-bar{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:none;padding:0 24px 10px;display:flex;gap:3px;flex-shrink:0;}
 .tab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;border-radius:9px;color:var(--text2);border-bottom:none;transition:all .12s;white-space:nowrap;}
-.tab.active{color:var(--purple-dark);background:rgba(32,106,114,0.10);}
-.tab:hover:not(.active){color:var(--text);background:rgba(0,0,0,0.03);}
+.tab.active{color:var(--purple-dark);background:var(--s-tint-strong);}
+.tab:hover:not(.active){color:var(--text);background:var(--s-sub);}
 /* CONTENT */
 .content{flex:1;overflow-y:auto;padding:6px 24px 24px;}
 ::-webkit-scrollbar{width:5px;height:5px;}
@@ -128,7 +130,7 @@ select{accent-color:#206A72;}select option:checked{background:#206A72;color:#fff
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
 .f5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px;}
-input,select,textarea{font-size:13px;padding:8px 11px;border-radius:var(--r-md);border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:inherit;width:100%;outline:none;transition:border-color .12s;}
+input,select,textarea{font-size:13px;padding:8px 11px;border-radius:var(--r-md);border:1px solid var(--border2);background:var(--s-white);color:var(--text);font-family:inherit;width:100%;outline:none;transition:border-color .12s;}
 input:focus,select:focus,textarea:focus{border-color:var(--purple);}
 textarea{resize:vertical;min-height:75px;line-height:1.5;}
 label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:4px;}
@@ -138,10 +140,10 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap;}
 td{padding:10px 14px;border-bottom:1px solid var(--border);}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:var(--bg2);}
+tr:hover td{background:var(--s-tint);}
 .perf-data-row:hover td{background:rgba(32,106,114,0.32)!important;box-shadow:inset 0 2px 0 var(--teal-dark),inset 0 -2px 0 var(--teal-dark)!important;}
 tr.perf-sum-row:hover td{background:#0c3b40 !important;}
-tr.perf-avg-row:hover td{background:rgba(32,106,114,0.14) !important;}
+tr.perf-avg-row:hover td{background:var(--s-tint-strong) !important;}
 /* ALERTS */
 .alert{border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .alert-warn{background:var(--amber-bg);border:1px solid rgba(217,65,9,.2);}
@@ -1025,7 +1027,7 @@ function buildUserOverviewHtml(){
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
     var roleCell=p.kind==='app'
       ?'<select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:140px;height:30px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select>'
-      :'<span title="Ergibt sich aus der Position (SC/SDM = Coach) – änderbar im Mitarbeiter unter Einstellungen" style="display:inline-flex;align-items:center;width:140px;height:30px;box-sizing:border-box;padding:4px 10px;font-size:12.5px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2)">'+r+'</span>';
+      :'<span title="Ergibt sich aus der Position (SC/SDM = Coach) – änderbar im Mitarbeiter unter Einstellungen" style="display:inline-flex;align-items:center;width:140px;height:30px;box-sizing:border-box;padding:4px 10px;font-size:12.5px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--s-white);color:var(--text2)">'+r+'</span>';
     var target=p.kind==='app'?'app':'emp';
     var lgCell=lg===null?'<span style="font-size:12px;color:var(--text3)">…</span>'
       :lg?'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:4px;background:var(--purple)"></span>Aktiv <span style="color:var(--text3)">· '+relTime(lg.last_sign_in_at)+'</span></span>'
@@ -1035,7 +1037,7 @@ function buildUserOverviewHtml(){
       +'<button class="btn btn-sm sbtn" title="Login entfernen" aria-label="Login entfernen" onclick="personLogin(\'remove\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-x"></i></button>';
     if(p.kind==='app') actions+='<button class="btn btn-sm sbtn" title="Person entfernen" aria-label="Person entfernen" onclick="deleteAppUser(\''+p.id+'\',\''+String(p.name).replace(/'/g,"\\'")+'\')"><i class="ti ti-trash"></i></button>';
     else actions+='<button class="btn btn-sm sbtn" title="Mitarbeiter öffnen" aria-label="Mitarbeiter öffnen" onclick="selectEmp(\''+p.id+'\')"><i class="ti ti-arrow-right"></i></button>';
-    var bg=i%2?'background:rgba(32,106,114,0.035)':'';
+    var bg=i%2?'background:var(--s-tint)':'';
     return '<tr style="'+bg+'"><td style="'+TD+'"><div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:6px;background:#e3ebea;color:var(--purple);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+esc(ini)+'</span><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">'+esc(p.name)+'</span><span style="font-size:11.5px;color:var(--text3)">'+esc(p.kind==='app'?(p.role==='admin'?'Admin':'Betrachter'):p.sub)+'</span></div></div></td>'
       +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+'</td>'
       +'<td style="'+TD+';font-size:12.5px;color:'+acc[1]+'">'+acc[0]+'</td><td style="'+TD+';text-align:right;white-space:nowrap"><div style="display:inline-flex;gap:6px">'+actions+'</div></td></tr>';
@@ -1431,7 +1433,7 @@ function agentLogin(action,empId){
     setTimeout(function(){
       var m2=document.getElementById('al-msg'); if(!m2) return;
       if(action==='remove'){ m2.innerHTML='<span style="color:var(--purple)">Zugang entfernt.</span>'; return; }
-      m2.innerHTML='<div style="background:rgba(32,106,114,0.08);border-radius:10px;padding:10px 12px"><b>'+(action==='create'?'Zugang angelegt.':'Passwort neu gesetzt.')+'</b> Bitte jetzt notieren und dem Mitarbeiter persönlich geben – es wird nicht gespeichert:<br>'
+      m2.innerHTML='<div style="background:var(--s-tint);border-radius:10px;padding:10px 12px"><b>'+(action==='create'?'Zugang angelegt.':'Passwort neu gesetzt.')+'</b> Bitte jetzt notieren und dem Mitarbeiter persönlich geben – es wird nicht gespeichert:<br>'
         +'E-Mail: <b>'+esc(emp.email||'')+'</b> · Passwort: <b style="font-family:monospace">'+esc(pw)+'</b></div>';
     },50);
   }).catch(function(e){ msg.innerHTML='<span style="color:var(--red)">Server nicht erreichbar: '+esc(e.message||String(e))+'. Ist die Funktion „agent-login“ in Supabase eingerichtet?</span>'; });
@@ -2038,7 +2040,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
   h+='<div class="card-title"><i class="ti ti-chart-bar"></i> QA-Calls · Sessions · Simulationen <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">(gesamt, Team)</span></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">'
     +'<div style="background:rgba(126,210,219,0.18);border:1px solid #7ED2DB;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#3f6c72">QA-CALLS</div><div style="font-size:22px;font-weight:700;color:#3f6c72;margin-top:4px">'+totQA+'</div></div>'
-    +'<div style="background:rgba(32,106,114,0.10);border:1px solid #206A72;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#206A72">SESSIONS</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSess+'</div></div>'
+    +'<div style="background:var(--s-tint-strong);border:1px solid #206A72;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#206A72">SESSIONS</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSess+'</div></div>'
     +'<div style="background:rgba(50,168,180,0.12);border:1px solid #32A8B4;border-radius:var(--r-lg);padding:12px 14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#206A72">SIMULATIONEN</div><div style="font-size:22px;font-weight:700;color:#206A72;margin-top:4px">'+totSim+'</div></div>'
     +'</div>';
   h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
@@ -2051,7 +2053,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
     var q=(callRatings[e.id]||[]).length;
     var s=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).length;
     var sim=(solidroadData[e.id]&&solidroadData[e.id].simulations)?solidroadData[e.id].simulations.length:0;
-    h+='<tr style="'+(idx%2===1?'background:rgba(32,106,114,0.07);':'')+'cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'
+    h+='<tr style="'+(idx%2===1?'background:var(--s-tint);':'')+'cursor:pointer" onclick="selectEmp(\''+e.id+'\')">'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);font-weight:500">'+esc(e.name)+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);text-align:right">'+q+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);text-align:right">'+s+'</td>'
@@ -2070,7 +2072,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
     h+='<div style="display:flex;flex-direction:column;gap:6px">';
     bedarfListe.forEach(function(x){
       var c=COLORS[x.e.color%COLORS.length];
-      h+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(0,0,0,0.03);border:1px solid var(--border2);border-radius:var(--r-md);cursor:pointer" onclick="selectEmp(\''+x.e.id+'\')">'
+      h+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-md);cursor:pointer" onclick="selectEmp(\''+x.e.id+'\')">'
         +'<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.e.name)+'</div>'
         +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+x.e.name+'</div>'
         +'<div style="font-size:11px;color:var(--red)">'+x.weak.map(function(w){return w.label+' (Ø '+w.avg.toFixed(1)+'/4)';}).join(' · ')+'</div></div>'
@@ -2091,7 +2093,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
     qaDueListe.forEach(function(x){
       var c=COLORS[x.e.color%COLORS.length];
       var col=x.cnt===0?'var(--red)':'var(--amber-dark)';
-      h+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(0,0,0,0.03);border:1px solid var(--border2);border-radius:var(--r-md)">'
+      h+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-md)">'
         +'<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.e.name)+'</div>'
         +'<div style="flex:1;min-width:0;cursor:pointer" onclick="selectEmp(\''+x.e.id+'\')"><div style="font-weight:600;font-size:13px">'+esc(x.e.name)+'</div><div style="font-size:11px;color:var(--text2)">'+x.e.role+'</div></div>'
         +'<span style="font-size:14px;font-weight:700;color:'+col+'">'+x.cnt+'/5</span>'
@@ -2460,7 +2462,7 @@ function renderCoachingAnsicht(){
     +'</div>';
   h+=buildCalNavControls();
   h+='</div>';
-  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid #164e54;background:rgba(32,106,114,0.1);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#164e54;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#7ED2DB;display:inline-block"></span>Abgeschlossen</span></div>';
+  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid #164e54;background:var(--s-tint-strong);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#164e54;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#7ED2DB;display:inline-block"></span>Abgeschlossen</span></div>';
   h+='</div>';
   h+=(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
 
@@ -2509,7 +2511,7 @@ function renderCoachingAnsicht(){
       var pTyp=(x.t||'').replace(/[<>"']/g,'');
       var pFok=(x.f||'').replace(/[<>"']/g,'');
       var pUhr=(x.uhrzeit||'').replace(/[<>"']/g,'');
-      h+='<div style="background:rgba(0,0,0,0.045);border:1px solid var(--border2);border-radius:var(--r-lg);padding:11px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="openPlannedSession(\''+x.eid+'\',\''+x.sid+'\',\''+pTyp+'\',\''+pFok+'\',\''+x.d+'\',\''+pUhr+'\')">';
+      h+='<div style="background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-lg);padding:11px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="openPlannedSession(\''+x.eid+'\',\''+x.sid+'\',\''+pTyp+'\',\''+pFok+'\',\''+x.d+'\',\''+pUhr+'\')">';
       h+='<div style="min-width:46px;text-align:center;background:var(--purple-bg);border-radius:var(--r-md);padding:6px 8px;flex-shrink:0"><div style="font-size:10px;font-weight:600;color:var(--purple)">'+wday(x.d)+'</div><div style="font-size:21px;font-weight:700;color:var(--purple);line-height:1.1">'+dt2.getDate()+'</div></div>';
       h+='<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.en)+'</div><span style="font-weight:600;font-size:13px;white-space:nowrap">'+x.en+'</span>'+(pUhr?'<span style="font-size:10px;color:var(--text2)"><i class="ti ti-clock" style="font-size:10px"></i> '+pUhr+'</span>':'')+' <span style="font-size:10px;padding:1px 6px;border-radius:20px;background:'+(df<=1?'var(--amber-bg)':'var(--bg2)')+';color:'+(df<=1?'var(--amber-dark)':'var(--text2)')+'">'+tdiff(x.d)+'</span></div><div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(pTyp||'Coaching')+(pFok?' · '+pFok:'')+'</div></div>';
       h+='<button class="btn btn-sm" data-id="'+x.eid+'" data-d="'+x.d+'" data-f="'+pFok+'" onclick="event.stopPropagation();emailSession(this.dataset.id,this.dataset.d,this.dataset.f)" title="Termin-E-Mail" style="padding:6px 9px;flex-shrink:0"><i class="ti ti-mail"></i></button>';
@@ -2539,7 +2541,7 @@ function renderCoachingAnsicht(){
     let7.forEach(function(x,idx){
       var c=ec(x.eid),r2=x.r?RS[x.r]:null;
       var _dur=sessionDuration(x.uhrzeit,x.endUhrzeit);
-      var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
+      var rowBg=idx%2===1?'background:var(--s-tint);':'';
       var tdStyle='padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:top;height:1px';
       h+='<tr style="'+rowBg+'">';
       h+='<td style="'+tdStyle+'"><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="selectEmp(\''+x.eid+'\')"><div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.en)+'</div><span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.en+'</span></div>'
@@ -3413,7 +3415,7 @@ function renderArbeitstageKalenderModal(){
   var weekChips=wMeta.map(function(wm){
     var n=0;
     Object.keys(st.tage).forEach(function(ds){if(st.tage[ds]==='work'&&ds>=wm.from&&ds<=wm.to)n++;});
-    return '<div style="flex:1;background:#f7fafa;border-radius:8px;padding:8px 6px;text-align:center;border:1px solid #e3e8e8"><div style="font-size:10px;color:#94a4a4;font-weight:600">KW '+wm.kw+'</div><div style="font-size:16px;font-weight:800;color:#0c3b40;margin-top:2px">'+n+'</div></div>';
+    return '<div style="flex:1;background:var(--s-sub);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid #e3e8e8"><div style="font-size:10px;color:#94a4a4;font-weight:600">KW '+wm.kw+'</div><div style="font-size:16px;font-weight:800;color:#0c3b40;margin-top:2px">'+n+'</div></div>';
   }).join('');
   var html='<div id="arbeitstage-kalender-overlay" style="position:fixed;inset:0;background:rgba(15,35,38,0.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)closeArbeitstageKalender()">'
     +'<div style="background:#fff;border-radius:16px;width:520px;max-width:92vw;box-shadow:0 20px 50px rgba(0,0,0,0.25);overflow:hidden">'
@@ -3429,7 +3431,7 @@ function renderArbeitstageKalenderModal(){
     +'<div style="font-size:11px;color:#94a4a4;margin-top:10px">Klicke einen Tag mehrfach: Arbeitstag → Frei → Urlaub → Krank → Arbeitstag …</div>'
     +'<div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:#5c7070;flex-wrap:wrap">'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#7ED2DB"></span>Arbeitstag</span>'
-    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#f4f6f6;border:1px solid #e3e8e8"></span>Frei</span>'
+    +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:var(--s-sub);border:1px solid #e3e8e8"></span>Frei</span>'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#e8ecfb;border:1px solid #d3d9f5"></span>Urlaub</span>'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;background:#fff2e0;border:1px solid #f5dfb8"></span>Krank</span>'
     +'<span><span style="width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;border:1px solid #d5dcdc"></span>Wochenende</span>'
@@ -3440,7 +3442,7 @@ function renderArbeitstageKalenderModal(){
     +'<div style="display:flex;gap:8px">'+weekChips+'</div>'
     +'</div>'
     +'</div>'
-    +'<div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid #e3e8e8;background:#fafcfc">'
+    +'<div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid #e3e8e8;background:var(--s-sub)">'
     +'<button onclick="closeArbeitstageKalender()" style="padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #e3e8e8;background:transparent;color:#5c7070">Abbrechen</button>'
     +'<button onclick="uebernehmeArbeitstageKalender()" style="padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#164e54;color:#fff">Übernehmen</button>'
     +'</div>'
@@ -3511,7 +3513,7 @@ function wochenzielKachelnHtml(){
       var pct=target>0?Math.round(ist/target*100):(ist>0?100:0);
       var isCur=wm.kw===curKw;
       if(isFuture){
-        out+='<div style="flex:1 1 120px;min-width:0;border:1px dashed var(--border2);background:rgba(32,106,114,0.04);border-radius:12px;padding:12px;opacity:0.6">'
+        out+='<div style="flex:1 1 120px;min-width:0;border:1px dashed var(--border2);background:var(--s-tint);border-radius:12px;padding:12px;opacity:0.6">'
           +'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">KW '+wm.kw+'</div>'
           +'<div style="font-size:16px;font-weight:700;color:var(--text3)">–</div>'
           +'<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
@@ -3520,7 +3522,7 @@ function wochenzielKachelnHtml(){
           +'</div>';
       } else {
         var barColor=pct>=100?'#206A72':'#B23A3A';
-        out+='<div style="flex:1 1 120px;min-width:0;border:'+(isCur?'2px solid #206A72;background:rgba(32,106,114,0.1)':'1px solid var(--border2);background:rgba(32,106,114,0.06)')+';border-radius:12px;padding:12px">'
+        out+='<div style="flex:1 1 120px;min-width:0;border:'+(isCur?'2px solid #206A72;background:var(--s-tint-strong)':'1px solid var(--border2);background:var(--s-tint)')+';border-radius:12px;padding:12px">'
           +'<div style="font-size:11px;color:'+(isCur?'#206A72;font-weight:700':'var(--text3)')+';margin-bottom:6px">KW '+wm.kw+(isCur?' · Heute':'')+'</div>'
           +'<div style="font-size:16px;font-weight:700;color:#0c3b40">€ '+Math.round(ist).toLocaleString('de-DE')+'</div>'
           +'<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Ziel: € '+Math.round(target).toLocaleString('de-DE')+'</div>'
@@ -3777,14 +3779,14 @@ function zielvereinbarungHtml(){
       }
       teamUrlaubSum+=urlaubCount;teamKrankSum+=krankCount;
       function abwCell(n,kind){
-        var style=n>0?(kind==='urlaub'?'background:#e8ecfb;color:#3d4fb0;border:1px solid #d3d9f5':'background:#fff2e0;color:#b5720c;border:1px solid #f5dfb8'):'background:#f7fafa;color:#c3cccc;border:1px solid var(--border)';
+        var style=n>0?(kind==='urlaub'?'background:#e8ecfb;color:#3d4fb0;border:1px solid #d3d9f5':'background:#fff2e0;color:#b5720c;border:1px solid #f5dfb8'):'background:var(--s-sub);color:#c3cccc;border:1px solid var(--border)';
         return '<div style="'+GD+';justify-content:center"><div style="width:48px;height:34px;border-radius:6px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;'+style+'">'+n+'</div></div>';
       }
       var weekCells=weeksMeta.map(function(wm,i){
         var isHol=wm.holidayNames.length>0;
         return '<div style="'+GD+';justify-content:center"><input type="number" class="ziel-num" id="zf-'+e.id+'-w'+i+'" min="0" max="7" value="'+weeks[i]+'" onchange="updateZielField(\''+e.id+'\',\'week\','+i+',this.value)" onkeydown="return zielTabNav(event,this)" style="width:48px;height:34px;box-sizing:border-box;padding:0 2px;text-align:center'+(isHol?';border-color:var(--amber)':'')+'"></div>';
       }).join('');
-      var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
+      var rowBg=idx%2===1?'background:var(--s-tint);':'';
       return '<div style="display:grid;grid-template-columns:'+weekGridTemplate+';'+rowBg+'">'
         +'<div style="'+GD+'"><div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;cursor:pointer" onclick="openArbeitstageKalender(\''+e.id+'\')" title="Arbeitstage per Kalender festlegen"><div class="av" style="width:28px;height:28px;font-size:11px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(e.name)+'</div><div style="min-width:0;overflow:hidden"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">'+esc(e.name)+' <i class="ti ti-calendar-event" style="font-size:12px;color:var(--text3)"></i></div><div style="font-size:11px;color:var(--text3)">'+e.role+'</div></div></div></div>'
         +abwCell(urlaubCount,'urlaub')
@@ -3793,15 +3795,15 @@ function zielvereinbarungHtml(){
         +'<div style="'+GD+';justify-content:center;font-weight:600">'+monthSum+'</div>'
         +'<div style="'+GD+'"><input type="number" class="ziel-num" id="zf-'+e.id+'-opt" min="0" value="'+optTag+'" onchange="updateZielField(\''+e.id+'\',\'optTag\',null,this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
         +'<div style="'+GD+'"><input type="number" class="ziel-num" id="zf-'+e.id+'-marge" min="0" value="'+margeOpt+'" onchange="updateZielField(\''+e.id+'\',\'margeOpt\',null,this.value)" onkeydown="return zielTabNav(event,this)" style="height:34px;box-sizing:border-box;text-align:right"></div>'
-        +weekTargets.map(function(wt,i){return '<div style="'+GD+';justify-content:flex-end;background:rgba(32,106,114,0.05);color:var(--teal-dark,#0c3b40);font-weight:600;white-space:nowrap'+(i===0?';border-left:2px solid var(--border2)':'')+(i===weekTargets.length-1?';border-right:2px solid var(--border2)':'')+'">€ '+Math.round(wt).toLocaleString('de-DE')+'</div>';}).join('')
-        +'<div style="'+GD+';justify-content:flex-end"><span style="font-weight:700;color:#0c3b40;background:rgba(32,106,114,0.14);border-radius:6px;padding:4px 10px">€ '+Math.round(target).toLocaleString('de-DE')+'</span></div>'
+        +weekTargets.map(function(wt,i){return '<div style="'+GD+';justify-content:flex-end;background:var(--s-tint);color:var(--teal-dark,#0c3b40);font-weight:600;white-space:nowrap'+(i===0?';border-left:2px solid var(--border2)':'')+(i===weekTargets.length-1?';border-right:2px solid var(--border2)':'')+'">€ '+Math.round(wt).toLocaleString('de-DE')+'</div>';}).join('')
+        +'<div style="'+GD+';justify-content:flex-end"><span style="font-weight:700;color:#0c3b40;background:var(--s-tint-strong);border-radius:6px;padding:4px 10px">€ '+Math.round(target).toLocaleString('de-DE')+'</span></div>'
         +'<div style="'+GD+';justify-content:flex-end;color:var(--text2)">€ '+Math.round(istMarge).toLocaleString('de-DE')+'</div>'
         +'<div style="'+GD+';justify-content:center">'+pctBadge+'</div>'
         +'</div>';
     }).join('');
     var avgMarge=margeVals.length?Math.round(margeVals.reduce(function(a,b){return a+b;},0)/margeVals.length):0;
     var weekTotalCells=(teamWeekDaysSums||weeksMeta.map(function(){return 0;})).map(function(sum){return '<div style="border-top:1px solid var(--border2);justify-content:center;font-weight:700;color:#fff;padding:10px 6px;display:flex;align-items:center">'+sum+'</div>';}).join('');
-    return '<div style="grid-column:1/-1;padding:16px 14px 18px;background:rgba(32,106,114,0.03);border-top:2px solid var(--purple)">'
+    return '<div style="grid-column:1/-1;padding:16px 14px 18px;background:var(--s-tint);border-top:2px solid var(--purple)">'
       +'<div style="font-size:12.5px;font-weight:700;color:var(--purple-dark);margin-bottom:12px"><i class="ti ti-calendar-event" style="margin-right:5px"></i>Wochen-Detail · '+monthLabel+'</div>'
       +'<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2);background:var(--bg-solid,#fff)">'
       +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+'">'
@@ -3869,7 +3871,7 @@ function zielvereinbarungHtml(){
     var mPct=mTargetSum>0?Math.round(mIstSum/mTargetSum*100):(mIstSum>0?100:0);
     yearDaysSum+=mDaysSum;yearNlSum+=mNl;yearTargetSum+=mTargetSum;yearIstSum+=mIstSum;yearUrlaubSum+=mUrlaubSum;yearKrankSum+=mKrankSum;
     var isCurrent=mk===zielMonth;
-    var rowBg=isCurrent?'background:var(--purple-bg);':(m%2===0?'background:rgba(32,106,114,0.07);':'');
+    var rowBg=isCurrent?'background:var(--purple-bg);':(m%2===0?'background:var(--s-tint);':'');
     monthRows.push('<div style="display:grid;grid-template-columns:'+yearGridTemplate+';cursor:pointer;'+rowBg+(isCurrent?'border-left:3px solid var(--purple);':'')+'" onclick="toggleZielMonth(\''+mk+'\')">'
       +'<div style="'+GD+';font-weight:'+(isCurrent?'700':'600')+'"><i class="ti ti-chevron-'+(isCurrent?'down':'right')+'" style="font-size:12px;margin-right:6px;color:var(--text3)"></i>'+MONTH_NAMES_ZIEL[m-1]+'</div>'
       +'<div style="'+GD+';justify-content:center;color:var(--text2);font-weight:600">'+mVisible.length+'</div>'
@@ -5839,7 +5841,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       var rowTotalHours=sr.rowTotalHours;
       var aktPerHour=sr.aktPerH;
       function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
-      var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
+      var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+stackCell(rowEmp.name,rowEmp.role||'',null,'left')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCell(g.label,(overviewPerfGroup!=='day'?g.count+' Tage':''),null,'left')+'</td>'
@@ -5854,15 +5856,15 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         +(function(){
           var optPerHVal=rowTotalHours>0?optGes/rowTotalHours:0;
           var colStyle=rowTotalHours>0?fc(Math.round(optPerHVal*10)/10,rowEmpT.optPerH.val,rowEmpT.optPerH.dir):'';
-          return '<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+colStyle+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\','+(rowTotalHours>0?optPerHVal.toFixed(1):'—')+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((rowTotalHours>0?optPerHVal.toFixed(1):'—'),null)+'</td>';
+          return '<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:var(--s-tint);text-align:right;'+colStyle+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\','+(rowTotalHours>0?optPerHVal.toFixed(1):'—')+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((rowTotalHours>0?optPerHVal.toFixed(1):'—'),null)+'</td>';
         })()
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+';cursor:help" onmouseenter="showCrTooltip(event,'+crGesamtTooltip+','+crOEM+','+crUpsTooltip+','+crWkaTooltip+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+tw+',\'TW+Yes+SY+MY\','+(tw+yes+sy+my)+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',tw)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR Yes = Yes / (Yes+SY+MY)\',\'Yes\','+yes+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR Yes\',\''+crYes+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crYes+'%',yes)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSyMy,rowEmpT.crSyMy.val,rowEmpT.crSyMy.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(sy+my)+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',sy+my)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+sy+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',sy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+my+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',my)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(Math.round(optGes>0?convOEM/optGes*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(convOEM/optGes*100):0)+'%',null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+';cursor:help" onmouseenter="showCrTooltip(event,'+crGesamtTooltip+','+crOEM+','+crUpsTooltip+','+crWkaTooltip+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+tw+',\'TW+Yes+SY+MY\','+(tw+yes+sy+my)+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',tw)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR Yes = Yes / (Yes+SY+MY)\',\'Yes\','+yes+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR Yes\',\''+crYes+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crYes+'%',yes)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSyMy,rowEmpT.crSyMy.val,rowEmpT.crSyMy.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(sy+my)+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',sy+my)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+sy+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',sy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+my+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',my)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(Math.round(optGes>0?convOEM/optGes*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(convOEM/optGes*100):0)+'%',null)+'</td>'
         +(rowEmp.id==='__agg__'?'<td style="padding:16px 14px;border-bottom:1px solid var(--border)"></td>':'<td style="padding:16px 14px;border-bottom:1px solid var(--border);white-space:nowrap"><div style="display:flex;gap:6px">'+(hideMemberCol?'':'<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button>')+'<button class="btn btn-sm" onclick="event.stopPropagation();openCoachingInfoModal(\''+rowEmp.id+'\')"><i class="ti ti-info-circle"></i> Info</button></div></td>')
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(margeOEMVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeUpsVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeWkaVal).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—'))+'</td>'
         +'</tr>';
@@ -5901,7 +5903,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       function decCnt(dec,cnt){return stackCell(dec.toFixed(1),cnt,'opacity:.75');}
       // Highlight-Varianten fuer Summe (dunkler Hintergrund -> helle Aufhellung) und Durchschnitt (heller Hintergrund -> Petrol-Toenung)
       function sumTdH(v,fmt,align,edge){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#fff;background:rgba(255,255,255,0.06)'+(edge==='l'?';border-left:2px solid rgba(255,255,255,0.3)':'')+(edge==='r'?';border-right:2px solid rgba(255,255,255,0.3)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
-      function avgTdH(v,fmt,align,edge){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#0c3b40;background:rgba(32,106,114,0.1)'+(edge==='l'?';border-left:2px solid var(--border2)':'')+(edge==='r'?';border-right:2px solid var(--border2)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
+      function avgTdH(v,fmt,align,edge){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#0c3b40;background:var(--s-tint-strong)'+(edge==='l'?';border-left:2px solid var(--border2)':'')+(edge==='r'?';border-right:2px solid var(--border2)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
       // Trennzeile: kleiner visueller Abstand zwischen Mitarbeiter-Zeilen und Summe/Durchschnitt
       h+='<tr><td colspan="20" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
       h+='<tr class="perf-sum-row" style="background:#0c3b40">'
@@ -5914,7 +5916,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         +'<td style="padding:13px 14px"></td>'
         +sumTd(stackCell(eur(sumMarge),'€'+Math.round(margeDurchCalc).toLocaleString('de-DE'),'opacity:.75'),null,'right')
         +'</tr>';
-      h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
+      h+='<tr class="perf-avg-row" style="background:var(--s-tint-strong)">'
         +'<td style="padding:13px 14px;font-weight:700;color:#0c3b40" colspan="2">Ø Durchschnitt</td>'
         +avgTd(decCnt(aktPerHourCalc,rnd1(sumAkt/rowCount)))+avgTd(cntPct(rnd1(sumNotR/rowCount),notRpct))+avgTd(cntPct(rnd1(sumNotP/rowCount),notPpct))+avgTd(cntPct(rnd1(sumNotS/rowCount),notSpct))
         +avgTd(cntPct(rnd1(sumConvOEM/rowCount),anteilOEMcalc))
@@ -6033,7 +6035,7 @@ function renderTeam(){
     var lsType=_ls?(_ls.type||'—'):'—';
     var lsTopics=_ls&&_ls.topics&&_ls.topics.length?_ls.topics.slice(0,2).join(', '):'—';
 
-    rows+='<tr style="cursor:pointer;'+(rowIdx%2===1?'background:rgba(32,106,114,0.07);':'')+'" onclick="selectEmp(\''+e.id+'\')">'
+    rows+='<tr style="cursor:pointer;'+(rowIdx%2===1?'background:var(--s-tint);':'')+'" onclick="selectEmp(\''+e.id+'\')">'
       // Mitarbeiter
       +'<td style="padding:10px 14px;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;align-items:center;gap:9px">'
@@ -6945,7 +6947,7 @@ function renderTab(){
       callRat.forEach(function(r,rdx){
         var cardId='cr'+emp.id+'x'+rdx;
         var ts=totalScore(r);var tcol=ts>=75?'var(--teal-dark)':ts>=50?'var(--amber-dark)':'var(--red)';
-        html+='<div style="background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden">';
+        html+='<div style="background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden">';
         html+='<div class="sess-hdr" data-eid="'+cardId+'" onclick="toggleSessCard(this.dataset.eid)" style="display:flex;align-items:center;gap:10px;padding:16px 14px;cursor:pointer;user-select:none;font-size:13px">';
         html+='<span style="font-size:13px;font-weight:700;white-space:nowrap">'+fd(r.date)+'</span>';
         html+='<span style="font-size:13px;color:var(--text2);background:var(--bg-solid);padding:2px 8px;border-radius:20px;flex-shrink:0">'+(r.b2b||'B2C')+'</span>';
@@ -7140,7 +7142,7 @@ function renderTab(){
             var curVal=recentP.length?recentP.reduce(function(a,x){return a+(x[g.metricKey]||0);},0)/recentP.length:null;
             metaParts.push('Aktuell (Ø 30 Tage): '+(curVal!==null?Math.round(curVal)+'%':'—')+' → Ziel: '+g.targetValue+'% ('+focusMetricLabel(g.metricKey)+')');
           }
-          html+='<div style="background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md);padding:12px 14px">'
+          html+='<div style="background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md);padding:12px 14px">'
             +'<div style="display:flex;align-items:center;gap:10px">'
             +'<div style="flex:1;font-size:13px;font-weight:600">'+esc(g.description)+'</div>'
             +'<select data-id="'+g.id+'" onchange="updateGoalStatus(this.dataset.id,this.value)" style="width:auto;flex-shrink:0;font-size:11px;font-weight:600;padding:4px 8px;border:none;border-radius:20px;background:'+statusBg+';color:'+statusCol+'">'
@@ -7172,7 +7174,7 @@ function renderTab(){
         if(item.type==='comment'){
           var c=item.data;
           var tcol=commentTypeCol[c.commentType]||'#5c7070';
-          html+='<div style="background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px">'
+          html+='<div style="background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px">'
             +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
             +'<span style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(c.date)+'</span>'
             +'<span style="font-size:10px;font-weight:700;color:#fff;background:'+tcol+';padding:2px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:.03em">'+esc(c.commentType)+'</span>'
@@ -7189,7 +7191,7 @@ function renderTab(){
         var eid='ev'+emp.id+'x'+idx;
         var overallAvg=(DIMS.reduce(function(a,d){return a+(ev[d.key]||0);},0)/DIMS.length).toFixed(1);
         var avgCol=overallAvg>=7?'var(--teal-dark)':overallAvg>=4?'var(--purple)':'var(--amber-dark)';
-        html+='<div style="background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden">';
+        html+='<div style="background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden">';
         html+='<div class="sess-hdr" data-eid="'+eid+'" onclick="toggleSessCard(this.dataset.eid)" style="display:flex;align-items:center;gap:10px;padding:10px 14px;min-height:44px;cursor:pointer;user-select:none">';
         html+='<span style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(ev.date)+'</span>';
         html+='<span style="flex:1"></span>';
@@ -7388,7 +7390,7 @@ function renderTab(){
         var dtP=new Date(s.date+'T00:00:00'),dfP=Math.round((dtP-new Date(today()+'T00:00:00'))/86400000);
         var whenTxt=dfP===0?'Heute':dfP===1?'Morgen':dfP<0?'Überfällig':'in '+dfP+' Tagen';
         var whenCol=dfP<0?'var(--red)':dfP<=1?'var(--amber-dark)':'var(--purple)';
-        html+='<div style="background:rgba(0,0,0,0.045);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" data-eid="'+emp.id+'" data-sid="'+s.id+'" data-typ="'+(s.type||'')+'" data-fokus="'+(s.focus||'')+'" data-datum="'+s.date+'" data-uhrzeit="'+(s.uhrzeit||'')+'" onclick="openPlannedSession(this.dataset.eid,this.dataset.sid,this.dataset.typ,this.dataset.fokus,this.dataset.datum,this.dataset.uhrzeit)">';
+        html+='<div style="background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" data-eid="'+emp.id+'" data-sid="'+s.id+'" data-typ="'+(s.type||'')+'" data-fokus="'+(s.focus||'')+'" data-datum="'+s.date+'" data-uhrzeit="'+(s.uhrzeit||'')+'" onclick="openPlannedSession(this.dataset.eid,this.dataset.sid,this.dataset.typ,this.dataset.fokus,this.dataset.datum,this.dataset.uhrzeit)">';
         html+='<div style="width:8px;height:8px;border-radius:50%;background:'+whenCol+';flex-shrink:0"></div>';
         html+='<div style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(s.date)+(s.uhrzeit?' · '+s.uhrzeit:'')+'</div>';
         html+='<span class="badge">'+(s.type||'Coaching')+'</span>';
@@ -7429,7 +7431,7 @@ function renderTab(){
         var RM={Teilweise:{c:'var(--amber)'},Yes:{c:'var(--teal)'},'Super Yes':{c:'var(--purple)'},'Mega Yes':{c:'var(--blue)'}};
         var rm=s.rating?RM[s.rating]:null;
         var _dur=sessionDuration(s.uhrzeit,s.endUhrzeit);
-        var rowBg=idx%2===1?'background:rgba(32,106,114,0.07);':'';
+        var rowBg=idx%2===1?'background:var(--s-tint);':'';
         var tdStyle='padding:16px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top;height:1px';
         html+='<tr style="'+rowBg+'">';
         html+='<td style="'+tdStyle+';white-space:nowrap">';
@@ -7776,14 +7778,14 @@ function renderTab(){
           var weekTotal=0;
           days.forEach(function(d,ridx){
             var dv=wh[d.key]||DEFAULT_WH[d.key];
-            var rowBg=ridx%2===1?'background:#fafcfc;':'';
+            var rowBg=ridx%2===1?'background:var(--s-tint);':'';
             var netH=calcNetHours(dv.von,dv.bis,dv.pause);
             weekTotal+=netH;
             html+='<tr style="'+rowBg+'">'
               +'<td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1;width:240px">'+d.lbl+'</td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-von" value="'+(dv.von||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-bis" value="'+(dv.bis||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="es-wh-'+d.key+'-pause" value="'+(dv.pause!=null?dv.pause:30)+'" step="5" min="0" max="180" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-von" value="'+(dv.von||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="time" id="es-wh-'+d.key+'-bis" value="'+(dv.bis||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><input type="number" id="es-wh-'+d.key+'-pause" value="'+(dv.pause!=null?dv.pause:30)+'" step="5" min="0" max="180" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
               +'<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1"><span id="es-wh-'+d.key+'-result" style="font-size:13px;font-weight:700;color:var(--text)">'+netH.toFixed(1)+' Std.</span></td>'
               +'</tr>';
           });
@@ -7827,7 +7829,7 @@ function renderTab(){
             +'</div>';
         }
         html+='<div class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">';
-        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px">BONUSVEREINBARUNG WEWOW <span style="font-size:10px;font-weight:600;color:var(--purple-dark);background:rgba(32,106,114,.12);padding:2px 8px;border-radius:20px;letter-spacing:0">VLC · Valencia</span></div>';
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px">BONUSVEREINBARUNG WEWOW <span style="font-size:10px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;letter-spacing:0">VLC · Valencia</span></div>';
         html+='<div style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
         html+=vlcStrip('Service Rate/Mon. (netto)','pv-vlc-serviceRate',vpv.serviceRate,'€',10);
         html+=vlcStrip('Bonus/Opt.','pv-vlc-bonusProOpt',vpv.bonusProOpt,'€',0.05);
@@ -7863,19 +7865,19 @@ function renderTab(){
           monatSets.forEach(function(mset,mi){tbl+='<th style="background:'+(mi===esCurIdx?'#206A72':'#0c3b40')+';color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+mset.label+(mi===esCurIdx?' · aktuell':'')+'</th>';});
           tbl+='</tr></thead><tbody>';
           fieldRows.forEach(function(fld,ridx){
-            var rowBg=ridx%2===1?'background:#fafcfc;':'';
+            var rowBg=ridx%2===1?'background:var(--s-tint);':'';
             if(fld.vlc){
               tbl+='<tr class="pv-vlc-block" style="'+rowBg+(isVlcModel?'':'display:none;')+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1;width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fld.lbl+'</td>';
               monatSets.forEach(function(mset,mi){
                 var vv=(vpv[mset.key]||{})[fld.f];
-                tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1;'+(mi===esCurIdx?'background:rgba(32,106,114,.06)':'')+'"><input type="number" id="pv-vlc-'+mset.key+'-'+fld.f+'" value="'+(vv!=null?vv:'')+'" placeholder="–" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>';
+                tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1;'+(mi===esCurIdx?'background:var(--s-tint)':'')+'"><input type="number" id="pv-vlc-'+mset.key+'-'+fld.f+'" value="'+(vv!=null?vv:'')+'" placeholder="–" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
               });
               tbl+='</tr>';
               return;
             }
             tbl+='<tr style="'+rowBg+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1;width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fld.lbl+'</td>';
             monatSets.forEach(function(mset,mi){
-              tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1;'+(mi===esCurIdx?'background:rgba(32,106,114,.06)':'')+'"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc"></td>';
+              tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #eef1f1;'+(mi===esCurIdx?'background:var(--s-tint)':'')+'"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
             });
             tbl+='</tr>';
           });
@@ -7907,7 +7909,7 @@ function renderTab(){
           var TH='background:#0c3b40;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center';
           var TD0='padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #eef1f1;width:240px';
           var TD='padding:8px;text-align:center;border-bottom:1px solid #eef1f1;font-size:12.5px;color:var(--text2)';
-          var INP='width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:#fbfcfc';
+          var INP='width:64px;padding:6px;border:1px solid #c8d2d4;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)';
           function inp(id,v,step){return '<input type="number" id="'+id+'" value="'+(v!=null?v:'')+'" placeholder="–" step="'+(step||1)+'" min="0" style="'+INP+'">';}
           var rows=[{f:'optH',lbl:'Opt./Std. (mind.)'},{f:'syMy',lbl:'SY/MY-Anteil (mind.) %'},{f:'crOem',lbl:'CR OEM (mind.) %'}];
           var months=[{k:'monat1',l:'Monat 1'},{k:'monat2',l:'Monat 2'},{k:'monat3plus',l:'Ab Monat 3'}];
@@ -7917,8 +7919,8 @@ function renderTab(){
           months.forEach(function(m,mi){t+='<th style="'+TH+(mi===esCurIdx?';background:#206A72':'')+'">'+m.l+(mi===esCurIdx?' · aktuell':'')+'</th>';});
           t+='</tr></thead><tbody>';
           rows.forEach(function(r,ri){
-            t+='<tr style="'+(ri%2===1?'background:#fafcfc;':'')+'"><td style="'+TD0+'">'+r.lbl+'</td>';
-            months.forEach(function(m,mi){t+='<td style="'+TD+(mi===esCurIdx?';background:rgba(32,106,114,.06)':'')+'">'+inp('pv-vlc-'+m.k+'-'+r.f,(vpv[m.k]||{})[r.f],r.f==='optH'?0.1:1)+'</td>';});
+            t+='<tr style="'+(ri%2===1?'background:var(--s-tint);':'')+'"><td style="'+TD0+'">'+r.lbl+'</td>';
+            months.forEach(function(m,mi){t+='<td style="'+TD+(mi===esCurIdx?';background:var(--s-tint)':'')+'">'+inp('pv-vlc-'+m.k+'-'+r.f,(vpv[m.k]||{})[r.f],r.f==='optH'?0.1:1)+'</td>';});
             t+='</tr>';
           });
           t+='</tbody></table></div>';
@@ -7931,14 +7933,14 @@ function renderTab(){
           t2+='<thead><tr><th style="'+TH+';text-align:left;padding-left:12px;width:240px">Kennzahl</th><th style="'+TH+'">Ziel verfehlt → Auszahlung</th><th style="'+TH+'">Untergrenze</th><th style="'+TH+'">Unter Untergrenze → Auszahlung</th></tr></thead><tbody>';
           [{f:'optH',lbl:'Opt./Std.',unit:''},{f:'syMy',lbl:'SY/MY-Anteil',unit:' %'},{f:'crOem',lbl:'CR OEM',unit:' %'}].forEach(function(r,ri){
             var o=st[r.f]||{};
-            t2+='<tr style="'+(ri%2===1?'background:#fafcfc;':'')+'"><td style="'+TD0+'">'+r.lbl+'</td>'
+            t2+='<tr style="'+(ri%2===1?'background:var(--s-tint);':'')+'"><td style="'+TD0+'">'+r.lbl+'</td>'
               +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-aus1',o.aus1,5)+' %</td>'
               +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-grenze',o.grenze,1)+r.unit+'</td>'
               +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-aus2',o.aus2,5)+' %</td></tr>';
           });
           t2+='</tbody></table></div>';
           html+=t2;
-          html+='<div style="font-size:12px;color:var(--text2);background:rgba(32,106,114,.07);border-radius:8px;padding:9px 12px;margin-bottom:16px;line-height:1.5"><i class="ti ti-info-circle" style="color:var(--purple)"></i> Werden mehrere Ziele verfehlt, gilt <b style="color:var(--purple-dark)">nur die schlechteste Stufe</b>, die Kürzungen werden nicht multipliziert. Opt./Std. = Optimierungen gesamt geteilt durch die Arbeitsstunden im Monat (Wochenarbeitszeiten). Extra Pay wird noch nicht eingerechnet.</div>';
+          html+='<div style="font-size:12px;color:var(--text2);background:var(--s-tint);border-radius:8px;padding:9px 12px;margin-bottom:16px;line-height:1.5"><i class="ti ti-info-circle" style="color:var(--purple)"></i> Werden mehrere Ziele verfehlt, gilt <b style="color:var(--purple-dark)">nur die schlechteste Stufe</b>, die Kürzungen werden nicht multipliziert. Opt./Std. = Optimierungen gesamt geteilt durch die Arbeitsstunden im Monat (Wochenarbeitszeiten). Extra Pay wird noch nicht eingerechnet.</div>';
         })();
         html+='</div>'; // pv-vlc-block (Stufen)
         cut('prov');
@@ -7982,12 +7984,12 @@ function renderTab(){
           {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('9 Kennzahlen')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
         ];
         var card='<div class="card"><div class="card-title"><i class="ti ti-user"></i> Stammdaten &amp; Provisionsvereinbarung '
-          +deOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:rgba(32,106,114,.12);padding:2px 8px;border-radius:20px;margin-left:4px">Provisionsvereinbarung Olching</span>')
-          +vlcOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:rgba(32,106,114,.12);padding:2px 8px;border-radius:20px;margin-left:4px">Bonusvereinbarung weWow · VLC</span>')+'</div>';
-        card+='<div style="font-size:12.5px;color:var(--text2);background:#f2f3f0;border:1px solid var(--border);border-radius:8px;padding:10px 13px;margin-bottom:12px;line-height:1.6"><div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:4px">SO WIRD GERECHNET</div>'+deOnly(regelDe)+vlcOnly(regelVlc)+'</div>';
+          +deOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;margin-left:4px">Provisionsvereinbarung Olching</span>')
+          +vlcOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;margin-left:4px">Bonusvereinbarung weWow · VLC</span>')+'</div>';
+        card+='<div style="font-size:12.5px;color:var(--text2);background:var(--s-sub);border:1px solid var(--border);border-radius:8px;padding:10px 13px;margin-bottom:12px;line-height:1.6"><div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:4px">SO WIRD GERECHNET</div>'+deOnly(regelDe)+vlcOnly(regelVlc)+'</div>';
         sections.forEach(function(sec){
           var open=!!esOpenSections[sec.n];
-          card+='<div class="es-acc" data-sec="'+sec.n+'" style="background:#f2f3f0;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">'
+          card+='<div class="es-acc" data-sec="'+sec.n+'" style="background:var(--s-sub);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">'
             +'<div onclick="esToggleSection('+sec.n+',this.parentNode)" style="display:flex;align-items:center;gap:14px;padding:15px 18px;cursor:pointer">'
             +'<span style="width:28px;height:28px;border-radius:7px;background:#0c3b40;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+sec.n+'</span>'
             +'<span style="font-weight:700;font-size:14.5px;min-width:230px">'+sec.t+'</span>'
@@ -7998,7 +8000,7 @@ function renderTab(){
         var esHist=(typeof employeeHistory!=='undefined'&&employeeHistory[emp.id])||[];
         var esLast=null; esHist.forEach(function(r){if(r.changedAt&&(!esLast||r.changedAt>esLast.changedAt))esLast=r;});
         var esLastTxt=esLast?'Zuletzt geändert am '+new Date(esLast.changedAt).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})+(esLast.changedByName?' von '+esc(esLast.changedByName):''):'Änderungen werden erst mit „Alles speichern“ übernommen.';
-        card+='<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:13px 18px;background:#f2f3f0;border:1px solid var(--border);border-radius:10px">'
+        card+='<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:13px 18px;background:var(--s-sub);border:1px solid var(--border);border-radius:10px">'
           +'<span id="pv-save-status" style="font-size:12.5px;color:var(--text3);margin-right:auto">'+esLastTxt+'</span>'
           +'<button class="btn" style="width:auto;height:34px" onclick="renderEmpDetail()"><i class="ti ti-arrow-back-up"></i> Verwerfen</button>'
           +'<button class="btn btn-primary" style="width:auto;height:34px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid);saveEmpEinstellungen()"><i class="ti ti-check"></i> Alles speichern</button></div>';
@@ -8010,7 +8012,7 @@ function renderTab(){
         var hasLogin=!!emp.auth_user_id;
         html+='<div class="card" id="agentLoginCard"><div class="card-title"><i class="ti ti-puzzle"></i> Zugang zur Sales-OS-Erweiterung</div>';
         html+='<p style="font-size:12px;color:var(--text2);margin:0 0 12px;line-height:1.5">'+(hasLogin
-          ?'<span class="badge" style="background:rgba(32,106,114,0.10);color:var(--purple);padding:3px 9px;border-radius:20px;font-weight:600">Zugang aktiv</span> &nbsp;Anmeldung mit <b>'+esc(emp.email||'')+'</b>. Der Mitarbeiter sieht in der Erweiterung nur seine eigenen Zahlen und kommt nicht ins Board.'
+          ?'<span class="badge" style="background:var(--s-tint-strong);color:var(--purple);padding:3px 9px;border-radius:20px;font-weight:600">Zugang aktiv</span> &nbsp;Anmeldung mit <b>'+esc(emp.email||'')+'</b>. Der Mitarbeiter sieht in der Erweiterung nur seine eigenen Zahlen und kommt nicht ins Board.'
           :(emp.email?'Noch kein Zugang. Der Login wird mit <b>'+esc(emp.email)+'</b> angelegt.':'<b style="color:var(--red)">Bitte zuerst oben unter Person eine E-Mail-Adresse hinterlegen und speichern.</b>'))+'</p>';
         if(emp.email||hasLogin){
           html+='<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">'
@@ -8319,7 +8321,7 @@ function renderTab(){
           var good=delta!==null&&(target===null?delta>0:(tk&&empT[tk]&&empT[tk].dir==='lte'?delta<0:delta>0));
           var deltaTxt=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1);
           var arrow=delta===null?'':(delta>0?'↑':delta<0?'↓':'→');
-          return '<div style="display:flex;align-items:center;gap:14px;padding:10px 12px;margin-bottom:6px;background:rgba(32,106,114,0.07);border:1px solid var(--border2);border-radius:var(--r-md)">'
+          return '<div style="display:flex;align-items:center;gap:14px;padding:10px 12px;margin-bottom:6px;background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md)">'
             +'<div style="width:80px;font-size:12px;font-weight:600;flex-shrink:0">'+fd(s.date)+'</div>'
             +'<div style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.type||'Coaching')+(s.focus?' · '+s.focus:'')+'</div>'
             +'<div style="font-size:11px;color:var(--text2);font-weight:600;width:70px;text-align:right">Ø vorher<br><b style="font-size:14px;color:var(--text)">'+(before!==null?before.toFixed(1):'—')+'</b></div>'
@@ -8328,7 +8330,7 @@ function renderTab(){
             +'</div>';
         }
         function buildPlaceholderRow(){
-          return '<div style="display:flex;align-items:center;gap:14px;padding:10px 12px;margin-bottom:6px;background:rgba(32,106,114,0.04);border:1px solid var(--border2);border-radius:var(--r-md)">'
+          return '<div style="display:flex;align-items:center;gap:14px;padding:10px 12px;margin-bottom:6px;background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md)">'
             +'<div style="width:80px;font-size:12px;font-weight:600;flex-shrink:0;color:var(--text3)">—</div>'
             +'<div style="flex:1;font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Keine Coaching Session vorhanden</div>'
             +'<div style="font-size:11px;color:var(--text3);font-weight:600;width:70px;text-align:right">Ø vorher<br><b style="font-size:14px;color:var(--text3)">—</b></div>'
@@ -8473,7 +8475,7 @@ function renderActivity(){
       var timeStr=isNaN(dt)?'':dt.toLocaleString('de-DE',{hour:'2-digit',minute:'2-digit'});
       var dateStr=isNaN(dt)?'':fd(a.createdAt.slice(0,10));
       var isToday=a.createdAt&&a.createdAt.slice(0,10)===today();
-      h+='<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:rgba(0,0,0,0.03);border:1px solid var(--border2);border-radius:var(--r-md)">';
+      h+='<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-md)">';
       h+='<div style="width:70px;flex-shrink:0;font-size:11px;color:var(--text3);padding-top:2px">'+(isToday?timeStr:dateStr)+'</div>';
       h+='<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0" title="'+esc(displayName||'Unbekannt')+'">'+(displayName?ini(displayName):'?')+'</div>';
       h+='<div style="flex:1;min-width:0">';
@@ -8602,14 +8604,14 @@ function buildWizardsHtml(){
     +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Inhalt</span>'+cb('slides.opt','Optimierungen &amp; Prognose',c.slides.opt)+cb('slides.marge','Marge &amp; Prognose',c.slides.marge)+cb('slides.cr','Conversion Rates (Team)',c.slides.cr)+cb('slides.worst','Schwächste 3 je KPI',c.slides.worst)
     +'<div style="display:flex;gap:8px;align-items:center;font-size:12.5px"><label for="wizMin" style="color:var(--text2)">nur Verkäufer mit mehr als</label><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:80px"><span style="color:var(--text2)">Opt.</span></div></div>'
     +'</div><div><button class="btn btn-sm sbtn" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
-  var soon=function(t,d){return '<div class="card" style="padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;opacity:.7"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">'+t+'</span><span style="font-size:12.5px;color:var(--text2)">'+d+'</span></div><span class="badge" style="color:var(--text3);background:rgba(0,0,0,0.05)">in Planung</span></div>';};
+  var soon=function(t,d){return '<div class="card" style="padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;opacity:.7"><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600">'+t+'</span><span style="font-size:12.5px;color:var(--text2)">'+d+'</span></div><span class="badge" style="color:var(--text3);background:var(--s-sub)">in Planung</span></div>';};
   return card1+soon('Wochenstart','Montags: Vorwoche im Rückblick und Fokus-KPI je Mitarbeiter')+soon('Coaching-Erinnerung','Hinweis, wenn ein Mitarbeiter länger kein Coaching hatte');
 }
 
 // ══ Integrationen & Daten (gemeinsame Bausteine) ═════════════════════════════
 function sCard(icon,title,desc,status,body){
   return '<div class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px;margin:0">'
-    +'<div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:10px;background:rgba(32,106,114,0.10);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--purple);font-size:19px"><i class="ti '+icon+'"></i></span>'
+    +'<div style="display:flex;gap:12px;align-items:flex-start"><span style="width:40px;height:40px;border-radius:10px;background:var(--s-tint-strong);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--purple);font-size:19px"><i class="ti '+icon+'"></i></span>'
     +'<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">'+title+'</span><span style="font-size:12.5px;color:var(--text2)">'+desc+'</span></div>'+(status||'')+'</div>'+body+'</div>';
 }
 function sStatus(t,kind){
@@ -9207,7 +9209,7 @@ function buildProvisionTeamTable(){
       sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
       sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0);
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
-      var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
+      var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCellLeft(g.label,g.count+' Einsatztage')+'</td>'
@@ -9218,13 +9220,13 @@ function buildProvisionTeamTable(){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'Upsells = Opt.Upsells / Opt.Ges.\',\'Opt.Upsells\','+ups+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(ups/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'WKA = Opt.WKA / Opt.Ges.\',\'Opt.WKA\','+wka+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(wka/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(wka/optGes*100)+'%':'—'),(optGes>0?wka:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;cursor:help" onmouseenter="showBreakdownTooltip(event,\'Opt. Ges. Aufschlüsselung\','+convOEM+','+ups+','+wka+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optGes,null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\',\''+optProStd+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optProStd,null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR OEM = Opt.OEM / (Opt.OEM + NERR OEM)\',\'Opt.OEM\','+convOEM+',\'Opt.OEM + NERR OEM\','+oemDenomVal+',\'CR OEM\',\''+crOEM+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',convOEM)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+rawTw+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',rawTw)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSyMy,rowKpiSet.syMy,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(rawSy+rawMy)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+rawMy+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\',\''+optProStd+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optProStd,null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR OEM = Opt.OEM / (Opt.OEM + NERR OEM)\',\'Opt.OEM\','+convOEM+',\'Opt.OEM + NERR OEM\','+oemDenomVal+',\'CR OEM\',\''+crOEM+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+rawTw+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',rawTw)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSyMy,rowKpiSet.syMy,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(rawSy+rawMy)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+rawMy+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(row.margeOEM||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeUpsell||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeWKA||0).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+stackCell(abzug,(abzugPct!==null?abzugPct+'%':null))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
@@ -9263,7 +9265,7 @@ function buildProvisionTeamTable(){
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#ffb3b3">'+stackCell('−€'+Math.round(sumAbzug).toLocaleString('de-DE'),sumAbzugPct+'%')+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#7ED2DB">'+stackCell('€'+Math.round(sumProvision).toLocaleString('de-DE'),sumProvisionPct+'%')+'</td>'
         +'</tr>';
-      h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
+      h+='<tr class="perf-avg-row" style="background:var(--s-tint-strong)">'
         +'<td style="padding:13px 14px;font-weight:700" colspan="2">Ø Durchschnitt</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumKrank/n).toFixed(1),null)+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumUrlaub/n).toFixed(1),null)+'</td>'
@@ -9391,7 +9393,7 @@ function buildProvisionTable(empId){
       sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
       sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0);sumAktivitaeten+=optPerH_num;
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
-      var rowBg=ridx%2===1?'background:rgba(32,106,114,0.07);':'';
+      var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCellLeft(g.label,g.count+' Einsatztage')+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(abwTage.krank,null)+'</td>'
@@ -9401,13 +9403,13 @@ function buildProvisionTable(empId){
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'Upsells = Opt.Upsells / Opt.Ges.\',\'Opt.Upsells\','+ups+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(ups/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'WKA = Opt.WKA / Opt.Ges.\',\'Opt.WKA\','+wka+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(wka/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(wka/optGes*100)+'%':'—'),(optGes>0?wka:'—'))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;cursor:help" onmouseenter="showBreakdownTooltip(event,\'Opt. Ges. Aufschlüsselung\','+convOEM+','+ups+','+wka+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optGes,null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\',\''+optProStd+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optProStd,null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR OEM = Opt.OEM / (Opt.OEM + NERR OEM)\',\'Opt.OEM\','+convOEM+',\'Opt.OEM + NERR OEM\','+oemDenomVal+',\'CR OEM\',\''+crOEM+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',convOEM)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+rawTw+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',rawTw)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crSyMy,rowKpiSet.syMy,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(rawSy+rawMy)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:rgba(32,106,114,0.05);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+rawMy+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',rawMy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:rgba(32,106,114,0.05);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(optPerH_num,rowKpiSet.optH,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\',\''+optProStd+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optProStd,null)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;font-weight:600;'+fc(crOEM,rowKpiSet.crOem,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR OEM = Opt.OEM / (Opt.OEM + NERR OEM)\',\'Opt.OEM\','+convOEM+',\'Opt.OEM + NERR OEM\','+oemDenomVal+',\'CR OEM\',\''+crOEM+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',convOEM)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crTW,rowKpiSet.tw,'lte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+rawTw+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',rawTw)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSyMy,rowKpiSet.syMy,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(rawSy+rawMy)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',rawSy+rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+rawSy+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',rawSy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crMY,rowKpiSet.my,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+rawMy+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',rawMy)+'</td>'
+        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(row.margeOEM||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeUpsell||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeWKA||0).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+stackCell(abzug,(abzugPct!==null?abzugPct+'%':null))+'</td>'
         +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
@@ -9446,7 +9448,7 @@ function buildProvisionTable(empId){
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#ffb3b3">'+stackCell('−€'+Math.round(sumAbzug).toLocaleString('de-DE'),sumAbzugPct+'%')+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#7ED2DB">'+stackCell('€'+Math.round(sumProvision).toLocaleString('de-DE'),sumProvisionPct+'%')+'</td>'
         +'</tr>';
-      h+='<tr class="perf-avg-row" style="background:rgba(32,106,114,0.14)">'
+      h+='<tr class="perf-avg-row" style="background:var(--s-tint-strong)">'
         +'<td style="padding:13px 14px;font-weight:700">Ø Durchschnitt</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumKrank/n).toFixed(1),null)+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell((sumUrlaub/n).toFixed(1),null)+'</td>'
@@ -11244,7 +11246,7 @@ function openCoachingInfoModal(empId){
   var daysSinceQa=lastQa?Math.round((new Date(heute+'T00:00:00')-new Date(lastQa.date+'T00:00:00'))/86400000):null;
   if(daysSinceQa===null||daysSinceQa>60){
     var qaTxt=daysSinceQa===null?'Noch keine QA-Bewertung (Telefonat) vorhanden':Math.round(daysSinceQa/7)+' Wochen seit letzter QA-Bewertung (Telefonat)';
-    h+='<div style="background:rgba(32,106,114,0.08);border-left:3px solid #206A72;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:11.5px;color:#164e54;font-weight:600">⚠ '+qaTxt+'</div>';
+    h+='<div style="background:var(--s-tint);border-left:3px solid #206A72;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:11.5px;color:#164e54;font-weight:600">⚠ '+qaTxt+'</div>';
   }
   h+='</div>';
 
@@ -11316,7 +11318,7 @@ function openCoachingInfoModal(empId){
         var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(nextSession.date+'T00:00:00'))/86400000);
         if(gapDays>=14){
           var gapWeeks=Math.round(gapDays/7);
-          h+='<div style="background:rgba(32,106,114,0.08);border-left:3px solid #206A72;border-radius:6px;padding:8px 12px;margin:4px 0 14px 0;font-size:11.5px;color:#164e54;font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
+          h+='<div style="background:var(--s-tint);border-left:3px solid #206A72;border-radius:6px;padding:8px 12px;margin:4px 0 14px 0;font-size:11.5px;color:#164e54;font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
         }
       }
     });
