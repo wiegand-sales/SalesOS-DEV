@@ -158,6 +158,25 @@ tr:hover td{background:var(--s-tint);}
 .std-table tr.sum td{background:#0c3b40!important;color:#fff!important;font-weight:700;padding:13px 14px!important;}
 .std-table .r{text-align:right;}
 .std-table td.r .btn,.std-table td.r a.btn{display:inline-flex;vertical-align:middle;}
+/* Rechte-Auswahl und Wizard-Bausteine */
+.perm-sel{width:136px;height:30px;padding:0 10px 0 14px;border-radius:15px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);}
+.perm-sel.v-E{background:#206A72;color:#fff;border-color:#206A72;}
+.perm-sel.v-S{background:var(--s-tint-strong);color:var(--purple-dark);border-color:transparent;}
+.perm-sel.v-x{background:var(--s-white);color:var(--text3);}
+.perm-fix{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:136px;height:30px;border-radius:15px;font-size:12px;font-weight:600;}
+.perm-fix.v-E{background:rgba(32,106,114,0.55);color:#fff;}
+.perm-fix.v-S{background:var(--s-tint);color:var(--purple-dark);}
+.perm-fix.v-x{background:transparent;color:var(--text3);}
+.wz-chip{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px;border-radius:16px;border:1px solid var(--border2);background:var(--s-white);font-size:12.5px;font-weight:500;color:var(--text2);cursor:pointer;margin:0 6px 0 0;}
+.wz-chip input{accent-color:#206A72;width:15px;height:15px;margin:0;}
+.wz-chip.on{background:var(--s-tint-strong);border-color:transparent;color:var(--purple-dark);font-weight:600;}
+.wz-switch{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;}
+.wz-switch input{opacity:0;width:0;height:0;position:absolute;}
+.wz-switch span{position:absolute;inset:0;border-radius:11px;background:#d8d5cd;transition:background .15s;cursor:pointer;}
+.wz-switch span:before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .15s;}
+.wz-switch input:checked+span{background:#206A72;}
+.wz-switch input:checked+span:before{transform:translateX(18px);}
+.wz-switch input:focus-visible+span{outline:2px solid #206A72;outline-offset:2px;}
 .std-table td.f{font-weight:600;color:var(--text);}
 .std-table .s{display:block;font-size:11px;font-weight:400;color:var(--text3);margin-top:1px;}
 tr.perf-sum-row:hover td{background:#0c3b40 !important;}
@@ -8554,13 +8573,14 @@ function saveSettingJson(key,val,logText){
 function buildRolesHtml(){
   var P=rolePerms();
   var M={E:['Bearbeiten','var(--purple-dark)','var(--s-tint-strong)'],S:['Ansehen','var(--text2)','var(--s-sub)'],'-':['–','var(--text3)','transparent']};
+  function cls(v){return v==='E'?'v-E':v==='S'?'v-S':'v-x';}
   function cell(role,row){
     var v=role==='admin'?'E':permFor(row.key,role), m=M[v], fixed=role==='admin'||row.fixed||row.adminOnly;
-    if(role==='agent') return '<td style="padding:9px 12px;text-align:center"><span style="font-size:12px;color:var(--text3)">'+(row.key==='performance'||row.key==='provision'?'nur eigene (Erweiterung)':'–')+'</span></td>';
-    if(fixed) return '<td style="padding:9px 12px;text-align:center"><span class="badge" title="Fest vorgegeben" style="color:'+m[1]+';background:'+m[2]+'">'+m[0]+'</span></td>';
+    if(role==='agent') return '<td style="text-align:center"><span style="font-size:12px;color:var(--text3)">'+(row.key==='performance'||row.key==='provision'?'nur eigene (Erweiterung)':'–')+'</span></td>';
+    if(fixed) return '<td style="text-align:center"><span class="perm-fix '+cls(v)+'" title="Fest vorgegeben">'+(v!=='-'?'<i class="ti ti-lock" style="font-size:12px"></i>':'')+m[0]+'</span></td>';
     var opts=(role==='viewer'||row.seeOnly)?['S','-']:['E','S','-'];
-    return '<td style="padding:6px 12px;text-align:center"><div class="chart-toggle" style="display:inline-flex;height:30px" role="group" aria-label="'+esc(row.label)+' – '+(role==='coach'?'Coach':'Betrachter')+'">'
-      +opts.map(function(o){return '<button class="'+(o===v?'active':'')+'" onclick="setPerm(\''+role+'\',\''+row.key+'\',\''+o+'\')">'+M[o][0]+'</button>';}).join('')+'</div></td>';
+    return '<td style="text-align:center"><select class="perm-sel '+cls(v)+'" aria-label="'+esc(row.label)+' – '+(role==='coach'?'Coach':'Betrachter')+'" onchange="setPerm(\''+role+'\',\''+row.key+'\',this.value)">'
+      +opts.map(function(o){return '<option value="'+o+'"'+(o===v?' selected':'')+'>'+(o==='-'?'Kein Zugriff':M[o][0])+'</option>';}).join('')+'</select></td>';
   }
   var TH='padding:11px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#cfe6e8;text-align:center';
   var rows='',g='';
@@ -8568,7 +8588,8 @@ function buildRolesHtml(){
     if(r.group!==g){g=r.group;rows+='<tr><th class="grp" colspan="5" scope="colgroup" style="text-align:left;padding:14px 16px 6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">'+g+'</th></tr>';}
     rows+='<tr><td style="padding:9px 16px;font-size:13px">'+esc(r.label)+'</td>'+cell('admin',r)+cell('coach',r)+cell('viewer',r)+cell('agent',r)+'</tr>';
   });
-  return '<div class="card"><div class="card-title">Was darf welche Rolle?</div><div class="card-sub">Je Bereich und Rolle: Bearbeiten, Ansehen oder – (kein Zugriff)</div>'
+  return '<div class="card"><div class="card-title">Was darf welche Rolle?</div><div class="card-sub">Je Bereich und Rolle festlegen. Admins haben immer alle Rechte, Sales Agents sehen nur ihre eigenen Zahlen in der Erweiterung.</div>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text2)"><span class="perm-fix v-E" style="width:auto;padding:0 12px;background:#206A72">Bearbeiten</span><span class="perm-fix v-S" style="width:auto;padding:0 12px;background:var(--s-tint-strong)">Ansehen</span><span class="perm-fix v-x" style="width:auto;padding:0 12px;border:1px solid var(--border2);background:#fff">Kein Zugriff</span><span style="margin-left:6px"><i class="ti ti-lock" style="font-size:12px"></i> = fest vorgegeben</span></div>'
     +'<div class="std-wrap"><table class="std-table" style="min-width:760px"><thead><tr style="background:linear-gradient(180deg,#0c3b40 0%,#164e54 100%)"><th scope="col" style="'+TH+';text-align:left;padding-left:16px">Recht</th><th scope="col" style="'+TH+'">Admin</th><th scope="col" style="'+TH+'">Coach</th><th scope="col" style="'+TH+'">Betrachter</th><th scope="col" style="'+TH+'">Sales Agent</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
     +'<div style="font-size:12.5px;line-height:1.55;color:var(--text2);background:var(--s-sub);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 13px;margin-top:12px"><b style="color:var(--text)">So wird es durchgesetzt:</b> Betrachter können in der Datenbank grundsätzlich nichts speichern. Was ein Coach bearbeiten darf, prüft das Board vor jedem Speichern. Bereiche mit „–“ werden in Menü und Mitarbeiterprofil ausgeblendet. Sales Agents kommen nicht ins Board und sehen in der Erweiterung nur ihre eigenen Zahlen.</div>';
 }
@@ -8583,17 +8604,22 @@ function setWiz(path,val){
 }
 function buildWizardsHtml(){
   var c=wizCfg();
-  var tg='<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;cursor:pointer;margin:0;color:var(--text)"><input type="checkbox" '+(c.on?'checked':'')+' onchange="setWiz(\'on\',this.checked)" style="accent-color:#206A72;width:16px;height:16px">Aktiv</label>';
-  function cb(path,label,on){return '<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)" style="accent-color:#206A72;width:16px;height:16px">'+label+'</label>';}
-  var L='font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)';
-  var card1='<div class="card" style="display:flex;flex-direction:column;gap:14px">'
-    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div style="display:flex;flex-direction:column;gap:3px"><span class="card-title" style="margin:0">Tagesüberblick</span><span style="font-size:12px;color:var(--text2)">Slides mit Optimierungen, Marge, Conversion Rates und den schwächsten 3 je KPI</span></div>'+tg+'</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">'
-    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Wann</span><div style="display:flex;gap:8px;align-items:center"><label for="wizTime" style="font-size:12.5px;color:var(--text2)">täglich ab</label><input id="wizTime" type="time" value="'+c.time+'" onchange="setWiz(\'time\',this.value)" style="width:120px"></div><span style="font-size:12px;color:var(--text3)">einmal pro Tag und Gerät</span></div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Für wen</span>'+cb('roles.admin','Admin',c.roles.admin)+cb('roles.coach','Coach',c.roles.coach)+cb('roles.viewer','Betrachter',c.roles.viewer)+'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px"><span style="'+L+'">Inhalt</span>'+cb('slides.opt','Optimierungen &amp; Prognose',c.slides.opt)+cb('slides.marge','Marge &amp; Prognose',c.slides.marge)+cb('slides.cr','Conversion Rates (Team)',c.slides.cr)+cb('slides.worst','Schwächste 3 je KPI',c.slides.worst)
-    +'<div style="display:flex;gap:8px;align-items:center;font-size:12.5px"><label for="wizMin" style="color:var(--text2)">nur Verkäufer mit mehr als</label><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:80px"><span style="color:var(--text2)">Opt.</span></div></div>'
-    +'</div><div><button class="btn sbtn" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
+  function chip(path,label,on){return '<label class="wz-chip'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)">'+label+'</label>';}
+  function sw(path,on,label){return '<label class="wz-switch" title="'+label+'"><input type="checkbox" aria-label="'+label+'" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)"><span></span></label>';}
+  var card1='<div class="card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div class="card-title" style="display:flex;align-items:center;gap:8px">Tagesüberblick '+sStatus(c.on?'Aktiv':'Aus',c.on?'ok':'off')+'</div><div class="card-sub" style="margin-top:-6px">Slides mit Optimierungen, Marge, Conversion Rates und den schwächsten 3 je KPI</div></div>'
+    +'<div style="display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600">'+(c.on?'Eingeschaltet':'Ausgeschaltet')+sw('on',c.on,'Tagesüberblick ein- oder ausschalten')+'</div></div>'
+    +'<div class="std-wrap" style="margin-bottom:14px"><table class="std-table"><thead><tr><th style="width:28%">Einstellung</th><th>Auswahl</th></tr></thead><tbody>'
+    +'<tr><td class="f">Zeitpunkt<span class="s">einmal pro Tag und Gerät</span></td><td><div style="display:flex;align-items:center;gap:8px"><label for="wizTime" style="margin:0;font-size:13px;color:var(--text2)">täglich ab</label><input id="wizTime" type="time" value="'+c.time+'" onchange="setWiz(\'time\',this.value)" style="width:130px"><span style="font-size:13px;color:var(--text2)">Uhr</span></div></td></tr>'
+    +'<tr><td class="f">Für wen<span class="s">wer den Überblick angezeigt bekommt</span></td><td>'+chip('roles.admin','Admin',c.roles.admin)+chip('roles.coach','Coach',c.roles.coach)+chip('roles.viewer','Betrachter',c.roles.viewer)+'</td></tr>'
+    +'</tbody></table></div>'
+    +'<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:28%">Slide</th><th>Inhalt</th><th class="r" style="text-align:right;width:120px">Anzeigen</th></tr></thead><tbody>'
+    +'<tr><td class="f">Optimierungen</td><td style="color:var(--text2)">Optimierungen heute und Prognose für den Monat</td><td class="r">'+sw('slides.opt',c.slides.opt,'Slide Optimierungen anzeigen')+'</td></tr>'
+    +'<tr><td class="f">Marge</td><td style="color:var(--text2)">Marge heute und Prognose für den Monat</td><td class="r">'+sw('slides.marge',c.slides.marge,'Slide Marge anzeigen')+'</td></tr>'
+    +'<tr><td class="f">Conversion Rates</td><td style="color:var(--text2)">CR des Teams im Überblick</td><td class="r">'+sw('slides.cr',c.slides.cr,'Slide Conversion Rates anzeigen')+'</td></tr>'
+    +'<tr><td class="f">Schwächste 3 je KPI</td><td style="color:var(--text2)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>nur Verkäufer mit mehr als</span><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:80px"><span>Opt.</span></div></td><td class="r">'+sw('slides.worst',c.slides.worst,'Slide Schwächste 3 je KPI anzeigen')+'</td></tr>'
+    +'</tbody></table></div>'
+    +'<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn sbtn" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
   var soon=function(t,d){return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="display:flex;flex-direction:column;gap:3px"><span class="card-title" style="margin:0">'+t+'</span><span style="font-size:12px;color:var(--text2)">'+d+'</span></div>'+sStatus('in Planung','off')+'</div>';};
   return card1+soon('Wochenstart','Montags: Vorwoche im Rückblick und Fokus-KPI je Mitarbeiter')+soon('Coaching-Erinnerung','Hinweis, wenn ein Mitarbeiter länger kein Coaching hatte');
 }
