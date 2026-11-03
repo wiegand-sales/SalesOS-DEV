@@ -8029,39 +8029,11 @@ function renderTab(){
     }
 
     if(true){
-      // ── Änderungshistorie (Stammdaten & Provisionsvereinbarung) ──
-      var hist=(employeeHistory[emp.id]||[]);
-      html+='<div class="card"><div class="card-title"><i class="ti ti-history"></i> Änderungshistorie</div>';
-      if(!hist.length){
-        html+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">Noch keine Änderungen protokolliert</div>';
-      } else {
-        var FIELD_LABELS={team:'Team',role:'Rolle',name:'Name',phase:'Phase',contract:'Anstellung',hours:'Stunden/Woche',startDate:'Vertragsbeginn',endDate:'Vertragsende',email:'E-Mail',
-          provision_gueltigAb:'Gültig ab',provision_grundgehalt:'Grundgehalt',provision_agSozialabgaben:'AG-Sozialabgaben',provision_basisProOpt:'Basisprovision/Opt.',
-          provision_divOEM:'Divisor OEM',provision_divUpsell:'Divisor Upsells',provision_divWka:'Divisor WKA',provision_reduktionProKpi:'Reduzierung je KPI',
-          provision_mindestprovision:'Mindestprovision',provision_mindestleistungOptH:'Mindestleistung Opt/Std'};
-        var MONAT_SUBFIELD_LABELS_DISPLAY={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NErr',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
-        var MONAT_LABELS_DISPLAY={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
-        function resolveFieldLabel(field){
-          if(FIELD_LABELS[field])return FIELD_LABELS[field];
-          var m=field.match(/^provision_kpi_(monat1|monat2|monat3plus)_(.+)$/);
-          if(m)return (MONAT_SUBFIELD_LABELS_DISPLAY[m[2]]||m[2])+' ('+MONAT_LABELS_DISPLAY[m[1]]+')';
-          return field;
-        }
-        html+='<div style="display:flex;flex-direction:column;gap:6px">';
-        hist.forEach(function(h){
-          var fieldLabel=resolveFieldLabel(h.field);
-          html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border-radius:var(--r-md);font-size:12px;flex-wrap:wrap">'
-            +'<span style="font-weight:600;width:150px;flex-shrink:0">'+fieldLabel+'</span>'
-            +'<span style="color:var(--text2)">'+esc(h.oldValue||'—')+' → '+esc(h.newValue||'—')+'</span>'
-            +'<span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">'
-            +(h.changedByName?'<span style="font-size:11px;color:var(--text2);font-weight:600">'+esc(h.changedByName)+'</span>':'')
-            +'<span style="font-size:11px;color:var(--text3)">'+fd(h.changedAt?h.changedAt.slice(0,10):'')+'</span>'
-            +'</span>'
-            +'</div>';
-        });
-        html+='</div>';
-      }
-      html+='</div>';
+      // ── Änderungshistorie: Kacheln je Speichervorgang ──
+      html+='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px"><div class="card-title" style="margin:0"><i class="ti ti-history"></i> Änderungshistorie</div>'
+        +'<div id="histFilterBar">'+buildHistFilterHtml()+'</div></div>'
+        +'<div id="histTiles">'+buildHistTilesHtml(emp.id)+'</div></div>';
+      window._histEmpId=emp.id;
 
       // ── Dokumente / Anhänge ──
       html+='<div class="card"><div class="card-title"><i class="ti ti-paperclip"></i> Dokumente</div>'
@@ -10863,6 +10835,8 @@ function saveEmpEinstellungen(){
   var histRows=[];
   function pushHist(field,ov,nv){
     if(ov===nv)return;
+    if((ov==null||ov==='')&&(nv==null||nv===''))return; // leer -> leer ist keine Aenderung
+    if(ov!=null&&nv!=null&&String(ov)===String(nv))return;
     histRows.push({employee_id:emp.id,field:field,old_value:ov!=null?String(ov):null,new_value:nv!=null?String(nv):null,changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorName});
   }
   pushHist('team',oldTeam,emp.team);
@@ -10885,6 +10859,114 @@ function saveEmpEinstellungen(){
 var _savingEmpZiele=false;
 var _savingProvisionSettings=false;
 var esOpenSections={};
+var histFilter='all', histShowAll=false, histExpanded={};
+var HIST_AREAS={stamm:'Stammdaten',prov:'Provision',kpi:'KPI-Ziele',zeit:'Arbeitszeit'};
+function histFieldInfo(field){
+  var FL={team:'Team',role:'Position',name:'Name',phase:'Phase',contract:'Anstellung',hours:'Stunden/Woche',startDate:'Vertragsbeginn',endDate:'Vertragsende',email:'E-Mail',
+    provision_gueltigAb:'Gültig ab',provision_grundgehalt:'Grundgehalt',provision_agSozialabgaben:'AG-Sozialabgaben',provision_basisProOpt:'Basisprovision/Opt.',
+    provision_divOEM:'Divisor OEM',provision_divUpsell:'Divisor Upsells',provision_divWka:'Divisor WKA',provision_reduktionProKpi:'Reduzierung je KPI',
+    provision_mindestprovision:'Mindestprovision',provision_mindestleistungOptH:'Mindestleistung Opt./Std.',
+    provision_vlc_serviceRate:'Service Rate (VLC)',provision_vlc_bonusProOpt:'Bonus/Opt. (VLC)',provision_vlc_extraPayPct:'Extra Pay % (VLC)',provision_vlc_extraPayAbH:'Extra Pay ab/Std. (VLC)'};
+  var SUB={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NErr',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
+  var MON={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
+  var PCT={crOem:1,tw:1,sy:1,my:1,syMy:1,oemAnteil:1,crYes:1,notReached:1,notPossible:1,notSuccessful:1};
+  var EUR={provision_grundgehalt:1,provision_basisProOpt:2,provision_vlc_serviceRate:1,provision_vlc_bonusProOpt:2,provision_vlc_extraPayAbH:2};
+  var PCTF={provision_agSozialabgaben:1,provision_reduktionProKpi:1,provision_mindestprovision:1,provision_vlc_extraPayPct:1};
+  var m;
+  if(FL[field]){
+    var area=/^provision_/.test(field)?'prov':(field==='hours'?'zeit':'stamm');
+    return {label:FL[field],area:area,fmt:EUR[field]?('eur'+(EUR[field]===2?'2':'')):PCTF[field]?'pct':(/Date$|gueltigAb$/.test(field)?'date':'')};
+  }
+  if((m=field.match(/^provision_kpis?_(monat1|monat2|monat3plus)$/)))return {label:'KPI-Vorgaben '+MON[m[1]],area:'kpi',legacy:true};
+  if((m=field.match(/^provision_kpi_(monat1|monat2|monat3plus)_(.+)$/)))return {label:(SUB[m[2]]||m[2])+' · '+MON[m[1]],area:'kpi',fmt:PCT[m[2]]?'pct':(m[2]==='margeZiel'?'eur':'')};
+  if((m=field.match(/^provision_vlc_(monat1|monat2|monat3plus)_(.+)$/)))return {label:(SUB[m[2]]||m[2])+' · '+MON[m[1]]+' (VLC)',area:'kpi',fmt:PCT[m[2]]?'pct':''};
+  if((m=field.match(/^provision_vlc_stufe_(optH|syMy|crOem)_(aus1|grenze|aus2)$/)))return {label:SUB[m[1]]+' · '+({aus1:'Stufe 1',grenze:'Untergrenze',aus2:'Stufe 2'})[m[2]]+' (VLC)',area:'prov',fmt:(m[2]==='grenze'&&m[1]==='optH')?'':'pct'};
+  if(/^provision_/.test(field))return {label:field.replace(/^provision_/,'').replace(/_/g,' '),area:'prov'};
+  return {label:field,area:'stamm'};
+}
+function histFmt(v,fmt){
+  if(v==null||v==='')return null;
+  if(fmt==='date'){var p=String(v).slice(0,10).split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:String(v);}
+  var n=parseFloat(String(v).replace(',','.'));
+  if(fmt&&!isNaN(n)&&/^-?[0-9.,]+$/.test(String(v))){
+    if(fmt==='eur')return n.toLocaleString('de-DE',{maximumFractionDigits:0})+' €';
+    if(fmt==='eur2')return n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+    if(fmt==='pct')return n.toLocaleString('de-DE',{maximumFractionDigits:1})+' %';
+  }
+  if(!isNaN(n)&&/^-?[0-9]+\.[0-9]+$/.test(String(v)))return n.toLocaleString('de-DE',{maximumFractionDigits:2});
+  return String(v);
+}
+function histEvents(empId){
+  var rows=((typeof employeeHistory!=='undefined'&&employeeHistory[empId])||[]).slice().sort(function(a,b){return (b.changedAt||'')<(a.changedAt||'')?-1:1;});
+  var evs=[];
+  rows.forEach(function(r){
+    var info=histFieldInfo(r.field||'');
+    var ov=r.oldValue, nv=r.newValue;
+    var legacy=info.legacy||(ov==='geändert'&&nv==='geändert');
+    if(!legacy&&(ov==null||ov===''||ov==='—')&&(nv==null||nv===''||nv==='—'))return; // leere Eintraege
+    if(!legacy&&String(ov)===String(nv))return;
+    var t=r.changedAt?new Date(r.changedAt).getTime():0, who=r.changedByName||'Unbekannt';
+    var ev=evs.length?evs[evs.length-1]:null;
+    if(!ev||ev.who!==who||Math.abs(ev.t0-t)>120000){ev={who:who,t:t,t0:t,items:[],keys:{}};evs.push(ev);}
+    ev.t0=t;
+    var key=info.label+'|'+ov+'|'+nv;
+    if(ev.keys[key])return; ev.keys[key]=1; // Duplikate
+    ev.items.push({label:info.label,area:info.area,legacy:legacy,ov:histFmt(ov,info.fmt),nv:histFmt(nv,info.fmt)});
+  });
+  return evs;
+}
+function buildHistFilterHtml(){
+  return '<div style="display:inline-flex;height:34px;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;background:var(--s-white)">'
+    +[['all','Alle']].concat(Object.keys(HIST_AREAS).map(function(a){return [a,HIST_AREAS[a]];})).map(function(x){
+      var on=histFilter===x[0];
+      return '<button onclick="setHistFilter(\''+x[0]+'\')" style="padding:0 13px;font-size:12px;font-weight:500;border:none;background:'+(on?'#206A72':'transparent')+';color:'+(on?'#fff':'var(--text2)')+';font-family:inherit;cursor:pointer">'+x[1]+'</button>';
+    }).join('')+'</div>';
+}
+function histAreaBadge(a){
+  var st={stamm:'background:var(--s-tint-strong);color:var(--purple-dark)',prov:'background:#0c3b40;color:#fff',kpi:'background:rgba(126,210,219,.35);color:var(--purple-dark)',zeit:'background:var(--s-white);color:var(--text2);border:1px solid var(--border)'}[a];
+  return '<span style="font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;'+st+'">'+HIST_AREAS[a]+'</span>';
+}
+function buildHistTilesHtml(empId){
+  var evs=histEvents(empId).map(function(e){return Object.assign({},e,{items:e.items.filter(function(i){return histFilter==='all'||i.area===histFilter;})});}).filter(function(e){return e.items.length;});
+  if(!evs.length)return '<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">'+(histFilter==='all'?'Noch keine Änderungen protokolliert':'Keine Änderungen in diesem Bereich')+'</div>';
+  var LIMIT=5, shown=histShowAll?evs:evs.slice(0,LIMIT);
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:stretch">';
+  shown.forEach(function(e,ix){
+    var key=e.who+'|'+e.t, open=!!histExpanded[key];
+    var ini=e.who.split(/\s+/).map(function(x){return x.charAt(0);}).join('').slice(0,2).toUpperCase();
+    var d=new Date(e.t), dTxt=d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'})+' · '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+' Uhr';
+    var areas=Object.keys(HIST_AREAS).filter(function(a){return e.items.some(function(i){return i.area===a;});});
+    var list=open?e.items:e.items.slice(0,3);
+    h+='<div style="background:var(--s-sub);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:196px">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span style="width:30px;height:30px;border-radius:7px;background:var(--s-tint-strong);color:var(--purple-dark);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+esc(ini)+'</span>'
+      +'<div style="min-width:0"><div style="font-weight:700;font-size:13px">'+esc(e.who)+'</div><div style="font-size:11.5px;color:var(--text2)">'+dTxt+'</div></div>'
+      +'<div style="margin-left:auto;text-align:right;flex-shrink:0"><div style="font-size:20px;font-weight:700;color:var(--purple-dark);line-height:1.1">'+e.items.length+'</div><div style="font-size:11.5px;color:var(--text2)">Änderung'+(e.items.length===1?'':'en')+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap">'+areas.map(histAreaBadge).join('')+'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:4px">'+list.map(function(i){
+        var v=i.legacy?'<span style="color:var(--text3);font-style:italic">geändert · Werte nicht protokolliert</span>'
+          :(i.ov==null?'<span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;background:var(--s-sub);color:var(--text2);margin-right:6px">neu</span>':'<span style="color:var(--text3);text-decoration:line-through">'+esc(i.ov)+'</span><span style="color:var(--text3);margin:0 6px">→</span>')
+           +(i.nv==null?'<span style="color:var(--text3)">leer</span>':'<span style="font-weight:700">'+esc(i.nv)+'</span>');
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:6px 10px;background:var(--s-white);border-radius:6px"><span style="color:var(--text2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:64px" title="'+esc(i.label)+'">'+esc(i.label)+'</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;'+(((i.ov||'')+(i.nv||'')).length<=24?'flex:0 0 auto':'flex:0 1 auto;min-width:0;max-width:62%')+'" title="'+esc((i.ov||'')+(i.ov?' → ':'')+(i.nv||''))+'">'+v+'</span></div>';
+      }).join('')+'</div>'
+      +(e.items.length>3?'<span onclick="toggleHistTile(\''+empId+'\',\''+String(key).replace(/'/g,'')+'\')" style="font-size:12px;color:var(--purple);font-weight:600;cursor:pointer;margin-top:auto">'+(open?'Weniger anzeigen':'+ '+(e.items.length-3)+' weitere anzeigen')+'</span>':'')
+      +'</div>';
+  });
+  h+='</div>';
+  if(evs.length>LIMIT)h+='<div style="margin-top:12px"><button class="btn" style="width:auto;height:34px" onclick="histShowAll=!histShowAll;refreshHistTiles(\''+empId+'\')"><i class="ti ti-'+(histShowAll?'chevron-up':'chevron-down')+'"></i> '+(histShowAll?'Weniger anzeigen':'Ältere anzeigen ('+(evs.length-LIMIT)+')')+'</button></div>';
+  return h;
+}
+function refreshHistTiles(empId){
+  var t=document.getElementById('histTiles'); if(t)t.innerHTML=buildHistTilesHtml(empId);
+  var f=document.getElementById('histFilterBar'); if(f)f.innerHTML=buildHistFilterHtml();
+}
+function setHistFilter(f){histFilter=f;var emp=(typeof selectedEmpId!=='undefined')?selectedEmpId:null;refreshHistTiles(window._histEmpId);}
+function toggleHistTile(empId,key){
+  Object.keys(histExpanded).forEach(function(k){if(k.replace(/'/g,'')===key)key=k;});
+  histExpanded[key]=!histExpanded[key];refreshHistTiles(empId);
+}
+
 function esToggleSection(n,el){
   esOpenSections[n]=!esOpenSections[n];
   var b=el.querySelector('.es-acc-body'), ch=el.querySelector('.es-acc-ch');
