@@ -7739,7 +7739,7 @@ function renderTab(){
         function cut(k){SEG[k]=(SEG[k]||'')+html; html='';}
         var isVlcModel=(emp.role==='VLC');
         var vpv=effectiveProvisionSettings(emp).vlc;
-        var esWeekTotal=0;
+        var esWeekTotal=0, esWorkDaysTxt='';
         var esBm=emp.startDate?beschaeftigungsmonat(emp,today().slice(0,7)):null;
         var esCurIdx=esBm?Math.min(esBm,3)-1:-1;
 
@@ -7812,6 +7812,10 @@ function renderTab(){
             +'</tr>';
           html+='</tbody></table></div>';
           esWeekTotal=weekTotal;
+          var wdIdx=[];days.forEach(function(d,ix){var dv=wh[d.key]||DEFAULT_WH[d.key];if(calcNetHours(dv.von,dv.bis,dv.pause)>0)wdIdx.push(ix);});
+          var sh=['Mo','Di','Mi','Do','Fr','Sa','So'];
+          var contiguous=wdIdx.length>1&&wdIdx[wdIdx.length-1]-wdIdx[0]===wdIdx.length-1;
+          esWorkDaysTxt=!wdIdx.length?'keine Arbeitstage':contiguous?sh[wdIdx[0]]+'–'+sh[wdIdx[wdIdx.length-1]]:wdIdx.map(function(ix){return sh[ix];}).join(', ');
         })();
         cut('zeit');
 
@@ -7991,7 +7995,7 @@ function renderTab(){
         var sections=[
           {n:1,t:'Person',sum:esc(emp.role||'–')+' · '+esc(emp.phase||'–')+' · '+esc(emp.contract==='part'?'Teilzeit':emp.contract==='full'?'Vollzeit':(emp.contract||'–'))+' · '+(emp.email?esc(emp.email):'<span style="color:var(--red)">keine E-Mail</span>'),body:SEG.person},
           {n:2,t:'Vertrag',sum:'Beginn '+esD(emp.startDate)+' · Gültig ab '+esD(pv.gueltigAb)+' · '+(emp.endDate?'Ende '+esD(emp.endDate):'unbefristet')+(esBm?' · Beschäftigungsmonat '+esBm:''),body:SEG.vertrag},
-          {n:3,t:'Arbeitszeit',sum:esN(esWeekTotal,1)+' Std. pro Woche',body:SEG.zeit},
+          {n:3,t:'Arbeitszeit',sum:(esWorkDaysTxt?esWorkDaysTxt+' · ':'')+esN(esWeekTotal,1)+' Std. pro Woche',body:SEG.zeit},
           {n:4,t:deOnly('Provision')+vlcOnly('Bonus'),sum:deOnly(esN(pvNum('grundgehalt',2800))+' € Grundgehalt · '+esN(pvNum('basisProOpt',1),2)+' €/Opt. · −'+esN(pvNum('reduktionProKpi',20))+' % je KPI · Mindestprov. '+esN(pvNum('mindestprovision',20))+' %')+vlcOnly(esN(vpv.serviceRate)+' € Service Rate · '+esN(vpv.bonusProOpt,2)+' €/Opt. · Stufen '+stufenUniq.join('/')+' % · Extra Pay folgt'),body:SEG.prov},
           {n:5,t:'Provisionsrelevante KPIs',sum:deOnly('6 Kennzahlen')+vlcOnly('3 Kennzahlen')+(mLabel?' · aktuell „'+mLabel+'“':''),body:SEG.kpi},
           {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('9 Kennzahlen')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
@@ -8002,16 +8006,19 @@ function renderTab(){
         card+='<div style="font-size:12.5px;color:var(--text2);background:rgba(32,106,114,.07);border-radius:8px;padding:10px 13px;margin-bottom:12px;line-height:1.6"><div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:4px">SO WIRD GERECHNET</div>'+deOnly(regelDe)+vlcOnly(regelVlc)+'</div>';
         sections.forEach(function(sec){
           var open=!!esOpenSections[sec.n];
-          card+='<div class="es-acc" data-sec="'+sec.n+'" style="border-top:1px solid var(--border)">'
-            +'<div onclick="esToggleSection('+sec.n+',this.parentNode)" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">'
-            +'<span style="width:24px;height:24px;border-radius:6px;background:#0c3b40;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+sec.n+'</span>'
-            +'<span style="font-weight:700;font-size:13.5px;min-width:210px">'+sec.t+'</span>'
-            +'<span style="font-size:12px;color:var(--text2);flex:1;min-width:0">'+sec.sum+'</span>'
+          card+='<div class="es-acc" data-sec="'+sec.n+'" style="background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:10px;overflow:hidden">'
+            +'<div onclick="esToggleSection('+sec.n+',this.parentNode)" style="display:flex;align-items:center;gap:14px;padding:15px 18px;cursor:pointer">'
+            +'<span style="width:28px;height:28px;border-radius:7px;background:#0c3b40;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+sec.n+'</span>'
+            +'<span style="font-weight:700;font-size:14.5px;min-width:230px">'+sec.t+'</span>'
+            +'<span style="font-size:13px;color:var(--text2);flex:1;min-width:0">'+sec.sum+'</span>'
             +'<i class="ti ti-chevron-right es-acc-ch" style="color:var(--text3);font-size:15px;transition:transform .15s;'+(open?'transform:rotate(90deg)':'')+'"></i></div>'
-            +'<div class="es-acc-body" style="'+(open?'':'display:none;')+'padding:4px 4px 16px">'+(sec.body||'')+'</div></div>';
+            +'<div class="es-acc-body" style="'+(open?'':'display:none;')+'padding:16px 18px 18px;border-top:1px solid #eef1f1">'+(sec.body||'')+'</div></div>';
         });
-        card+='<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:12px 4px 2px;border-top:1px solid var(--border)">'
-          +'<span id="pv-save-status" style="font-size:12px;color:var(--text3);margin-right:auto">Änderungen werden erst mit „Alles speichern“ übernommen.</span>'
+        var esHist=(typeof employeeHistory!=='undefined'&&employeeHistory[emp.id])||[];
+        var esLast=null; esHist.forEach(function(r){if(r.changedAt&&(!esLast||r.changedAt>esLast.changedAt))esLast=r;});
+        var esLastTxt=esLast?'Zuletzt geändert am '+new Date(esLast.changedAt).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})+(esLast.changedByName?' von '+esc(esLast.changedByName):''):'Änderungen werden erst mit „Alles speichern“ übernommen.';
+        card+='<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:13px 18px;background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.06)">'
+          +'<span id="pv-save-status" style="font-size:12.5px;color:var(--text3);margin-right:auto">'+esLastTxt+'</span>'
           +'<button class="btn btn-sm" style="width:auto" onclick="renderEmpDetail()"><i class="ti ti-arrow-back-up"></i> Verwerfen</button>'
           +'<button class="btn btn-primary btn-sm" style="width:auto" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid);saveEmpEinstellungen()"><i class="ti ti-check"></i> Alles speichern</button></div>';
         card+='</div>'; // close Provisionsvereinbarung card
