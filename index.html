@@ -998,9 +998,9 @@ function loginOf(p){
 }
 function relTime(iso){
   if(!iso)return 'noch nie angemeldet';
-  var d=new Date(iso), now=new Date(), days=Math.floor((new Date(now.toDateString())-new Date(d.toDateString()))/86400000);
-  var hm=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-  return days===0?'heute '+hm:days===1?'gestern':days<7?'vor '+days+' Tagen':d.toLocaleDateString('de-DE');
+  var d=new Date(iso); if(isNaN(d))return 'noch nie angemeldet';
+  var z=function(n){return ('0'+n).slice(-2);};
+  return 'letzter Login '+z(d.getDate())+'.'+z(d.getMonth()+1)+'.'+d.getFullYear()+', '+z(d.getHours())+':'+z(d.getMinutes())+' Uhr';
 }
 function setUserFilter(f){userFilter=f;renderMain();}
 function setUserSearch(v){userSearch=v;renderMain();var el=document.getElementById('userSearch');if(el){el.focus();el.setSelectionRange(v.length,v.length);}}
