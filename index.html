@@ -544,7 +544,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 
 
 <!-- SESSION PLANEN MODAL -->
-<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:86vh;overflow:hidden;padding:0;width:680px;display:flex;flex-direction:column">
+<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:86vh;overflow:hidden;padding:0;width:680px;display:flex;flex-direction:column;background:#EEEDE9">
   <div id="coachingInfoModalBody" style="display:flex;flex-direction:column;min-height:0;flex:1;max-height:86vh"></div>
 </div></div>
 <div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal">
@@ -11659,7 +11659,7 @@ function openCoachingInfoModal(empId){
   }
   h+=ciBox('ciSecVerlauf','Verlauf','<span style="font-size:12px;font-weight:600;color:var(--text3)">'+combinedTl.length+' Einträge</span>','<div>'+rows+'</div>','margin-bottom:6px');
   h+='</div>'; // Ende Scrollbereich
-  h+='<div style="padding:10px 18px 14px;border-top:1px solid #E4E0D6;background:#F7F5F0">'
+  h+='<div style="padding:10px 18px 14px;border-top:1px solid #E4E0D6;background:#EEEDE9">'
     +'<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:6px 6px 6px 14px;position:relative">'
     +'<i class="ti ti-message-plus" style="color:var(--text3);font-size:17px"></i>'
     +'<input id="ciComposer" type="text" placeholder="Kommentar oder Notiz schreiben …" style="flex:1;border:none;background:transparent;font-size:14.5px;outline:none;padding:6px 0;min-width:0" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ciSubmit(\''+empId+'\');}">'
