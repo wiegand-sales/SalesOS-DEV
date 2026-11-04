@@ -11550,11 +11550,11 @@ function openCoachingInfoModal(empId){
   var lastCoach=lastDone&&lastDone.coachId?employees.find(function(e){return e.id===lastDone.coachId;}):null;
   function fdS(ds){var d=new Date(ds+'T00:00:00');return dowShort[d.getDay()]+', '+d.getDate()+'. '+mNamesShort[d.getMonth()];}
   var sumTxt='';
-  if(lastDone){sumTxt+='Letzte Session vor <b>'+daysSinceLast+' '+(daysSinceLast===1?'Tag':'Tagen')+'</b>'+(lastCoach?' bei <b>'+esc(lastCoach.name.split(' ')[0])+'</b>':'')+'. ';}
+  if(lastDone){sumTxt+='Letzte Session vor <b>'+daysSinceLast+' '+(daysSinceLast===1?'Tag':'Tagen')+'</b>. ';}
   else sumTxt+='Noch keine abgeschlossene Session. ';
   var futPlan=geplant.filter(function(p){return p.date>=heute;}).length;
-  if(futPlan)sumTxt+='<b>'+futPlan+' '+(futPlan===1?'Session ist':'Sessions sind')+'</b> geplant, die nächste am <b>'+fdS(nextPlan.date)+'</b>. ';
-  else sumTxt+='Keine Session geplant. ';
+  if(futPlan)sumTxt+='<b>'+futPlan+' '+(futPlan===1?'Session':'Sessions')+'</b> geplant, die nächste am <b>'+fdS(nextPlan.date)+'</b>. ';
+  else sumTxt+='<b>Keine Session</b> geplant. ';
   if(daysSinceQa===null)sumTxt+='Noch keine QA-Bewertung.';
   else if(daysSinceQa>60)sumTxt+='Seit <b>'+Math.round(daysSinceQa/7)+' Wochen</b> keine QA-Bewertung.';
   else sumTxt+='Letzte QA-Bewertung vor '+daysSinceQa+' Tagen.';
@@ -11567,14 +11567,14 @@ function openCoachingInfoModal(empId){
     mVals.push({lbl:mNamesShort[md.getMonth()],v:cnt,cur:mi===0,fut:mi>0});
   }
   var mMax=Math.max(1,avgPerMonth?parseFloat(avgPerMonth):0);mVals.forEach(function(x){mMax=Math.max(mMax,x.v);});mMax=mMax*1.15;
-  var BH=104;
+  var BH=150;
   var chips='';
   if(daysSinceLast!==null&&daysSinceLast>30)chips+='<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid rgba(240,133,102,.5);color:#B5513A">Letzte vor '+daysSinceLast+' Tagen</span>';
   if(daysSinceQa===null||daysSinceQa>60)chips+='<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid rgba(240,133,102,.5);color:#B5513A">'+(daysSinceQa===null?'Keine QA':Math.round(daysSinceQa/7)+' Wo. ohne QA')+'</span>';
   function bigKpi(dot,lbl,val,small){return '<div style="font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></span>'+lbl+'</div><div style="font-size:26px;font-weight:300;line-height:1.1;margin-bottom:8px">'+val+(small?'<span style="font-size:12px;font-weight:500;color:var(--text2);margin-left:4px">'+small+'</span>':'')+'</div>';}
   var effTxt=avgEffekt===null?'—':(avgEffekt>=0?'+':'−')+Math.abs(avgEffekt).toFixed(1).replace('.',',');
-  var box='<div style="background:#fff;border:1px solid #E4E0D6;border-radius:14px;overflow:hidden;margin-bottom:14px">'
-    +'<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#EFECE5;border-bottom:1px solid #E4E0D6;font-weight:700;font-size:14px"><i class="ti ti-chart-bar"></i>Coaching im Überblick<span style="margin-left:auto;display:flex;gap:6px">'+chips+'</span></div>'
+  var box='<div style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--text);margin:4px 0 8px">Coaching im Überblick<span style="margin-left:auto;display:flex;gap:6px">'+chips+'</span></div>'
+    +'<div style="background:#fff;border:1px solid #E4E0D6;border-radius:14px;overflow:hidden;margin-bottom:10px">'
     +'<div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;padding:14px">'
     +'<div>'+bigKpi('#3a3833','Sessions gesamt',total)+bigKpi('#8C8577','Ø pro Monat',avgPerMonth?String(avgPerMonth).replace('.',','):'—')+bigKpi('#D3CCBD','Geplant',geplant.length)+bigKpi('#F08566','Ø Effekt',effTxt,besteSession?esc(besteSession.eff.label):'')+'</div>'
     +'<div style="min-width:0"><div style="position:relative;height:'+(BH+18)+'px;display:flex;align-items:flex-end;gap:6px">';
@@ -11582,12 +11582,12 @@ function openCoachingInfoModal(empId){
   mVals.forEach(function(x){var hp=Math.max(3,Math.round(x.v/mMax*BH));
     box+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="'+x.lbl+': '+x.v+(x.fut?' geplant':' Sessions')+'"><span style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px">'+x.v+'</span><div style="width:70%;height:'+hp+'px;border-radius:4px 4px 0 0;'+(x.fut?'border:1.5px dashed #B4AC9C;background:transparent':x.cur?'background:#3a3833':'background:#B4AC9C')+'"></div></div>';});
   box+='</div><div style="display:flex;gap:6px;margin-top:4px">'+mVals.map(function(x){return '<span style="flex:1;text-align:center;font-size:10.5px;color:'+(x.cur?'var(--text)':'var(--text3)')+';font-weight:'+(x.cur?700:600)+'">'+x.lbl+'</span>';}).join('')+'</div>'
-    +'<div style="font-size:11.5px;color:var(--text3);margin-top:8px">Sessions je Monat · dunkel = aktueller Monat · gestrichelt = geplant'+(besteSession&&besteSession.eff.delta>0?' · beste Session +'+besteSession.eff.delta.toFixed(1).replace('.',',')+' '+esc(besteSession.eff.label):'')+(alleEffekte.length?' · Effekt = Ø-Veränderung des Ziel-KPI 14 Tage vor/nach der Session ('+alleEffekte.length+' von '+total+' Sessions)':'')+'</div>'
-    +'</div></div></div>';
+    +''
+    +'</div></div></div>'
+    +'<div id="ciSum" style="font-size:14.5px;color:var(--text);line-height:1.55;margin:0 0 16px">'+sumTxt+'</div>';
   var notizTxt=emp.notes||'';
-  var noteBox='<div id="ciSecNotiz" style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--text2);margin:4px 0 8px"><i class="ti ti-chevron-down" style="font-size:14px"></i>Notiz zum Mitarbeiter</div>'
-    +'<div style="background:#FBF6E9;border:1px solid #EADFC4;border-radius:12px;padding:10px 12px;margin-bottom:14px">'
-    +'<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#8a7a52;margin-bottom:4px"><i class="ti ti-notes"></i>Notiz · nur für Coaches und Admins</div>'
+  var noteBox='<div id="ciSecNotiz" style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--text);margin:4px 0 8px">Notiz zum Mitarbeiter<span style="font-size:12px;font-weight:600;color:var(--text3)">nur für Coaches und Admins</span></div>'
+    +'<div style="background:#FBF6E9;border:1px solid #EADFC4;border-radius:12px;padding:10px 12px;margin-bottom:16px">'
     +'<textarea id="coachingInfoNotizField" placeholder="Noch keine Notiz – hier schreiben …" style="width:100%;min-height:54px;border:none;background:transparent;font-size:14px;resize:vertical;color:var(--text);outline:none;padding:0;font-family:inherit" onblur="saveCoachingInfoNotiz(\''+empId+'\')">'+esc(notizTxt)+'</textarea>'
     +'<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-top:4px"><span>Wird beim Verlassen des Feldes automatisch gespeichert</span><span id="coachingInfoNotizStatus"></span></div></div>';
   var role=emp.role||'';
@@ -11599,16 +11599,16 @@ function openCoachingInfoModal(empId){
   function railBtn(icon,tip,js,on){return '<button class="rl-btn'+(on?' on':'')+'" aria-label="'+tip+'" onclick="'+js+'" style="width:38px;height:38px;font-size:18px"><i class="ti '+icon+'"></i><span class="rl-tip" style="left:48px">'+tip+'</span></button>';}
   var sc=function(id){return "var el=document.getElementById('"+id+"');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})";};
   h+='<div style="display:flex;min-height:0;flex:1">'
-    +'<div style="width:56px;flex-shrink:0;align-self:flex-start;margin:14px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
+    +'<div style="width:56px;flex-shrink:0;align-self:stretch;margin:14px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
     +railBtn('ti-layout-grid','Übersicht',sc('ciSecTop'),true)+railBtn('ti-message-circle','Verlauf',sc('ciSecVerlauf'))+railBtn('ti-notes','Notiz',sc('ciSecNotiz'))
     +railBtn('ti-star','QA-Bewertungen',"closeModal('coachingInfoModal');selectedEmp='"+empId+"';view='emp';activeTab='call-performance';renderSidebar();renderMain();")
     +railBtn('ti-calendar-plus','Session planen',"closeModal('coachingInfoModal');openSessionModal('"+empId+"')")
     +'</div>'
     +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">'
     +'<div id="ciScroll" style="flex:1;overflow-y:auto;padding:14px 18px 8px">'
-    +'<div id="ciSecTop" style="font-size:14.5px;color:var(--text);line-height:1.55;margin-bottom:12px">'+sumTxt+'</div>'
+    +'<div id="ciSecTop"></div>'
     +box+noteBox;
-  h+='<div id="ciSecVerlauf" style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--text2);margin:4px 0 8px"><i class="ti ti-chevron-down" style="font-size:14px"></i>Verlauf</div>';
+  h+='<div id="ciSecVerlauf" style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--text);margin:4px 0 8px">Verlauf</div>';
   h+='<div style="padding-left:0">';
   // Sessions, persoenliche Bestwerte UND Kommentare zu einer gemeinsamen, chronologisch sortierten Zeitleiste zusammenfuehren
   var infoComments=(reviews[empId]||[]).filter(function(r){return r.isComment;});
@@ -11627,8 +11627,9 @@ function openCoachingInfoModal(empId){
       if(item.kind==='comment'){
         var cc=item.c;
         var ccol=commentTypeColInfo[cc.commentType]||'#5c7070';
-        h+='<div style="position:relative;padding-bottom:18px">';
-        h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+ccol+';display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff"><i class="ti ti-message-2"></i></div>';
+        h+='<div style="position:relative;padding-bottom:10px">';
+        h+='<div style="position:absolute;left:-22px;top:14px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+ccol+';display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff"><i class="ti ti-message-2"></i></div>';
+        h+='<div style="background:#fff;border:1px solid #E4E0D6;border-radius:12px;padding:9px 12px">';
         h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+'</div>';
         h+='<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'
           +'<i class="ti ti-message-2" style="color:'+ccol+';font-size:14px"></i>'
@@ -11636,22 +11637,24 @@ function openCoachingInfoModal(empId){
           +(cc.author?'<span style="font-size:10.5px;color:var(--text3)">'+esc(cc.author)+'</span>':'')
           +'</div>';
         h+='<div style="font-size:12.5px;color:var(--text2);margin-top:3px">'+esc(cc.note)+'</div>';
-        h+='</div>';
+        h+='</div></div>';
         return;
       }
       if(item.kind==='record'){
-        h+='<div style="position:relative;padding-bottom:18px">';
-        h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:#3a3833;display:flex;align-items:center;justify-content:center"></div>';
+        h+='<div style="position:relative;padding-bottom:10px">';
+        h+='<div style="position:absolute;left:-22px;top:14px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:#3a3833;display:flex;align-items:center;justify-content:center"></div>';
+        h+='<div style="background:#fff;border:1.5px solid #F08566;border-radius:12px;padding:9px 12px">';
         h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+'</div>';
         h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px;color:#3a3833">🎉 '+esc(item.label)+'</div>';
-        h+='</div>';
+        h+='</div></div>';
         return;
       }
       var p=item.p;
       var planned=p.status==='geplant';
       var coach=p.coachId?employees.find(function(e){return e.id===p.coachId;}):null;
-      h+='<div style="position:relative;padding-bottom:18px">';
-      h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+(planned?'#F7F5F0':'#3a3833')+'"></div>';
+      h+='<div style="position:relative;padding-bottom:10px">';
+      h+='<div style="position:absolute;left:-22px;top:14px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+(planned?'#F7F5F0':'#3a3833')+'"></div>';
+      h+='<div style="background:#fff;border:1px '+(planned?'dashed #B4AC9C':'solid #E4E0D6')+';border-radius:12px;padding:9px 12px">';
       h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+(planned?' · Geplant':'')+'</div>';
       h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px">'+esc(p.type||p.art||'Coaching')+(besteSession&&besteSession.p===p?' 🏆':'')+'</div>';
       h+='<div style="font-size:11.5px;color:var(--text2);margin-top:1px">'+(coach?'Coach: '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):'')+'</div>';
@@ -11659,7 +11662,7 @@ function openCoachingInfoModal(empId){
       if(eff){
         h+='<div style="margin-top:4px"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:'+(eff.delta>=0?'#eafaf3':'#fdeeee')+';color:'+(eff.delta>=0?'#2f8f66':'#B23A3A')+'">'+(eff.delta>=0?'+':'')+eff.delta.toFixed(1)+' '+esc(eff.label)+'</span></div>';
       }
-      h+='</div>';
+      h+='</div></div>';
       // Luecken-Hervorhebung: zur naechsten (aelteren) SESSION (Bestwerte dazwischen werden uebersprungen)
       var nextSession=null;
       for(var ni=idx+1;ni<combinedTl.length;ni++){if(combinedTl[ni].kind==='session'){nextSession=combinedTl[ni].p;break;}}
@@ -11667,7 +11670,7 @@ function openCoachingInfoModal(empId){
         var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(nextSession.date+'T00:00:00'))/86400000);
         if(gapDays>=14){
           var gapWeeks=Math.round(gapDays/7);
-          h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-left:3px solid #F08566;border-radius:8px;padding:9px 12px;margin:4px 0 14px 0;font-size:12px;color:var(--text);font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
+          h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-left:3px solid #F08566;border-radius:12px;padding:9px 12px;margin:0 0 10px 0;font-size:12px;color:var(--text);font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
         }
       }
     });
