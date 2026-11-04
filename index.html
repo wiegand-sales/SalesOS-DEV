@@ -543,8 +543,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 
 
 <!-- SESSION PLANEN MODAL -->
-<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:80vh;overflow-y:auto">
-  <div id="coachingInfoModalBody"></div>
+<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:86vh;overflow:hidden;padding:0;width:680px;display:flex;flex-direction:column">
+  <div id="coachingInfoModalBody" style="display:flex;flex-direction:column;min-height:0;flex:1;max-height:86vh"></div>
 </div></div>
 <div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal">
   <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Session planen</div>
@@ -11447,6 +11447,23 @@ function saveInlineCallBewertung(empId){
 
 
 var _savingCoachingInfoNotiz=false;
+function ciSetType(t,lbl){window._ciType=t;var l=document.getElementById('ciTypeLbl');if(l)l.textContent=lbl;var m=document.getElementById('ciTypeMenu');if(m)m.style.display='none';var i=document.getElementById('ciComposer');if(i)i.focus();}
+function ciSubmit(empId){
+  var inp=document.getElementById('ciComposer');if(!inp)return;
+  var txt=inp.value.trim();if(!txt){inp.focus();return;}
+  var t=window._ciType||'diverses';
+  if(t==='notiz'){
+    var f=document.getElementById('coachingInfoNotizField');if(!f)return;
+    var d=new Date();var stamp=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+    f.value=(f.value.trim()?f.value.trim()+'\n':'')+stamp+' '+txt;
+    inp.value='';saveCoachingInfoNotiz(empId);return;
+  }
+  var curName=currentCoach?currentCoach.name:(resolveNonEmployeeName(currentAuthUser&&currentAuthUser.email)||'Admin');
+  if(!reviews[empId])reviews[empId]=[];
+  reviews[empId].push({id:'comment_'+Date.now(),date:today(),isComment:true,commentType:t,note:txt,author:curName});
+  inp.value='';
+  openCoachingInfoModal(empId);
+}
 function saveCoachingInfoNotiz(empId){
   if(_savingCoachingInfoNotiz)return;
   var field=document.getElementById('coachingInfoNotizField');
@@ -11524,49 +11541,72 @@ function openCoachingInfoModal(empId){
   var besteSession=effektPaare.length?effektPaare.slice().sort(function(a,b){return b.eff.delta-a.eff.delta;})[0]:null;
   var avgEffekt=alleEffekte.length?(alleEffekte.reduce(function(a,b){return a+b.delta;},0)/alleEffekte.length):null;
 
-  var h='<div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-history" style="color:var(--text2)"></i> Coaching-Historie · '+esc(emp.name)+'</div>';
-
-  h+='<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:#EFECE5;border:1px solid #E4E0D6;color:var(--text);font-size:11px;margin-right:6px;letter-spacing:0\">1</span>Übersicht</div>';
-  h+='<div style="padding-left:0;margin-bottom:16px">';
-  h+='<div style="display:flex;gap:10px;margin-bottom:10px">'
-    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+total+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Gesamt</div></div>'
-    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:'+(daysSinceLast!==null&&daysSinceLast>30?'#B23A3A':'#1d1c1a')+'">'+(daysSinceLast===null?'—':daysSinceLast+'d')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Letzte</div></div>'
-    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+(avgPerMonth||'—')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø/Monat</div></div>'
-    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+geplant.length+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Geplant</div></div>'
-    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:'+(avgEffekt===null?'#94a4a4':avgEffekt>=0?'#2f8f66':'#B23A3A')+'">'+(avgEffekt===null?'—':(avgEffekt>=0?'+':'')+avgEffekt.toFixed(1))+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø Effekt</div></div>'
-    +'</div>';
-  if(mainCoach){
-    h+='<div style="font-size:11.5px;color:var(--text2)">Haupt-Coach: <b style="color:#1d1c1a">'+esc(mainCoach.name)+'</b> ('+coachCounts[mainCoachId]+'× von '+total+')</div>';
-  }
-  if(alleEffekte.length){
-    h+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Effekt = Ø-Veränderung des hinterlegten Ziel-KPI 14 Tage vor/nach der Session, in Zielrichtung normalisiert (basiert auf '+alleEffekte.length+' von '+total+' Sessions mit Ziel-KPI)</div>';
-  }
-  if(besteSession&&besteSession.eff.delta>0){
-    var bd=new Date(besteSession.p.date+'T00:00:00');
-    h+='<div style="background:#fff;border:1px solid #E4E0D6;border-left:3px solid #3a3833;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:12px;color:var(--text)">'
-      +'🏆 <b>Beste Session:</b> '+esc(besteSession.p.type||besteSession.p.art||'Coaching')+' am '+bd.getDate()+'. '+mNamesShort[bd.getMonth()]+' <span style="font-weight:700">(+'+besteSession.eff.delta.toFixed(1)+' '+esc(besteSession.eff.label)+')</span>'
-      +'</div>';
-  }
-  // QA-Fälligkeit: letzte Call-Bewertung dieses Mitarbeiters, gleiche 60-Tage-Schwelle wie bei "QA fällig" in der Coaching-Uebersicht
+  // ── Kopf, Zusammenfassung, Diagramm-Box und Notiz (Layout: schlanker Kopf + Symbolleiste links) ──
   var sortedRatings=(callRatings[empId]||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
   var lastQa=sortedRatings[0]||null;
   var daysSinceQa=lastQa?Math.round((new Date(heute+'T00:00:00')-new Date(lastQa.date+'T00:00:00'))/86400000):null;
-  if(daysSinceQa===null||daysSinceQa>60){
-    var qaTxt=daysSinceQa===null?'Noch keine QA-Bewertung (Telefonat) vorhanden':Math.round(daysSinceQa/7)+' Wochen seit letzter QA-Bewertung (Telefonat)';
-    h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-left:3px solid #F08566;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:12px;color:var(--text);font-weight:600">⚠ '+qaTxt+'</div>';
+  var nextPlan=geplant.filter(function(p){return p.date>=heute;}).sort(function(a,b){return a.date.localeCompare(b.date);})[0]||null;
+  var lastCoach=lastDone&&lastDone.coachId?employees.find(function(e){return e.id===lastDone.coachId;}):null;
+  function fdS(ds){var d=new Date(ds+'T00:00:00');return dowShort[d.getDay()]+', '+d.getDate()+'. '+mNamesShort[d.getMonth()];}
+  var sumTxt='';
+  if(lastDone){sumTxt+='Letzte Session vor <b>'+daysSinceLast+' '+(daysSinceLast===1?'Tag':'Tagen')+'</b>'+(lastCoach?' bei <b>'+esc(lastCoach.name.split(' ')[0])+'</b>':'')+'. ';}
+  else sumTxt+='Noch keine abgeschlossene Session. ';
+  var futPlan=geplant.filter(function(p){return p.date>=heute;}).length;
+  if(futPlan)sumTxt+='<b>'+futPlan+' '+(futPlan===1?'Session ist':'Sessions sind')+'</b> geplant, die nächste am <b>'+fdS(nextPlan.date)+'</b>. ';
+  else sumTxt+='Keine Session geplant. ';
+  if(daysSinceQa===null)sumTxt+='Noch keine QA-Bewertung.';
+  else if(daysSinceQa>60)sumTxt+='Seit <b>'+Math.round(daysSinceQa/7)+' Wochen</b> keine QA-Bewertung.';
+  else sumTxt+='Letzte QA-Bewertung vor '+daysSinceQa+' Tagen.';
+  // Sessions je Monat (12 Monate zurueck + aktueller + naechster Monat geplant)
+  var mVals=[];
+  for(var mi=-11;mi<=1;mi++){
+    var md=new Date(heute+'T00:00:00');md.setDate(1);md.setMonth(md.getMonth()+mi);
+    var mk=md.getFullYear()+'-'+('0'+(md.getMonth()+1)).slice(-2);
+    var cnt=mi<=0?abgeschlossen.filter(function(p){return (p.date||'').slice(0,7)===mk;}).length:geplant.filter(function(p){return (p.date||'').slice(0,7)===mk;}).length;
+    mVals.push({lbl:mNamesShort[md.getMonth()],v:cnt,cur:mi===0,fut:mi>0});
   }
-  h+='</div>';
-
-  h+='<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:#EFECE5;border:1px solid #E4E0D6;color:var(--text);font-size:11px;margin-right:6px;letter-spacing:0\">2</span>Notiz</div>';
-  h+='<div style="padding-left:0;margin-bottom:16px">';
-  h+='<textarea id="coachingInfoNotizField" placeholder="Notiz zu diesem Mitarbeiter..." style="width:100%;min-height:70px;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--r-md);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box">'+esc(emp.notes||'')+'</textarea>';
-  h+='<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><button class="btn btn-sm" onclick="saveCoachingInfoNotiz(\''+empId+'\')"><i class="ti ti-device-floppy"></i> Notiz speichern</button><span id="coachingInfoNotizStatus" style="font-size:11px;color:var(--text3)"></span></div>';
-  h+='</div>';
-
-  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-    +'<span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:#EFECE5;border:1px solid #E4E0D6;color:var(--text);font-size:11px;margin-right:6px;letter-spacing:0\">3</span>Verlauf</span>'
-    +'<button class="btn btn-sm" onclick="openCommentModal(\''+empId+'\')"><i class="ti ti-message-plus"></i> Kommentar</button>'
-    +'</div>';
+  var mMax=Math.max(1,avgPerMonth?parseFloat(avgPerMonth):0);mVals.forEach(function(x){mMax=Math.max(mMax,x.v);});mMax=mMax*1.15;
+  var BH=104;
+  var chips='';
+  if(daysSinceLast!==null&&daysSinceLast>30)chips+='<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid rgba(240,133,102,.5);color:#B5513A">Letzte vor '+daysSinceLast+' Tagen</span>';
+  if(daysSinceQa===null||daysSinceQa>60)chips+='<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid rgba(240,133,102,.5);color:#B5513A">'+(daysSinceQa===null?'Keine QA':Math.round(daysSinceQa/7)+' Wo. ohne QA')+'</span>';
+  function bigKpi(dot,lbl,val,small){return '<div style="font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></span>'+lbl+'</div><div style="font-size:26px;font-weight:300;line-height:1.1;margin-bottom:8px">'+val+(small?'<span style="font-size:12px;font-weight:500;color:var(--text2);margin-left:4px">'+small+'</span>':'')+'</div>';}
+  var effTxt=avgEffekt===null?'—':(avgEffekt>=0?'+':'−')+Math.abs(avgEffekt).toFixed(1).replace('.',',');
+  var box='<div style="background:#fff;border:1px solid #E4E0D6;border-radius:14px;overflow:hidden;margin-bottom:14px">'
+    +'<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#EFECE5;border-bottom:1px solid #E4E0D6;font-weight:700;font-size:14px"><i class="ti ti-chart-bar"></i>Coaching im Überblick<span style="margin-left:auto;display:flex;gap:6px">'+chips+'</span></div>'
+    +'<div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;padding:14px">'
+    +'<div>'+bigKpi('#3a3833','Sessions gesamt',total)+bigKpi('#8C8577','Ø pro Monat',avgPerMonth?String(avgPerMonth).replace('.',','):'—')+bigKpi('#D3CCBD','Geplant',geplant.length)+bigKpi('#F08566','Ø Effekt',effTxt,besteSession?esc(besteSession.eff.label):'')+'</div>'
+    +'<div style="min-width:0"><div style="position:relative;height:'+(BH+18)+'px;display:flex;align-items:flex-end;gap:6px">';
+  if(avgPerMonth)box+='<div style="position:absolute;left:0;right:0;bottom:'+Math.round(parseFloat(avgPerMonth)/mMax*BH)+'px;border-top:1.5px dashed #8C8577"><span style="position:absolute;right:0;top:-16px;font-size:10.5px;color:var(--text2);font-weight:600;background:#fff;padding:0 3px">Ø '+String(avgPerMonth).replace('.',',')+'</span></div>';
+  mVals.forEach(function(x){var hp=Math.max(3,Math.round(x.v/mMax*BH));
+    box+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="'+x.lbl+': '+x.v+(x.fut?' geplant':' Sessions')+'"><span style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px">'+x.v+'</span><div style="width:70%;height:'+hp+'px;border-radius:4px 4px 0 0;'+(x.fut?'border:1.5px dashed #B4AC9C;background:transparent':x.cur?'background:#3a3833':'background:#B4AC9C')+'"></div></div>';});
+  box+='</div><div style="display:flex;gap:6px;margin-top:4px">'+mVals.map(function(x){return '<span style="flex:1;text-align:center;font-size:10.5px;color:'+(x.cur?'var(--text)':'var(--text3)')+';font-weight:'+(x.cur?700:600)+'">'+x.lbl+'</span>';}).join('')+'</div>'
+    +'<div style="font-size:11.5px;color:var(--text3);margin-top:8px">Sessions je Monat · dunkel = aktueller Monat · gestrichelt = geplant'+(besteSession&&besteSession.eff.delta>0?' · beste Session +'+besteSession.eff.delta.toFixed(1).replace('.',',')+' '+esc(besteSession.eff.label):'')+(alleEffekte.length?' · Effekt = Ø-Veränderung des Ziel-KPI 14 Tage vor/nach der Session ('+alleEffekte.length+' von '+total+' Sessions)':'')+'</div>'
+    +'</div></div></div>';
+  var notizTxt=emp.notes||'';
+  var noteBox='<div id="ciSecNotiz" style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--text2);margin:4px 0 8px"><i class="ti ti-chevron-down" style="font-size:14px"></i>Notiz zum Mitarbeiter</div>'
+    +'<div style="background:#FBF6E9;border:1px solid #EADFC4;border-radius:12px;padding:10px 12px;margin-bottom:14px">'
+    +'<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#8a7a52;margin-bottom:4px"><i class="ti ti-notes"></i>Notiz · nur für Coaches und Admins</div>'
+    +'<textarea id="coachingInfoNotizField" placeholder="Noch keine Notiz – hier schreiben …" style="width:100%;min-height:54px;border:none;background:transparent;font-size:14px;resize:vertical;color:var(--text);outline:none;padding:0;font-family:inherit" onblur="saveCoachingInfoNotiz(\''+empId+'\')">'+esc(notizTxt)+'</textarea>'
+    +'<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-top:4px"><span>Wird beim Verlassen des Feldes automatisch gespeichert</span><span id="coachingInfoNotizStatus"></span></div></div>';
+  var role=emp.role||'';
+  var h='<div style="display:flex;align-items:center;padding:14px 16px 10px;border-bottom:1px solid #E4E0D6">'
+    +'<div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Coaching-Historie</div>'
+    +'<div style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(emp.name)+(role?' · '+esc(role):'')+(mainCoach?' · Coach '+esc(mainCoach.name.split(' ')[0]):'')+'</div></div>'
+    +'<button class="btn" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal(\'coachingInfoModal\')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>';
+  function railBtn(icon,tip,js,on){return '<button title="'+tip+'" aria-label="'+tip+'" onclick="'+js+'" style="width:36px;height:36px;border-radius:10px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:'+(on?'var(--text)':'var(--text2)')+';background:'+(on?'#fff':'transparent')+';'+(on?'box-shadow:0 0 0 1px #E4E0D6':'')+'"><i class="ti '+icon+'"></i></button>';}
+  var sc=function(id){return "var el=document.getElementById('"+id+"');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})";};
+  h+='<div style="display:flex;min-height:0;flex:1">'
+    +'<div style="width:52px;flex-shrink:0;border-right:1px solid #E4E0D6;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;background:#EFECE5">'
+    +railBtn('ti-layout-grid','Übersicht',sc('ciSecTop'),true)+railBtn('ti-message-circle','Verlauf',sc('ciSecVerlauf'))+railBtn('ti-notes','Notiz',sc('ciSecNotiz'))
+    +railBtn('ti-star','QA-Bewertungen',"closeModal('coachingInfoModal');selectedEmp='"+empId+"';view='emp';activeTab='call-performance';renderSidebar();renderMain();")
+    +railBtn('ti-calendar-plus','Session planen',"closeModal('coachingInfoModal');openSessionModal('"+empId+"')")
+    +'</div>'
+    +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">'
+    +'<div id="ciScroll" style="flex:1;overflow-y:auto;padding:14px 18px 8px">'
+    +'<div id="ciSecTop" style="font-size:14.5px;color:var(--text);line-height:1.55;margin-bottom:12px">'+sumTxt+'</div>'
+    +box+noteBox;
+  h+='<div id="ciSecVerlauf" style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--text2);margin:4px 0 8px"><i class="ti ti-chevron-down" style="font-size:14px"></i>Verlauf</div>';
   h+='<div style="padding-left:0">';
   // Sessions, persoenliche Bestwerte UND Kommentare zu einer gemeinsamen, chronologisch sortierten Zeitleiste zusammenfuehren
   var infoComments=(reviews[empId]||[]).filter(function(r){return r.isComment;});
@@ -11632,7 +11672,19 @@ function openCoachingInfoModal(empId){
     h+='</div>';
   }
   h+='</div>';
-  h+='<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="btn" onclick="closeModal(\'coachingInfoModal\')">Schließen</button></div>';
+  h+='</div>'; // Ende Scrollbereich
+  h+='<div style="padding:10px 18px 14px;border-top:1px solid #E4E0D6;background:#F7F5F0">'
+    +'<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:6px 6px 6px 14px;position:relative">'
+    +'<i class="ti ti-message-plus" style="color:var(--text3);font-size:17px"></i>'
+    +'<input id="ciComposer" type="text" placeholder="Kommentar oder Notiz schreiben …" style="flex:1;border:none;background:transparent;font-size:14.5px;outline:none;padding:6px 0;min-width:0" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ciSubmit(\''+empId+'\');}">'
+    +'<div style="display:flex;align-items:center;border-radius:18px;background:#EFECE5;border:1px solid #E4E0D6;position:relative">'
+    +'<button id="ciTypeBtn" onclick="var m=document.getElementById(\'ciTypeMenu\');m.style.display=(m.style.display===\'block\')?\'none\':\'block\'" style="border:none;background:transparent;font-size:12.5px;font-weight:700;color:var(--text);padding:0 6px 0 12px;height:32px;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:inherit"><span id="ciTypeLbl">Kommentar · Diverses</span><i class="ti ti-chevron-down" style="font-size:13px"></i></button>'
+    +'<button onclick="ciSubmit(\''+empId+'\')" aria-label="Senden" style="width:32px;height:32px;border-radius:50%;border:none;background:#F08566;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:1px"><i class="ti ti-arrow-up"></i></button>'
+    +'<div id="ciTypeMenu" style="display:none;position:absolute;right:0;bottom:42px;background:#fff;border:1px solid #E4E0D6;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.12);padding:6px;min-width:270px;z-index:5;white-space:nowrap">'
+    +[['diverses','Kommentar · Diverses','in den Verlauf'],['skill','Kommentar · Skill','in den Verlauf'],['will','Kommentar · Will','in den Verlauf'],['result','Kommentar · Result','in den Verlauf'],['notiz','In Notiz übernehmen','an die Notiz anhängen']].map(function(o){return '<div onclick="ciSetType(\''+o[0]+'\',\''+o[1]+'\')" style="padding:8px 10px;border-radius:8px;font-size:13.5px;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;gap:16px" onmouseover="this.style.background=\'#EFECE5\'" onmouseout="this.style.background=\'transparent\'">'+o[1]+'<small style="color:var(--text3);font-size:11.5px">'+o[2]+'</small></div>';}).join('')
+    +'</div></div></div></div>';
+  h+='</div></div>'; // Ende Inhalt + Flex
+  window._ciType='diverses';
   document.getElementById('coachingInfoModalBody').innerHTML=h;
   openModal('coachingInfoModal');
 }
