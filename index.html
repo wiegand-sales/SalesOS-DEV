@@ -201,7 +201,7 @@ thead th *{color:inherit;}
 .std-table tbody tr:nth-child(even) td{background:var(--s-tint);--band:rgba(29,28,26,0.06);}
 .std-table tbody tr:last-child td{border-bottom:none!important;}
 .std-table tbody tr:not(.sum):hover td{background:rgba(29,28,26,0.16)!important;box-shadow:inset 0 2px 0 var(--teal-dark),inset 0 -2px 0 var(--teal-dark)!important;}
-.std-table tr.sum td{background:#1d1c1a!important;color:#fff!important;font-weight:700;padding:13px 14px!important;}
+.std-table tr.sum td{background:#FDF0EB!important;color:var(--text)!important;font-weight:700;padding:13px 14px!important;border-top:2px solid #F08566!important;}
 .std-table .r{text-align:right;}
 .std-table td.r .btn,.std-table td.r a.btn{display:inline-flex;vertical-align:middle;}
 /* Rechte-Auswahl und Wizard-Bausteine */
@@ -225,7 +225,11 @@ thead th *{color:inherit;}
 .wz-switch input:focus-visible+span{outline:2px solid #F08566;outline-offset:2px;}
 .std-table td.f{font-weight:600;color:var(--text);}
 .std-table .s{display:block;font-size:11px;font-weight:400;color:var(--text3);margin-top:1px;}
-tr.perf-sum-row:hover td{background:#1d1c1a !important;}
+/* Summenzeilen: dezentes Koralle statt Schwarz */
+tr.perf-sum-row td{background:#FDF0EB!important;color:var(--text)!important;border-top:2px solid #F08566!important;border-bottom:none!important;}
+tr.perf-sum-row td:first-child,.std-table tr.sum td:first-child{box-shadow:inset 4px 0 0 #F08566!important;}
+tr.perf-sum-row [style*="color:#fff"],tr.perf-sum-row [style*="color: #fff"],.std-table tr.sum [style*="color:#fff"]{color:var(--text)!important;}
+tr.perf-sum-row:hover td{background:#FBE6DE!important;}
 tr.perf-avg-row:hover td{background:var(--s-tint-strong) !important;}
 /* ALERTS */
 .alert{border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
@@ -3923,18 +3927,18 @@ function zielvereinbarungHtml(){
       +'<div style="'+GH+';justify-content:center">%</div>'
       +'</div>'
       +rowsHtml
-      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:#1d1c1a">'
-      +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center">Team gesamt</div>'
-      +'<div style="font-weight:700;color:#F7B39A;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamUrlaubSum+'</div>'
-      +'<div style="font-weight:700;color:#e0a13a;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamKrankSum+'</div>'
+      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:#FDF0EB;border-top:2px solid #F08566;box-shadow:inset 4px 0 0 #F08566">'
+      +'<div style="font-weight:700;color:var(--text);padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center">Team gesamt</div>'
+      +'<div style="font-weight:700;color:#C9502F;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamUrlaubSum+'</div>'
+      +'<div style="font-weight:700;color:#B8741A;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamKrankSum+'</div>'
       +weekTotalCells
-      +'<div style="font-weight:700;color:#fff;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamDaysSum+'</div>'
-      +'<div style="color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">–</div>'
-      +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">Ø € '+avgMarge+'</div>'
-      +(teamWeekTargetSums||weeksMeta.map(function(){return 0;})).map(function(sum,i){return '<div style="font-weight:700;color:#F7B39A;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end;white-space:nowrap'+(i===0?';border-left:2px solid rgba(255,255,255,0.25)':'')+(i===(teamWeekTargetSums||weeksMeta).length-1?';border-right:2px solid rgba(255,255,255,0.25)':'')+'">€ '+Math.round(sum).toLocaleString('de-DE')+'</div>';}).join('')
-      +'<div style="font-weight:700;color:#F7B39A;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamTargetSum).toLocaleString('de-DE')+'</div>'
-      +'<div style="font-weight:700;color:#fff;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamIstSum).toLocaleString('de-DE')+'</div>'
-      +'<div style="font-weight:700;color:#F7B39A;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+(teamTargetSum>0?Math.round(teamIstSum/teamTargetSum*100):(teamIstSum>0?100:0))+'%</div>'
+      +'<div style="font-weight:700;color:var(--text);text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamDaysSum+'</div>'
+      +'<div style="color:var(--text);padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">–</div>'
+      +'<div style="font-weight:700;color:var(--text);padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">Ø € '+avgMarge+'</div>'
+      +(teamWeekTargetSums||weeksMeta.map(function(){return 0;})).map(function(sum,i){return '<div style="font-weight:700;color:#C9502F;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end;white-space:nowrap'+(i===0?';border-left:2px solid rgba(255,255,255,0.25)':'')+(i===(teamWeekTargetSums||weeksMeta).length-1?';border-right:2px solid rgba(255,255,255,0.25)':'')+'">€ '+Math.round(sum).toLocaleString('de-DE')+'</div>';}).join('')
+      +'<div style="font-weight:700;color:#C9502F;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamTargetSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="font-weight:700;color:var(--text);padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(teamIstSum).toLocaleString('de-DE')+'</div>'
+      +'<div style="font-weight:700;color:#C9502F;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+(teamTargetSum>0?Math.round(teamIstSum/teamTargetSum*100):(teamIstSum>0?100:0))+'%</div>'
       +'</div>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:var(--text3)"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block"></span> Woche enthält einen bayerischen Feiertag — Standardwert bereits reduziert, Hover für Details</div>'
@@ -3990,18 +3994,18 @@ function zielvereinbarungHtml(){
       +'</div>');
     if(isCurrent)monthRows.push(weekDetailHtml);
   }
-  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:#1d1c1a">'
-    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center">Jahresergebnis</div>'
-    +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:center">–</div>'
-    +'<div style="font-weight:800;color:#F7B39A;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:center">'+yearUrlaubSum+'</div>'
-    +'<div style="font-weight:800;color:#e0a13a;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:center">'+yearKrankSum+'</div>'
-    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:center">'+yearDaysSum+'</div>'
-    +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:center">–</div>'
-    +'<div style="color:#fff;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:center">–</div>'
-    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
-    +'<div style="font-weight:800;color:#F7B39A;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearTargetSum).toLocaleString('de-DE')+'</div>'
-    +'<div style="font-weight:800;color:#fff;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearIstSum).toLocaleString('de-DE')+'</div>'
-    +'<div style="font-weight:800;color:#F7B39A;padding:10px 14px;border-top:2px solid #F7B39A;display:flex;align-items:center;justify-content:center">'+(yearTargetSum>0?Math.round(yearIstSum/yearTargetSum*100):(yearIstSum>0?100:0))+'%</div>'
+  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:#FDF0EB;border-top:2px solid #F08566;box-shadow:inset 4px 0 0 #F08566">'
+    +'<div style="font-weight:800;color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center">Jahresergebnis</div>'
+    +'<div style="color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">–</div>'
+    +'<div style="font-weight:800;color:#C9502F;padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">'+yearUrlaubSum+'</div>'
+    +'<div style="font-weight:800;color:#B8741A;padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">'+yearKrankSum+'</div>'
+    +'<div style="font-weight:800;color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">'+yearDaysSum+'</div>'
+    +'<div style="color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">–</div>'
+    +'<div style="color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">–</div>'
+    +'<div style="font-weight:800;color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearNlSum).toLocaleString('de-DE')+'</div>'
+    +'<div style="font-weight:800;color:#C9502F;padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearTargetSum).toLocaleString('de-DE')+'</div>'
+    +'<div style="font-weight:800;color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:flex-end">€ '+Math.round(yearIstSum).toLocaleString('de-DE')+'</div>'
+    +'<div style="font-weight:800;color:#C9502F;padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">'+(yearTargetSum>0?Math.round(yearIstSum/yearTargetSum*100):(yearIstSum>0?100:0))+'%</div>'
     +'</div>';
   return buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}))
     +wochenzielKachelnHtml()
