@@ -5643,7 +5643,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       liste=visible.filter(function(e){return e.id===overviewChartEmpId;});
     }
     var labels=weeks.map(function(w){return w.label;});
-    var colors={gesamt:'#F08566',oem:'#F7B39A',ups:'#e0a13a',wka:'#8a6fd4'};
+    var colors={gesamt:'#3a3833',oem:'#8C8577',ups:'#B4AC9C',wka:'#D3CCBD'}; // Diagramm in den Hintergrundfarben (Entwurf C)
 
     function seriesFor(valFn,color,label,fillOrder){
       var data=weeks.map(function(w){
@@ -5652,7 +5652,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       });
       return {label:label,data:data,borderColor:color,backgroundColor:color+'22',
         fill:!!fillOrder,tension:0.35,pointRadius:labels.length<=16?3:0,
-        pointBackgroundColor:color,borderWidth:2,spanGaps:false,order:fillOrder||2};
+        pointBackgroundColor:color,borderWidth:fillOrder?2.5:2,spanGaps:false,order:fillOrder||2,borderDash:color===colors.wka?[5,4]:[]};
     }
 
     var datasets=[];
@@ -5712,7 +5712,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       datasets.push({
         label:'Ziel ('+target+')',
         data:labels.map(function(){return target;}),
-        borderColor:'#BD2D29',borderDash:[5,4],borderWidth:2,
+        borderColor:'#F08566',borderDash:[5,4],borderWidth:1.5,
         pointRadius:0,fill:false,order:99
       });
     }
@@ -6435,17 +6435,17 @@ function renderTeam(){
     // Team Performance Trend Chart (inkl. kombinierter Filter-Zeile)
     +(function(){
       var TMETRICS=[
-        {k:'margeGesamt',l:'Marge Gesamt',c:'#F08566'},
-        {k:'oem_aktivitaeten',l:'Aktivitäten',c:'#F08566'},
-        {k:'optGesamt',  l:'Opt. Gesamt', c:'#F08566'},
-        {k:'convOEM',    l:'Opt. OEM',    c:'#F08566'},
-        {k:'ups_yes',    l:'Opt. Upsell', c:'#F08566'},
-        {k:'wka_gesamt_yes',        l:'Opt. WKA',    c:'#F08566'},
-        {k:'crOEM',      l:'CR Ges.',      c:'#F08566'},
-        {k:'crTeilweise',l:'CR TW',       c:'#F08566'},
-        {k:'crYes',      l:'CR Yes',      c:'#F08566'},
-        {k:'crSuperYes', l:'CR SY',       c:'#F08566'},
-        {k:'crMegaYes',  l:'CR MY',       c:'#F08566'},
+        {k:'margeGesamt',l:'Marge Gesamt',c:'#3a3833'},
+        {k:'oem_aktivitaeten',l:'Aktivitäten',c:'#3a3833'},
+        {k:'optGesamt',  l:'Opt. Gesamt', c:'#3a3833'},
+        {k:'convOEM',    l:'Opt. OEM',    c:'#3a3833'},
+        {k:'ups_yes',    l:'Opt. Upsell', c:'#3a3833'},
+        {k:'wka_gesamt_yes',        l:'Opt. WKA',    c:'#3a3833'},
+        {k:'crOEM',      l:'CR Ges.',      c:'#3a3833'},
+        {k:'crTeilweise',l:'CR TW',       c:'#3a3833'},
+        {k:'crYes',      l:'CR Yes',      c:'#3a3833'},
+        {k:'crSuperYes', l:'CR SY',       c:'#3a3833'},
+        {k:'crMegaYes',  l:'CR MY',       c:'#3a3833'},
       ];
       var s='<div class="card" style="margin-bottom:22px">';
       s+='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px">';
@@ -6511,17 +6511,17 @@ function renderTeam(){
   window._teamChartData=null;
   (function(allRows,metric,days,kpiTargets){
     var mMap={
-      crOEM:      {f:'crOEM',      l:'CR OEM %', c:'#F08566'},
-      crTeilweise:{f:'crTeilweise',l:'CR TW %',  c:'#F08566'},
-      crYes:      {f:'crYes',      l:'CR Yes %', c:'#F08566'},
-      crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#F08566'},
-      crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#F08566'},
-      oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',c:'#F08566'},
-      optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#F08566'},
-      convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#F08566'},
-      ups_yes:    {f:'ups_yes',    l:'Opt. Upsell',c:'#F08566'},
-      wka_gesamt_yes:        {f:'wka_gesamt_yes',        l:'Opt. WKA', c:'#F08566'},
-      margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#F08566'}
+      crOEM:      {f:'crOEM',      l:'CR OEM %', c:'#3a3833'},
+      crTeilweise:{f:'crTeilweise',l:'CR TW %',  c:'#3a3833'},
+      crYes:      {f:'crYes',      l:'CR Yes %', c:'#3a3833'},
+      crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#3a3833'},
+      crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#3a3833'},
+      oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',c:'#3a3833'},
+      optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#3a3833'},
+      convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#3a3833'},
+      ups_yes:    {f:'ups_yes',    l:'Opt. Upsell',c:'#3a3833'},
+      wka_gesamt_yes:        {f:'wka_gesamt_yes',        l:'Opt. WKA', c:'#3a3833'},
+      margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#3a3833'}
     };
     var m=mMap[metric]||mMap.crOEM;
     if(!allRows||!allRows.length){return;}
@@ -6590,7 +6590,7 @@ function renderTeam(){
       datasets.push({
         label:'Ziel ('+target+')',
         data:dates.map(function(){return target;}),
-        borderColor:'#BD2D29',borderDash:[5,4],borderWidth:2,
+        borderColor:'#F08566',borderDash:[5,4],borderWidth:1.5,
         pointRadius:0,fill:false,order:2
       });
     }
