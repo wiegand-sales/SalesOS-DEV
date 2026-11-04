@@ -308,7 +308,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 /* MODAL */
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;}
 .modal-ov.hidden{display:none;}
-.modal{background:rgba(255,255,255,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:var(--r-lg);padding:24px;width:640px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18);}
+.modal{background:#F7F5F0;border:1px solid #E4E0D6;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:16px;padding:24px;width:640px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18);}
 .modal-title{font-size:16px;font-weight:600;margin-bottom:16px;}
 .modal-actions{display:flex;gap:10px;margin-top:6px;}
 /* CHART */
@@ -5266,16 +5266,35 @@ function buildGlobalBannerHtml(visible){
       +'</div>';
     h+='</div>';
 
-    h+='<div style="flex:1;padding:0 4px 0 18px;position:relative">'
-      +'<svg width="100%" height="195" viewBox="0 0 '+_CW+' '+_CHh+'" preserveAspectRatio="none">'
-      +'<line x1="'+_hX+'" y1="0" x2="'+_hX+'" y2="'+_CHh+'" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,3"/>'
-      +'<path d="'+_areaPath+'" fill="#fff" opacity="0.10"/>'
-      +'<path d="'+_pastPath+'" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>'
-      +'<path d="'+_futurePath+'" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6,5"/>'
-      +'</svg>'
-      +'<div style="position:absolute;left:calc(18px + '+(_hX/_CW*100)+'% * (100% - 22px) / 100%);top:'+(_yP(_coachDays[_hIdx])/_CHh*195)+'px;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,0.3)" title="Heute"></div>'
-      +'<div style="position:absolute;top:0;left:'+(_hX/_CW*100)+'%;transform:translateX(-50%);font-size:11px;font-weight:600;letter-spacing:.06em;color:#fff;white-space:nowrap">HEUTE</div>'
-      +'</div>';
+    // Wochenbalken mit Wochenziel: 7 Vorwochen, aktuelle Woche, 4 Folgewochen (geplant als Umriss)
+    (function(){
+      var d0=new Date(_heute+'T00:00:00Z'), dow=(d0.getUTCDay()+6)%7, mon=addDaysUTC(_heute,-dow);
+      var wks=[];
+      for(var w=-7;w<=4;w++){
+        var ws=addDaysUTC(mon,7*w), we=addDaysUTC(ws,6);
+        var done=_allSess.filter(function(x){return x.d>=ws&&x.d<=we&&x.s!=='geplant';}).length;
+        var plan=_allSess.filter(function(x){return x.d>=ws&&x.d<=we&&x.s==='geplant'&&x.d>=_heute;}).length;
+        wks.push({kw:isoWeekNum(new Date(ws+'T00:00:00Z')),done:done,plan:plan,cur:w===0,fut:w>0});
+      }
+      var wkZiel=Math.round((_sessionsZiel*12/52)*10)/10;
+      var mx=Math.max(wkZiel,1);wks.forEach(function(x){mx=Math.max(mx,x.fut?x.plan:x.done);});mx=mx*1.15;
+      var BH=140;
+      var g='<div style="flex:1;padding:0 4px 0 18px;position:relative;height:195px;display:flex;flex-direction:column;justify-content:flex-end">'
+        +'<div style="position:relative;height:'+(BH+22)+'px;display:flex;align-items:flex-end;gap:10px">';
+      if(wkZiel>0)g+='<div style="position:absolute;left:0;right:0;bottom:'+Math.round(wkZiel/mx*BH)+'px;border-top:1.5px dashed rgba(255,255,255,0.85);z-index:1"><span style="position:absolute;right:0;top:-18px;font-size:11px;font-weight:600;color:#fff">Wochenziel '+wkZiel.toLocaleString('de-DE')+'</span></div>';
+      wks.forEach(function(x){
+        var v=x.fut?x.plan:x.done, hpx=Math.max(3,Math.round(v/mx*BH));
+        var bar=x.fut
+          ?'<div style="width:56%;max-width:46px;height:'+hpx+'px;border-radius:4px;background:rgba(255,255,255,0.08);border:1.5px dashed rgba(255,255,255,0.7)"></div>'
+          :'<div style="width:56%;max-width:46px;height:'+hpx+'px;border-radius:4px;background:'+(x.cur?'#fff':'rgba(255,255,255,0.42)')+'"></div>';
+        g+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="KW '+x.kw+': '+(x.fut?v+' geplant':v+' Sessions'+(x.cur&&x.plan?' · '+x.plan+' noch geplant':''))+'">'
+          +'<div style="font-size:13px;font-weight:'+(x.cur?700:500)+';color:#fff;margin-bottom:4px">'+v+'</div>'+bar+'</div>';
+      });
+      g+='</div><div style="display:flex;gap:10px;margin-top:6px">';
+      wks.forEach(function(x){g+='<div style="flex:1;text-align:center;font-size:11px;font-weight:'+(x.cur?700:500)+';color:'+(x.cur?'#fff':'rgba(255,255,255,0.8)')+';white-space:nowrap">KW '+x.kw+(x.fut?' · geplant':'')+'</div>';});
+      g+='</div></div>';
+      h+=g;
+    })();
     h+='</div>';
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
       +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
@@ -11505,16 +11524,16 @@ function openCoachingInfoModal(empId){
   var besteSession=effektPaare.length?effektPaare.slice().sort(function(a,b){return b.eff.delta-a.eff.delta;})[0]:null;
   var avgEffekt=alleEffekte.length?(alleEffekte.reduce(function(a,b){return a+b.delta;},0)/alleEffekte.length):null;
 
-  var h='<div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-history" style="color:var(--purple)"></i> Coaching-Historie · '+esc(emp.name)+'</div>';
+  var h='<div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-history" style="color:var(--text2)"></i> Coaching-Historie · '+esc(emp.name)+'</div>';
 
-  h+='<div style="font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Übersicht</div>';
-  h+='<div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">';
+  h+='<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:#EFECE5;border:1px solid #E4E0D6;color:var(--text);font-size:11px;margin-right:6px;letter-spacing:0\">1</span>Übersicht</div>';
+  h+='<div style="padding-left:0;margin-bottom:16px">';
   h+='<div style="display:flex;gap:10px;margin-bottom:10px">'
-    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+total+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Gesamt</div></div>'
-    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:'+(daysSinceLast!==null&&daysSinceLast>30?'#B23A3A':'#1d1c1a')+'">'+(daysSinceLast===null?'—':daysSinceLast+'d')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Letzte</div></div>'
-    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+(avgPerMonth||'—')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø/Monat</div></div>'
-    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+geplant.length+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Geplant</div></div>'
-    +'<div style="flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px"><div style="font-size:18px;font-weight:700;color:'+(avgEffekt===null?'#94a4a4':avgEffekt>=0?'#2f8f66':'#B23A3A')+'">'+(avgEffekt===null?'—':(avgEffekt>=0?'+':'')+avgEffekt.toFixed(1))+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø Effekt</div></div>'
+    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+total+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Gesamt</div></div>'
+    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:'+(daysSinceLast!==null&&daysSinceLast>30?'#B23A3A':'#1d1c1a')+'">'+(daysSinceLast===null?'—':daysSinceLast+'d')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Letzte</div></div>'
+    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+(avgPerMonth||'—')+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø/Monat</div></div>'
+    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:#1d1c1a">'+geplant.length+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Geplant</div></div>'
+    +'<div style="flex:1;text-align:center;background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:12px 6px"><div style="font-size:18px;font-weight:700;color:'+(avgEffekt===null?'#94a4a4':avgEffekt>=0?'#2f8f66':'#B23A3A')+'">'+(avgEffekt===null?'—':(avgEffekt>=0?'+':'')+avgEffekt.toFixed(1))+'</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600">Ø Effekt</div></div>'
     +'</div>';
   if(mainCoach){
     h+='<div style="font-size:11.5px;color:var(--text2)">Haupt-Coach: <b style="color:#1d1c1a">'+esc(mainCoach.name)+'</b> ('+coachCounts[mainCoachId]+'× von '+total+')</div>';
@@ -11524,7 +11543,7 @@ function openCoachingInfoModal(empId){
   }
   if(besteSession&&besteSession.eff.delta>0){
     var bd=new Date(besteSession.p.date+'T00:00:00');
-    h+='<div style="background:#eafaf3;border-left:3px solid #2f8f66;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:11.5px;color:#1f5e42">'
+    h+='<div style="background:#fff;border:1px solid #E4E0D6;border-left:3px solid #3a3833;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:12px;color:var(--text)">'
       +'🏆 <b>Beste Session:</b> '+esc(besteSession.p.type||besteSession.p.art||'Coaching')+' am '+bd.getDate()+'. '+mNamesShort[bd.getMonth()]+' <span style="font-weight:700">(+'+besteSession.eff.delta.toFixed(1)+' '+esc(besteSession.eff.label)+')</span>'
       +'</div>';
   }
@@ -11534,21 +11553,21 @@ function openCoachingInfoModal(empId){
   var daysSinceQa=lastQa?Math.round((new Date(heute+'T00:00:00')-new Date(lastQa.date+'T00:00:00'))/86400000):null;
   if(daysSinceQa===null||daysSinceQa>60){
     var qaTxt=daysSinceQa===null?'Noch keine QA-Bewertung (Telefonat) vorhanden':Math.round(daysSinceQa/7)+' Wochen seit letzter QA-Bewertung (Telefonat)';
-    h+='<div style="background:var(--s-tint);border-left:3px solid #F08566;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:11.5px;color:#F08566;font-weight:600">⚠ '+qaTxt+'</div>';
+    h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-left:3px solid #F08566;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:12px;color:var(--text);font-weight:600">⚠ '+qaTxt+'</div>';
   }
   h+='</div>';
 
-  h+='<div style="font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Notiz</div>';
-  h+='<div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">';
+  h+='<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:#EFECE5;border:1px solid #E4E0D6;color:var(--text);font-size:11px;margin-right:6px;letter-spacing:0\">2</span>Notiz</div>';
+  h+='<div style="padding-left:0;margin-bottom:16px">';
   h+='<textarea id="coachingInfoNotizField" placeholder="Notiz zu diesem Mitarbeiter..." style="width:100%;min-height:70px;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--r-md);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box">'+esc(emp.notes||'')+'</textarea>';
   h+='<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><button class="btn btn-sm" onclick="saveCoachingInfoNotiz(\''+empId+'\')"><i class="ti ti-device-floppy"></i> Notiz speichern</button><span id="coachingInfoNotizStatus" style="font-size:11px;color:var(--text3)"></span></div>';
   h+='</div>';
 
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-    +'<span style="font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em">③ Verlauf</span>'
+    +'<span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:#EFECE5;border:1px solid #E4E0D6;color:var(--text);font-size:11px;margin-right:6px;letter-spacing:0\">3</span>Verlauf</span>'
     +'<button class="btn btn-sm" onclick="openCommentModal(\''+empId+'\')"><i class="ti ti-message-plus"></i> Kommentar</button>'
     +'</div>';
-  h+='<div style="border-left:2px solid var(--border2);padding-left:14px">';
+  h+='<div style="padding-left:0">';
   // Sessions, persoenliche Bestwerte UND Kommentare zu einer gemeinsamen, chronologisch sortierten Zeitleiste zusammenfuehren
   var infoComments=(reviews[empId]||[]).filter(function(r){return r.isComment;});
   var commentTypeColInfo={skill:'#1d1c1a',will:'#F08566',result:'#F08566',diverses:'#5c7070'};
@@ -11590,7 +11609,7 @@ function openCoachingInfoModal(empId){
       var planned=p.status==='geplant';
       var coach=p.coachId?employees.find(function(e){return e.id===p.coachId;}):null;
       h+='<div style="position:relative;padding-bottom:18px">';
-      h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+(planned?'#e8ecfb':'#F08566')+'"></div>';
+      h+='<div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);background:'+(planned?'#F7F5F0':'#3a3833')+'"></div>';
       h+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">'+dowShort[dt.getDay()]+', '+dt.getDate()+'. '+mNamesShort[dt.getMonth()]+(planned?' · Geplant':'')+'</div>';
       h+='<div style="font-weight:600;font-size:13.5px;margin-top:2px">'+esc(p.type||p.art||'Coaching')+(besteSession&&besteSession.p===p?' 🏆':'')+'</div>';
       h+='<div style="font-size:11.5px;color:var(--text2);margin-top:1px">'+(coach?'Coach: '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):'')+'</div>';
@@ -11606,7 +11625,7 @@ function openCoachingInfoModal(empId){
         var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(nextSession.date+'T00:00:00'))/86400000);
         if(gapDays>=14){
           var gapWeeks=Math.round(gapDays/7);
-          h+='<div style="background:var(--s-tint);border-left:3px solid #F08566;border-radius:6px;padding:8px 12px;margin:4px 0 14px 0;font-size:11.5px;color:#F08566;font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
+          h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-left:3px solid #F08566;border-radius:8px;padding:9px 12px;margin:4px 0 14px 0;font-size:12px;color:var(--text);font-weight:600">⚠ '+gapWeeks+' Wochen Pause seit dieser Session</div>';
         }
       }
     });
