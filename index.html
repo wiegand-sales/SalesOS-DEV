@@ -6685,6 +6685,16 @@ function renderEmpDetail(){
   var _cc={};p.forEach(function(x){if(x.status!=='geplant'&&x.coachId)_cc[x.coachId]=(_cc[x.coachId]||0)+1;});
   var _mcId=Object.keys(_cc).sort(function(x,y){return _cc[y]-_cc[x];})[0];
   var _mc=_mcId?employees.find(function(e){return String(e.id)===String(_mcId);}):null;
+  // Hinweise im Kopf: letzte Session und letzte QA-Bewertung (koralle, wenn überfällig)
+  var _hT=today(),_dd=function(d){return Math.round((new Date(_hT+'T00:00:00')-new Date(d+'T00:00:00'))/86400000);};
+  var _lastS=p.filter(function(x){return x.status!=='geplant'&&x.date<=_hT;}).map(function(x){return x.date;}).sort().pop();
+  var _lastQ=(callRatings[emp.id]||[]).map(function(x){return x.date;}).sort().pop();
+  function _hint(txt,warn){return '<span style="height:34px;display:flex;align-items:center;gap:7px;padding:0 12px;border-radius:10px;font-size:12.5px;white-space:nowrap;'+(warn?'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A':'background:#fff;border:1px solid #E4E0D6;color:var(--text2)')+'"><span style="width:8px;height:8px;border-radius:50%;background:'+(warn?'#F08566':'#3a3833')+'"></span>'+txt+'</span>';}
+  var _hints='';
+  if(_lastS){var _ds=_dd(_lastS);_hints+=_hint(_ds===0?'Letzte Session <b>heute</b>':'Letzte Session vor <b>'+_ds+' '+(_ds===1?'Tag':'Tagen')+'</b>',_ds>30);}
+  else _hints+=_hint('<b>Noch keine Session</b>',true);
+  if(_lastQ){var _dq=_dd(_lastQ),_wq=Math.round(_dq/7);_hints+=_hint(_dq<7?'QA-Bewertung <b>diese Woche</b>':'<b>'+_wq+' Wo.</b> ohne QA',_dq>60);}
+  else _hints+=_hint('<b>Noch keine QA</b>',true);
   var _meta=[esc(emp.role||''),esc(emp.phase||''),emp.startDate?'seit '+emp.startDate.split('-').reverse().join('.'):'',_mc?'Coach '+esc(_mc.name.split(' ')[0]):''].filter(Boolean).join(' · ');
   document.getElementById('mainArea').innerHTML=
     '<div style="padding:22px 24px 8px;flex-shrink:0"><div style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(40,32,15,0.06)">'
@@ -6700,7 +6710,8 @@ function renderEmpDetail(){
     +'<div class="tab" data-tab="tasks" onclick="switchTab(\'tasks\')" id="tasksTabBtn">Task'+(tc>0?'<span class="emp-seg-badge">'+tc+'</span>':'')+'</div>'
     +'<div class="tab" data-tab="emp-settings" onclick="switchTab(\'emp-settings\')">Einstellungen</div>'
     +'</div>'
-    +'<span style="margin-left:auto;display:flex;gap:8px">'
+    +'<span style="margin-left:auto;display:flex;gap:6px">'+_hints+'</span>'
+    +'<span style="display:flex;gap:8px">'
     +'<button class="btn btn-primary" title="Zusammenfassung (PDF)" aria-label="Zusammenfassung (PDF)" data-eid="'+emp.id+'" onclick="exportEmpSummary(this.dataset.eid)" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-file-description" style="font-size:16px"></i></button>'
     +'<button class="btn" title="Drucken" aria-label="Drucken" onclick="window.print()" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-printer" style="font-size:16px"></i></button>'
     +'</span></div></div></div>'
