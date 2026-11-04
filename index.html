@@ -7601,15 +7601,6 @@ function renderTab(){
     if(!completedSessions.length){
       html+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-calendar-off" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Coachings erfasst<div style="margin-top:10px"><button class="btn btn-sm btn-primary" data-eid="'+emp.id+'" onclick="openNeuesCoachingModal(this.dataset.eid)"><i class="ti ti-plus"></i> Jetzt erfassen</button></div></div>';
     } else {
-      html+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;table-layout:fixed;border-collapse:collapse"><thead><tr>'
-        +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:12%">Datum</th>'
-        +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:12%">Inhalt</th>'
-        +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:11%">Impact</th>'
-        +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#F7B39A;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Start</th>'
-        +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#F4A6A6;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Stop</th>'
-        +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#FBD38D;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Continue</th>'
-        +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Notizen</th>'
-        +'</tr></thead><tbody>';
       var _fullPerfHist=(performance[emp.id]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
       var empT=empTargets(emp);
       function _histImpactWindow(centerDate,daysBefore,daysAfter,fkey){
@@ -7618,37 +7609,43 @@ function renderTab(){
         var vals=rows.map(function(p){return p[fkey];}).filter(function(v){return v!==undefined&&v!==null;});
         return vals.length?(vals.reduce(function(a,b){return a+b;},0)/vals.length):null;
       }
-      var clampStyle='display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;height:34px';
+      var CHIP='font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;white-space:nowrap;';
+      html+='<div style="display:flex;flex-direction:column;gap:6px">';
       completedSessions.forEach(function(s,idx){
-        var RM={Teilweise:{c:'var(--amber)'},Yes:{c:'var(--teal)'},'Super Yes':{c:'var(--purple)'},'Mega Yes':{c:'var(--blue)'}};
-        var rm=s.rating?RM[s.rating]:null;
+        var cid='chs'+emp.id+'x'+idx;
+        var planned=s.status==='geplant';
         var _dur=sessionDuration(s.uhrzeit,s.endUhrzeit);
-        var rowBg=idx%2===1?'background:var(--s-tint);':'';
-        var tdStyle='padding:16px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top;height:1px';
-        html+='<tr style="'+rowBg+'">';
-        html+='<td style="'+tdStyle+';white-space:nowrap">';
-        html+='<div style="font-weight:600">'+fd(s.date)+'</div>';
-        html+='<div style="height:15px;font-size:11px;color:var(--text3);margin-top:2px">'+(s.uhrzeit?'<i class="ti ti-clock" style="font-size:10px"></i> '+s.uhrzeit+(s.endUhrzeit?'–'+s.endUhrzeit:'')+(_dur?' ('+formatDuration(_dur)+')':''):'')+'</div>';
-        html+='</td>';
-        html+='<td style="'+tdStyle+';color:var(--text2)"><div style="'+clampStyle+'">'+(s.type||'Session')+(s.topics&&s.topics.length?' · '+s.topics.join(', '):'')+'</div><div style="height:16px;color:'+(rm?rm.c:'var(--text3)')+';font-size:11px;font-weight:700;margin-top:2px">'+(rm?s.rating:'')+'</div></td>';
-        html+=(function(){
-          if(!s.focusMetric)return '<td style="'+tdStyle+';color:var(--text3);text-align:center">—</td>';
-          var before=_histImpactWindow(s.date,14,0,s.focusMetric);
-          var after=_histImpactWindow(s.date,0,14,s.focusMetric);
+        var coach=s.coachId?employees.find(function(e){return e.id===s.coachId;}):null;
+        var F=[['Start',s.start],['Stop',s.stop],['Continue',s.cont],['Notizen',s.notes]].map(function(f){return [f[0],(f[1]&&String(f[1]).trim())?String(f[1]).trim():''];});
+        // Wirkung (Ziel-KPI 14 Tage vor/nach)
+        var imp='';
+        if(s.focusMetric){
+          var before=_histImpactWindow(s.date,14,0,s.focusMetric),after=_histImpactWindow(s.date,0,14,s.focusMetric);
           var delta=(before!==null&&after!==null)?(after-before):null;
-          if(delta===null)return '<td style="'+tdStyle+';color:var(--text3)"><div style="font-size:10px;color:var(--text3)">'+focusMetricLabel(s.focusMetric)+'</div>—</td>';
-          var dir=(empT[s.focusMetric]&&empT[s.focusMetric].dir)||'gte';
-          var good=dir==='lte'?delta<0:delta>0;
-          var arrow=delta>0?'↑':delta<0?'↓':'→';
-          return '<td style="'+tdStyle+'"><div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+focusMetricLabel(s.focusMetric)+'</div><div style="font-weight:700;color:'+(good?'var(--teal-dark)':'var(--red)')+'">'+arrow+' '+(delta>0?'+':'')+delta.toFixed(1)+'</div></td>';
-        })();
-        html+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyle+'">'+(s.start&&s.start.trim()?s.start:'<span style="color:var(--text3)">—</span>')+'</div></td>';
-        html+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyle+'">'+(s.stop&&s.stop.trim()?s.stop:'<span style="color:var(--text3)">—</span>')+'</div></td>';
-        html+='<td style="'+tdStyle+';color:var(--text)"><div style="'+clampStyle+'">'+(s.cont&&s.cont.trim()?s.cont:'<span style="color:var(--text3)">—</span>')+'</div></td>';
-        html+='<td style="'+tdStyle+';color:var(--text2);font-style:italic"><div style="'+clampStyle+'">'+(s.notes&&s.notes.trim()?esc(s.notes):'<span style="color:var(--text3);font-style:normal">—</span>')+'</div></td>';
-        html+='</tr>';
+          if(delta===null)imp='<span style="'+CHIP+'background:#fff;border:1px solid #E4E0D6;color:var(--text2)">Ziel: '+esc(focusMetricLabel(s.focusMetric))+'</span>';
+          else{var dir=(empT[s.focusMetric]&&empT[s.focusMetric].dir)||'gte';var good=dir==='lte'?delta<0:delta>0;
+            imp='<span style="'+CHIP+(good?'background:#E6EFE9;border:1px solid transparent;color:#2f6b52':'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A')+'">'+esc(focusMetricLabel(s.focusMetric))+' '+(delta>0?'+':'')+delta.toFixed(1).replace('.',',')+'</span>';}
+        }
+        html+='<div>';
+        html+='<div onclick="toggleSessCard(\''+cid+'\')" style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid '+(planned?'rgba(240,133,102,0.45)':'#E4E0D6')+';border-radius:10px;background:'+(planned?'#FDF0EB':'#EFECE5')+';cursor:pointer;user-select:none">';
+        html+='<div style="width:150px;flex-shrink:0;line-height:1.25"><div style="font-size:13.5px;font-weight:600">'+fd(s.date)+'</div><div style="font-size:12px;color:var(--text3)">'+(s.uhrzeit?s.uhrzeit+(s.endUhrzeit?'–'+s.endUhrzeit:'')+(_dur?' · '+formatDuration(_dur):''):'ohne Uhrzeit')+'</div></div>';
+        html+='<div style="flex:1;min-width:0;line-height:1.3"><div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s.type||'Session')+(s.topics&&s.topics.length?' · '+esc(s.topics.join(', ')):'')+'</div>'
+          +'<div style="font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(coach?'Coach '+esc(coach.name):'')+(s.rating?(coach?' · ':'')+esc(s.rating):'')+'</div></div>';
+        if(planned)html+='<span style="'+CHIP+'background:#fff;border:1px solid rgba(240,133,102,0.55);color:#B5513A">geplant</span>';
+        html+=imp;
+        html+='<span style="display:flex;gap:4px" title="Start · Stop · Continue · Notizen">'+F.map(function(f){var on=!!f[1];return '<i style="font-style:normal;width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:1px solid '+(on?'#3a3833':'#E4E0D6')+';background:'+(on?'#3a3833':'#F7F5F0')+';color:'+(on?'#fff':'var(--text3)')+'" title="'+f[0]+(on?' ausgefüllt':' leer')+'">'+f[0].charAt(0)+'</i>';}).join('')+'</span>';
+        html+='<span id="arr-'+cid+'" style="width:34px;height:34px;flex-shrink:0;border-radius:var(--r-md);border:1px solid var(--border2);background:#F7F5F0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:12px;transition:transform .2s">▾</span>';
+        html+='</div>';
+        var filled=F.filter(function(f){return f[1];});
+        html+='<div id="body-'+cid+'" style="display:none;border:1px solid #E4E0D6;border-top:none;border-radius:0 0 10px 10px;background:#F7F5F0;margin:-1px 8px 0;padding:4px 14px">';
+        if(!filled.length)html+='<div style="font-size:13px;color:var(--text3);min-height:44px;display:flex;align-items:center">Kein Rückblick und keine Notiz erfasst.</div>';
+        filled.forEach(function(f,fi){
+          html+='<div style="display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;min-height:44px;padding:6px 0;'+(fi<filled.length-1?'border-bottom:1px solid #eae7e0;':'')+'font-size:13.5px;line-height:1.5">'
+            +'<span style="font-size:12.5px;font-weight:700;color:var(--text2)">'+f[0]+'</span><span style="color:var(--text);white-space:pre-wrap">'+esc(f[1])+'</span></div>';
+        });
+        html+='</div></div>';
       });
-      html+='</tbody></table></div>';
+      html+='</div>';
     }
     html+='</div>'; // Ende Historie-Karte
 
