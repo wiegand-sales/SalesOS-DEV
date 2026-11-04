@@ -47,7 +47,7 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .rl-btn.on:before{content:"";position:absolute;left:-13px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#F08566;}
 .rl-soft{background:#ECE9E1;color:var(--text);}
 #coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before{left:-9px;}
-.rl-tip{position:absolute;left:52px;top:50%;transform:translateY(-50%);background:#1d1c1a;color:#fff;font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:60;}
+.rl-tip{position:absolute;left:52px;top:50%;margin-top:-14px;height:28px;line-height:18px;background:#1d1c1a;color:#fff;font-size:12.5px;font-weight:700;padding:5px 10px;box-sizing:border-box;border-radius:8px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:60;}
 .rl-btn:hover .rl-tip{opacity:1;}
 .rl-sep{width:28px;height:1px;background:#E4E0D6;margin:6px 0;}
 .rl-me{width:38px;height:38px;border-radius:10px!important;font-size:13px;font-weight:700;margin-top:6px;cursor:default;background:#EFECE5!important;color:#1d1c1a!important;box-shadow:0 0 0 1px #E4E0D6;}
@@ -229,6 +229,9 @@ thead th *{color:inherit;}
 .wz-switch input:focus-visible+span{outline:2px solid #F08566;outline-offset:2px;}
 .std-table td.f{font-weight:600;color:var(--text);}
 .std-table .s{display:block;font-size:11px;font-weight:400;color:var(--text3);margin-top:1px;}
+/* Dunkle Info-Fenster: Schrift immer weiss, scharf gerendert (ganze Pixel, Kantenglaettung fuer helle Schrift auf dunklem Grund) */
+#crBreakdownTooltip{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-size:12.5px!important;font-weight:500;transform:none!important;}
+#crBreakdownTooltip,#crBreakdownTooltip *{color:#fff!important;}
 /* Summe & Durchschnitt: transparentes Schwarz */
 tr.perf-sum-row,tr.perf-avg-row,.std-table tr.sum{background:#fff!important;color:var(--text)!important;}
 tr.perf-sum-row td{background:rgba(29,28,26,0.07)!important;color:var(--text)!important;border-top:2px solid #3a3833!important;border-bottom:none!important;font-weight:700;}
@@ -4153,9 +4156,10 @@ if(typeof Chart!=='undefined'){
   Chart.defaults.plugins.tooltip.backgroundColor='#1d1c1a';
   Chart.defaults.plugins.tooltip.titleColor='#fff';
   Chart.defaults.plugins.tooltip.titleFont={size:12,weight:'700'};
-  Chart.defaults.plugins.tooltip.bodyColor='rgba(255,255,255,0.9)';
-  Chart.defaults.plugins.tooltip.bodyFont={size:12};
-  Chart.defaults.plugins.tooltip.borderColor='rgba(247,179,154,0.4)';
+  Chart.defaults.plugins.tooltip.bodyColor='#fff';
+  Chart.defaults.plugins.tooltip.footerColor='#fff';
+  Chart.defaults.plugins.tooltip.bodyFont={size:12.5,weight:'500'};
+  Chart.defaults.plugins.tooltip.borderColor='rgba(255,255,255,0.08)';
   Chart.defaults.plugins.tooltip.borderWidth=1;
   Chart.defaults.plugins.tooltip.cornerRadius=8;
   Chart.defaults.plugins.tooltip.padding=10;
@@ -5560,8 +5564,8 @@ function positionCrTooltip(ev){
   var rect=el.getBoundingClientRect();
   if(x+rect.width>window.innerWidth-8)x=ev.clientX-rect.width-14;
   if(y+rect.height>window.innerHeight-8)y=ev.clientY-rect.height-14;
-  el.style.left=x+'px';
-  el.style.top=y+'px';
+  el.style.left=Math.round(x)+'px';
+  el.style.top=Math.round(y)+'px';
 }
 function hideCrTooltip(){
   var el=document.getElementById('crBreakdownTooltip');
