@@ -46,6 +46,7 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .rl-btn.on{background:#fff;color:var(--text);box-shadow:0 0 0 1px #E4E0D6,0 2px 6px rgba(40,32,15,.06);}
 .rl-btn.on:before{content:"";position:absolute;left:-13px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#F08566;}
 .rl-soft{background:#ECE9E1;color:var(--text);}
+#coachingInfoModal .rl-btn.on:before{left:-9px;}
 .rl-tip{position:absolute;left:52px;top:50%;transform:translateY(-50%);background:#1d1c1a;color:#fff;font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:60;}
 .rl-btn:hover .rl-tip{opacity:1;}
 .rl-sep{width:28px;height:1px;background:#E4E0D6;margin:6px 0;}
@@ -11594,10 +11595,11 @@ function openCoachingInfoModal(empId){
     +'<div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Coaching-Historie</div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(emp.name)+(role?' · '+esc(role):'')+(mainCoach?' · Coach '+esc(mainCoach.name.split(' ')[0]):'')+'</div></div>'
     +'<button class="btn" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal(\'coachingInfoModal\')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>';
-  function railBtn(icon,tip,js,on){return '<button title="'+tip+'" aria-label="'+tip+'" onclick="'+js+'" style="width:36px;height:36px;border-radius:10px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:'+(on?'var(--text)':'var(--text2)')+';background:'+(on?'#fff':'transparent')+';'+(on?'box-shadow:0 0 0 1px #E4E0D6':'')+'"><i class="ti '+icon+'"></i></button>';}
+  // Gleiche Bausteine wie die Hauptmenueleiste (rl-btn: abgerundete Quadrate, aktiv weiss mit Koralle-Strich, Namensschild beim Darueberfahren)
+  function railBtn(icon,tip,js,on){return '<button class="rl-btn'+(on?' on':'')+'" aria-label="'+tip+'" onclick="'+js+'" style="width:38px;height:38px;font-size:18px"><i class="ti '+icon+'"></i><span class="rl-tip" style="left:48px">'+tip+'</span></button>';}
   var sc=function(id){return "var el=document.getElementById('"+id+"');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})";};
   h+='<div style="display:flex;min-height:0;flex:1">'
-    +'<div style="width:52px;flex-shrink:0;border-right:1px solid #E4E0D6;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;background:#EFECE5">'
+    +'<div style="width:56px;flex-shrink:0;align-self:flex-start;margin:14px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
     +railBtn('ti-layout-grid','Übersicht',sc('ciSecTop'),true)+railBtn('ti-message-circle','Verlauf',sc('ciSecVerlauf'))+railBtn('ti-notes','Notiz',sc('ciSecNotiz'))
     +railBtn('ti-star','QA-Bewertungen',"closeModal('coachingInfoModal');selectedEmp='"+empId+"';view='emp';activeTab='call-performance';renderSidebar();renderMain();")
     +railBtn('ti-calendar-plus','Session planen',"closeModal('coachingInfoModal');openSessionModal('"+empId+"')")
