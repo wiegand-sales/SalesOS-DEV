@@ -7132,30 +7132,36 @@ function renderTab(){
       html+='<div style="display:flex;flex-direction:column;gap:6px">';
       callRat.forEach(function(r,rdx){
         var cardId='cr'+emp.id+'x'+rdx;
-        var ts=totalScore(r);var tcol=ts>=75?'var(--teal-dark)':ts>=50?'var(--amber-dark)':'var(--red)';
-        html+='<div style="background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden">';
-        html+='<div class="sess-hdr" data-eid="'+cardId+'" onclick="toggleSessCard(this.dataset.eid)" style="display:flex;align-items:center;gap:10px;padding:16px 14px;cursor:pointer;user-select:none;font-size:13px">';
-        html+='<span style="font-size:13px;font-weight:700;white-space:nowrap">'+fd(r.date)+'</span>';
-        html+='<span style="font-size:13px;color:var(--text2);background:var(--bg-solid);padding:2px 8px;border-radius:20px;flex-shrink:0">'+(r.b2b||'B2C')+'</span>';
-        html+='<span style="font-size:13px;color:'+(r.status==='ja'?'var(--teal-dark)':'var(--red)')+';flex:1">'+(r.status==='ja'?'✓ Abschluss':'✗ Kein Abschluss')+(r.abschlussArt?' · Opt.: '+r.abschlussArt:'')+'</span>';
-        html+='<span style="font-size:13px;font-weight:700;color:'+tcol+';flex-shrink:0">'+ts.toFixed(0)+'</span>';
-        if(canEditHistorie())html+='<button class="btn btn-sm" data-eid="'+emp.id+'" data-rid="'+r.id+'" onclick="event.stopPropagation();openQaBewertungModal(this.dataset.eid,this.dataset.rid)" style="padding:2px 8px;height:auto"><i class="ti ti-pencil" style="font-size:12px"></i></button>';
-        if(canEditHistorie())html+='<button class="btn btn-sm" data-eid="'+emp.id+'" data-rid="'+r.id+'" onclick="event.stopPropagation();deleteHistorieCallRating(this.dataset.eid,this.dataset.rid)" style="padding:2px 8px;height:auto;color:var(--red)"><i class="ti ti-trash" style="font-size:12px"></i></button>';
-        html+='<span id="arr-'+cardId+'" style="color:var(--text3);font-size:12px;flex-shrink:0;transition:transform .2s">▾</span></div>';
-        html+='<div id="body-'+cardId+'" style="display:none;border-top:1px solid var(--border)">';
-        CALL_CATS.forEach(function(cat){
-          var v=catAvg(r,cat);if(!v)return;
-          var bc=v>=3.5?'var(--teal-dark)':v>=2.5?'var(--purple)':v>=1.5?'var(--amber-dark)':'var(--red)';
-          html+='<div style="padding:6px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">';
-          html+='<div style="width:140px;font-size:12px;flex-shrink:0;color:'+cat.col+';font-weight:600">'+cat.label+'</div>';
-          html+='<div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">';
-          html+='<div style="height:100%;width:'+(v/4*100)+'%;background:'+cat.col+';border-radius:3px"></div></div>';
-          html+='<div style="width:24px;text-align:right;font-size:12px;font-weight:700;color:'+bc+'">'+v.toFixed(1)+'</div>';
-          html+='</div>';
+        var hasPts=r.scores&&Object.keys(r.scores).some(function(k){return r.scores[k]>0;});
+        var ts=totalScore(r),lo=hasPts&&ts<50;
+        html+='<div>';
+        html+='<div class="sess-hdr" data-eid="'+cardId+'" onclick="toggleSessCard(this.dataset.eid)" style="display:flex;align-items:center;gap:12px;height:52px;padding:0 12px;border:1px solid #E4E0D6;border-radius:10px;background:#EFECE5;cursor:pointer;user-select:none">';
+        html+='<span style="width:110px;font-size:13.5px;white-space:nowrap">'+fd(r.date)+'</span>';
+        html+='<span style="font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;color:var(--text2);white-space:nowrap">'+esc(r.b2b||'B2C')+'</span>';
+        html+=(r.status==='ja'
+          ?'<span style="font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;color:var(--text2);white-space:nowrap">✓ Abschluss'+(r.abschlussArt?' · Opt.: '+esc(r.abschlussArt):'')+'</span>'
+          :'<span style="font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A;white-space:nowrap">✕ Kein Abschluss</span>');
+        html+='<span style="margin-left:auto;display:flex;align-items:center;gap:10px">';
+        if(hasPts)html+='<span style="width:120px;height:8px;border-radius:4px;background:#E4E0D6;overflow:hidden"><i style="display:block;height:100%;width:'+Math.max(2,Math.min(100,ts))+'%;border-radius:4px;background:'+(lo?'#F08566':'#3a3833')+'"></i></span>'
+          +'<span style="width:48px;text-align:right;font-size:14px;font-weight:600;color:'+(lo?'#B5513A':'var(--text)')+'">'+Math.round(ts)+' %</span>';
+        else html+='<span style="font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;color:var(--text2)">keine Punkte</span>';
+        if(canEditHistorie())html+='<button class="btn btn-sm" title="Bearbeiten" data-eid="'+emp.id+'" data-rid="'+r.id+'" onclick="event.stopPropagation();openQaBewertungModal(this.dataset.eid,this.dataset.rid)" style="width:30px;height:28px;padding:0;justify-content:center"><i class="ti ti-pencil"></i></button>';
+        if(canEditHistorie())html+='<button class="btn btn-sm" title="Löschen" data-eid="'+emp.id+'" data-rid="'+r.id+'" onclick="event.stopPropagation();deleteHistorieCallRating(this.dataset.eid,this.dataset.rid)" style="width:30px;height:28px;padding:0;justify-content:center"><i class="ti ti-trash"></i></button>';
+        html+='<span id="arr-'+cardId+'" style="width:30px;height:28px;border-radius:8px;border:1px solid #E4E0D6;background:#F7F5F0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:12px;transition:transform .2s">▾</span></span></div>';
+        html+='<div id="body-'+cardId+'" style="display:none;border:1px solid #E4E0D6;border-top:none;border-radius:0 0 10px 10px;background:#F7F5F0;margin:-1px 8px 0;padding:14px 14px 10px">';
+        if(!hasPts)html+='<div style="font-size:13px;color:var(--text2);padding:2px 0 8px">Für diesen Call wurden keine Einzelpunkte gespeichert.</div>';
+        else CALL_CATS.forEach(function(cat){
+          var v=catAvg(r,cat);
+          var rv=Math.round(v);
+          html+='<div style="display:grid;grid-template-columns:minmax(170px,220px) 1fr 48px;align-items:center;gap:14px;height:30px;border-bottom:1px solid #eae7e0;font-size:13.5px">'
+            +'<span>'+esc(cat.label)+' <span style="color:var(--text3);font-size:12px">'+Math.round(cat.weight*100)+' %</span></span>'
+            +'<span style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">'+[1,2,3,4].map(function(n){return '<i style="display:block;height:9px;border-radius:5px;background:'+(v&&n<=rv?(v<1.5?'#F08566':'#3a3833'):'#E4E0D6')+'"></i>';}).join('')+'</span>'
+            +'<span style="text-align:right;font-weight:600;color:'+(v&&v<1.5?'#B5513A':v?'var(--text)':'var(--text3)')+'">'+(v?v.toFixed(1).replace('.',','):'–')+'</span></div>';
         });
-        if(r.einwand)html+='<div style="padding:7px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)"><i class="ti ti-message-2" style="margin-right:5px"></i>'+r.einwand+'</div>';
-        if(r.hinweis)html+='<div style="padding:7px 14px;font-size:12px;color:var(--text2);font-style:italic"><i class="ti ti-notes" style="margin-right:5px"></i>'+r.hinweis+'</div>';
-        html+='<div style="padding:6px 14px;font-size:11px;color:var(--text3);border-top:1px solid var(--border)">Bewertet von: '+(r.bewertetVon||'—')+' · Auftrag: '+(r.auftragsnr||'—')+'</div>';
+        var meta=['Bewertet von '+esc(r.bewertetVon||'—'),'Auftrag '+esc(r.auftragsnr||'—')];
+        if(r.einwand)meta.push('Einwand: '+esc(r.einwand));
+        if(r.hinweis)meta.push('Hinweis: '+esc(r.hinweis));
+        html+='<div style="font-size:12.5px;color:var(--text2);margin-top:8px">'+meta.join(' · ')+'</div>';
         html+='</div></div>';
       });
       html+='</div>';
