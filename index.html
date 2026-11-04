@@ -12132,6 +12132,87 @@ function zieleSpeichern(){
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
+
+// ══ Einheitliche Auswahllisten: jedes <select> bekommt automatisch das Design der Auswahlfelder
+//    aus der Performance-Tabelle (Knopf + Panel in #EFECE5). Das echte <select> bleibt unsichtbar
+//    erhalten, Werte, onchange und alle bestehenden Funktionen laufen unveraendert weiter. ══
+(function(){
+  if(window._uiSelectInit)return;window._uiSelectInit=true;
+  var openFor=null,panel=null;
+  function skip(sel){return sel.multiple||sel.classList.contains('perm-sel')||sel.hasAttribute('data-native')||sel.size>1;}
+  function curText(sel){var o=sel.options[sel.selectedIndex];return o?o.text:'';}
+  function sync(sel){var b=sel._uiBtn;if(!b)return;var t=b.querySelector('.ui-sel-t');if(t)t.textContent=curText(sel)||'—';b.disabled=sel.disabled;b.style.opacity=sel.disabled?'.55':'';}
+  window.uiSelectSync=sync;
+  function enhance(sel){
+    if(sel._uiBtn||skip(sel))return;
+    var st=sel.getAttribute('style')||'';
+    var auto=/width\s*:\s*auto/.test(st);
+    var hm=st.match(/height\s*:\s*(\d+)px/);var fm=st.match(/font-size\s*:\s*([\d.]+)px/);
+    var b=document.createElement('button');b.type='button';b.className='ui-sel';
+    b.style.cssText='display:'+(auto?'inline-flex':'flex')+';align-items:center;justify-content:space-between;gap:8px;width:'+(auto?'auto':'100%')+';height:'+(hm?hm[1]:38)+'px;padding:0 11px;border:1px solid var(--border2);border-radius:var(--r-md);background:#F7F5F0;color:var(--text);font-family:inherit;font-size:'+(fm?fm[1]:13)+'px;font-weight:'+(auto?500:400)+';cursor:pointer;text-align:left;white-space:nowrap;min-width:0';
+    b.innerHTML='<span class="ui-sel-t" style="overflow:hidden;text-overflow:ellipsis"></span><i class="ti ti-chevron-down" style="font-size:12px;color:var(--text3);flex-shrink:0"></i>';
+    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle(sel);});
+    sel._uiBtn=b;sel.style.display='none';
+    sel.parentNode.insertBefore(b,sel.nextSibling);
+    sync(sel);
+  }
+  function close(){if(panel){panel.remove();panel=null;}openFor=null;}
+  function toggle(sel){if(openFor===sel){close();return;}close();open(sel);}
+  function open(sel){
+    openFor=sel;
+    var r=sel._uiBtn.getBoundingClientRect();
+    panel=document.createElement('div');
+    var w=Math.max(r.width,220);
+    panel.style.cssText='position:fixed;z-index:100000;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.16);padding:8px 4px;display:flex;flex-direction:column;width:'+w+'px;max-width:92vw';
+    var many=sel.options.length>10;
+    var h='';
+    if(many)h+='<div style="padding:0 6px 6px"><div style="display:flex;align-items:center;gap:6px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:8px;padding:6px 8px"><i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i><input class="ui-sel-q" placeholder="Suchen…" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text);height:auto;padding:0"></div></div>';
+    h+='<div class="ui-sel-list" style="overflow-y:auto;max-height:300px">';
+    var idx=0;
+    Array.prototype.forEach.call(sel.children,function(ch){
+      if(ch.tagName==='OPTGROUP'){h+='<div class="ui-sel-head" style="font-size:11px;font-weight:700;color:var(--text3);padding:8px 12px 4px">'+esc(ch.label||'')+'</div>';Array.prototype.forEach.call(ch.children,function(o){h+=row(o);});}
+      else if(ch.tagName==='OPTION')h+=row(ch);
+    });
+    function row(o){var i=Array.prototype.indexOf.call(sel.options,o);var on=i===sel.selectedIndex;
+      if(o.hidden)return '';
+      return '<div class="ui-sel-opt" data-i="'+i+'" data-search="'+esc((o.text||'').toLowerCase())+'" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;margin:0 4px;font-size:13px;border-radius:6px;cursor:'+(o.disabled?'default':'pointer')+';color:'+(o.disabled?'var(--text3)':'var(--text)')+';font-weight:'+(on?600:400)+'"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.text)+'</span>'+(on?'<i class="ti ti-check" style="font-size:14px;flex-shrink:0"></i>':'')+'</div>';}
+    h+='<div class="ui-sel-none" style="display:none;padding:12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div></div>';
+    panel.innerHTML=h;
+    document.body.appendChild(panel);
+    var ph=panel.offsetHeight,below=window.innerHeight-r.bottom-8;
+    var top=(ph>below&&r.top>below)?Math.max(8,r.top-ph-4):r.bottom+4;
+    var left=Math.min(r.left,window.innerWidth-w-8);
+    panel.style.top=top+'px';panel.style.left=Math.max(8,left)+'px';
+    panel.addEventListener('click',function(e){e.stopPropagation();var opt=e.target.closest('.ui-sel-opt');if(!opt)return;var o=sel.options[+opt.dataset.i];if(!o||o.disabled)return;
+      var changed=sel.selectedIndex!==+opt.dataset.i;sel.selectedIndex=+opt.dataset.i;close();sync(sel);
+      if(changed){sel.dispatchEvent(new Event('input',{bubbles:true}));sel.dispatchEvent(new Event('change',{bubbles:true}));}});
+    panel.addEventListener('mouseover',function(e){var o=e.target.closest('.ui-sel-opt');panel.querySelectorAll('.ui-sel-opt').forEach(function(x){x.style.background=x===o?'rgba(29,28,26,0.06)':'transparent';});});
+    var q=panel.querySelector('.ui-sel-q');
+    if(q){q.addEventListener('input',function(){var v=q.value.toLowerCase().trim(),n=0;panel.querySelectorAll('.ui-sel-opt').forEach(function(x){var hit=!v||x.dataset.search.indexOf(v)>=0;x.style.display=hit?'flex':'none';if(hit)n++;});panel.querySelectorAll('.ui-sel-head').forEach(function(x){x.style.display=v?'none':'block';});panel.querySelector('.ui-sel-none').style.display=n?'none':'block';});setTimeout(function(){q.focus();},0);}
+    var cur=panel.querySelector('.ui-sel-opt[data-i="'+sel.selectedIndex+'"]');if(cur)cur.scrollIntoView({block:'nearest'});
+  }
+  document.addEventListener('click',function(){close();});
+  window.addEventListener('scroll',function(e){if(panel&&!panel.contains(e.target))close();},true);
+  window.addEventListener('resize',close);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+  // Programmatische Wertaenderungen (sel.value=…) im Knopf nachziehen
+  var dv=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+  var di=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'selectedIndex');
+  if(dv&&dv.set)Object.defineProperty(HTMLSelectElement.prototype,'value',{configurable:true,get:function(){return dv.get.call(this);},set:function(v){dv.set.call(this,v);if(this._uiBtn)sync(this);}});
+  if(di&&di.set)Object.defineProperty(HTMLSelectElement.prototype,'selectedIndex',{configurable:true,get:function(){return di.get.call(this);},set:function(v){di.set.call(this,v);if(this._uiBtn)sync(this);}});
+  var dsel=Object.getOwnPropertyDescriptor(HTMLOptionElement.prototype,'selected');
+  if(dsel&&dsel.set)Object.defineProperty(HTMLOptionElement.prototype,'selected',{configurable:true,get:function(){return dsel.get.call(this);},set:function(v){dsel.set.call(this,v);var s=this.parentNode&&(this.parentNode.tagName==='SELECT'?this.parentNode:this.parentNode.parentNode);if(s&&s._uiBtn)sync(s);}});
+  var dd=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'disabled');
+  if(dd&&dd.set)Object.defineProperty(HTMLSelectElement.prototype,'disabled',{configurable:true,get:function(){return dd.get.call(this);},set:function(v){dd.set.call(this,v);if(this._uiBtn)sync(this);}});
+  var pending=false;
+  function scan(){pending=false;document.querySelectorAll('select').forEach(function(sel){if(!sel._uiBtn)enhance(sel);else sync(sel);});}
+  new MutationObserver(function(muts){
+    if(pending)return;
+    for(var i=0;i<muts.length;i++){var t=muts[i].target;if(panel&&panel.contains(t))continue;pending=true;break;}
+    if(pending)requestAnimationFrame(scan);
+  }).observe(document.documentElement,{childList:true,subtree:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scan);else scan();
+})();
 </script>
 </body>
 </html>
