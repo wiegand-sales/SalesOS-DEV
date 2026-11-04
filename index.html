@@ -121,6 +121,8 @@ body.sb-collapsed .sb-rail{border-right:none;}
 #cevModal input:not([type=checkbox]):not([type=radio]):not([type=range]),
 #commentModal input:not([type=checkbox]):not([type=radio]):not([type=range]){height:38px;box-sizing:border-box;padding-top:0;padding-bottom:0}
 .modal-ov td input:not([type=checkbox]):not([type=radio]):not([type=range]){height:auto;padding-top:revert;padding-bottom:revert}
+/* Flächen in Popups: kein zusätzlicher Abstand unter dem letzten Feld */
+#ncSecNew>div[style*="#EFECE5"]>*:last-child,#qaSecBew>div[style*="#EFECE5"]>*:last-child{margin-bottom:0!important}
 /* Mitarbeiter-Kopf: Reiter als Schalter */
 #empTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
 #empTabBar.emp-seg .tab{height:28px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text2);background:transparent;white-space:nowrap}
@@ -655,13 +657,14 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 </div></div>
 
 <!-- NEUES COACHING ERFASSEN (ehem. "Neue Session erfassen", jetzt Pop-up) -->
-<div class="modal-ov hidden" id="neuesCoachingModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
+<div class="modal-ov hidden" id="neuesCoachingModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden;position:relative">
   <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div id="ncHdKick" style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Neue Session erfassen</div><div id="ncHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('neuesCoachingModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
   <div style="display:flex;min-height:0;flex:1">
-    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Wer & Wann" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecWer');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-users"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span><span class="rl-tip" style="left:48px">Wer & Wann</span></button><button class="rl-btn" type="button" aria-label="Was für ein Coaching" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecWas');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-message-circle"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span><span class="rl-tip" style="left:48px">Was für ein Coaching</span></button><button class="rl-btn" type="button" aria-label="Rückblick & Kontext" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecKon');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-repeat"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">3</span><span class="rl-tip" style="left:48px">Rückblick & Kontext</span></button><span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span><button class="rl-btn" type="button" aria-label="Coaching-Historie" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openCoachingInfoModal(e)"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Coaching-Historie</span></button><button class="rl-btn" type="button" aria-label="Session planen" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openSessionModal(e)"><i class="ti ti-calendar-plus"></i><span class="rl-tip" style="left:48px">Session planen</span></button><button class="rl-btn" type="button" aria-label="Neuen Call bewerten" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openQaBewertungModal(e)"><i class="ti ti-phone"></i><span class="rl-tip" style="left:48px">Neuen Call bewerten</span></button></div>
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Neue Session" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecNew');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-pencil"></i><span class="rl-tip" style="left:48px">Neue Session</span></button><button class="rl-btn" type="button" aria-label="Letzte Sessions" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecList');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-list"></i><span class="rl-tip" style="left:48px">Letzte Sessions</span></button><span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span><button class="rl-btn" type="button" aria-label="Coaching-Historie" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openCoachingInfoModal(e)"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Coaching-Historie</span></button><button class="rl-btn" type="button" aria-label="Session planen" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openSessionModal(e)"><i class="ti ti-calendar-plus"></i><span class="rl-tip" style="left:48px">Session planen</span></button><button class="rl-btn" type="button" aria-label="Neuen Call bewerten" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openQaBewertungModal(e)"><i class="ti ti-phone"></i><span class="rl-tip" style="left:48px">Neuen Call bewerten</span></button></div>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
-        <div id="ncSecWer" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Wer &amp; Wann</div>
+        <div id="ncSecNew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Neue Session<span id="ncFrom" style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)"></span></div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Wer &amp; Wann</div>
     <div style="position:relative;margin-bottom:10px">
       <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
       <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleNcEmpDropdown()">
@@ -676,7 +679,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       <div><label>Ende</label><input type="time" id="sess-end-time" value=""></div>
     </div>
         </div>
-        <div id="ncSecWas" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Was für ein Coaching</div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Was für ein Coaching</div>
     <div class="f2" style="margin-bottom:10px">
       <div><label>Kategorie</label><select id="sess-category" onchange="onCoachingCategoryChange('sess-category','sess-type')"></select></div>
       <div><label>Art des Coachings</label><select id="sess-type"></select></div>
@@ -688,13 +691,18 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       </div>
     </div>
         </div>
-        <div id="ncSecKon" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Rückblick &amp; Kontext</div>
-          <div id="ncLastContinueBox"></div>
-<div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-player-play"></i></span>Start <span style="font-weight:500;color:var(--text3);font-size:12px">Was soll neu begonnen werden?</span></div><textarea id="sess-start" rows="2" style="resize:vertical"></textarea></div><div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-player-stop"></i></span>Stop <span style="font-weight:500;color:var(--text3);font-size:12px">Was soll aufgehört werden?</span></div><textarea id="sess-stop" rows="2" style="resize:vertical"></textarea></div><div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-repeat"></i></span>Continue <span style="font-weight:500;color:var(--text3);font-size:12px">Was soll beibehalten werden?</span></div><textarea id="sess-cont" rows="2" style="resize:vertical"></textarea></div><div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-notes"></i></span>Notizen <span style="font-weight:500;color:var(--text3);font-size:12px">Beobachtungen &amp; Vereinbarungen</span></div><textarea id="sess-note" rows="2" style="resize:vertical"></textarea></div>        </div>
+<div id="ncLastContinueBox" style="display:none"></div>
+<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:0 0 8px"><span>Start</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Was soll neu begonnen werden?</span></div><textarea id="sess-start" rows="2" style="min-height:72px;resize:vertical"></textarea>
+<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:12px 0 8px"><span>Stop</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Was soll aufgehört werden?</span></div><textarea id="sess-stop" rows="2" style="min-height:72px;resize:vertical"></textarea>
+<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:12px 0 8px"><span>Continue</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Was soll beibehalten werden?</span></div><textarea id="sess-cont" rows="2" style="min-height:72px;resize:vertical"></textarea>
+<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:12px 0 8px"><span>Notiz</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Beobachtungen &amp; Vereinbarungen</span></div><textarea id="sess-note" rows="2" style="min-height:52px;resize:vertical"></textarea>
+<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" data-eid="" id="ncSaveBtn" type="button" style="height:36px;width:auto" onclick="saveSession(document.getElementById('ncSaveBtn').dataset.eid)"><i class="ti ti-device-floppy"></i> Session speichern</button></div></div>
+        <div id="ncSecList" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Letzte Sessions <span id="ncListN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span><button class="btn" type="button" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');selectedEmp=e;view='emp';activeTab='session';renderSidebar();renderMain();">Alle in Coaching Sessions</button></div><div id="ncList"></div></div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('neuesCoachingModal')">Abbrechen</button><button class="btn btn-primary" data-eid="" id="ncSaveBtn" type="button" style="height:36px;width:auto" onclick="saveSession(document.getElementById('ncSaveBtn').dataset.eid)"><i class="ti ti-device-floppy"></i> Session speichern</button></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('neuesCoachingModal')">Schließen</button></div>
     </div>
   </div>
+  <div id="ncToast" style="position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:#1d1c1a;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;display:none;white-space:nowrap;-webkit-font-smoothing:antialiased;z-index:5"></div>
 </div></div>
 
 <!-- NEUEN CALL BEWERTEN -->
@@ -705,11 +713,11 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
         <div id="qaSecBew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px"><span id="qaCardTitle">Neue Bewertung</span> <span id="qaTotalTxt" style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)"></span></div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;margin:0 0 8px">Call-Details</div>
+          <div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Call-Details</div>
           <div class="f3" style="gap:10px;margin-bottom:10px"><div><label>Datum</label><input type="date" id="cb-date"></div><div><label>Auftragsnummer</label><input type="text" id="cb-auftrag" placeholder="z.B. 438043417"></div><div><label>Bewertet von</label><input type="text" id="cb-bewerter" placeholder="Name"></div></div>
           <div class="f3" style="gap:10px;margin-bottom:10px"><div><label>Abschluss?</label><select id="cb-status"><option value="nein">Nein</option><option value="ja">Ja</option></select></div><div><label>B2B / B2C</label><select id="cb-b2b"><option value="B2C">B2C</option><option value="B2B">B2B</option></select></div><div><label>Optimierung</label><select id="cb-abschlussart"><option value="">Keine Optimierung</option><option value="TW">Opt.: TW</option><option value="Yes">Opt.: Yes</option><option value="SY">Opt.: SY</option><option value="MY">Opt.: MY</option><option value="Upsell">Opt.: Upsell</option><option value="WKA">Opt.: WKA</option></select></div></div>
-          <div><label>Genannter Einwand</label><input type="text" id="cb-einwand" placeholder="z.B. Preis zu hoch, Kündigung läuft"></div>
-          <div style="height:12px"></div>
+          <div><label>Genannter Einwand</label><input type="text" id="cb-einwand" placeholder="z.B. Preis zu hoch, Kündigung läuft"></div></div>
+          
           <div id="qaScoringSection"></div>
           <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;margin:12px 0 6px">Notiz <span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text3)">optional</span></div><textarea id="cb-hinweis" rows="2" style="min-height:56px;resize:vertical" placeholder="Beobachtungen, Verbesserungspotenzial"></textarea>
           <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" type="button" id="qaCancelEdit" style="height:36px;width:auto;display:none" onclick="qaReopen(null)">Bearbeiten abbrechen</button><button class="btn btn-primary" id="qaSaveBtn" data-eid="" type="button" style="height:36px;width:auto" onclick="saveInlineCallBewertung(document.getElementById('qaSaveBtn').dataset.eid)"><i class="ti ti-device-floppy"></i> Bewertung speichern</button></div>
@@ -9636,7 +9644,7 @@ function saveSession(empId){
       var namesTxt=empIds.map(function(id){var e=employees.find(function(x){return x.id===id;});return e?e.name:id;}).join(', ');
       logActivity('session','created','Gruppensession erfasst ('+empIds.length+' Mitarbeiter): '+(type||'Session'),null,namesTxt+(focus?' · '+focus:'')+' · '+fd(date));
       resetSessionFormFields();
-      closeModal('neuesCoachingModal');
+      ncAfterSave(true);
       if(view==='coaching')renderCoachingAnsicht();else renderTab();
     }).catch(function(err){_savingSession=false;alert('Unerwarteter Fehler: '+err.message);});
     return;
@@ -9674,7 +9682,7 @@ function saveSession(empId){
     logActivity('session',editId?'updated':'created',(editId?'Session bearbeitet':'Neue Session erfasst')+': '+(type||'Session'),singleEmpId,(empForLog?empForLog.name:'')+(focus?' · '+focus:'')+' · '+fd(date));
     _editingSessionId=null;
     resetSessionFormFields();
-    closeModal('neuesCoachingModal');
+    ncAfterSave(false);
     if(view==='coaching')renderCoachingAnsicht();else renderTab();
   }).catch(function(err){
     _savingSession=false;
@@ -12419,6 +12427,31 @@ function openQaBewertungModal(empId,editRatingId){
   qaRenderList();
   openModal('qaBewertungModal');
 }
+// ── Session im gemeinsamen Popup: letzte Sessions, nach dem Speichern offen bleiben ──
+function ncToast(m){var t=document.getElementById('ncToast');if(!t)return;t.textContent=m;t.style.display='block';clearTimeout(window._ncTT);window._ncTT=setTimeout(function(){t.style.display='none';},3000);}
+function ncRenderList(){
+  var el=document.getElementById('ncList');if(!el)return;
+  var t0=today();
+  var list=(protocols[selectedEmp]||[]).filter(function(x){return x.status!=='geplant'||x.date<=t0;}).slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+  var n=document.getElementById('ncListN');if(n)n.textContent='('+list.length+')';
+  el.innerHTML=list.length?list.slice(0,5).map(function(x){
+    var coach=x.coachId?employees.find(function(e){return String(e.id)===String(x.coachId);}):null;
+    var dur=(typeof sessionDuration==='function')?sessionDuration(x.uhrzeit,x.endUhrzeit):0;
+    var meta=[coach?'Coach '+coach.name.split(' ')[0]:'',dur&&typeof formatDuration==='function'?formatDuration(dur):'',x.topics&&x.topics.length?x.topics.join(', '):''].filter(Boolean).join(' · ');
+    var txt=[x.start?'Start: '+x.start:'',x.stop?'Stop: '+x.stop:'',x.cont?'Continue: '+x.cont:'',x.notes||''].filter(Boolean).join(' · ');
+    return '<div title="'+esc(txt)+'" style="display:flex;align-items:flex-start;gap:12px;height:84px;padding:12px;border:1px solid #E4E0D6;border-radius:10px;background:#EFECE5;margin-bottom:6px;overflow:hidden">'
+      +'<div style="width:150px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+fd(x.date)+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.type||'Session')+'</span></div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(meta)+'</div>'
+      +'<div style="font-size:13.5px;line-height:19px;height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:'+(txt?'var(--text)':'var(--text3)')+'">'+(txt?esc(txt):'Kein Rückblick erfasst')+'</div></div></div>';
+  }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Noch keine Sessions.</div>';
+}
+function ncAfterSave(wasEdit){
+  var m=document.getElementById('neuesCoachingModal');
+  if(!m||m.classList.contains('hidden'))return;
+  _puSwitching=true;try{openNeuesCoachingModal(selectedEmp);}finally{_puSwitching=false;}
+  var c=document.getElementById('ncSecNew');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});
+  ncToast(wasEdit?'Session aktualisiert':'Session gespeichert');
+}
 function openNeuesCoachingModal(empId){
   if(empId)selectedEmp=empId;
   _editingSessionId=null;
@@ -12446,6 +12479,8 @@ function openNeuesCoachingModal(empId){
   if(saveBtn)saveBtn.dataset.eid=selectedEmp;
   renderLastContinueBox(selectedEmp,'ncLastContinueBox');
   updateNcHdSub();
+  ncRenderList();
+  var nf=document.getElementById('ncFrom');if(nf){var cn=(typeof currentCoach!=='undefined'&&currentCoach)?currentCoach.name:((typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof resolveNonEmployeeName==='function'&&resolveNonEmployeeName(currentAuthUser.email))||'');nf.textContent=cn?'von '+cn:'';}
   openModal('neuesCoachingModal');
 }
 
