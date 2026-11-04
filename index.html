@@ -8913,7 +8913,7 @@ function deleteHistorieComment(empId,commentId){
   var idx=list.findIndex(function(r){return r.id===commentId;});
   if(idx<0)return;
   list.splice(idx,1);
-  sb.from('reviews').delete().eq('id',commentId).then(function(){renderTab();}).catch(function(){renderTab();});
+  sb.from('employee_comments').delete().eq('id',commentId).then(function(res){if(res&&res.error)console.warn('Kommentar loeschen fehlgeschlagen:',res.error);renderTab();}).catch(function(){renderTab();});
 }
 function deleteHistorieEval(empId,evalId){
   if(!canEditHistorie())return;
@@ -9022,17 +9022,18 @@ function openCommentModal(empId,editCommentId){
       existingComment.date=dateVal;
       existingComment.commentType=commentType;
       existingComment.note=txt;
-      // TODO: Supabase-Update analog ergaenzen, sobald Tabellen-Spalte vorhanden
+      saveCommentToDb(empId,existingComment,true);
     } else {
-      reviews[empId].push({
-        id:'comment_'+Date.now(),
+      var newC={
+        id:newCommentId(),
         date:dateVal,
         isComment:true,
         commentType:commentType,
         note:txt,
         author:curName
-      });
-      // TODO: Supabase-Persistenz analog zu reviews-Speicherung ergaenzen, sobald Tabellen-Spalte vorhanden
+      };
+      reviews[empId].push(newC);
+      saveCommentToDb(empId,newC,false);
     }
     overlay.remove();
     var infoModalOpen=document.getElementById('coachingInfoModal')&&!document.getElementById('coachingInfoModal').classList.contains('hidden');
@@ -10403,8 +10404,29 @@ function loadReviewsFromSupabase(){
     });
     Object.keys(byEmp).forEach(function(k){byEmp[k].sort(function(a,b){return b.date.localeCompare(a.date);});});
     reviews=byEmp;
-    return true;
+    // Kommentare (Tabelle employee_comments) dazuladen – fehlt die Tabelle noch, laeuft das Board normal weiter
+    return sb.from('employee_comments').select('*').order('date',{ascending:false}).then(function(cr){
+      if(cr.error){console.warn('employee_comments load failed:',cr.error);return true;}
+      (cr.data||[]).forEach(function(c){
+        var k=String(c.employee_id);
+        if(!reviews[k])reviews[k]=[];
+        reviews[k].push({id:c.id,date:c.date,isComment:true,commentType:c.comment_type||'diverses',note:c.note||'',author:c.author||''});
+      });
+      return true;
+    },function(e){console.warn('employee_comments load failed:',e);return true;});
   });
+}
+function saveCommentToDb(empId,c,isUpdate){
+  var row={id:c.id,employee_id:String(empId),date:c.date,comment_type:c.commentType||'diverses',note:c.note,author:c.author||null};
+  var q=isUpdate?sb.from('employee_comments').update({date:row.date,comment_type:row.comment_type,note:row.note}).eq('id',c.id):sb.from('employee_comments').insert(row);
+  return q.then(function(res){
+    if(res.error){console.warn('Kommentar speichern fehlgeschlagen:',res.error);alert('Kommentar konnte nicht gespeichert werden: '+res.error.message);}
+    return res;
+  });
+}
+function newCommentId(){
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(ch){var r=Math.random()*16|0;return (ch==='x'?r:(r&0x3|0x8)).toString(16);});
 }
 
 function loadTasksFromSupabase(){
@@ -11461,9 +11483,11 @@ function ciSubmit(empId){
   }
   var curName=currentCoach?currentCoach.name:(resolveNonEmployeeName(currentAuthUser&&currentAuthUser.email)||'Admin');
   if(!reviews[empId])reviews[empId]=[];
-  reviews[empId].push({id:'comment_'+Date.now(),date:today(),isComment:true,commentType:t,note:txt,author:curName});
+  var nc={id:newCommentId(),date:today(),isComment:true,commentType:t,note:txt,author:curName};
+  reviews[empId].push(nc);
   inp.value='';
   openCoachingInfoModal(empId);
+  saveCommentToDb(empId,nc,false);
 }
 function saveCoachingInfoNotiz(empId){
   if(_savingCoachingInfoNotiz)return;
