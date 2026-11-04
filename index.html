@@ -11567,8 +11567,8 @@ function openCoachingInfoModal(empId){
     mVals.push({lbl:mNamesShort[md.getMonth()],v:cnt,cur:mi===0,fut:mi>0});
   }
   var mMax=Math.max(1,avgPerMonth?parseFloat(avgPerMonth):0);mVals.forEach(function(x){mMax=Math.max(mMax,x.v);});mMax=mMax*1.15;
-  var BH=150;
-  var chips='';
+  var BH=170;
+  var chips='<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;color:var(--text2)">'+total+' '+(total===1?'Session':'Sessions')+'</span>';
   if(daysSinceLast!==null&&daysSinceLast>30)chips+='<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid rgba(240,133,102,.5);color:#B5513A">Letzte vor '+daysSinceLast+' Tagen</span>';
   if(daysSinceQa===null||daysSinceQa>60)chips+='<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff;border:1px solid rgba(240,133,102,.5);color:#B5513A">'+(daysSinceQa===null?'Keine QA':Math.round(daysSinceQa/7)+' Wo. ohne QA')+'</span>';
   function bigKpi(dot,lbl,val,small){return '<div style="font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></span>'+lbl+'</div><div style="font-size:26px;font-weight:300;line-height:1.1;margin-bottom:8px">'+val+(small?'<span style="font-size:12px;font-weight:500;color:var(--text2);margin-left:4px">'+small+'</span>':'')+'</div>';}
@@ -11577,11 +11577,11 @@ function openCoachingInfoModal(empId){
   function ciBox(id,title,right,body,extraStyle){return '<div id="'+id+'" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);'+(extraStyle||'')+'">'
     +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:700;font-size:14px;color:var(--text)">'+title+(right?'<span style="margin-left:auto;display:flex;gap:6px;align-items:center">'+right+'</span>':'')+'</div>'+body+'</div>';}
   function topKpi(val,lbl){return '<div style="text-align:right"><div style="font-size:24px;font-weight:400;line-height:1.1;color:var(--text)">'+val+'</div><div style="font-size:14px;color:var(--text3);font-weight:500">'+lbl+'</div></div>';}
-  var chartHtml='<div style="padding:2px 0 0"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">'
-    +topKpi(total,'Sessions')+topKpi(avgPerMonth?String(avgPerMonth).replace('.',','):'—','im Mon.')+topKpi(geplant.length,'Geplant')+topKpi(effTxt,'Effekt')+'</div>'
+  var chartHtml='<div style="padding:16px 0 0">'
     +'<div style="position:relative;height:'+(BH+18)+'px;display:flex;align-items:flex-end;gap:6px">';
-  if(avgPerMonth)chartHtml+='<div style="position:absolute;left:0;right:0;bottom:'+Math.round(parseFloat(avgPerMonth)/mMax*BH)+'px;border-top:1.5px dashed #8C8577"><span style="position:absolute;right:0;top:-16px;font-size:10.5px;color:var(--text2);font-weight:600;background:#F7F5F0;padding:0 3px">Ø '+String(avgPerMonth).replace('.',',')+'</span></div>';
+  if(avgPerMonth)chartHtml+='<div style="position:absolute;left:0;right:0;bottom:'+Math.round(parseFloat(avgPerMonth)/mMax*BH)+'px;border-top:1.5px dashed #8C8577"><span style="position:absolute;left:0;top:-16px;font-size:10.5px;color:var(--text2);font-weight:600;background:#F7F5F0;padding:0 3px">Ø '+String(avgPerMonth).replace('.',',')+'</span></div>';
   mVals.forEach(function(x){var hp=Math.max(3,Math.round(x.v/mMax*BH));
+    if(x.v===0){chartHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="'+x.lbl+': keine'+(x.fut?' geplant':' Sessions')+'"><div style="width:5px;height:5px;border-radius:50%;background:'+(x.cur?'#3a3833':'#D3CCBD')+';margin-bottom:1px"></div></div>';return;}
     chartHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="'+x.lbl+': '+x.v+(x.fut?' geplant':' Sessions')+'"><span style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px">'+x.v+'</span><div style="width:70%;height:'+hp+'px;border-radius:4px 4px 0 0;'+(x.fut?'border:1.5px dashed #B4AC9C;background:transparent':x.cur?'background:#3a3833':'background:#B4AC9C')+'"></div></div>';});
   chartHtml+='</div><div style="display:flex;gap:6px;margin-top:4px;margin-bottom:8px">'+mVals.map(function(x){return '<span style="flex:1;text-align:center;font-size:11px;color:'+(x.cur?'var(--text)':'var(--text3)')+';font-weight:'+(x.cur?700:600)+'">'+x.lbl+'</span>';}).join('')+'</div></div>'
     +'<div id="ciSum" style="font-size:14px;color:var(--text);line-height:1.5;padding:10px 0 0;border-top:1px solid #E4E0D6">'+sumTxt+'</div>';
