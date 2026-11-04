@@ -6728,6 +6728,44 @@ var ITEM_LABELS={
   struktur:'Struktur',kontrolle:'Gesprächskontrolle',klarheit:'Klarheit',fragequalitaet:'Fragequalität',
   naechsteschritte:'Zusammenfassung & nächste Schritte'
 };
+// ── „Aktuelle Bewertung im Detail“ (Entwurf C): Gesamt oben, je Kriterium ein vierstufiger Balken ──
+function callDetailBodyHtml(call){
+  var sc=call.scores||{};
+  function f1(x){return x.toFixed(1).replace('.',',');}
+  function cAvg(cat){var v=cat.items.map(function(k){return sc[k]||0;}).filter(function(x){return x>0;});return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;}
+  var all=[];CALL_CATS.forEach(function(c){all=all.concat(c.items);});
+  var rated=all.filter(function(k){return sc[k]>0;}).length;
+  var ts=totalScore(call);
+  var einw=CALL_CATS.find(function(c){return c.key==='einwand';}),absch=CALL_CATS.find(function(c){return c.key==='abschluss';});
+  var h='<div style="display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;padding:14px 0 12px;margin-bottom:6px;border-bottom:1px solid var(--border)">'
+    +'<div><div style="font-size:40px;font-weight:300;line-height:1">'+(rated?Math.round(ts)+' %':'–')+'</div><div style="font-size:12.5px;color:var(--text3);font-weight:600">Gesamtpunktzahl</div></div>';
+  [einw,absch].forEach(function(c){if(!c)return;var a=cAvg(c);h+='<div><div style="font-size:28px;font-weight:300;line-height:1.05">'+(a!=null?f1(a):'–')+'</div><div style="font-size:12.5px;color:var(--text3);font-weight:600">'+esc(c.short||c.label)+' ('+Math.round(c.weight*100)+' %)</div></div>';});
+  h+='<div style="margin-left:auto;display:flex;gap:14px;font-size:12px;color:var(--text2);flex-wrap:wrap">'
+    +'<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3a3833;margin-right:5px;vertical-align:-1px"></i>bewertet</span>'
+    +'<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#F08566;margin-right:5px;vertical-align:-1px"></i>schwach (1)</span>'
+    +'<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#E4E0D6;margin-right:5px;vertical-align:-1px"></i>offen bis 4</span>'
+    +'<span style="font-weight:600">'+rated+' von '+all.length+' Kriterien bewertet</span></div></div>';
+  if(!rated)h+='<div style="background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13px">Für diesen Call wurden keine Einzelpunkte gespeichert. Über „Neuen Call bewerten“ bzw. Bearbeiten in der Historie kannst du die Punkte nachtragen.</div>';
+  CALL_CATS.forEach(function(cat){
+    var a=cAvg(cat);
+    h+='<div style="display:flex;align-items:center;gap:8px;margin:14px 0 4px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)">'+esc(cat.label)+' · '+Math.round(cat.weight*100)+' %'
+      +'<span style="margin-left:auto;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:10px;letter-spacing:0;text-transform:none;'+(a!=null&&a<2?'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A':'background:#fff;border:1px solid #E4E0D6;color:var(--text2)')+'">Ø '+(a!=null?f1(a):'–')+'</span></div>';
+    cat.items.forEach(function(k){
+      var v=sc[k]||0;
+      h+='<div style="display:grid;grid-template-columns:minmax(180px,260px) 1fr 52px;align-items:center;gap:14px;height:34px;border-bottom:1px solid #eae7e0">'
+        +'<span style="font-size:13.5px;color:var(--text)">'+esc(ITEM_LABELS[k]||k)+'</span>'
+        +'<span style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">'+[1,2,3,4].map(function(n){return '<i style="display:block;height:10px;border-radius:5px;background:'+(v&&n<=v?(v===1?'#F08566':'#3a3833'):'#E4E0D6')+'"></i>';}).join('')+'</span>'
+        +'<span style="text-align:right;font-size:14px;font-weight:600;color:'+(v===1?'#B5513A':v?'var(--text)':'var(--text3)')+'">'+(v?v+' / 4':'–')+'</span></div>';
+    });
+  });
+  var meta=[];
+  if(call.auftragsnr)meta.push('Auftrag '+esc(call.auftragsnr));
+  if(call.bewertetVon)meta.push('bewertet von '+esc(call.bewertetVon));
+  if(call.einwand)meta.push('Einwand: '+esc(call.einwand));
+  if(call.hinweis)meta.push('Hinweis: '+esc(call.hinweis));
+  if(meta.length)h+='<div style="padding:12px 0 0;font-size:12.5px;color:var(--text2)">'+meta.join(' · ')+'</div>';
+  return h;
+}
 function catAvg(rat,cat){
   var vals=cat.items.map(function(k){return rat.scores&&rat.scores[k]?rat.scores[k]:0;}).filter(function(v){return v>0;});
   if(!vals.length)return 0;
@@ -7079,33 +7117,7 @@ function renderTab(){
     html+='</div>';
     html+='<div id="callDetailBody" style="display:none;border-top:1px solid var(--border);padding:0 17px 14px">';
     if(showCall){
-      CALL_CATS.forEach(function(cat){
-        var catVals=cat.items.map(function(k){return showCall.scores&&showCall.scores[k]?showCall.scores[k]:0;}).filter(function(v){return v>0;});
-        var catAvgVal=catVals.length?catVals.reduce(function(a,b){return a+b;},0)/catVals.length:0;
-        html+='<div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-top:12px">';
-        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
-          +'<span style="font-size:11.5px;font-weight:700;color:'+cat.col+'">'+cat.label.toUpperCase()+' ('+Math.round(cat.weight*100)+'%)</span>'
-          +'<span style="font-size:11px;font-weight:700;color:#fff;background:'+cat.col+';padding:2px 10px;border-radius:10px">Ø '+catAvgVal.toFixed(1)+'</span>'
-          +'</div>';
-        cat.items.forEach(function(k,idx){
-          var v=showCall.scores&&showCall.scores[k]?showCall.scores[k]:0;
-          html+='<div style="'+(idx>0?'margin-top:10px':'')+'">';
-          html+='<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
-            +'<span style="font-size:12.5px;color:var(--text2);font-weight:500">'+ITEM_LABELS[k]+'</span>'
-            +'<span style="font-size:12px;font-weight:700;color:'+cat.col+'">'+v+'</span>'
-            +'</div>';
-          html+='<div style="height:8px;background:#fff;border:1px solid var(--border2);border-radius:5px;overflow:hidden">'
-            +'<div style="height:100%;width:'+Math.max(2,v/4*100)+'%;border-radius:5px;background:linear-gradient(90deg,#F7B39A,'+cat.col+')"></div>'
-            +'</div>';
-          html+='</div>';
-        });
-        html+='</div>';
-      });
-      var ts0=totalScore(showCall);var tc0=ts0>=75?'var(--teal-dark)':ts0>=50?'var(--amber-dark)':'var(--red)';
-      html+='<div style="padding:14px 0 0;font-size:11px;color:var(--text3);margin-top:4px">';
-      html+='Score: <strong style="color:'+tc0+'">'+ts0.toFixed(0)+'</strong>/100';
-      if(showCall.einwand)html+=' · Einwand: <em>'+showCall.einwand+'</em>';
-      html+='</div>';
+      html+=callDetailBodyHtml(showCall);
     } else {
       html+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-phone" style="font-size:26px;display:block;margin-bottom:8px"></i>Noch keine Bewertung vorhanden</div>';
     }
