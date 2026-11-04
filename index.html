@@ -46,7 +46,7 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .rl-btn.on{background:#fff;color:var(--text);box-shadow:0 0 0 1px #E4E0D6,0 2px 6px rgba(40,32,15,.06);}
 .rl-btn.on:before{content:"";position:absolute;left:-13px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#F08566;}
 .rl-soft{background:#ECE9E1;color:var(--text);}
-#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before{left:-9px;}
+#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before{left:-9px;}
 .rl-tip{position:absolute;left:52px;top:50%;transform:translateY(-50%);background:#1d1c1a;color:#fff;font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:60;}
 .rl-btn:hover .rl-tip{opacity:1;}
 .rl-sep{width:28px;height:1px;background:#E4E0D6;margin:6px 0;}
@@ -621,11 +621,13 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 </div></div>
 
 <!-- NEUES COACHING ERFASSEN (ehem. "Neue Session erfassen", jetzt Pop-up) -->
-<div class="modal-ov hidden" id="neuesCoachingModal"><div class="modal" style="max-height:88vh;overflow-y:auto">
-  <div class="modal-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><i class="ti ti-calendar-plus" style="color:var(--purple)"></i> Neue Session erfassen</div>
-
-  <div style="font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">① Wer & wann</div>
-  <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
+<div class="modal-ov hidden" id="neuesCoachingModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
+  <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div id="ncHdKick" style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Neue Session erfassen</div><div id="ncHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('neuesCoachingModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
+  <div style="display:flex;min-height:0;flex:1">
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Wer & Wann" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecWer');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-users"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span><span class="rl-tip" style="left:48px">Wer & Wann</span></button><button class="rl-btn" type="button" aria-label="Was für ein Coaching" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecWas');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-message-circle"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span><span class="rl-tip" style="left:48px">Was für ein Coaching</span></button><button class="rl-btn" type="button" aria-label="Rückblick & Kontext" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ncSecKon');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-repeat"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">3</span><span class="rl-tip" style="left:48px">Rückblick & Kontext</span></button><span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span><button class="rl-btn" type="button" aria-label="Coaching-Historie" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openCoachingInfoModal(e)"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Coaching-Historie</span></button><button class="rl-btn" type="button" aria-label="Session planen" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openSessionModal(e)"><i class="ti ti-calendar-plus"></i><span class="rl-tip" style="left:48px">Session planen</span></button><button class="rl-btn" type="button" aria-label="Neuen Call bewerten" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('neuesCoachingModal');openQaBewertungModal(e)"><i class="ti ti-phone"></i><span class="rl-tip" style="left:48px">Neuen Call bewerten</span></button></div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
+      <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
+        <div id="ncSecWer" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Wer &amp; Wann</div>
     <div style="position:relative;margin-bottom:10px">
       <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
       <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleNcEmpDropdown()">
@@ -639,10 +641,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       <div><label>Start</label><input type="time" id="sess-time" value=""></div>
       <div><label>Ende</label><input type="time" id="sess-end-time" value=""></div>
     </div>
-  </div>
-
-  <div style="font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">② Was für ein Coaching</div>
-  <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px">
+        </div>
+        <div id="ncSecWas" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Was für ein Coaching</div>
     <div class="f2" style="margin-bottom:10px">
       <div><label>Kategorie</label><select id="sess-category" onchange="onCoachingCategoryChange('sess-category','sess-type')"></select></div>
       <div><label>Art des Coachings</label><select id="sess-type"></select></div>
@@ -653,34 +653,13 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
         <select id="sess-focus-metric"><option value="">— Kein spezifisches KPI —</option></select>
       </div>
     </div>
-  </div>
-
-  <div style="font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">③ Rückblick & Kontext</div>
-  <div style="border-left:2px solid var(--border2);padding-left:14px;margin-bottom:14px">
-    <div id="ncLastContinueBox"></div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div style="border-radius:var(--r-md);overflow:hidden">
-        <div style="background:var(--teal-bg);padding:7px 12px;border-left:3px solid var(--teal-dark)"><span style="font-size:11px;font-weight:700;color:var(--teal-dark)">START</span> <span style="font-size:11px;color:var(--teal-dark);opacity:0.7">– Was soll neu begonnen werden?</span></div>
-        <textarea id="sess-start" rows="2" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-md) var(--r-md);background:var(--bg);color:var(--text);resize:vertical"></textarea>
+        </div>
+        <div id="ncSecKon" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Rückblick &amp; Kontext</div>
+          <div id="ncLastContinueBox"></div>
+<div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-player-play"></i></span>Start <span style="font-weight:500;color:var(--text3);font-size:12px">Was soll neu begonnen werden?</span></div><textarea id="sess-start" rows="2" style="resize:vertical"></textarea></div><div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-player-stop"></i></span>Stop <span style="font-weight:500;color:var(--text3);font-size:12px">Was soll aufgehört werden?</span></div><textarea id="sess-stop" rows="2" style="resize:vertical"></textarea></div><div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-repeat"></i></span>Continue <span style="font-weight:500;color:var(--text3);font-size:12px">Was soll beibehalten werden?</span></div><textarea id="sess-cont" rows="2" style="resize:vertical"></textarea></div><div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px"><span style="width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;font-size:13px"><i class="ti ti-notes"></i></span>Notizen <span style="font-weight:500;color:var(--text3);font-size:12px">Beobachtungen &amp; Vereinbarungen</span></div><textarea id="sess-note" rows="2" style="resize:vertical"></textarea></div>        </div>
       </div>
-      <div style="border-radius:var(--r-md);overflow:hidden">
-        <div style="background:var(--red-bg);padding:7px 12px;border-left:3px solid var(--red)"><span style="font-size:11px;font-weight:700;color:var(--red)">STOP</span> <span style="font-size:11px;color:var(--red);opacity:0.7">– Was soll aufgehört werden?</span></div>
-        <textarea id="sess-stop" rows="2" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-md) var(--r-md);background:var(--bg);color:var(--text);resize:vertical"></textarea>
-      </div>
-      <div style="border-radius:var(--r-md);overflow:hidden">
-        <div style="background:var(--amber-bg);padding:7px 12px;border-left:3px solid var(--amber-dark)"><span style="font-size:11px;font-weight:700;color:var(--amber-dark)">CONTINUE</span> <span style="font-size:11px;color:var(--amber-dark);opacity:0.7">– Was soll beibehalten werden?</span></div>
-        <textarea id="sess-cont" rows="2" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-md) var(--r-md);background:var(--bg);color:var(--text);resize:vertical"></textarea>
-      </div>
-      <div style="border-radius:var(--r-md);overflow:hidden">
-        <div style="background:var(--bg2);padding:7px 12px;border-left:3px solid var(--text2)"><span style="font-size:11px;font-weight:700;color:var(--text2)">Notizen</span> <span style="font-size:11px;color:var(--text2);opacity:0.7">– Beobachtungen &amp; Vereinbarungen</span></div>
-        <textarea id="sess-note" rows="2" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r-md) var(--r-md);background:var(--bg);color:var(--text);resize:vertical"></textarea>
-      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('neuesCoachingModal')">Abbrechen</button><button class="btn btn-primary" data-eid="" id="ncSaveBtn" type="button" style="height:36px;width:auto" onclick="saveSession(document.getElementById('ncSaveBtn').dataset.eid)"><i class="ti ti-device-floppy"></i> Session speichern</button></div>
     </div>
-  </div>
-
-  <div class="modal-actions">
-    <button class="btn" onclick="closeModal('neuesCoachingModal')">Abbrechen</button>
-    <button class="btn btn-primary" data-eid="" id="ncSaveBtn" onclick="saveSession(document.getElementById('ncSaveBtn').dataset.eid)"><i class="ti ti-device-floppy"></i> Session speichern</button>
   </div>
 </div></div>
 
@@ -11763,7 +11742,16 @@ function openSessionModal(empId){
   updateSessionHdSub();
   openModal('sessionPlanenModal');
 }
+function updateNcHdSub(){
+  var el=document.getElementById('ncHdSub');if(!el)return;
+  var ids=ncSelectedEmpIds||[];
+  if(!ids.length){el.textContent='Mitarbeiter wählen';return;}
+  if(ids.length>1){el.textContent=ids.length+' Mitarbeiter · Gruppencoaching';return;}
+  var e=employees.find(function(x){return x.id===ids[0];});
+  el.textContent=e?(e.name+(e.role?' · '+e.role:'')):'1 Mitarbeiter';
+}
 function renderNcEmpDropdown(){
+  if(typeof updateNcHdSub==='function')updateNcHdSub();
   var wrap=document.getElementById('ncEmpDropdownWrap');
   if(!wrap)return;
   var labelEl=document.getElementById('ncEmpSelLabel');
@@ -11995,6 +11983,7 @@ function openNeuesCoachingModal(empId){
   var saveBtn=document.getElementById('ncSaveBtn');
   if(saveBtn)saveBtn.dataset.eid=selectedEmp;
   renderLastContinueBox(selectedEmp,'ncLastContinueBox');
+  updateNcHdSub();
   openModal('neuesCoachingModal');
 }
 
