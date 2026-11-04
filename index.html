@@ -4893,7 +4893,7 @@ function renderOptGesHeuteTileHtml(visible){
   var diff=ist-ziel;
   return '<div><div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em">OPT. GES. (HEUTE)</div>'
     +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+ist+' <span style="font-size:11px;font-weight:400;color:#FFE1D6">/ '+ziel+' Stk.</span></div>'
-    +'<div style="font-size:9.5px;color:#E9B2A6;margin-top:3px">Abw. <span style="color:'+(diff<0?'#e57373':'#F7B39A')+';font-weight:600">'+(diff>=0?'+':'')+diff+'</span></div>'
+    +'<div style="font-size:9.5px;color:#E9B2A6;margin-top:3px">Abw. <span style="color:'+(diff<0?'#fff':'#F7B39A')+';font-weight:600">'+(diff>=0?'+':'')+diff+'</span></div>'
     +'</div>';
 }
 // Slide 1 (Performance) des Banners - wiederverwendbar fuer den globalen Banner UND den
@@ -4993,7 +4993,7 @@ function buildBannerSlide1Html(visible,dotsHtml,marginTop){
   function heroKpiCell(k,cur,prev,spark7K){
     var vR=cur!==null?(k.pct?Math.round(cur):+cur.toFixed(1)):null;
     var hit=cur!==null&&k.target!==null&&(k.dir==='lte'?cur<=k.target:cur>=k.target);
-    var colLight=cur===null?'#FFE1D6':(k.target!==null?(hit?'#fff':'#e57373'):'#fff');
+    var colLight=cur===null?'#FFE1D6':(k.target!==null?(hit?'#fff':'#fff'):'#fff');
     var trend=(cur!==null&&prev!==null)?cur-prev:null;
     var trendArrow=trend===null?'':(trend>0.5?'\u2191':trend<-0.5?'\u2193':'\u2192');
     var targetTxt=k.target!==null?('Ziel '+(k.dir==='gte'?'\u2265':'\u2264')+k.target+(k.pct?'%':'')):(k.fallbackLabel||'Team-Durchschnitt');
@@ -5089,7 +5089,8 @@ function buildGlobalBannerHtml(visible){
       var pct=ziel>0?Math.min(100,Math.round(ist/ziel*100)):(ist>0?100:0);
       var diff=ist-ziel;
       var diffTxt=(diff>=0?'+':'')+Math.round(diff).toLocaleString('de-DE')+' €';
-      var barCol=diff>=0?'#F7B39A':'#e57373';
+      var barCol='#fff'; // im Banner immer weiss; ueber/unter Ziel zeigt der Text
+      var diffPill='<span style="display:inline-block;background:'+(diff>=0?'rgba(255,255,255,0.22)':'rgba(0,0,0,0.22)')+';color:#fff;font-weight:600;padding:0 6px;border-radius:5px">'+(diff>=0?'▲ ':'▼ ')+diffTxt+'</span>';
       var fs=big?30:18;
       return '<div style="padding:4px 14px;width:100%">'
         +'<div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:6px">'+label.toUpperCase()+'</div>'
@@ -5098,7 +5099,7 @@ function buildGlobalBannerHtml(visible){
         +'<div style="height:100%;border-radius:5px;width:'+pct+'%;background:'+barCol+'"></div>'
         +'<div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;left:100%"></div>'
         +'</div>'
-        +'<div style="font-size:9.5px;color:#E9B2A6;margin-top:5px">Ziel '+Math.round(ziel).toLocaleString('de-DE')+' € · <span style="color:'+barCol+';font-weight:600">'+diffTxt+'</span> '+(diff>=0?'über':'unter')+' Ziel</div>'
+        +'<div style="font-size:9.5px;color:#E9B2A6;margin-top:5px">Ziel '+Math.round(ziel).toLocaleString('de-DE')+' € · '+diffPill+' '+(diff>=0?'über':'unter')+' Ziel</div>'
         +'</div>';
     }
     for(var m=1;m<=12;m++){
@@ -5158,7 +5159,7 @@ function buildGlobalBannerHtml(visible){
         +'\nZiel DE Marge/Mon.: €'+zielMargeArr[i].toLocaleString('de-DE')
         +'\nErzielte Marge: '+(erzieltArr[i]!=null?'€'+erzieltArr[i].toLocaleString('de-DE'):'—');
       h+='<div style="flex:1;position:relative;height:'+CH2+'px;display:flex;align-items:flex-end;justify-content:center;cursor:default" title="'+tipTxt2+'">'
-        +'<div style="position:absolute;left:14px;right:14px;bottom:'+pctNl2+'%;border-top:2px dashed #e0a13a"></div>'
+        +'<div style="position:absolute;left:8px;right:8px;bottom:'+pctNl2+'%;border-top:2px dashed #fff;z-index:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.25))"></div>'
         +'<div style="display:flex;align-items:flex-end;gap:4px;height:100%">'
         +'<div style="width:24px;height:'+pctZiel2+'%;background:#F7B39A;opacity:0.4;border-radius:3px 3px 0 0"></div>'
         +(pctErz2!=null?'<div style="width:24px;height:'+pctErz2+'%;background:#F7B39A;border-radius:3px 3px 0 0"></div>':'<div style="width:24px"></div>')
@@ -5227,7 +5228,7 @@ function buildGlobalBannerHtml(visible){
     var _oeTageSeitLetzter=_sessTagePro.length?(_sessTagePro.reduce(function(a,b){return a+b;},0)/_sessTagePro.length):null;
     var _sessPct=_sessionsZiel>0?Math.min(100,Math.round(_sessionsMonat/_sessionsZiel*100)):0;
     var _sessDiff=_sessionsMonat-_sessionsZiel;
-    var _sessBarCol=_sessDiff>=0?'#F7B39A':'#e57373';
+    var _sessBarCol='#fff';
     h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
@@ -5253,7 +5254,7 @@ function buildGlobalBannerHtml(visible){
 
     h+='<div style="flex:1;padding:0 4px 0 18px;position:relative">'
       +'<svg width="100%" height="195" viewBox="0 0 '+_CW+' '+_CHh+'" preserveAspectRatio="none">'
-      +'<line x1="'+_hX+'" y1="0" x2="'+_hX+'" y2="'+_CHh+'" stroke="#e0a13a" stroke-width="1.5" stroke-dasharray="4,3"/>'
+      +'<line x1="'+_hX+'" y1="0" x2="'+_hX+'" y2="'+_CHh+'" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,3"/>'
       +'<path d="'+_areaPath+'" fill="#F7B39A" opacity="0.12"/>'
       +'<path d="'+_pastPath+'" fill="none" stroke="#F7B39A" stroke-width="2.5" stroke-linecap="round"/>'
       +'<path d="'+_futurePath+'" fill="none" stroke="#F7B39A" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6,5" opacity="0.75"/>'
@@ -5291,7 +5292,7 @@ function buildGlobalBannerHtml(visible){
     }
     var _actTrendPct=_actPrev30Sum>0?Math.round((_act30Sum-_actPrev30Sum)/_actPrev30Sum*100):null;
     var _actTrendArrow=_actTrendPct===null?'':(_actTrendPct>0?' ↑':_actTrendPct<0?' ↓':'');
-    var _actTrendCol=_actTrendPct===null?'#FFE1D6':(_actTrendPct>=0?'#F7B39A':'#e57373');
+    var _actTrendCol='#fff';
     var _actAvgPerDay=(_act30Sum/30).toFixed(1);
     h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
@@ -5314,7 +5315,7 @@ function buildGlobalBannerHtml(visible){
     h+='<div style="flex:1;padding:0 4px 0 18px;display:flex;align-items:flex-end;gap:3px;height:195px">';
     _actDays.forEach(function(n){
       var pct=Math.max(2,Math.round(n/_actMax*100));
-      h+='<div style="flex:1;height:100%;display:flex;align-items:flex-end"><div style="width:100%;height:'+pct+'%;background:#F08566;border-radius:2px 2px 0 0" title="'+n+' Aktivitäten"></div></div>';
+      h+='<div style="flex:1;height:100%;display:flex;align-items:flex-end"><div style="width:100%;height:'+pct+'%;background:#fff;opacity:.9;border-radius:2px 2px 0 0" title="'+n+' Aktivitäten"></div></div>';
     });
     h+='</div>';
     h+='</div>';
@@ -5416,7 +5417,7 @@ function buildGlobalBannerHtml(visible){
     var pctShown=Math.round(pct*100);
     var circumference=94.2;
     var offset=circumference*(1-Math.min(pct,1));
-    var color=(ziel>0&&pct>=1)?'#F7B39A':(ziel>0&&pct<1&&sollFrac!=null&&pct<sollFrac?'#e57373':'#F7B39A');
+    var color=(ziel>0&&pct>=1)?'#F7B39A':(ziel>0&&pct<1&&sollFrac!=null&&pct<sollFrac?'#fff':'#F7B39A');
     var diff=ist-(ziel*(sollFrac!=null?sollFrac:1));
     var diffTxt=(diff>=0?'+':'')+fmt(diff);
     var restTxt=fmt(Math.max(0,ziel-ist));
@@ -5429,7 +5430,7 @@ function buildGlobalBannerHtml(visible){
       +'<div>'
       +'<div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em">'+label.toUpperCase()+'</div>'
       +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+fmt(ist)+' <span style="font-size:10.5px;font-weight:400;color:#FFE1D6">/ '+fmt(ziel)+(unitSuffix?' '+unitSuffix:'')+'</span></div>'
-      +'<div style="font-size:9.5px;color:#E9B2A6;margin-top:3px">'+(sollFrac!=null?('Abw. <span style="color:'+(diff<0?'#e57373':'#F7B39A')+';font-weight:600">'+diffTxt+'</span> · Rest '+restTxt):('Abw. <span style="color:'+(diff<0?'#e57373':'#F7B39A')+';font-weight:600">'+diffTxt+'</span>'))+'</div>'
+      +'<div style="font-size:9.5px;color:#E9B2A6;margin-top:3px">'+(sollFrac!=null?('Abw. <span style="color:'+(diff<0?'#fff':'#F7B39A')+';font-weight:600">'+diffTxt+'</span> · Rest '+restTxt):('Abw. <span style="color:'+(diff<0?'#e57373':'#F7B39A')+';font-weight:600">'+diffTxt+'</span>'))+'</div>'
       +'</div>'
       +'<svg width="38" height="38" viewBox="0 0 38 38" style="flex-shrink:0">'
       +'<circle cx="19" cy="19" r="15" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="5"/>'
