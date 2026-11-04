@@ -11574,21 +11574,21 @@ function openCoachingInfoModal(empId){
   function bigKpi(dot,lbl,val,small){return '<div style="font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></span>'+lbl+'</div><div style="font-size:26px;font-weight:300;line-height:1.1;margin-bottom:8px">'+val+(small?'<span style="font-size:12px;font-weight:500;color:var(--text2);margin-left:4px">'+small+'</span>':'')+'</div>';}
   var effTxt=avgEffekt===null?'—':(avgEffekt>=0?'+':'−')+Math.abs(avgEffekt).toFixed(1).replace('.',',');
   // Einheitliche Box mit Kopfzeile in Menuefarbe (#F7F5F0)
-  function ciBox(id,title,right,body,extraStyle){return '<div id="'+id+'" style="background:#fff;border:1px solid #E4E0D6;border-radius:14px;overflow:hidden;margin-bottom:14px;'+(extraStyle||'')+'">'
-    +'<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#F7F5F0;border-bottom:1px solid #E4E0D6;font-weight:700;font-size:14px;color:var(--text)">'+title+(right?'<span style="margin-left:auto;display:flex;gap:6px;align-items:center">'+right+'</span>':'')+'</div>'+body+'</div>';}
+  function ciBox(id,title,right,body,extraStyle){return '<div id="'+id+'" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);'+(extraStyle||'')+'">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:700;font-size:14px;color:var(--text)">'+title+(right?'<span style="margin-left:auto;display:flex;gap:6px;align-items:center">'+right+'</span>':'')+'</div>'+body+'</div>';}
   function topKpi(val,lbl){return '<div style="text-align:right"><div style="font-size:24px;font-weight:400;line-height:1.1;color:var(--text)">'+val+'</div><div style="font-size:14px;color:var(--text3);font-weight:500">'+lbl+'</div></div>';}
-  var chartHtml='<div style="padding:14px 16px 6px"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">'
+  var chartHtml='<div style="padding:2px 0 0"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">'
     +topKpi(total,'Sessions')+topKpi(avgPerMonth?String(avgPerMonth).replace('.',','):'—','im Mon.')+topKpi(geplant.length,'Geplant')+topKpi(effTxt,'Effekt')+'</div>'
     +'<div style="position:relative;height:'+(BH+18)+'px;display:flex;align-items:flex-end;gap:6px">';
-  if(avgPerMonth)chartHtml+='<div style="position:absolute;left:0;right:0;bottom:'+Math.round(parseFloat(avgPerMonth)/mMax*BH)+'px;border-top:1.5px dashed #8C8577"><span style="position:absolute;right:0;top:-16px;font-size:10.5px;color:var(--text2);font-weight:600;background:#fff;padding:0 3px">Ø '+String(avgPerMonth).replace('.',',')+'</span></div>';
+  if(avgPerMonth)chartHtml+='<div style="position:absolute;left:0;right:0;bottom:'+Math.round(parseFloat(avgPerMonth)/mMax*BH)+'px;border-top:1.5px dashed #8C8577"><span style="position:absolute;right:0;top:-16px;font-size:10.5px;color:var(--text2);font-weight:600;background:#F7F5F0;padding:0 3px">Ø '+String(avgPerMonth).replace('.',',')+'</span></div>';
   mVals.forEach(function(x){var hp=Math.max(3,Math.round(x.v/mMax*BH));
     chartHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="'+x.lbl+': '+x.v+(x.fut?' geplant':' Sessions')+'"><span style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px">'+x.v+'</span><div style="width:70%;height:'+hp+'px;border-radius:4px 4px 0 0;'+(x.fut?'border:1.5px dashed #B4AC9C;background:transparent':x.cur?'background:#3a3833':'background:#B4AC9C')+'"></div></div>';});
   chartHtml+='</div><div style="display:flex;gap:6px;margin-top:4px;margin-bottom:8px">'+mVals.map(function(x){return '<span style="flex:1;text-align:center;font-size:11px;color:'+(x.cur?'var(--text)':'var(--text3)')+';font-weight:'+(x.cur?700:600)+'">'+x.lbl+'</span>';}).join('')+'</div></div>'
-    +'<div id="ciSum" style="font-size:14px;color:var(--text);line-height:1.5;padding:10px 16px 12px;border-top:1px solid #eeebe4">'+sumTxt+'</div>';
+    +'<div id="ciSum" style="font-size:14px;color:var(--text);line-height:1.5;padding:10px 0 0;border-top:1px solid #E4E0D6">'+sumTxt+'</div>';
   var box=ciBox('ciSecTopBox','Coaching im Überblick',chips,chartHtml);
   var notizTxt=emp.notes||'';
   var noteBox=ciBox('ciSecNotiz','Notiz zum Mitarbeiter','<span style="font-size:12px;font-weight:600;color:var(--text3)">nur für Coaches und Admins</span>',
-    '<div style="background:#FBF6E9;padding:10px 14px">'
+    '<div style="background:#FBF6E9;border:1px solid #EADFC4;border-radius:10px;padding:10px 12px">'
     +'<textarea id="coachingInfoNotizField" placeholder="Noch keine Notiz – hier schreiben …" style="width:100%;min-height:54px;border:none;background:transparent;font-size:14px;resize:vertical;color:var(--text);outline:none;padding:0;font-family:inherit" onblur="saveCoachingInfoNotiz(\''+empId+'\')">'+esc(notizTxt)+'</textarea>'
     +'<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-top:4px"><span>Wird beim Verlassen des Feldes automatisch gespeichert</span><span id="coachingInfoNotizStatus"></span></div></div>');
   var role=emp.role||'';
@@ -11617,7 +11617,7 @@ function openCoachingInfoModal(empId){
     .sort(function(a,b){return b.date.localeCompare(a.date);});
   var RH=58;
   function tlRow(dateTxt,mark,title,sub,right,opt){opt=opt||{};
-    return '<div title="'+esc((title||'')+(sub?' – '+sub:''))+'" style="display:flex;align-items:center;gap:12px;height:'+RH+'px;padding:0 14px;border-bottom:1px solid #eeebe4;'+(opt.bg?'background:'+opt.bg+';':'')+(opt.bar?'box-shadow:inset 3px 0 0 '+opt.bar+';':'')+'">'
+    return '<div title="'+esc((title||'')+(sub?' – '+sub:''))+'" style="display:flex;align-items:center;gap:12px;height:'+RH+'px;padding:0 12px;margin-bottom:6px;border-radius:10px;border:1px solid '+(opt.border||'#E4E0D6')+';background:'+(opt.bg||'#EFECE5')+';'+(opt.bar?'box-shadow:inset 3px 0 0 '+opt.bar+';':'')+'">'
       +'<div style="width:58px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--text3);line-height:1.25">'+dateTxt+'</div>'
       +'<div style="width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;'+(mark.style||'background:#F7F5F0;border:1px solid #E4E0D6;color:var(--text2)')+'">'+mark.html+'</div>'
       +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+title+'</div>'+(sub?'<div style="font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>':'')+'</div>'
@@ -11636,7 +11636,7 @@ function openCoachingInfoModal(empId){
         return;
       }
       if(item.kind==='record'){
-        rows+=tlRow(dTxt,{html:'🎉',style:'background:#fff;border:1.5px solid #F08566'},esc(item.label),'',pill('Bestwert','background:#fff;color:#B5513A;border:1px solid rgba(240,133,102,.6)'),{bar:'#F08566'});
+        rows+=tlRow(dTxt,{html:'🎉',style:'background:#fff;border:1.5px solid #F08566'},esc(item.label),'',pill('Bestwert','background:#fff;color:#B5513A;border:1px solid rgba(240,133,102,.6)'),{bar:'#F08566',border:'rgba(240,133,102,.6)'});
         return;
       }
       var p=item.p;
@@ -11657,7 +11657,7 @@ function openCoachingInfoModal(empId){
       }
     });
   }
-  h+=ciBox('ciSecVerlauf','Verlauf','<span style="font-size:12px;font-weight:600;color:var(--text3)">'+combinedTl.length+' Einträge</span>','<div>'+rows+'</div>','margin-bottom:6px');
+  h+=ciBox('ciSecVerlauf','Verlauf <span style="font-size:12px;font-weight:500;color:var(--text3)">('+combinedTl.length+')</span>','','<div>'+rows+'</div>','margin-bottom:6px;padding-bottom:8px');
   h+='</div>'; // Ende Scrollbereich
   h+='<div style="padding:10px 18px 14px;border-top:1px solid #E4E0D6;background:#EEEDE9">'
     +'<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:6px 6px 6px 14px;position:relative">'
