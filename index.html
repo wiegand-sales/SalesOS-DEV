@@ -201,7 +201,7 @@ thead th *{color:inherit;}
 .std-table tbody tr:nth-child(even) td{background:var(--s-tint);--band:rgba(29,28,26,0.06);}
 .std-table tbody tr:last-child td{border-bottom:none!important;}
 .std-table tbody tr:not(.sum):hover td{background:rgba(29,28,26,0.16)!important;box-shadow:inset 0 2px 0 var(--teal-dark),inset 0 -2px 0 var(--teal-dark)!important;}
-.std-table tr.sum td{background:#FDF0EB!important;color:var(--text)!important;font-weight:700;padding:13px 14px!important;border-top:2px solid #F08566!important;}
+.std-table tr.sum td{background:rgba(29,28,26,0.07)!important;color:var(--text)!important;font-weight:700;padding:13px 14px!important;border-top:2px solid #3a3833!important;}
 .std-table .r{text-align:right;}
 .std-table td.r .btn,.std-table td.r a.btn{display:inline-flex;vertical-align:middle;}
 /* Rechte-Auswahl und Wizard-Bausteine */
@@ -225,12 +225,16 @@ thead th *{color:inherit;}
 .wz-switch input:focus-visible+span{outline:2px solid #F08566;outline-offset:2px;}
 .std-table td.f{font-weight:600;color:var(--text);}
 .std-table .s{display:block;font-size:11px;font-weight:400;color:var(--text3);margin-top:1px;}
-/* Summenzeilen: dezentes Koralle statt Schwarz */
-tr.perf-sum-row td{background:#FDF0EB!important;color:var(--text)!important;border-top:2px solid #F08566!important;border-bottom:none!important;}
-tr.perf-sum-row td:first-child,.std-table tr.sum td:first-child{box-shadow:inset 4px 0 0 #F08566!important;}
+/* Summe & Durchschnitt: transparentes Schwarz */
+tr.perf-sum-row,tr.perf-avg-row,.std-table tr.sum{background:#fff!important;color:var(--text)!important;}
+tr.perf-sum-row td{background:rgba(29,28,26,0.07)!important;color:var(--text)!important;border-top:2px solid #3a3833!important;border-bottom:none!important;font-weight:700;}
+tr.perf-sum-row td:first-child,.std-table tr.sum td:first-child{box-shadow:inset 4px 0 0 #3a3833!important;}
 tr.perf-sum-row [style*="color:#fff"],tr.perf-sum-row [style*="color: #fff"],.std-table tr.sum [style*="color:#fff"]{color:var(--text)!important;}
-tr.perf-sum-row:hover td{background:#FBE6DE!important;}
-tr.perf-avg-row:hover td{background:var(--s-tint-strong) !important;}
+tr.perf-sum-row:hover td{background:rgba(29,28,26,0.11)!important;}
+tr.perf-avg-row td{background:rgba(29,28,26,0.035)!important;color:var(--text2)!important;font-weight:600!important;border-top:1px dashed rgba(29,28,26,0.35)!important;border-bottom:none!important;}
+tr.perf-avg-row td:first-child{box-shadow:inset 4px 0 0 rgba(29,28,26,0.25)!important;}
+tr.perf-avg-row [style*="color:#1d1c1a"]{color:var(--text2)!important;}
+tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 /* ALERTS */
 .alert{border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .alert-warn{background:var(--amber-bg);border:1px solid rgba(217,65,9,.2);}
@@ -3927,7 +3931,7 @@ function zielvereinbarungHtml(){
       +'<div style="'+GH+';justify-content:center">%</div>'
       +'</div>'
       +rowsHtml
-      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:#FDF0EB;border-top:2px solid #F08566;box-shadow:inset 4px 0 0 #F08566">'
+      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:rgba(29,28,26,0.07);border-top:2px solid #3a3833;box-shadow:inset 4px 0 0 #3a3833">'
       +'<div style="font-weight:700;color:var(--text);padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center">Team gesamt</div>'
       +'<div style="font-weight:700;color:#C9502F;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamUrlaubSum+'</div>'
       +'<div style="font-weight:700;color:#B8741A;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamKrankSum+'</div>'
@@ -3994,7 +3998,7 @@ function zielvereinbarungHtml(){
       +'</div>');
     if(isCurrent)monthRows.push(weekDetailHtml);
   }
-  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:#FDF0EB;border-top:2px solid #F08566;box-shadow:inset 4px 0 0 #F08566">'
+  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:rgba(29,28,26,0.07);border-top:2px solid #3a3833;box-shadow:inset 4px 0 0 #3a3833">'
     +'<div style="font-weight:800;color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center">Jahresergebnis</div>'
     +'<div style="color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">–</div>'
     +'<div style="font-weight:800;color:#C9502F;padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">'+yearUrlaubSum+'</div>'
@@ -5972,18 +5976,18 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
     function sortTh(label,key,extraStyle){
       var active=overviewPerfSortKey===key;
       var arrow=active?(overviewPerfSortDir==='asc'?' ▲':' ▼'):'';
-      return '<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:'+(active?'#F7B39A':'#fff')+';text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none'+(extraStyle||'')+'" onclick="setOverviewPerfSort(\''+key+'\')">'+label+arrow+'</th>';
+      return '<th style="background:#EFECE5;padding:9px 10px;text-align:left;font-size:10px;font-weight:700;color:'+(active?'#F7B39A':'#fff')+';text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none'+(extraStyle||'')+'" onclick="setOverviewPerfSort(\''+key+'\')">'+label+arrow+'</th>';
     }
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
-      +sortTh('Mitarbeiter','name',';width:190px;min-width:190px')
-      +sortTh(firstColLabel,'period',';width:120px;min-width:120px')
+      +sortTh('Mitarbeiter','name',';width:170px')
+      +sortTh(firstColLabel,'period',';width:120px')
       +[['Akt./Std.','aktPerH'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
-        return sortTh(cc[0],cc[1],';text-align:right;width:92px;min-width:92px');
+        return sortTh(cc[0],cc[1],';text-align:right');
       }).join('')
-      +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap">Aktion</th>'
       +[['Marge Ges.','marge']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right');
       }).join('')
+      +'<th style="background:#EFECE5;padding:9px 10px;text-align:right;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:1%">Aktion</th>'
       +'</tr></thead><tbody>';
     // Zwei Werte gestapelt (Hauptwert oben, Anzahl klein darunter) statt "Wert (Anzahl)" in einer Zeile.
     // Rendert die zweite Zeile IMMER (auch als unsichtbaren Platzhalter), damit alle Zellen einer
@@ -6006,30 +6010,30 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
       var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+stackCell(rowEmp.name,rowEmp.role||'',null,'left')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCell(g.label,(overviewPerfGroup!=='day'?g.count+' Tage':''),null,'left')+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;cursor:help" onmouseenter="showInfoTooltip(event,\'Akt./Std. = Aktivitäten / Stunden\',\'Aktivitäten\','+akt+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Akt./Std.\','+aktPerHour.toFixed(1)+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(aktPerHour.toFixed(1),akt)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notR/akt*100),rowEmpT.notReached.val,rowEmpT.notReached.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NE = NE / Aktivitäten\',\'NE\','+notR+',\'Aktivitäten\','+akt+',\'NE-Quote\',\''+(akt>0?Math.round(notR/akt*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((akt>0?Math.round(notR/akt*100)+'%':'—'),(akt>0?notR:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notP/akt*100),rowEmpT.notPossible.val,rowEmpT.notPossible.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NM = NM / Aktivitäten\',\'NM\','+notP+',\'Aktivitäten\','+akt+',\'NM-Quote\',\''+(akt>0?Math.round(notP/akt*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((akt>0?Math.round(notP/akt*100)+'%':'—'),(akt>0?notP:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;'+((notS+optGes)>0?fc(Math.round(notS/(notS+optGes)*100),rowEmpT.notSuccessful.val,rowEmpT.notSuccessful.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NErr = NErr / (NErr + Opt.Ges.)\',\'NErr\','+notS+',\'Opt.Ges.\','+optGes+',\'NErr-Quote\',\''+((notS+optGes)>0?Math.round(notS/(notS+optGes)*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(((notS+optGes)>0?Math.round(notS/(notS+optGes)*100)+'%':'—'),((notS+optGes)>0?notS:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(convOEM/optGes*100)+'%':'—'),(optGes>0?convOEM:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'Upsells = Opt.Upsells / Opt.Ges.\',\'Opt.Upsells\','+ups+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(ups/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'WKA = Opt.WKA / Opt.Ges.\',\'Opt.WKA\','+wka_gesamt_yes+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(wka_gesamt_yes/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(wka_gesamt_yes/optGes*100)+'%':'—'),(optGes>0?wka_gesamt_yes:'—'))+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;cursor:help" onmouseenter="showBreakdownTooltip(event,\'Opt. Ges. Aufschlüsselung\','+convOEM+','+ups+','+wka_gesamt_yes+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optGes,null)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+stackCell(rowEmp.name,rowEmp.role||'',null,'left')+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCell(g.label,(overviewPerfGroup!=='day'?g.count+' Tage':''),null,'left')+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;cursor:help" onmouseenter="showInfoTooltip(event,\'Akt./Std. = Aktivitäten / Stunden\',\'Aktivitäten\','+akt+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Akt./Std.\','+aktPerHour.toFixed(1)+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(aktPerHour.toFixed(1),akt)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notR/akt*100),rowEmpT.notReached.val,rowEmpT.notReached.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NE = NE / Aktivitäten\',\'NE\','+notR+',\'Aktivitäten\','+akt+',\'NE-Quote\',\''+(akt>0?Math.round(notR/akt*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((akt>0?Math.round(notR/akt*100)+'%':'—'),(akt>0?notR:'—'))+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notP/akt*100),rowEmpT.notPossible.val,rowEmpT.notPossible.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NM = NM / Aktivitäten\',\'NM\','+notP+',\'Aktivitäten\','+akt+',\'NM-Quote\',\''+(akt>0?Math.round(notP/akt*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((akt>0?Math.round(notP/akt*100)+'%':'—'),(akt>0?notP:'—'))+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;'+((notS+optGes)>0?fc(Math.round(notS/(notS+optGes)*100),rowEmpT.notSuccessful.val,rowEmpT.notSuccessful.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NErr = NErr / (NErr + Opt.Ges.)\',\'NErr\','+notS+',\'Opt.Ges.\','+optGes+',\'NErr-Quote\',\''+((notS+optGes)>0?Math.round(notS/(notS+optGes)*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(((notS+optGes)>0?Math.round(notS/(notS+optGes)*100)+'%':'—'),((notS+optGes)>0?notS:'—'))+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(convOEM/optGes*100)+'%':'—'),(optGes>0?convOEM:'—'))+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'Upsells = Opt.Upsells / Opt.Ges.\',\'Opt.Upsells\','+ups+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(ups/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'WKA = Opt.WKA / Opt.Ges.\',\'Opt.WKA\','+wka_gesamt_yes+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(wka_gesamt_yes/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(wka_gesamt_yes/optGes*100)+'%':'—'),(optGes>0?wka_gesamt_yes:'—'))+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;cursor:help" onmouseenter="showBreakdownTooltip(event,\'Opt. Ges. Aufschlüsselung\','+convOEM+','+ups+','+wka_gesamt_yes+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(optGes,null)+'</td>'
         +(function(){
           var optPerHVal=rowTotalHours>0?optGes/rowTotalHours:0;
           var colStyle=rowTotalHours>0?fc(Math.round(optPerHVal*10)/10,rowEmpT.optPerH.val,rowEmpT.optPerH.dir):'';
-          return '<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:var(--s-tint);text-align:right;'+colStyle+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\','+(rowTotalHours>0?optPerHVal.toFixed(1):'—')+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((rowTotalHours>0?optPerHVal.toFixed(1):'—'),null)+'</td>';
+          return '<td style="padding:8px 10px;border-bottom:1px solid var(--border);border-left:2px solid var(--border2);background:var(--s-tint);text-align:right;'+colStyle+';cursor:help" onmouseenter="showInfoTooltip(event,\'Opt./Std. = Opt.Ges. / Stunden\',\'Opt.Ges.\','+optGes+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Opt./Std.\','+(rowTotalHours>0?optPerHVal.toFixed(1):'—')+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((rowTotalHours>0?optPerHVal.toFixed(1):'—'),null)+'</td>';
         })()
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+';cursor:help" onmouseenter="showCrTooltip(event,'+crGesamtTooltip+','+crOEM+','+crUpsTooltip+','+crWkaTooltip+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',null)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+tw+',\'TW+Yes+SY+MY\','+(tw+yes+sy+my)+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',tw)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR Yes = Yes / (Yes+SY+MY)\',\'Yes\','+yes+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR Yes\',\''+crYes+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crYes+'%',yes)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSyMy,rowEmpT.crSyMy.val,rowEmpT.crSyMy.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(sy+my)+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',sy+my)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+sy+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',sy)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+my+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',my)+'</td>'
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(Math.round(optGes>0?convOEM/optGes*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(convOEM/optGes*100):0)+'%',null)+'</td>'
-        +(rowEmp.id==='__agg__'?'<td style="padding:16px 14px;border-bottom:1px solid var(--border)"></td>':'<td style="padding:16px 14px;border-bottom:1px solid var(--border);white-space:nowrap"><div style="display:flex;gap:6px">'+(hideMemberCol?'':'<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button>')+'<button class="btn btn-sm" onclick="event.stopPropagation();openCoachingInfoModal(\''+rowEmp.id+'\')"><i class="ti ti-info-circle"></i> Info</button></div></td>')
-        +'<td style="padding:16px 14px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(margeOEMVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeUpsVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeWkaVal).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—'))+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crOEM,rowEmpT.crOEM.val,rowEmpT.crOEM.dir)+';cursor:help" onmouseenter="showCrTooltip(event,'+crGesamtTooltip+','+crOEM+','+crUpsTooltip+','+crWkaTooltip+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crOEM+'%',null)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crTW,rowEmpT.crTeilweise.val,rowEmpT.crTeilweise.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR TW = TW / (TW+Yes+SY+MY)\',\'TW\','+tw+',\'TW+Yes+SY+MY\','+(tw+yes+sy+my)+',\'CR TW\',\''+crTW+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crTW+'%',tw)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crYes,rowEmpT.crYes.val,rowEmpT.crYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR Yes = Yes / (Yes+SY+MY)\',\'Yes\','+yes+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR Yes\',\''+crYes+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crYes+'%',yes)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSyMy,rowEmpT.crSyMy.val,rowEmpT.crSyMy.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY/MY = (SY+MY) / (Yes+SY+MY)\',\'SY+MY\','+(sy+my)+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY/MY\',\''+crSyMy+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSyMy+'%',sy+my)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crSY,rowEmpT.crSuperYes.val,rowEmpT.crSuperYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR SY = SY / (Yes+SY+MY)\',\'SY\','+sy+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR SY\',\''+crSY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crSY+'%',sy)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--s-tint);text-align:right;'+fc(crMY,rowEmpT.crMegaYes.val,rowEmpT.crMegaYes.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'CR MY = MY / (Yes+SY+MY)\',\'MY\','+my+',\'Yes+SY+MY\','+(yes+sy+my)+',\'CR MY\',\''+crMY+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(crMY+'%',my)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(Math.round(optGes>0?convOEM/optGes*100:0),rowEmpT.anteilOEM.val,rowEmpT.anteilOEM.dir)+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(convOEM/optGes*100):0)+'%',null)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(margeOEMVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeUpsVal).toLocaleString('de-DE')+'\',\'€'+Math.round(margeWkaVal).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+Math.round(marge/optGes).toLocaleString('de-DE'):'—'))+'</td>'
+        +(rowEmp.id==='__agg__'?'<td style="padding:8px 10px;border-bottom:1px solid var(--border)"></td>':'<td style="padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap"><div style="display:flex;gap:6px;justify-content:flex-end">'+(hideMemberCol?'':'<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+rowEmp.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button>')+'<button class="btn btn-sm" title="Info" aria-label="Info" style="width:30px;padding:0;justify-content:center" onclick="event.stopPropagation();openCoachingInfoModal(\''+rowEmp.id+'\')"><i class="ti ti-info-circle"></i></button></div></td>')
         +'</tr>';
       sumAkt+=akt;sumNotR+=notR;sumNotP+=notP;sumNotS+=notS;sumNotROem+=notROem;sumNotPOem+=notPOem;sumNotSOem+=notSOem;sumConvOEM+=convOEM;sumTw+=tw;sumYes+=yes;sumSy+=sy;sumMy+=my;sumTotalHours+=rowTotalHours;
       sumUps+=ups;sumWka+=wka_gesamt_yes;sumOptGes+=optGes;sumMarge+=marge;
@@ -6038,8 +6042,8 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
     // ── Summe & Durchschnitt (nur sinnvoll bei mehreren Zeilen) ──
     var rowCount=sortableRows.length;
     if(rowCount>1){
-      function sumTd(v,fmt,align){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#fff">'+(fmt?fmt(v):v)+'</td>';}
-      function avgTd(v,fmt,align){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#1d1c1a">'+(fmt?fmt(v):v)+'</td>';}
+      function sumTd(v,fmt,align){return '<td style="padding:9px 10px;text-align:'+(align||'right')+';font-weight:700;color:#fff">'+(fmt?fmt(v):v)+'</td>';}
+      function avgTd(v,fmt,align){return '<td style="padding:9px 10px;text-align:'+(align||'right')+';font-weight:700;color:#1d1c1a">'+(fmt?fmt(v):v)+'</td>';}
       var eur=function(v){return '€'+Math.round(v).toLocaleString('de-DE');};
       var pct=function(v){return Math.round(v)+'%';};
       var pctStack=function(v){return stackCell(Math.round(v)+'%',null);};
@@ -6065,30 +6069,29 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       function valPct(v,p){return stackCell(v,Math.round(p)+'%','opacity:.75');}
       function decCnt(dec,cnt){return stackCell(dec.toFixed(1),cnt,'opacity:.75');}
       // Highlight-Varianten fuer Summe (dunkler Hintergrund -> helle Aufhellung) und Durchschnitt (heller Hintergrund -> Petrol-Toenung)
-      function sumTdH(v,fmt,align,edge){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#fff;background:rgba(255,255,255,0.06)'+(edge==='l'?';border-left:2px solid rgba(255,255,255,0.3)':'')+(edge==='r'?';border-right:2px solid rgba(255,255,255,0.3)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
-      function avgTdH(v,fmt,align,edge){return '<td style="padding:13px 14px;text-align:'+(align||'right')+';font-weight:700;color:#1d1c1a;background:var(--s-tint-strong)'+(edge==='l'?';border-left:2px solid var(--border2)':'')+(edge==='r'?';border-right:2px solid var(--border2)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
+      function sumTdH(v,fmt,align,edge){return '<td style="padding:9px 10px;text-align:'+(align||'right')+';font-weight:700;color:#fff;background:rgba(255,255,255,0.06)'+(edge==='l'?';border-left:2px solid rgba(255,255,255,0.3)':'')+(edge==='r'?';border-right:2px solid rgba(255,255,255,0.3)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
+      function avgTdH(v,fmt,align,edge){return '<td style="padding:9px 10px;text-align:'+(align||'right')+';font-weight:700;color:#1d1c1a;background:var(--s-tint-strong)'+(edge==='l'?';border-left:2px solid var(--border2)':'')+(edge==='r'?';border-right:2px solid var(--border2)':'')+'">'+(fmt?fmt(v):v)+'</td>';}
       // Trennzeile: kleiner visueller Abstand zwischen Mitarbeiter-Zeilen und Summe/Durchschnitt
-      h+='<tr><td colspan="20" style="padding:0;border:none;height:8px;background:var(--bg)"></td></tr>';
       h+='<tr class="perf-sum-row" style="background:#1d1c1a">'
-        +'<td style="padding:13px 14px;font-weight:700;color:#fff" colspan="2">Σ Summe</td>'
+        +'<td style="padding:9px 10px;font-weight:700;color:#fff" colspan="2">Σ Summe</td>'
         +sumTd(decCnt(aktPerHourCalc,sumAkt))+sumTd(cntPct(sumNotR,notRpct))+sumTd(cntPct(sumNotP,notPpct))+sumTd(cntPct(sumNotS,notSpct))+sumTd(cntPct(sumConvOEM,anteilOEMcalc))
         +sumTd(cntPct(sumUps,anteilUpsCalc))+sumTd(cntPct(sumWka,anteilWkaCalc))+sumTd(stackCell(sumOptGes,null))
         +sumTdH(stackCell(optPerHourCalc.toFixed(1),null),null,'right','l')
         +sumTdH(crOEMcalc,pctStack)+sumTdH(cntPct(sumTw,crTWcalc))+sumTdH(cntPct(sumYes,crYescalc))+sumTdH(cntPct(sumSy+sumMy,crSyMycalc))+sumTdH(cntPct(sumSy,crSYcalc))+sumTdH(cntPct(sumMy,crMYcalc))
         +sumTdH(anteilOEMcalc,pctStack,'right','r')
-        +'<td style="padding:13px 14px"></td>'
         +sumTd(stackCell(eur(sumMarge),'€'+Math.round(margeDurchCalc).toLocaleString('de-DE'),'opacity:.75'),null,'right')
+        +'<td style="padding:9px 10px"></td>'
         +'</tr>';
       h+='<tr class="perf-avg-row" style="background:var(--s-tint-strong)">'
-        +'<td style="padding:13px 14px;font-weight:700;color:#1d1c1a" colspan="2">Ø Durchschnitt</td>'
+        +'<td style="padding:9px 10px;font-weight:700;color:#1d1c1a" colspan="2">Ø Durchschnitt</td>'
         +avgTd(decCnt(aktPerHourCalc,rnd1(sumAkt/rowCount)))+avgTd(cntPct(rnd1(sumNotR/rowCount),notRpct))+avgTd(cntPct(rnd1(sumNotP/rowCount),notPpct))+avgTd(cntPct(rnd1(sumNotS/rowCount),notSpct))
         +avgTd(cntPct(rnd1(sumConvOEM/rowCount),anteilOEMcalc))
         +avgTd(cntPct(rnd1(sumUps/rowCount),anteilUpsCalc))+avgTd(cntPct(rnd1(sumWka/rowCount),anteilWkaCalc))+avgTd(stackCell(rnd1(sumOptGes/rowCount),null))
         +avgTdH(stackCell(optPerHourCalc.toFixed(1),null),null,'right','l')
         +avgTdH(crOEMcalc,pctStack)+avgTdH(cntPct(rnd1(sumTw/rowCount),crTWcalc))+avgTdH(cntPct(rnd1(sumYes/rowCount),crYescalc))+avgTdH(cntPct(rnd1((sumSy+sumMy)/rowCount),crSyMycalc))+avgTdH(cntPct(rnd1(sumSy/rowCount),crSYcalc))+avgTdH(cntPct(rnd1(sumMy/rowCount),crMYcalc))
         +avgTdH(anteilOEMcalc,pctStack,'right','r')
-        +'<td style="padding:13px 14px"></td>'
         +avgTd(stackCell(eur(sumMarge/rowCount),'€'+Math.round(margeDurchCalc).toLocaleString('de-DE'),'opacity:.75'),null,'right')
+        +'<td style="padding:9px 10px"></td>'
         +'</tr>';
     }
     h+='</tbody></table></div>';
