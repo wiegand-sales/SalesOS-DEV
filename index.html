@@ -108,6 +108,12 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .sform select,.sform input{height:30px;padding:4px 10px;font-size:12.5px;}
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red);}
 /* TABS */
+/* Mitarbeiter-Kopf: Reiter als Schalter */
+#empTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
+#empTabBar.emp-seg .tab{height:28px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text2);background:transparent;white-space:nowrap}
+#empTabBar.emp-seg .tab.active{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#empTabBar.emp-seg .tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,.55)}
+.emp-seg-badge{font-size:10.5px;font-weight:700;background:#F08566;color:#fff;border-radius:8px;padding:0 6px;line-height:16px;margin-left:6px}
 .tab-bar{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:none;padding:0 24px 10px;display:flex;gap:3px;flex-shrink:0;}
 .tab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;border-radius:9px;color:var(--text2);border-bottom:none;transition:all .12s;white-space:nowrap;}
 .tab.active{color:var(--purple-dark);background:var(--s-tint-strong);}
@@ -6673,21 +6679,29 @@ function renderEmpDetail(){
   var c=COLORS[emp.color%COLORS.length];
   var p=protocols[emp.id]||[];
   var tc=openTaskCount(emp.id);
+  // Kopf als Box: oben Name und Infos, darunter Reiter als Schalter und rechts zwei Symbol-Knöpfe auf einer Linie
+  var _cc={};p.forEach(function(x){if(x.status!=='geplant'&&x.coachId)_cc[x.coachId]=(_cc[x.coachId]||0)+1;});
+  var _mcId=Object.keys(_cc).sort(function(x,y){return _cc[y]-_cc[x];})[0];
+  var _mc=_mcId?employees.find(function(e){return String(e.id)===String(_mcId);}):null;
+  var _meta=[esc(emp.role||''),esc(emp.phase||''),emp.startDate?'seit '+emp.startDate.split('-').reverse().join('.'):'',_mc?'Coach '+esc(_mc.name.split(' ')[0]):''].filter(Boolean).join(' · ');
   document.getElementById('mainArea').innerHTML=
-    '<div class="topbar"><div class="tb-left">'
-    +'<div class="av" style="width:40px;height:40px;font-size:17px;background:'+c.bg+';color:'+c.text+'">'+ini(emp.name)+'</div>'
-    +'<div><div class="tb-name">'+esc(emp.name)+'</div><div class="tb-meta">'+emp.role+' · '+emp.phase+(emp.startDate?' · Start '+fd(emp.startDate):'')+' · '+p.length+' Session'+(p.length!==1?'s':'')+'</div></div>'
-    +'</div><div style="display:flex;gap:8px">'
-    +'<button class="btn btn-primary" data-eid="'+emp.id+'" onclick="exportEmpSummary(this.dataset.eid)"><i class="ti ti-file-description"></i> Zusammenfassung (PDF)</button>'
-    +'<button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Print</button></div></div>'
-    +'<div class="tab-bar" id="empTabBar">'
+    '<div style="padding:22px 24px 8px;flex-shrink:0"><div style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(40,32,15,0.06)">'
+    +'<div style="display:flex;align-items:center;gap:12px">'
+    +'<div style="width:40px;height:40px;border-radius:11px;background:#EFECE5;border:1px solid #E4E0D6;color:var(--text);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ini(emp.name)+'</div>'
+    +'<div style="min-width:0"><div style="font-size:18px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(emp.name)+'</div><div style="font-size:12.5px;color:var(--text2);line-height:1.3">'+_meta+'</div></div></div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-top:14px">'
+    +'<div class="emp-seg" id="empTabBar">'
     +'<div class="tab" data-tab="performance" onclick="switchTab(\'performance\')">KPI Performance</div>'
     +'<div class="tab" data-tab="call-performance" onclick="switchTab(\'call-performance\')">QA Performance</div>'
     +'<div class="tab" data-tab="session" onclick="switchTab(\'session\')">Coaching Sessions</div>'
     +'<div class="tab" data-tab="coaching-eval" onclick="switchTab(\'coaching-eval\')">Development</div>'
-    +'<div class="tab" data-tab="tasks" onclick="switchTab(\'tasks\')" id="tasksTabBtn">Task'+(tc>0?' <span style="background:var(--purple);color:#fff;border-radius:20px;font-size:10px;font-weight:600;padding:1px 6px">'+tc+'</span>':'')+'</div>'
+    +'<div class="tab" data-tab="tasks" onclick="switchTab(\'tasks\')" id="tasksTabBtn">Task'+(tc>0?'<span class="emp-seg-badge">'+tc+'</span>':'')+'</div>'
     +'<div class="tab" data-tab="emp-settings" onclick="switchTab(\'emp-settings\')">Einstellungen</div>'
     +'</div>'
+    +'<span style="margin-left:auto;display:flex;gap:8px">'
+    +'<button class="btn btn-primary" title="Zusammenfassung (PDF)" aria-label="Zusammenfassung (PDF)" data-eid="'+emp.id+'" onclick="exportEmpSummary(this.dataset.eid)" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-file-description" style="font-size:16px"></i></button>'
+    +'<button class="btn" title="Drucken" aria-label="Drucken" onclick="window.print()" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-printer" style="font-size:16px"></i></button>'
+    +'</span></div></div></div>'
     +'<div class="content" id="tabContent"></div>';
   renderTabBar();
   renderTab();
