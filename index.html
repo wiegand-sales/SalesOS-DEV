@@ -693,10 +693,10 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 </div></div>
 
 <!-- NEUEN CALL BEWERTEN -->
-<div class="modal-ov hidden" id="qaBewertungModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
+<div class="modal-ov hidden" id="qaBewertungModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden;position:relative">
   <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div id="qaHdKick" style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Neuen Call bewerten</div><div id="qaHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('qaBewertungModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
   <div style="display:flex;min-height:0;flex:1">
-    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Call-Details" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('qaSecDet');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-phone"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span><span class="rl-tip" style="left:48px">Call-Details</span></button><button class="rl-btn" type="button" aria-label="Bewertung" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('qaSecBew');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-star"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span><span class="rl-tip" style="left:48px">Bewertung</span></button><button class="rl-btn" type="button" aria-label="Notiz" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('qaSecNotiz');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-notes"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">3</span><span class="rl-tip" style="left:48px">Notiz</span></button><span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span><button class="rl-btn" type="button" aria-label="Coaching-Historie" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('qaBewertungModal');openCoachingInfoModal(e)"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Coaching-Historie</span></button><button class="rl-btn" type="button" aria-label="Session planen" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('qaBewertungModal');openSessionModal(e)"><i class="ti ti-calendar-plus"></i><span class="rl-tip" style="left:48px">Session planen</span></button></div>
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Call-Details" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('qaSecDet');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-phone"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span><span class="rl-tip" style="left:48px">Call-Details</span></button><button class="rl-btn" type="button" aria-label="Bewertung" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('qaSecBew');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-star"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span><span class="rl-tip" style="left:48px">Bewertung</span></button><button class="rl-btn" type="button" aria-label="Letzte Calls" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('qaSecList');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-list"></i><span class="rl-tip" style="left:48px">Letzte Calls</span></button><span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span><button class="rl-btn" type="button" aria-label="Coaching-Historie" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('qaBewertungModal');openCoachingInfoModal(e)"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Coaching-Historie</span></button><button class="rl-btn" type="button" aria-label="Session planen" style="width:38px;height:38px;font-size:18px" onclick="var e=selectedEmp;closeModal('qaBewertungModal');openSessionModal(e)"><i class="ti ti-calendar-plus"></i><span class="rl-tip" style="left:48px">Session planen</span></button></div>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
         <div id="qaSecDet" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Call-Details</div>
@@ -704,14 +704,17 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
           <div class="f3" style="gap:10px;margin-bottom:10px"><div><label>Abschluss?</label><select id="cb-status"><option value="nein">Nein</option><option value="ja">Ja</option></select></div><div><label>B2B / B2C</label><select id="cb-b2b"><option value="B2C">B2C</option><option value="B2B">B2B</option></select></div><div><label>Optimierung</label><select id="cb-abschlussart"><option value="">Keine Optimierung</option><option value="TW">Opt.: TW</option><option value="Yes">Opt.: Yes</option><option value="SY">Opt.: SY</option><option value="MY">Opt.: MY</option><option value="Upsell">Opt.: Upsell</option><option value="WKA">Opt.: WKA</option></select></div></div>
           <div><label>Genannter Einwand</label><input type="text" id="cb-einwand" placeholder="z.B. Preis zu hoch, Kündigung läuft"></div>
         </div>
-        <div id="qaSecBew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Bewertung <span style="font-weight:500;color:var(--text3);font-size:12px">1–4 je Kriterium</span><span style="margin-left:auto;display:flex;gap:6px"><span id="qaCountChip" style="font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;color:var(--text2);white-space:nowrap">0 bewertet</span><span id="qaTotalChip" style="font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:10px;background:#1d1c1a;border:1px solid #1d1c1a;color:#fff;white-space:nowrap">Gesamt –</span></span></div>
+        <div id="qaSecBew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Bewertung <span id="qaTotalTxt" style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)"></span></div>
           <div id="qaScoringSection"></div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;margin:12px 0 6px">Notiz <span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text3)">optional</span></div><textarea id="cb-hinweis" rows="2" style="min-height:56px;resize:vertical" placeholder="Beobachtungen, Verbesserungspotenzial"></textarea>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" type="button" id="qaCancelEdit" style="height:36px;width:auto;display:none" onclick="qaReopen(null)">Bearbeiten abbrechen</button><button class="btn btn-primary" id="qaSaveBtn" data-eid="" type="button" style="height:36px;width:auto" onclick="saveInlineCallBewertung(document.getElementById('qaSaveBtn').dataset.eid)"><i class="ti ti-device-floppy"></i> Bewertung speichern</button></div>
         </div>
-        <div id="qaSecNotiz" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Notiz</div><label>Hinweis / Notiz</label><textarea id="cb-hinweis" rows="2" placeholder="Beobachtungen, Verbesserungspotenzial"></textarea></div>
+        <div id="qaSecList" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:4px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Letzte Calls <span id="qaListN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span><button class="btn" type="button" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px" onclick="var e=selectedEmp;closeModal('qaBewertungModal');selectedEmp=e;view='emp';activeTab='call-performance';renderSidebar();renderMain();">Alle in QA Performance</button></div><div id="qaList"></div></div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('qaBewertungModal')">Abbrechen</button><button class="btn btn-primary" id="qaSaveBtn" data-eid="" type="button" style="height:36px;width:auto" onclick="saveInlineCallBewertung(document.getElementById('qaSaveBtn').dataset.eid)"><i class="ti ti-device-floppy"></i> Bewertung speichern</button></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('qaBewertungModal')">Schließen</button></div>
     </div>
   </div>
+  <div id="qaToast" style="position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:#1d1c1a;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;display:none;white-space:nowrap;-webkit-font-smoothing:antialiased;z-index:5"></div>
 </div></div>
 
 <!-- NEUES ZIEL -->
@@ -11771,30 +11774,65 @@ var _cbScores={};
 
 
 
+var _qaBase=null;
 function setCbScore(key,val){
   _cbScores[key]=val;
-  var disp=document.getElementById('cbv_'+key);
-  if(disp){disp.style.color='var(--text)';disp.textContent=val;}
-  [1,2,3,4].forEach(function(v){
-    var btn=document.getElementById('cbf_'+key+'_'+v);
-    if(!btn)return;
-    if(v===val&&v===1){btn.style.background='#FDF0EB';btn.style.borderColor='rgba(240,133,102,0.6)';btn.style.color='#B5513A';}
-    else if(v===val){btn.style.background='#3a3833';btn.style.borderColor='#3a3833';btn.style.color='#fff';}
-    else{btn.style.background='#F7F5F0';btn.style.borderColor='#E4E0D6';btn.style.color='var(--text2)';}
-  });
+  var sl=document.getElementById('qas_'+key);if(sl&&+sl.value!==val)sl.value=val;
+  var disp=document.getElementById('cbv_'+key);if(disp)disp.textContent=val;
+  var lv=_qaBase&&_qaBase.scores?_qaBase.scores[key]:null;
+  var l=document.getElementById('qal_'+key);if(l)l.textContent=lv?'zuletzt '+lv:'';
+  var d=document.getElementById('qad_'+key);
+  if(d){if(!lv)d.textContent='';else{var dd=val-lv;d.textContent=dd>0?'+'+dd:dd<0?String(dd):'±0';d.style.color=dd>0?'#2f6b52':dd<0?'#B5513A':'var(--text3)';}}
   updateQaChips();
 }
 function updateQaChips(){
-  var all=[];CALL_CATS.forEach(function(c){all=all.concat(c.items);});
-  var done=all.filter(function(k){return _cbScores&&_cbScores[k];}).length;
-  var c=document.getElementById('qaCountChip');if(c)c.textContent=done+' von '+all.length+' bewertet';
-  var t=document.getElementById('qaTotalChip');if(t)t.textContent=done?('Gesamt '+Math.round(totalScore({scores:_cbScores}))+' %'):'Gesamt –';
+  CALL_CATS.forEach(function(cat){
+    var vs=cat.items.map(function(k){return _cbScores[k]||0;}).filter(function(x){return x>0;});
+    var e=document.getElementById('qacg_'+cat.key);if(e)e.textContent=vs.length?'Ø '+(vs.reduce(function(a,b){return a+b;},0)/vs.length).toFixed(1).replace('.',','):'';
+  });
+  var t=document.getElementById('qaTotalTxt');
+  if(t){var cur=Math.round(totalScore({scores:_cbScores}));var base=_qaBase?Math.round(totalScore(_qaBase)):null;
+    t.innerHTML='Gesamt <b style="color:var(--text);font-size:13.5px;font-weight:600">'+cur+' %</b>'+(base!=null?' ('+base+' %)':'');}
+}
+function qaToast(m){var t=document.getElementById('qaToast');if(!t)return;t.textContent=m;t.style.display='block';clearTimeout(window._qaTT);window._qaTT=setTimeout(function(){t.style.display='none';},3000);}
+function qaRealId(rid){var r=(callRatings[selectedEmp]||[]).find(function(x){return String(x.id)===String(rid);});return r?r.id:rid;}
+function qaReopen(rid){if(rid)rid=qaRealId(rid);_puSwitching=true;try{openQaBewertungModal(selectedEmp,rid||undefined);}finally{_puSwitching=false;}var sc=document.getElementById('qaSecDet');if(sc)sc.scrollIntoView({behavior:'smooth',block:'start'});}
+function qaRenderList(){
+  var el=document.getElementById('qaList');if(!el)return;
+  var list=(callRatings[selectedEmp]||[]).slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+  var n=document.getElementById('qaListN');if(n)n.textContent='('+list.length+')';
+  var ed=canEditHistorie();
+  el.innerHTML=list.length?list.slice(0,5).map(function(r,i){
+    var has=r.scores&&Object.keys(r.scores).some(function(k){return r.scores[k]>0;});
+    var ts=has?Math.round(totalScore(r)):null;
+    var prev=list.slice(i+1).find(function(x){return x.scores&&Object.keys(x.scores).some(function(k){return x.scores[k]>0;});});
+    var dl=(ts!=null&&prev)?ts-Math.round(totalScore(prev)):0;
+    var d=r.date?r.date.slice(8,10)+'.'+r.date.slice(5,7)+'.':'';
+    var meta=[r.auftragsnr?'Auftrag '+r.auftragsnr:'',r.b2b||'',r.status==='ja'?'Abschluss'+(r.abschlussArt?' · Opt.: '+r.abschlussArt:''):'kein Abschluss'].filter(Boolean).join(' · ');
+    var txt=[r.einwand?'Einwand: '+r.einwand:'',r.hinweis||''].filter(Boolean).join(' · ');
+    return '<div title="'+esc(txt)+'" style="display:flex;align-items:flex-start;gap:12px;height:84px;padding:12px;border:1px solid #E4E0D6;border-radius:10px;background:#EFECE5;margin-bottom:6px;overflow:hidden">'
+      +'<div style="width:96px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+d+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text)">'+(ts!=null?ts+' %':'–')+(dl?' <span style="font-size:11.5px;font-weight:700;color:'+(dl>0?'#2f6b52':'#B5513A')+'">'+(dl>0?'▲':'▼')+'</span>':'')+'</span></div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(meta)+'</div>'
+      +'<div style="font-size:13.5px;line-height:19px;height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:'+(txt?'var(--text)':'var(--text3)')+'">'+(txt?esc(txt):(has?'Keine Notiz':'Keine Einzelpunkte gespeichert'))+'</div></div>'
+      +(ed?'<span style="display:flex;gap:6px;flex-shrink:0;align-self:flex-start">'
+        +'<button class="btn" type="button" title="Bearbeiten" onclick="qaReopen(\''+r.id+'\')" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-pencil"></i></button>'
+        +'<button class="btn" type="button" title="Löschen" onclick="qaDelete(\''+r.id+'\')" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-trash"></i></button></span>':'')
+      +'</div>';
+  }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Noch keine Calls bewertet.</div>';
+}
+function qaDelete(rid){
+  var n0=(callRatings[selectedEmp]||[]).length;
+  deleteHistorieCallRating(selectedEmp,qaRealId(rid));
+  if((callRatings[selectedEmp]||[]).length<n0){
+    if(String(_editingCallRatingId)===String(rid))qaReopen(null);else qaRenderList();
+    qaToast('Bewertung gelöscht');
+  }
 }
 
 var _savingCallBewertung=false;
 function saveInlineCallBewertung(empId){
   if(_savingCallBewertung)return;
-  if(empId)selectedEmp=empId;
+  if(empId){var _se=employees.find(function(e){return String(e.id)===String(empId);});selectedEmp=_se?_se.id:empId;}
   var datum=document.getElementById('cb-date');
   var auftrag=document.getElementById('cb-auftrag');
   var bewerter=document.getElementById('cb-bewerter');
@@ -11842,8 +11880,9 @@ function saveInlineCallBewertung(empId){
       var avgScore=Object.keys(scores).length?(Object.values(scores).reduce(function(a,b){return a+b;},0)/Object.keys(scores).length).toFixed(1):null;
       logActivity('qa',isEditing?'updated':'created',(isEditing?'Call-Bewertung bearbeitet':'Neuen Call bewertet')+(avgScore?' (Ø '+avgScore+'/4)':''),selectedEmp,e0?e0.name+' · '+fd(r.date):'');
       _cbScores={};_editingCallRatingId=null;
-      closeModal('qaBewertungModal');
-      renderTab();
+      var _qm=document.getElementById('qaBewertungModal');
+      if(_qm&&!_qm.classList.contains('hidden')){qaReopen(null);qaToast(isEditing?'Änderung gespeichert':'Bewertung gespeichert');}
+      if(view==='emp')renderTab();
     };
     if(isEditing){
       sb.from('call_rating_scores').delete().eq('call_rating_id',r.id).then(function(){
@@ -12336,34 +12375,42 @@ function openQaBewertungModal(empId,editRatingId){
   var statusEl=document.getElementById('cb-status');if(statusEl)statusEl.value=editingRating?editingRating.status:'nein';
   var b2bEl=document.getElementById('cb-b2b');if(b2bEl)b2bEl.value=editingRating?editingRating.b2b:'B2C';
   var artEl=document.getElementById('cb-abschlussart');if(artEl)artEl.value=editingRating?(editingRating.abschlussArt||''):'';
+  // Vergleichsbasis: der letzte Call vor diesem (beim Bearbeiten der davor)
+  var _qaList=(callRatings[selectedEmp]||[]).slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+  var _qaHas=function(r){return r&&r.scores&&Object.keys(r.scores).some(function(k){return r.scores[k]>0;});};
+  if(editingRating){var _ix=_qaList.indexOf(editingRating);_qaBase=_qaList.slice(_ix+1).find(_qaHas)||null;}
+  else _qaBase=_qaList.find(_qaHas)||null;
   var box=document.getElementById('qaScoringSection');
   if(box){
+    var BAND='font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between';
     var h='';
     CALL_CATS.forEach(function(cat,ci){
-      h+='<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin:'+(ci?12:0)+'px 0 6px">'+esc(cat.label)+'<span>'+Math.round(cat.weight*100)+' %</span></div>';
+      h+='<div style="'+BAND+';margin:'+(ci?12:0)+'px 0 4px"><span>'+esc(cat.label)+' · '+Math.round(cat.weight*100)+' %</span><span id="qacg_'+cat.key+'" style="letter-spacing:0;text-transform:none;color:var(--text3)"></span></div>';
       cat.items.forEach(function(k){
-        h+='<div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 10px;border-radius:10px;border:1px solid #E4E0D6;background:#EFECE5;margin-bottom:6px">';
-        h+='<div style="flex:1;font-size:13.5px;color:var(--text)">'+ITEM_LABELS[k]+'</div>';
-        h+='<div style="display:flex;gap:4px">';
-        [1,2,3,4].forEach(function(v){
-          h+='<button type="button" id="cbf_'+k+'_'+v+'" onclick="setCbScore(\''+k+'\','+v+')" style="width:30px;height:28px;border:1px solid #E4E0D6;border-radius:8px;background:#F7F5F0;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text2);font-family:inherit;padding:0">'+v+'</button>';
-        });
-        h+='</div></div>';
+        h+='<div style="display:flex;align-items:center;gap:12px;height:36px;padding:0 10px;border-bottom:1px solid #eae7e0">'
+          +'<span style="flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ITEM_LABELS[k]+'</span>'
+          +'<span id="qal_'+k+'" style="width:62px;flex-shrink:0;font-size:12px;color:var(--text3)"></span>'
+          +'<input type="range" min="1" max="4" step="1" id="qas_'+k+'" oninput="setCbScore(\''+k+'\',+this.value)" style="width:150px;flex-shrink:0;accent-color:#3a3833;margin:0;padding:0;height:20px;border:none;background:transparent">'
+          +'<b id="cbv_'+k+'" style="width:18px;text-align:right;font-size:13.5px"></b>'
+          +'<span id="qad_'+k+'" style="width:30px;text-align:right;font-size:12px;font-weight:700"></span></div>';
       });
     });
     box.innerHTML=h;
-    if(editingRating&&editingRating.scores){
-      Object.keys(editingRating.scores).forEach(function(k){setCbScore(k,editingRating.scores[k]);});
-    }
+    CALL_CATS.forEach(function(cat){cat.items.forEach(function(k){
+      var v=editingRating&&editingRating.scores&&editingRating.scores[k]?editingRating.scores[k]:(_qaBase&&_qaBase.scores[k]?_qaBase.scores[k]:2);
+      setCbScore(k,v);
+    });});
   }
   var kEl=document.getElementById('qaHdKick');if(kEl)kEl.textContent=editingRating?'Call-Bewertung bearbeiten':'Neuen Call bewerten';
-  var sEl=document.getElementById('qaHdSub');var qe=employees.find(function(e){return e.id===selectedEmp;});if(sEl)sEl.textContent=qe?(qe.name+(qe.role?' · '+qe.role:'')):'—';
+  var sEl=document.getElementById('qaHdSub');var qe=employees.find(function(e){return String(e.id)===String(selectedEmp);});if(sEl)sEl.textContent=qe?(qe.name+(qe.role?' · '+qe.role:'')):'—';
   updateQaChips();
   var saveBtn=document.getElementById('qaSaveBtn');
   if(saveBtn){
     saveBtn.dataset.eid=selectedEmp;
-    saveBtn.innerHTML=editingRating?'<i class="ti ti-device-floppy"></i> Änderungen speichern':'<i class="ti ti-device-floppy"></i> Bewertung speichern';
+    saveBtn.innerHTML=editingRating?'<i class="ti ti-check"></i> Änderung speichern':'<i class="ti ti-check"></i> Bewertung speichern';
   }
+  var ce=document.getElementById('qaCancelEdit');if(ce)ce.style.display=editingRating?'':'none';
+  qaRenderList();
   openModal('qaBewertungModal');
 }
 function openNeuesCoachingModal(empId){
