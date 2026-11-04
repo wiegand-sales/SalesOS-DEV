@@ -108,6 +108,8 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .sform select,.sform input{height:30px;padding:4px 10px;font-size:12.5px;}
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red);}
 /* TABS */
+/* Performance-Tabelle: alle Kennzahl-Spalten gleich breit, lange Spaltenköpfe dürfen umbrechen */
+.perf-tbl th{white-space:normal!important;line-height:1.25;vertical-align:middle;padding-left:8px!important;padding-right:8px!important}
 /* Mitarbeiter-Kopf: Reiter als Schalter */
 #empTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
 #empTabBar.emp-seg .tab{height:28px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text2);background:transparent;white-space:nowrap}
@@ -5992,8 +5994,8 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       var arrow=active?(overviewPerfSortDir==='asc'?' ▲':' ▼'):'';
       return '<th style="background:#EFECE5;padding:9px 10px;text-align:left;font-size:10px;font-weight:700;color:'+(active?'#F7B39A':'#fff')+';text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none'+(extraStyle||'')+'" onclick="setOverviewPerfSort(\''+key+'\')">'+label+arrow+'</th>';
     }
-    h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse"><thead><tr>'
-      +sortTh('Mitarbeiter','name',';width:170px')
+    h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table class="perf-tbl" style="width:100%;min-width:1400px;border-collapse:collapse;table-layout:fixed"><thead><tr>'
+      +sortTh('Mitarbeiter','name',';width:160px')
       +sortTh(firstColLabel,'period',';width:120px')
       +[['Akt./Std.','aktPerH'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right');
@@ -6001,7 +6003,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       +[['Marge Ges.','marge']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right');
       }).join('')
-      +'<th style="background:#EFECE5;padding:9px 10px;text-align:right;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:1%">Aktion</th>'
+      +'<th style="background:#EFECE5;padding:9px 10px;text-align:right;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:150px">Aktion</th>'
       +'</tr></thead><tbody>';
     // Zwei Werte gestapelt (Hauptwert oben, Anzahl klein darunter) statt "Wert (Anzahl)" in einer Zeile.
     // Rendert die zweite Zeile IMMER (auch als unsichtbaren Platzhalter), damit alle Zellen einer
