@@ -2453,9 +2453,10 @@ function renderCoachingAnsicht(){
           var labelTxt=(coachEmpM?coachEmpM.name.split(' ')[0]+' / ':'')+wenTxt;
           var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
           if(e2.planned){
-            var chipBg=coachPetrolColor(x.coachId);
-            var chipOp=x.d<heute?0.4:1;
-            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+chipBg+';opacity:'+chipOp+';color:#fff;border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'">'+esc(labelTxt)+'</div>';
+            var chipPast=x.d<heute;
+            var chipBg=chipPast?'#F7F5F0':coachPetrolColor(x.coachId);
+            var chipOp=1;
+            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+chipBg+';opacity:'+chipOp+';color:'+(chipPast?'var(--text)':'#fff')+';'+(chipPast?'box-shadow:inset 0 0 0 1px #E4E0D6;':'')+'border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'">'+esc(labelTxt)+'</div>';
           } else {
             var r2=x.r?RS[x.r]:null;
             k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+esc(labelTxt)+'</div>';
@@ -2538,9 +2539,10 @@ function renderCoachingAnsicht(){
         var planned=x.s==='geplant';
         var isPast=x.d<heute;
         var baseColor=coachPetrolColor(x.coachId);
-        var bg=baseColor, bdr=isPast?'#c3cccc':'#1d1c1a';
-        var fg='#fff', fgSub='rgba(255,255,255,0.85)';
-        var opacity=isPast?0.4:1;
+        // Vergangene Termine: ruhig in Boxfarbe #F7F5F0 mit dunkler Schrift, kommende in der Coach-Farbe
+        var bg=isPast?'#F7F5F0':baseColor, bdr=isPast?'#E4E0D6':'#1d1c1a';
+        var fg=isPast?'var(--text)':'#fff', fgSub=isPast?'var(--text3)':'rgba(255,255,255,0.85)';
+        var opacity=1;
         var colWidthPct=100/totalCols;
         var leftPct=e._col*colWidthPct;
         var coachEmp=x.coachId?employees.find(function(em){return em.id===x.coachId;}):null;
