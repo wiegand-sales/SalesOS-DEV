@@ -116,6 +116,11 @@ body.sb-collapsed .sb-rail{border-right:none;}
 /* TABS */
 /* Performance-Tabelle: alle Kennzahl-Spalten gleich breit, lange Spaltenköpfe dürfen umbrechen */
 .perf-tbl th{white-space:normal!important;line-height:1.25;vertical-align:middle;padding-left:8px!important;padding-right:8px!important}
+/* Eingabefelder in Popups: gleiche Höhe wie die Auswahllisten (38 px) */
+.modal-ov input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),
+#cevModal input:not([type=checkbox]):not([type=radio]):not([type=range]),
+#commentModal input:not([type=checkbox]):not([type=radio]):not([type=range]){height:38px;box-sizing:border-box;padding-top:0;padding-bottom:0}
+.modal-ov td input:not([type=checkbox]):not([type=radio]):not([type=range]){height:auto;padding-top:revert;padding-bottom:revert}
 /* Mitarbeiter-Kopf: Reiter als Schalter */
 #empTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
 #empTabBar.emp-seg .tab{height:28px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text2);background:transparent;white-space:nowrap}
