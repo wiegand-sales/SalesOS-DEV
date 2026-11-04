@@ -46,7 +46,10 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .rl-btn.on{background:#fff;color:var(--text);box-shadow:0 0 0 1px #E4E0D6,0 2px 6px rgba(40,32,15,.06);}
 .rl-btn.on:before{content:"";position:absolute;left:-13px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#F08566;}
 .rl-soft{background:#ECE9E1;color:var(--text);}
-#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before{left:-9px;}
+#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before,#addEmpModal .rl-btn.on:before{left:-9px;}
+#aeBody table{min-width:0!important;table-layout:auto!important;}
+#aeBody th,#aeBody td{width:auto!important;}
+#aeBody td input[type=time]{min-width:0;width:100%;max-width:120px;}
 .rl-tip{position:absolute;left:52px;top:50%;margin-top:-14px;height:28px;line-height:18px;background:#1d1c1a;color:#fff;font-size:12.5px;font-weight:700;padding:5px 10px;box-sizing:border-box;border-radius:8px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:60;}
 .rl-btn:hover .rl-tip{opacity:1;}
 .rl-sep{width:28px;height:1px;background:#E4E0D6;margin:6px 0;}
@@ -418,7 +421,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 </div>
 <div class="sidebar" id="sidebar">
   <div class="sb-rail">
-    <button class="rl-btn rl-acc" onclick="openModal('addEmpModal')" aria-label="Mitarbeiter hinzufügen"><i class="ti ti-plus"></i><span class="rl-tip">Mitarbeiter hinzufügen</span></button>
+    <button class="rl-btn rl-acc" onclick="openAddEmpModal()" aria-label="Mitarbeiter hinzufügen"><i class="ti ti-plus"></i><span class="rl-tip">Mitarbeiter hinzufügen</span></button>
     <button class="rl-btn" id="rail-search" onclick="sbOpenSearch()"><i class="ti ti-search"></i><span class="rl-tip">Mitarbeiter suchen</span></button>
     <div class="rl-sep"></div>
     <button class="rl-btn" id="rail-overview" onclick="selectWiegandSub('overview')"><i class="ti ti-chart-bar"></i><span class="rl-tip">Performance</span></button>
@@ -438,7 +441,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <div id="sbPanelStaff" style="display:flex;flex-direction:column;flex:1;min-height:0">
       <div class="sb-search"><i class="ti ti-search"></i><input id="sbEmpSearch" type="search" placeholder="Mitarbeiter suchen" aria-label="Mitarbeiter suchen" oninput="sbFilterEmps(this.value)"></div>
       <div class="emp-list" id="empList"></div>
-      <button class="sb-add" onclick="openModal('addEmpModal')"><i class="ti ti-plus"></i> Mitarbeiter hinzufügen</button>
+      <button class="sb-add" onclick="openAddEmpModal()"><i class="ti ti-plus"></i> Mitarbeiter hinzufügen</button>
     </div>
     <div style="flex:1" id="sbPanelSpacer"></div>
     <div id="sbProfileRow" class="sb-prof">
@@ -486,29 +489,15 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 </div>
 
 <!-- MODALS -->
-<div class="modal-ov hidden" id="addEmpModal"><div class="modal">
-  <div class="modal-title">Mitarbeiter hinzufügen</div>
-  <div class="f2" style="margin-bottom:12px">
-    <div><label>Vollständiger Name</label><input type="text" id="newName" placeholder="z.B. Anna Bauer"></div>
-    <div><label>Position</label><select id="newRole" onchange="if(this.value==='__new__'){var nv=prompt('Neue Position:');if(nv&&nv.trim()){var o=document.createElement('option');o.value=nv.trim();o.text=nv.trim();this.add(o);this.value=nv.trim();}else{this.value='SR';}}">
-      <option value="SR">SR</option>
-      <option value="SE">SE</option>
-      <option value="VLC">VLC</option>
-      <option value="SDM">SDM</option>
-      <option value="SC">SC</option>
-      <option value="__new__">+ Neue Position hinzufügen</option>
-    </select></div>
+<div class="modal-ov hidden" id="addEmpModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
+  <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Mitarbeiter hinzufügen</div><div id="aeHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Neuer Mitarbeiter</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeAddEmpModal()" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
+  <div style="display:flex;min-height:0;flex:1">
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Person" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('aeSec1');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-user"></i><span class="rl-tip" style="left:48px">Person</span></button><button class="rl-btn" type="button" aria-label="Vertrag" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('aeSec2');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-file-text"></i><span class="rl-tip" style="left:48px">Vertrag</span></button><button class="rl-btn" type="button" aria-label="Arbeitszeit" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('aeSec3');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-clock"></i><span class="rl-tip" style="left:48px">Arbeitszeit</span></button><button class="rl-btn" type="button" aria-label="Provision" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('aeSec4');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-currency-euro"></i><span class="rl-tip" style="left:48px">Provision</span></button><button class="rl-btn" type="button" aria-label="Provisionsrelevante KPIs" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('aeSec5');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-target"></i><span class="rl-tip" style="left:48px">Provisionsrelevante KPIs</span></button><button class="rl-btn" type="button" aria-label="Ergänzende KPI-Ziele" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('aeSec6');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-chart-bar"></i><span class="rl-tip" style="left:48px">Ergänzende KPI-Ziele</span></button></div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
+      <div id="aeBody" style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeAddEmpModal()">Abbrechen</button><button class="btn btn-primary" id="aeSaveBtn" type="button" style="height:36px;width:auto" onclick="saveNewEmpFull()"><i class="ti ti-user-plus"></i> Mitarbeiter anlegen</button></div>
+    </div>
   </div>
-  <div class="f3" style="margin-bottom:12px">
-    <div><label>Phase</label><select id="newPhase"><option>Onboarding</option><option>Aktiv</option></select></div>
-    <div><label>Anstellung</label><select id="newContract"><option value="Vollzeit">Vollzeit</option><option value="Teilzeit">Teilzeit</option></select></div>
-    <div><label>Stunden / Woche</label><input type="number" id="newHours" value="40" min="1" max="60"></div>
-  </div>
-  <div class="f2" style="margin-bottom:12px">
-    <div><label>Vertragsbeginn</label><input type="date" id="newStart"></div>
-    <div><label>Vertragsende</label><input type="date" id="newEnd"></div>
-  </div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal('addEmpModal')">Abbrechen</button><button class="btn btn-primary" onclick="saveNewEmp()"><i class="ti ti-check"></i> Hinzufügen</button></div>
 </div></div>
 
 <div class="modal-ov hidden" id="addTaskModal"><div class="modal">
@@ -7877,321 +7866,8 @@ function renderTab(){
   
   // ── EMP SETTINGS TAB ──
   if(activeTab==='emp-settings'){
-    var t=empTargets(emp);
-    var _tr=emp.targets||{};
-    var tf={
-      crOEM:_tr.crOEM!=null?_tr.crOEM:t.crOEM.val,crOEMDir:_tr.crOEMDir||t.crOEM.dir,
-      crTW:_tr.crTW!=null?_tr.crTW:t.crTeilweise.val,crTWDir:_tr.crTWDir||t.crTeilweise.dir,
-      crSuperYes:_tr.crSuperYes!=null?_tr.crSuperYes:t.crSuperYes.val,crSYDir:_tr.crSYDir||t.crSuperYes.dir,
-      crMegaYes:_tr.crMegaYes!=null?_tr.crMegaYes:t.crMegaYes.val,crMYDir:_tr.crMYDir||t.crMegaYes.dir,
-      optPerH:_tr.optPerH!=null?_tr.optPerH:t.optPerH.val,optPerHDir:_tr.optPerHDir||t.optPerH.dir,
-      optPerDay:_tr.optPerDay!=null?_tr.optPerDay:t.optPerDay.val,optPerDayDir:_tr.optPerDayDir||t.optPerDay.dir
-    };
-    var swatches=COLORS.map(function(col,i){
-      return '<div onclick="setEmpColor('+i+')" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+col.bg+';border:3px solid '+(emp.color===i?col.text:'transparent')+';display:inline-block;margin-right:6px;margin-bottom:6px;transition:all .15s"></div>';
-    }).join('');
-    var teamOpts=allTeams().map(function(tm){return '<option'+(tm===emp.team?' selected':'')+'>'+tm+'</option>';}).join('')+'<option value="__new__">+ Neues Team...</option>';
-    var ROLLEN=['Vertriebsmitarbeiter','Senior Vertriebsmitarbeiter','Sales Coach'];
-
+    html=esBuildHtml(emp,false,html);
     if(true){
-
-      // ── Provisionsvereinbarung (jetzt inkl. Stammdaten, mitarbeiterspezifisch) ──
-      (function(){
-        var pv=(emp.provisionSettings)||{};
-        function pvNum(key,def){return pv[key]!=null?pv[key]:def;}
-        var m1=pv.monat1||{}, m2=pv.monat2||{}, m3=pv.monat3plus||{};
-        function pvMonatNum(mObj,key,def){return mObj[key]!=null?mObj[key]:def;}
-        // Box als nummerierte Abschnitte: Inhalte werden in Segmente gesammelt und unten zusammengesetzt.
-        // Alle Eingabefelder bleiben (auch zugeklappt) im DOM, damit Speichern unveraendert alle Werte liest.
-        var _esOuter=html; html=''; var SEG={};
-        function cut(k){SEG[k]=(SEG[k]||'')+html; html='';}
-        var isVlcModel=(emp.role==='VLC');
-        var vpv=effectiveProvisionSettings(emp).vlc;
-        var esWeekTotal=0, esWorkDaysTxt='';
-        var esBm=emp.startDate?beschaeftigungsmonat(emp,today().slice(0,7)):null;
-        var esCurIdx=esBm?Math.min(esBm,3)-1:-1;
-
-        html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
-        html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+esc(emp.name)+'"></div>';
-        html+='<div><label>Position</label>'
-          +'<select id="es-role" onchange="var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}toggleProvisionModel(this.value);">'
-          +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
-          +'<option'+(emp.role==='SE'?' selected':'')+'>SE</option>'
-          +'<option'+(emp.role==='VLC'?' selected':'')+'>VLC</option>'
-          +'<option'+(emp.role==='SDM'?' selected':'')+'>SDM</option>'
-          +'<option'+(emp.role==='SC'?' selected':'')+'>SC</option>'
-          +'<option value="__new__">+ Neue Position hinzufügen</option>'
-          +'</select></div>';
-        html+='<div><label>Phase</label><select id="es-phase">'
-          +'<option'+(emp.phase==='Onboarding'?' selected':'')+'>Onboarding</option>'
-          +'<option'+(emp.phase==='Aktiv'?' selected':'')+'>Aktiv</option>'
-          +'<option'+(emp.phase==='Inaktiv'?' selected':'')+'>Inaktiv</option>'
-          +'</select></div>';
-        html+='<div><label>Anstellung</label><select id="es-contract">'
-          +'<option value="Vollzeit"'+(emp.contract==='Vollzeit'||emp.contract==='full'?' selected':'')+'>Vollzeit</option>'
-          +'<option value="Teilzeit"'+(emp.contract==='Teilzeit'||emp.contract==='part'?' selected':'')+'>Teilzeit</option>'
-          +'</select></div>';
-        html+='</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-        html+='<div><label>E-Mail</label><input type="email" id="es-email" value="'+esc(emp.email||'')+'" placeholder="name@wiegand-gmbh.de"></div>';
-        html+='<div><label>Avatar-Farbe</label><div style="margin-top:6px">'+swatches+'</div></div>';
-        html+='</div>';
-
-        cut('person');
-        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Arbeitszeiten je Wochentag – ermöglicht präzise Teilzeit-Steuerung und eine korrekte Optimierungen/Std.-Berechnung (z.B. kürzerer Freitag, längerer Montag).</p>';
-        (function(){
-          var DEFAULT_WH={
-            mo:{von:'08:30',bis:'18:00',pause:30},di:{von:'08:30',bis:'17:00',pause:30},mi:{von:'08:30',bis:'17:00',pause:30},
-            do:{von:'08:30',bis:'17:00',pause:30},fr:{von:'08:30',bis:'16:00',pause:30},sa:{von:'',bis:'',pause:0},so:{von:'',bis:'',pause:0}
-          };
-          var wh=emp.workHours||{};
-          var days=[{key:'mo',lbl:'Montag'},{key:'di',lbl:'Dienstag'},{key:'mi',lbl:'Mittwoch'},{key:'do',lbl:'Donnerstag'},{key:'fr',lbl:'Freitag'},{key:'sa',lbl:'Samstag'},{key:'so',lbl:'Sonntag'}];
-          function calcNetHours(von,bis,pause){
-            if(!von||!bis)return 0;
-            var vp=von.split(':'),bp=bis.split(':');
-            var mins=(+bp[0]*60+ +bp[1])-(+vp[0]*60+ +vp[1])-(pause||0);
-            return Math.max(0,mins/60);
-          }
-          html+='<div class="std-wrap" style="margin-bottom:16px"><table class="std-table inputs" style="border-collapse:collapse;table-layout:fixed;min-width:100%">';
-          html+='<thead><tr>'
-            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px;width:240px">Wochentag</th>'
-            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Von</th>'
-            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Bis</th>'
-            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Pause (Min.)</th>'
-            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:130px">Arbeitszeit</th>'
-            +'</tr></thead><tbody>';
-          var weekTotal=0;
-          days.forEach(function(d,ridx){
-            var dv=wh[d.key]||DEFAULT_WH[d.key];
-            var rowBg='';
-            var netH=calcNetHours(dv.von,dv.bis,dv.pause);
-            weekTotal+=netH;
-            html+='<tr style="'+rowBg+'">'
-              +'<td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px">'+d.lbl+'</td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><input type="time" id="es-wh-'+d.key+'-von" value="'+(dv.von||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><input type="time" id="es-wh-'+d.key+'-bis" value="'+(dv.bis||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><input type="number" id="es-wh-'+d.key+'-pause" value="'+(dv.pause!=null?dv.pause:30)+'" step="5" min="0" max="180" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
-              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><span id="es-wh-'+d.key+'-result" style="font-size:13px;font-weight:700;color:var(--text)">'+netH.toFixed(1)+' Std.</span></td>'
-              +'</tr>';
-          });
-          html+='<tr class="sum" style="background:#1d1c1a">'
-            +'<td colspan="4" style="padding:9px 8px;padding-left:12px;font-weight:700;color:#fff;font-size:12.5px">Summe</td>'
-            +'<td style="padding:8px;text-align:center"><span id="es-wh-summe-result" style="font-size:14px;font-weight:700;color:#fff">'+weekTotal.toFixed(1)+' Std.</span></td>'
-            +'</tr>';
-          html+='</tbody></table></div>';
-          esWeekTotal=weekTotal;
-          var wdIdx=[];days.forEach(function(d,ix){var dv=wh[d.key]||DEFAULT_WH[d.key];if(calcNetHours(dv.von,dv.bis,dv.pause)>0)wdIdx.push(ix);});
-          var sh=['Mo','Di','Mi','Do','Fr','Sa','So'];
-          var contiguous=wdIdx.length>1&&wdIdx[wdIdx.length-1]-wdIdx[0]===wdIdx.length-1;
-          esWorkDaysTxt=!wdIdx.length?'keine Arbeitstage':contiguous?sh[wdIdx[0]]+'–'+sh[wdIdx[wdIdx.length-1]]:wdIdx.map(function(ix){return sh[ix];}).join(', ');
-        })();
-        cut('zeit');
-
-        html+='<div style="margin-bottom:4px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
-          +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+(emp.notes||'')+'</textarea></div>';
-
-        cut('person');
-
-        function stripField(lbl,id,def,unit,step){
-          return '<div style="padding:4px 16px;border-right:1px solid rgba(255,255,255,0.14)">'
-            +'<div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">'+lbl+'</div>'
-            +'<div style="display:flex;align-items:baseline;gap:3px"><input type="number" id="'+id+'" value="'+pvNum(id.replace('pv-',''),def)+'" step="'+(step||1)+'" min="0" style="border:none;background:none;font-size:19px;font-weight:700;color:#fff;width:85px;padding:0"><span style="font-size:12px;color:#FFEDE6;font-weight:600">'+unit+'</span></div>'
-            +'</div>';
-        }
-        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
-        html+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
-        html+=stripField('Grundgehalt/Mon.','pv-grundgehalt',2800,'€',10);
-        html+=stripField('AG-Sozialabgaben','pv-agSozialabgaben',21,'%',1);
-        html+=stripField('Basisprov./Opt.','pv-basisProOpt',1.00,'€',0.10);
-        html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5).replace('border-right:1px solid rgba(255,255,255,0.14)','');
-        html+='</div>';
-        html+='</div>'; // pv-de-block (Banner)
-        // ── VLC: Bonusvereinbarung weWow – Banner ──
-        function vlcStrip(lbl,id,val,unit,step,last,soon){
-          return '<div style="padding:4px 16px;'+(last?'':'border-right:1px solid rgba(255,255,255,0.14)')+'">'
-            +'<div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">'+lbl+(soon?' <span style="font-size:9.5px;font-weight:700;color:#1d1c1a;background:#F7B39A;padding:1px 7px;border-radius:20px;margin-left:4px">folgt</span>':'')+'</div>'
-            +'<div style="display:flex;align-items:baseline;gap:3px"><input type="number" id="'+id+'" value="'+(val!=null?val:'')+'" step="'+(step||1)+'" min="0" style="border:none;background:none;font-size:19px;font-weight:700;color:#fff;width:85px;padding:0"><span style="font-size:12px;color:#FFEDE6;font-weight:600">'+unit+'</span></div>'
-            +'</div>';
-        }
-        html+='<div class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">';
-        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px">BONUSVEREINBARUNG WEWOW <span style="font-size:10px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;letter-spacing:0">VLC · Valencia</span></div>';
-        html+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
-        html+=vlcStrip('Service Rate/Mon. (netto)','pv-vlc-serviceRate',vpv.serviceRate,'€',10);
-        html+=vlcStrip('Bonus/Opt.','pv-vlc-bonusProOpt',vpv.bonusProOpt,'€',0.05);
-        html+=vlcStrip('Extra Pay','pv-vlc-extraPayPct',vpv.extraPayPct,'%',0.1,false,true);
-        html+=vlcStrip('Extra Pay ab (pro Std.)','pv-vlc-extraPayAbH',vpv.extraPayAbH,'€',0.5,true);
-        html+='</div>';
-        html+='</div>'; // pv-vlc-block (Banner)
-        cut('prov');
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
-        html+='<div><label>Vertragsbeginn</label><input type="date" id="es-start" value="'+(emp.startDate||'')+'"></div>';
-        html+='<div><label>Gültig ab (Provision)</label><input type="date" id="pv-gueltigAb" value="'+(pv.gueltigAb||'')+'"></div>';
-        html+='<div><label>Vertragsende</label><input type="date" id="es-end" value="'+(emp.endDate||'')+'"></div>';
-        html+='</div>';
-        cut('vertrag');
-
-        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
-        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:4px;border-top:1px solid #ebe9e3">UMSATZABHÄNGIGE PROVISION (§2 ABS. 2) — DIVISOREN</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
-        [{lbl:'OEM',id:'divOEM',def:10000},{lbl:'Upsells',id:'divUpsell',def:20000},{lbl:'WKA',id:'divWka',def:20000}].forEach(function(f){
-          html+='<div><label>'+f.lbl+'</label><input type="number" id="pv-'+f.id+'" value="'+pvNum(f.id,f.def)+'" step="1000" min="1"></div>';
-        });
-        html+='</div>';
-
-        html+='</div>'; cut('prov');
-        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
-        function buildKpiTable(fieldRows,defsKey1,defsKey2,defsKey3){
-          var monatSets=[{key:'monat1',label:'Monat 1',obj:m1,defs:defsKey1},
-           {key:'monat2',label:'Monat 2',obj:m2,defs:defsKey2},
-           {key:'monat3plus',label:'Ab Monat 3',obj:m3,defs:defsKey3}
-          ];
-          var tbl='<div class="std-wrap" style="margin-bottom:8px"><table class="std-table inputs" style="width:100%;border-collapse:collapse;table-layout:fixed">';
-          tbl+='<thead><tr><th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px;width:240px">Kennzahl</th>';
-          monatSets.forEach(function(mset,mi){tbl+='<th'+(mi===esCurIdx?' class="cur"':'')+' style="background:'+(mi===esCurIdx?'#F08566':'#1d1c1a')+';color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+mset.label+(mi===esCurIdx?' · aktuell':'')+'</th>';});
-          tbl+='</tr></thead><tbody>';
-          fieldRows.forEach(function(fld,ridx){
-            var rowBg='';
-            if(fld.vlc){
-              tbl+='<tr class="pv-vlc-block" style="'+rowBg+(isVlcModel?'':'display:none;')+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fld.lbl+'</td>';
-              monatSets.forEach(function(mset,mi){
-                var vv=(vpv[mset.key]||{})[fld.f];
-                tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;'+(mi===esCurIdx?'background:var(--band)':'')+'"><input type="number" id="pv-vlc-'+mset.key+'-'+fld.f+'" value="'+(vv!=null?vv:'')+'" placeholder="–" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
-              });
-              tbl+='</tr>';
-              return;
-            }
-            tbl+='<tr style="'+rowBg+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fld.lbl+'</td>';
-            monatSets.forEach(function(mset,mi){
-              tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;'+(mi===esCurIdx?'background:var(--band)':'')+'"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
-            });
-            tbl+='</tr>';
-          });
-          tbl+='</tbody></table></div>';
-          return tbl;
-        }
-        html+=buildKpiTable([
-          {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
-          {lbl:'CR OEM (mind.) %',f:'crOem',unit:'%'},
-          {lbl:'TW-Anteil (max.) %',f:'tw',unit:'%'},
-          {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
-          {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
-          {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'}
-        ],{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80});
-
-        html+='</div>'; cut('kpi');
-        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
-        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #ebe9e3">§4/§5 REDUZIERUNG</div>';
-        html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-        html+='<div><label>Reduzierung je nicht erfüllter KPI</label><input type="number" id="pv-reduktionProKpi" value="'+pvNum('reduktionProKpi',20)+'" step="5" min="0" max="100"></div>';
-        html+='<div><label>Mindestleistung ab Monat 2 (Opt/Std)</label><input type="number" id="pv-mindestleistungOptH" value="'+pvNum('mindestleistungOptH',2.50)+'" step="0.1" min="0"></div>';
-        html+='</div>';
-
-        html+='</div>'; // pv-de-block (§4/§5)
-        cut('prov');
-        // ── VLC: KPI-Vorgaben je Monat + Kuerzungsstufen ──
-        html+='<div class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">';
-        (function(){
-          var TH='background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center';
-          var TD0='padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px';
-          var TD='padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;font-size:12.5px;color:var(--text2)';
-          var INP='width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)';
-          function inp(id,v,step){return '<input type="number" id="'+id+'" value="'+(v!=null?v:'')+'" placeholder="–" step="'+(step||1)+'" min="0" style="'+INP+'">';}
-          var rows=[{f:'optH',lbl:'Opt./Std. (mind.)'},{f:'syMy',lbl:'SY/MY-Anteil (mind.) %'},{f:'crOem',lbl:'CR OEM (mind.) %'}];
-          var months=[{k:'monat1',l:'Monat 1'},{k:'monat2',l:'Monat 2'},{k:'monat3plus',l:'Ab Monat 3'}];
-          html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Leeres Feld = in diesem Monat keine Prüfung, der Bonus wird voll ausgezahlt.</p>';
-          var t='<div class="std-wrap" style="margin-bottom:16px"><table class="std-table inputs" style="width:100%;border-collapse:collapse;table-layout:fixed">';
-          t+='<thead><tr><th style="'+TH+';text-align:left;padding-left:12px;width:240px">Kennzahl</th>';
-          months.forEach(function(m,mi){t+='<th'+(mi===esCurIdx?' class="cur"':'')+' style="'+TH+(mi===esCurIdx?';background:#F08566':'')+'">'+m.l+(mi===esCurIdx?' · aktuell':'')+'</th>';});
-          t+='</tr></thead><tbody>';
-          rows.forEach(function(r,ri){
-            t+='<tr style="'+''+'"><td style="'+TD0+'">'+r.lbl+'</td>';
-            months.forEach(function(m,mi){t+='<td style="'+TD+(mi===esCurIdx?';background:var(--band)':'')+'">'+inp('pv-vlc-'+m.k+'-'+r.f,(vpv[m.k]||{})[r.f],r.f==='optH'?0.1:1)+'</td>';});
-            t+='</tr>';
-          });
-          t+='</tbody></table></div>';
-          html+=t;
-          html+='</div>'; cut('kpi');
-          html+='<div class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">';
-          html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #ebe9e3">KÜRZUNGSSTUFEN</div>';
-          var st=vpv.stufen||{};
-          var t2='<div class="std-wrap" style="margin-bottom:10px"><table class="std-table inputs" style="width:100%;border-collapse:collapse;table-layout:fixed">';
-          t2+='<thead><tr><th style="'+TH+';text-align:left;padding-left:12px;width:240px">Kennzahl</th><th style="'+TH+'">Ziel verfehlt → Auszahlung</th><th style="'+TH+'">Untergrenze</th><th style="'+TH+'">Unter Untergrenze → Auszahlung</th></tr></thead><tbody>';
-          [{f:'optH',lbl:'Opt./Std.',unit:''},{f:'syMy',lbl:'SY/MY-Anteil',unit:' %'},{f:'crOem',lbl:'CR OEM',unit:' %'}].forEach(function(r,ri){
-            var o=st[r.f]||{};
-            t2+='<tr style="'+''+'"><td style="'+TD0+'">'+r.lbl+'</td>'
-              +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-aus1',o.aus1,5)+' %</td>'
-              +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-grenze',o.grenze,1)+r.unit+'</td>'
-              +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-aus2',o.aus2,5)+' %</td></tr>';
-          });
-          t2+='</tbody></table></div>';
-          html+=t2;
-          html+='<div style="font-size:12px;color:var(--text2);background:var(--s-tint);border-radius:8px;padding:9px 12px;margin-bottom:16px;line-height:1.5"><i class="ti ti-info-circle" style="color:var(--purple)"></i> Werden mehrere Ziele verfehlt, gilt <b style="color:var(--purple-dark)">nur die schlechteste Stufe</b>, die Kürzungen werden nicht multipliziert. Opt./Std. = Optimierungen gesamt geteilt durch die Arbeitsstunden im Monat (Wochenarbeitszeiten). Extra Pay wird noch nicht eingerechnet.</div>';
-        })();
-        html+='</div>'; // pv-vlc-block (Stufen)
-        cut('prov');
-        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet.</p>';
-        html+=buildKpiTable([
-          {lbl:'TW-Anteil (max.) %',f:'tw',vlc:true},
-          {lbl:'MY-Anteil (mind.) %',f:'my',vlc:true},
-          {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',vlc:true},
-          {lbl:'CR Yes (mind.) %',f:'crYes',unit:'%'},
-          {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
-          {lbl:'NE - nicht erreicht (max.) %',f:'notReached',unit:'%'},
-          {lbl:'NM - nicht möglich (max.) %',f:'notPossible',unit:'%'},
-          {lbl:'NErr - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
-          {lbl:'Aktivitäten/Tag (mind.)',f:'aktivitaeten',unit:''},
-          {lbl:'Conv. OEM/Tag (mind.)',f:'convOEM',unit:''},
-          {lbl:'Opt. Gesamt/Tag (mind.)',f:'optGesamt',unit:''},
-          {lbl:'Marge Ziel (mind.)',f:'margeZiel',unit:'€',step:10}
-        ],{crYes:15,sy:30,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000},
-          {crYes:15,sy:40,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
-          {crYes:15,sy:40,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
-
-        cut('erg');
-        // ── Zusammensetzen: nummerierte Abschnitte ──
-        function esD(d){if(!d)return '–';var p=d.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:d;}
-        function esN(v,dec){return v==null||v===''?'–':(+v).toLocaleString('de-DE',{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0});}
-        function deOnly(x){return '<span class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">'+x+'</span>';}
-        function vlcOnly(x){return '<span class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">'+x+'</span>';}
-        var mLabel=esCurIdx===0?'Monat 1':esCurIdx===1?'Monat 2':esCurIdx===2?'Ab Monat 3':null;
-        var vst=vpv.stufen||{};
-        var stufenTxt=[vst.optH&&vst.optH.aus1,vst.syMy&&vst.syMy.aus1,vst.syMy&&vst.syMy.aus2,vst.crOem&&vst.crOem.aus1,vst.crOem&&vst.crOem.aus2].filter(function(x){return x!=null;});
-        var stufenUniq=stufenTxt.filter(function(x,i){return stufenTxt.indexOf(x)===i;}).sort(function(a,b){return b-a;});
-        var vm3=vpv.monat3plus||{};
-        var regelDe='<b style="color:var(--purple-dark)">Basis:</b> '+esN(pvNum('basisProOpt',1),2)+' € je qualifizierender Optimierung. <b style="color:var(--purple-dark)">Dazu</b> ein Prozentsatz der Marge (Marge gesamt ÷ Divisor) auf OEM, Upsells und WKA. <b style="color:var(--purple-dark)">Je verfehlter KPI</b> −'+esN(pvNum('reduktionProKpi',20))+' %, mindestens '+esN(pvNum('mindestprovision',20))+' % bleiben. <b style="color:var(--purple-dark)">Ab Monat 2</b> unter '+esN(pvNum('mindestleistungOptH',2.5),1)+' Opt./Std. nur noch die Mindestprovision.';
-        var regelVlc='<b style="color:var(--purple-dark)">Bonus:</b> '+esN(vpv.bonusProOpt,2)+' € je Optimierung. <b style="color:var(--purple-dark)">Ab Monat 3</b> Opt./Std. unter '+esN(vm3.optH,1)+' → '+esN(vst.optH&&vst.optH.aus1)+' %, SY/MY unter '+esN(vm3.syMy)+' % → '+esN(vst.syMy&&vst.syMy.aus1)+' %, unter '+esN(vst.syMy&&vst.syMy.grenze)+' % → '+esN(vst.syMy&&vst.syMy.aus2)+' %, CR OEM unter '+esN(vm3.crOem)+' % → '+esN(vst.crOem&&vst.crOem.aus1)+' %, unter '+esN(vst.crOem&&vst.crOem.grenze)+' % → '+esN(vst.crOem&&vst.crOem.aus2)+' %. <b style="color:var(--purple-dark)">Es gilt die schlechteste Stufe.</b> Extra Pay folgt.';
-        var sections=[
-          {n:1,t:'Person',sum:esc(emp.role||'–')+' · '+esc(emp.phase||'–')+' · '+esc(emp.contract==='part'?'Teilzeit':emp.contract==='full'?'Vollzeit':(emp.contract||'–'))+' · '+(emp.email?esc(emp.email):'<span style="color:var(--red)">keine E-Mail</span>'),body:SEG.person},
-          {n:2,t:'Vertrag',sum:'Beginn '+esD(emp.startDate)+' · Gültig ab '+esD(pv.gueltigAb)+' · '+(emp.endDate?'Ende '+esD(emp.endDate):'unbefristet')+(esBm?' · Beschäftigungsmonat '+esBm:''),body:SEG.vertrag},
-          {n:3,t:'Arbeitszeit',sum:(esWorkDaysTxt?esWorkDaysTxt+' · ':'')+esN(esWeekTotal,1)+' Std. pro Woche',body:SEG.zeit},
-          {n:4,t:deOnly('Provision')+vlcOnly('Bonus'),sum:deOnly(esN(pvNum('grundgehalt',2800))+' € Grundgehalt · '+esN(pvNum('basisProOpt',1),2)+' €/Opt. · −'+esN(pvNum('reduktionProKpi',20))+' % je KPI · Mindestprov. '+esN(pvNum('mindestprovision',20))+' %')+vlcOnly(esN(vpv.serviceRate)+' € Service Rate · '+esN(vpv.bonusProOpt,2)+' €/Opt. · Stufen '+stufenUniq.join('/')+' % · Extra Pay folgt'),body:SEG.prov},
-          {n:5,t:'Provisionsrelevante KPIs',sum:deOnly('6 Kennzahlen')+vlcOnly('3 Kennzahlen')+(mLabel?' · aktuell „'+mLabel+'“':''),body:SEG.kpi},
-          {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('9 Kennzahlen')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
-        ];
-        var card='<div class="card"><div class="card-title"><i class="ti ti-user"></i> Stammdaten &amp; Provisionsvereinbarung '
-          +deOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;margin-left:4px">Provisionsvereinbarung Olching</span>')
-          +vlcOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;margin-left:4px">Bonusvereinbarung weWow · VLC</span>')+'</div>';
-        card+='<div style="font-size:12.5px;color:var(--text);background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);border-radius:12px;padding:12px 14px;margin-bottom:12px;line-height:1.6"><div style="font-size:10.5px;font-weight:700;color:#C9502F;letter-spacing:.08em;margin-bottom:4px">SO WIRD GERECHNET</div>'+deOnly(regelDe)+vlcOnly(regelVlc)+'</div>';
-        sections.forEach(function(sec){
-          var open=!!esOpenSections[sec.n];
-          card+='<div class="es-acc" data-sec="'+sec.n+'" style="background:var(--s-sub);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">'
-            +'<div onclick="esToggleSection('+sec.n+',this.parentNode)" style="display:flex;align-items:center;gap:14px;padding:15px 18px;cursor:pointer">'
-            +'<span style="width:28px;height:28px;border-radius:7px;background:#1d1c1a;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+sec.n+'</span>'
-            +'<span style="font-weight:700;font-size:14.5px;min-width:230px">'+sec.t+'</span>'
-            +'<span style="font-size:13px;color:var(--text2);flex:1;min-width:0">'+sec.sum+'</span>'
-            +'<i class="ti ti-chevron-right es-acc-ch" style="color:var(--text3);font-size:15px;transition:transform .15s;'+(open?'transform:rotate(90deg)':'')+'"></i></div>'
-            +'<div class="es-acc-body" style="'+(open?'':'display:none;')+'padding:16px 18px 18px;border-top:1px solid var(--border)">'+(sec.body||'')+'</div></div>';
-        });
-        var esHist=(typeof employeeHistory!=='undefined'&&employeeHistory[emp.id])||[];
-        var esLast=null; esHist.forEach(function(r){if(r.changedAt&&(!esLast||r.changedAt>esLast.changedAt))esLast=r;});
-        var esLastTxt=esLast?'Zuletzt geändert am '+new Date(esLast.changedAt).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})+(esLast.changedByName?' von '+esc(esLast.changedByName):''):'Änderungen werden erst mit „Alles speichern“ übernommen.';
-        card+='<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:13px 18px;background:var(--s-sub);border:1px solid var(--border);border-radius:10px">'
-          +'<span id="pv-save-status" style="font-size:12.5px;color:var(--text3);margin-right:auto">'+esLastTxt+'</span>'
-          +'<button class="btn" style="width:auto;height:34px" onclick="renderEmpDetail()"><i class="ti ti-arrow-back-up"></i> Verwerfen</button>'
-          +'<button class="btn btn-primary" style="width:auto;height:34px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid);saveEmpEinstellungen()"><i class="ti ti-check"></i> Alles speichern</button></div>';
-        card+='</div>'; // close Provisionsvereinbarung card
-        html=_esOuter+card;
-      })();
       // ── Zugang zur Sales-OS-Erweiterung (nur Admins, nur fuer Agents) ──
       if(currentUserRole==='admin' && !(emp.isPureCoach||emp.role==='SC'||emp.role==='SDM')){
         var hasLogin=!!emp.auth_user_id;
@@ -10125,6 +9801,415 @@ function saveNewTask(){
   });
 }
 var _savingNewEmp=false;
+function esBuildHtml(emp,asPopup,html){
+  html=html||'';
+    var t=empTargets(emp);
+    var _tr=emp.targets||{};
+    var tf={
+      crOEM:_tr.crOEM!=null?_tr.crOEM:t.crOEM.val,crOEMDir:_tr.crOEMDir||t.crOEM.dir,
+      crTW:_tr.crTW!=null?_tr.crTW:t.crTeilweise.val,crTWDir:_tr.crTWDir||t.crTeilweise.dir,
+      crSuperYes:_tr.crSuperYes!=null?_tr.crSuperYes:t.crSuperYes.val,crSYDir:_tr.crSYDir||t.crSuperYes.dir,
+      crMegaYes:_tr.crMegaYes!=null?_tr.crMegaYes:t.crMegaYes.val,crMYDir:_tr.crMYDir||t.crMegaYes.dir,
+      optPerH:_tr.optPerH!=null?_tr.optPerH:t.optPerH.val,optPerHDir:_tr.optPerHDir||t.optPerH.dir,
+      optPerDay:_tr.optPerDay!=null?_tr.optPerDay:t.optPerDay.val,optPerDayDir:_tr.optPerDayDir||t.optPerDay.dir
+    };
+    var swatches=COLORS.map(function(col,i){
+      return '<div onclick="setEmpColor('+i+')" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+col.bg+';border:3px solid '+(emp.color===i?col.text:'transparent')+';display:inline-block;margin-right:6px;margin-bottom:6px;transition:all .15s"></div>';
+    }).join('');
+    var teamOpts=allTeams().map(function(tm){return '<option'+(tm===emp.team?' selected':'')+'>'+tm+'</option>';}).join('')+'<option value="__new__">+ Neues Team...</option>';
+    var ROLLEN=['Vertriebsmitarbeiter','Senior Vertriebsmitarbeiter','Sales Coach'];
+
+    if(true){
+
+      // ── Provisionsvereinbarung (jetzt inkl. Stammdaten, mitarbeiterspezifisch) ──
+      (function(){
+        var pv=(emp.provisionSettings)||{};
+        function pvNum(key,def){return pv[key]!=null?pv[key]:def;}
+        var m1=pv.monat1||{}, m2=pv.monat2||{}, m3=pv.monat3plus||{};
+        function pvMonatNum(mObj,key,def){return mObj[key]!=null?mObj[key]:def;}
+        // Box als nummerierte Abschnitte: Inhalte werden in Segmente gesammelt und unten zusammengesetzt.
+        // Alle Eingabefelder bleiben (auch zugeklappt) im DOM, damit Speichern unveraendert alle Werte liest.
+        var _esOuter=html; html=''; var SEG={};
+        function cut(k){SEG[k]=(SEG[k]||'')+html; html='';}
+        var isVlcModel=(emp.role==='VLC');
+        var vpv=effectiveProvisionSettings(emp).vlc;
+        var esWeekTotal=0, esWorkDaysTxt='';
+        var esBm=emp.startDate?beschaeftigungsmonat(emp,today().slice(0,7)):null;
+        var esCurIdx=esBm?Math.min(esBm,3)-1:-1;
+
+        html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
+        html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+esc(emp.name)+'"></div>';
+        html+='<div><label>Position</label>'
+          +'<select id="es-role" onchange="var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}toggleProvisionModel(this.value);">'
+          +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
+          +'<option'+(emp.role==='SE'?' selected':'')+'>SE</option>'
+          +'<option'+(emp.role==='VLC'?' selected':'')+'>VLC</option>'
+          +'<option'+(emp.role==='SDM'?' selected':'')+'>SDM</option>'
+          +'<option'+(emp.role==='SC'?' selected':'')+'>SC</option>'
+          +'<option value="__new__">+ Neue Position hinzufügen</option>'
+          +'</select></div>';
+        html+='<div><label>Phase</label><select id="es-phase">'
+          +'<option'+(emp.phase==='Onboarding'?' selected':'')+'>Onboarding</option>'
+          +'<option'+(emp.phase==='Aktiv'?' selected':'')+'>Aktiv</option>'
+          +'<option'+(emp.phase==='Inaktiv'?' selected':'')+'>Inaktiv</option>'
+          +'</select></div>';
+        html+='<div><label>Anstellung</label><select id="es-contract">'
+          +'<option value="Vollzeit"'+(emp.contract==='Vollzeit'||emp.contract==='full'?' selected':'')+'>Vollzeit</option>'
+          +'<option value="Teilzeit"'+(emp.contract==='Teilzeit'||emp.contract==='part'?' selected':'')+'>Teilzeit</option>'
+          +'</select></div>';
+        html+='</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+        html+='<div><label>E-Mail</label><input type="email" id="es-email" value="'+esc(emp.email||'')+'" placeholder="name@wiegand-gmbh.de"></div>';
+        html+='<div><label>Avatar-Farbe</label><div style="margin-top:6px">'+swatches+'</div></div>';
+        html+='</div>';
+
+        cut('person');
+        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Arbeitszeiten je Wochentag – ermöglicht präzise Teilzeit-Steuerung und eine korrekte Optimierungen/Std.-Berechnung (z.B. kürzerer Freitag, längerer Montag).</p>';
+        (function(){
+          var DEFAULT_WH={
+            mo:{von:'08:30',bis:'18:00',pause:30},di:{von:'08:30',bis:'17:00',pause:30},mi:{von:'08:30',bis:'17:00',pause:30},
+            do:{von:'08:30',bis:'17:00',pause:30},fr:{von:'08:30',bis:'16:00',pause:30},sa:{von:'',bis:'',pause:0},so:{von:'',bis:'',pause:0}
+          };
+          var wh=emp.workHours||{};
+          var days=[{key:'mo',lbl:'Montag'},{key:'di',lbl:'Dienstag'},{key:'mi',lbl:'Mittwoch'},{key:'do',lbl:'Donnerstag'},{key:'fr',lbl:'Freitag'},{key:'sa',lbl:'Samstag'},{key:'so',lbl:'Sonntag'}];
+          function calcNetHours(von,bis,pause){
+            if(!von||!bis)return 0;
+            var vp=von.split(':'),bp=bis.split(':');
+            var mins=(+bp[0]*60+ +bp[1])-(+vp[0]*60+ +vp[1])-(pause||0);
+            return Math.max(0,mins/60);
+          }
+          html+='<div class="std-wrap" style="margin-bottom:16px"><table class="std-table inputs" style="border-collapse:collapse;table-layout:fixed;min-width:100%">';
+          html+='<thead><tr>'
+            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px;width:240px">Wochentag</th>'
+            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Von</th>'
+            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Bis</th>'
+            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:208px">Pause (Min.)</th>'
+            +'<th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center;width:130px">Arbeitszeit</th>'
+            +'</tr></thead><tbody>';
+          var weekTotal=0;
+          days.forEach(function(d,ridx){
+            var dv=wh[d.key]||DEFAULT_WH[d.key];
+            var rowBg='';
+            var netH=calcNetHours(dv.von,dv.bis,dv.pause);
+            weekTotal+=netH;
+            html+='<tr style="'+rowBg+'">'
+              +'<td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px">'+d.lbl+'</td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><input type="time" id="es-wh-'+d.key+'-von" value="'+(dv.von||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><input type="time" id="es-wh-'+d.key+'-bis" value="'+(dv.bis||'')+'" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:100px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><input type="number" id="es-wh-'+d.key+'-pause" value="'+(dv.pause!=null?dv.pause:30)+'" step="5" min="0" max="180" oninput="updateWorkHoursRow(\''+d.key+'\')" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>'
+              +'<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3"><span id="es-wh-'+d.key+'-result" style="font-size:13px;font-weight:700;color:var(--text)">'+netH.toFixed(1)+' Std.</span></td>'
+              +'</tr>';
+          });
+          html+='<tr class="sum" style="background:#1d1c1a">'
+            +'<td colspan="4" style="padding:9px 8px;padding-left:12px;font-weight:700;color:#fff;font-size:12.5px">Summe</td>'
+            +'<td style="padding:8px;text-align:center"><span id="es-wh-summe-result" style="font-size:14px;font-weight:700;color:#fff">'+weekTotal.toFixed(1)+' Std.</span></td>'
+            +'</tr>';
+          html+='</tbody></table></div>';
+          esWeekTotal=weekTotal;
+          var wdIdx=[];days.forEach(function(d,ix){var dv=wh[d.key]||DEFAULT_WH[d.key];if(calcNetHours(dv.von,dv.bis,dv.pause)>0)wdIdx.push(ix);});
+          var sh=['Mo','Di','Mi','Do','Fr','Sa','So'];
+          var contiguous=wdIdx.length>1&&wdIdx[wdIdx.length-1]-wdIdx[0]===wdIdx.length-1;
+          esWorkDaysTxt=!wdIdx.length?'keine Arbeitstage':contiguous?sh[wdIdx[0]]+'–'+sh[wdIdx[wdIdx.length-1]]:wdIdx.map(function(ix){return sh[ix];}).join(', ');
+        })();
+        cut('zeit');
+
+        html+='<div style="margin-bottom:4px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
+          +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+(emp.notes||'')+'</textarea></div>';
+
+        cut('person');
+
+        function stripField(lbl,id,def,unit,step){
+          return '<div style="padding:4px 16px;border-right:1px solid rgba(255,255,255,0.14)">'
+            +'<div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">'+lbl+'</div>'
+            +'<div style="display:flex;align-items:baseline;gap:3px"><input type="number" id="'+id+'" value="'+pvNum(id.replace('pv-',''),def)+'" step="'+(step||1)+'" min="0" style="border:none;background:none;font-size:19px;font-weight:700;color:#fff;width:85px;padding:0"><span style="font-size:12px;color:#FFEDE6;font-weight:600">'+unit+'</span></div>'
+            +'</div>';
+        }
+        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
+        html+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
+        html+=stripField('Grundgehalt/Mon.','pv-grundgehalt',2800,'€',10);
+        html+=stripField('AG-Sozialabgaben','pv-agSozialabgaben',21,'%',1);
+        html+=stripField('Basisprov./Opt.','pv-basisProOpt',1.00,'€',0.10);
+        html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5).replace('border-right:1px solid rgba(255,255,255,0.14)','');
+        html+='</div>';
+        html+='</div>'; // pv-de-block (Banner)
+        // ── VLC: Bonusvereinbarung weWow – Banner ──
+        function vlcStrip(lbl,id,val,unit,step,last,soon){
+          return '<div style="padding:4px 16px;'+(last?'':'border-right:1px solid rgba(255,255,255,0.14)')+'">'
+            +'<div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">'+lbl+(soon?' <span style="font-size:9.5px;font-weight:700;color:#1d1c1a;background:#F7B39A;padding:1px 7px;border-radius:20px;margin-left:4px">folgt</span>':'')+'</div>'
+            +'<div style="display:flex;align-items:baseline;gap:3px"><input type="number" id="'+id+'" value="'+(val!=null?val:'')+'" step="'+(step||1)+'" min="0" style="border:none;background:none;font-size:19px;font-weight:700;color:#fff;width:85px;padding:0"><span style="font-size:12px;color:#FFEDE6;font-weight:600">'+unit+'</span></div>'
+            +'</div>';
+        }
+        html+='<div class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">';
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px">BONUSVEREINBARUNG WEWOW <span style="font-size:10px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;letter-spacing:0">VLC · Valencia</span></div>';
+        html+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
+        html+=vlcStrip('Service Rate/Mon. (netto)','pv-vlc-serviceRate',vpv.serviceRate,'€',10);
+        html+=vlcStrip('Bonus/Opt.','pv-vlc-bonusProOpt',vpv.bonusProOpt,'€',0.05);
+        html+=vlcStrip('Extra Pay','pv-vlc-extraPayPct',vpv.extraPayPct,'%',0.1,false,true);
+        html+=vlcStrip('Extra Pay ab (pro Std.)','pv-vlc-extraPayAbH',vpv.extraPayAbH,'€',0.5,true);
+        html+='</div>';
+        html+='</div>'; // pv-vlc-block (Banner)
+        cut('prov');
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+        html+='<div><label>Vertragsbeginn</label><input type="date" id="es-start" value="'+(emp.startDate||'')+'"></div>';
+        html+='<div><label>Gültig ab (Provision)</label><input type="date" id="pv-gueltigAb" value="'+(pv.gueltigAb||'')+'"></div>';
+        html+='<div><label>Vertragsende</label><input type="date" id="es-end" value="'+(emp.endDate||'')+'"></div>';
+        html+='</div>';
+        cut('vertrag');
+
+        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:4px;border-top:1px solid #ebe9e3">UMSATZABHÄNGIGE PROVISION (§2 ABS. 2) — DIVISOREN</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+        [{lbl:'OEM',id:'divOEM',def:10000},{lbl:'Upsells',id:'divUpsell',def:20000},{lbl:'WKA',id:'divWka',def:20000}].forEach(function(f){
+          html+='<div><label>'+f.lbl+'</label><input type="number" id="pv-'+f.id+'" value="'+pvNum(f.id,f.def)+'" step="1000" min="1"></div>';
+        });
+        html+='</div>';
+
+        html+='</div>'; cut('prov');
+        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
+        function buildKpiTable(fieldRows,defsKey1,defsKey2,defsKey3){
+          var monatSets=[{key:'monat1',label:'Monat 1',obj:m1,defs:defsKey1},
+           {key:'monat2',label:'Monat 2',obj:m2,defs:defsKey2},
+           {key:'monat3plus',label:'Ab Monat 3',obj:m3,defs:defsKey3}
+          ];
+          var tbl='<div class="std-wrap" style="margin-bottom:8px"><table class="std-table inputs" style="width:100%;border-collapse:collapse;table-layout:fixed">';
+          tbl+='<thead><tr><th style="background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:left;padding-left:12px;width:240px">Kennzahl</th>';
+          monatSets.forEach(function(mset,mi){tbl+='<th'+(mi===esCurIdx?' class="cur"':'')+' style="background:'+(mi===esCurIdx?'#F08566':'#1d1c1a')+';color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center">'+mset.label+(mi===esCurIdx?' · aktuell':'')+'</th>';});
+          tbl+='</tr></thead><tbody>';
+          fieldRows.forEach(function(fld,ridx){
+            var rowBg='';
+            if(fld.vlc){
+              tbl+='<tr class="pv-vlc-block" style="'+rowBg+(isVlcModel?'':'display:none;')+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fld.lbl+'</td>';
+              monatSets.forEach(function(mset,mi){
+                var vv=(vpv[mset.key]||{})[fld.f];
+                tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;'+(mi===esCurIdx?'background:var(--band)':'')+'"><input type="number" id="pv-vlc-'+mset.key+'-'+fld.f+'" value="'+(vv!=null?vv:'')+'" placeholder="–" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
+              });
+              tbl+='</tr>';
+              return;
+            }
+            tbl+='<tr style="'+rowBg+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fld.lbl+'</td>';
+            monatSets.forEach(function(mset,mi){
+              tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;'+(mi===esCurIdx?'background:var(--band)':'')+'"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
+            });
+            tbl+='</tr>';
+          });
+          tbl+='</tbody></table></div>';
+          return tbl;
+        }
+        html+=buildKpiTable([
+          {lbl:'Opt./Std. (mind.)',f:'optH',unit:'',step:0.1},
+          {lbl:'CR OEM (mind.) %',f:'crOem',unit:'%'},
+          {lbl:'TW-Anteil (max.) %',f:'tw',unit:'%'},
+          {lbl:'SY/MY-Anteil (mind.) %',f:'syMy',unit:'%'},
+          {lbl:'MY-Anteil (mind.) %',f:'my',unit:'%'},
+          {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',unit:'%'}
+        ],{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80});
+
+        html+='</div>'; cut('kpi');
+        html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #ebe9e3">§4/§5 REDUZIERUNG</div>';
+        html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+        html+='<div><label>Reduzierung je nicht erfüllter KPI</label><input type="number" id="pv-reduktionProKpi" value="'+pvNum('reduktionProKpi',20)+'" step="5" min="0" max="100"></div>';
+        html+='<div><label>Mindestleistung ab Monat 2 (Opt/Std)</label><input type="number" id="pv-mindestleistungOptH" value="'+pvNum('mindestleistungOptH',2.50)+'" step="0.1" min="0"></div>';
+        html+='</div>';
+
+        html+='</div>'; // pv-de-block (§4/§5)
+        cut('prov');
+        // ── VLC: KPI-Vorgaben je Monat + Kuerzungsstufen ──
+        html+='<div class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">';
+        (function(){
+          var TH='background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 8px;text-align:center';
+          var TD0='padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px';
+          var TD='padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;font-size:12.5px;color:var(--text2)';
+          var INP='width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)';
+          function inp(id,v,step){return '<input type="number" id="'+id+'" value="'+(v!=null?v:'')+'" placeholder="–" step="'+(step||1)+'" min="0" style="'+INP+'">';}
+          var rows=[{f:'optH',lbl:'Opt./Std. (mind.)'},{f:'syMy',lbl:'SY/MY-Anteil (mind.) %'},{f:'crOem',lbl:'CR OEM (mind.) %'}];
+          var months=[{k:'monat1',l:'Monat 1'},{k:'monat2',l:'Monat 2'},{k:'monat3plus',l:'Ab Monat 3'}];
+          html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Leeres Feld = in diesem Monat keine Prüfung, der Bonus wird voll ausgezahlt.</p>';
+          var t='<div class="std-wrap" style="margin-bottom:16px"><table class="std-table inputs" style="width:100%;border-collapse:collapse;table-layout:fixed">';
+          t+='<thead><tr><th style="'+TH+';text-align:left;padding-left:12px;width:240px">Kennzahl</th>';
+          months.forEach(function(m,mi){t+='<th'+(mi===esCurIdx?' class="cur"':'')+' style="'+TH+(mi===esCurIdx?';background:#F08566':'')+'">'+m.l+(mi===esCurIdx?' · aktuell':'')+'</th>';});
+          t+='</tr></thead><tbody>';
+          rows.forEach(function(r,ri){
+            t+='<tr style="'+''+'"><td style="'+TD0+'">'+r.lbl+'</td>';
+            months.forEach(function(m,mi){t+='<td style="'+TD+(mi===esCurIdx?';background:var(--band)':'')+'">'+inp('pv-vlc-'+m.k+'-'+r.f,(vpv[m.k]||{})[r.f],r.f==='optH'?0.1:1)+'</td>';});
+            t+='</tr>';
+          });
+          t+='</tbody></table></div>';
+          html+=t;
+          html+='</div>'; cut('kpi');
+          html+='<div class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">';
+          html+='<div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;padding-top:12px;border-top:1px solid #ebe9e3">KÜRZUNGSSTUFEN</div>';
+          var st=vpv.stufen||{};
+          var t2='<div class="std-wrap" style="margin-bottom:10px"><table class="std-table inputs" style="width:100%;border-collapse:collapse;table-layout:fixed">';
+          t2+='<thead><tr><th style="'+TH+';text-align:left;padding-left:12px;width:240px">Kennzahl</th><th style="'+TH+'">Ziel verfehlt → Auszahlung</th><th style="'+TH+'">Untergrenze</th><th style="'+TH+'">Unter Untergrenze → Auszahlung</th></tr></thead><tbody>';
+          [{f:'optH',lbl:'Opt./Std.',unit:''},{f:'syMy',lbl:'SY/MY-Anteil',unit:' %'},{f:'crOem',lbl:'CR OEM',unit:' %'}].forEach(function(r,ri){
+            var o=st[r.f]||{};
+            t2+='<tr style="'+''+'"><td style="'+TD0+'">'+r.lbl+'</td>'
+              +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-aus1',o.aus1,5)+' %</td>'
+              +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-grenze',o.grenze,1)+r.unit+'</td>'
+              +'<td style="'+TD+'">'+inp('pv-vlc-st-'+r.f+'-aus2',o.aus2,5)+' %</td></tr>';
+          });
+          t2+='</tbody></table></div>';
+          html+=t2;
+          html+='<div style="font-size:12px;color:var(--text2);background:var(--s-tint);border-radius:8px;padding:9px 12px;margin-bottom:16px;line-height:1.5"><i class="ti ti-info-circle" style="color:var(--purple)"></i> Werden mehrere Ziele verfehlt, gilt <b style="color:var(--purple-dark)">nur die schlechteste Stufe</b>, die Kürzungen werden nicht multipliziert. Opt./Std. = Optimierungen gesamt geteilt durch die Arbeitsstunden im Monat (Wochenarbeitszeiten). Extra Pay wird noch nicht eingerechnet.</div>';
+        })();
+        html+='</div>'; // pv-vlc-block (Stufen)
+        cut('prov');
+        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet.</p>';
+        html+=buildKpiTable([
+          {lbl:'TW-Anteil (max.) %',f:'tw',vlc:true},
+          {lbl:'MY-Anteil (mind.) %',f:'my',vlc:true},
+          {lbl:'OEM-Anteil (mind.) %',f:'oemAnteil',vlc:true},
+          {lbl:'CR Yes (mind.) %',f:'crYes',unit:'%'},
+          {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
+          {lbl:'NE - nicht erreicht (max.) %',f:'notReached',unit:'%'},
+          {lbl:'NM - nicht möglich (max.) %',f:'notPossible',unit:'%'},
+          {lbl:'NErr - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
+          {lbl:'Aktivitäten/Tag (mind.)',f:'aktivitaeten',unit:''},
+          {lbl:'Conv. OEM/Tag (mind.)',f:'convOEM',unit:''},
+          {lbl:'Opt. Gesamt/Tag (mind.)',f:'optGesamt',unit:''},
+          {lbl:'Marge Ziel (mind.)',f:'margeZiel',unit:'€',step:10}
+        ],{crYes:15,sy:30,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000},
+          {crYes:15,sy:40,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
+          {crYes:15,sy:40,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
+
+        cut('erg');
+        // ── Zusammensetzen: nummerierte Abschnitte ──
+        function esD(d){if(!d)return '–';var p=d.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:d;}
+        function esN(v,dec){return v==null||v===''?'–':(+v).toLocaleString('de-DE',{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0});}
+        function deOnly(x){return '<span class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">'+x+'</span>';}
+        function vlcOnly(x){return '<span class="pv-vlc-block" style="'+(isVlcModel?'':'display:none')+'">'+x+'</span>';}
+        var mLabel=esCurIdx===0?'Monat 1':esCurIdx===1?'Monat 2':esCurIdx===2?'Ab Monat 3':null;
+        var vst=vpv.stufen||{};
+        var stufenTxt=[vst.optH&&vst.optH.aus1,vst.syMy&&vst.syMy.aus1,vst.syMy&&vst.syMy.aus2,vst.crOem&&vst.crOem.aus1,vst.crOem&&vst.crOem.aus2].filter(function(x){return x!=null;});
+        var stufenUniq=stufenTxt.filter(function(x,i){return stufenTxt.indexOf(x)===i;}).sort(function(a,b){return b-a;});
+        var vm3=vpv.monat3plus||{};
+        var regelDe='<b style="color:var(--purple-dark)">Basis:</b> '+esN(pvNum('basisProOpt',1),2)+' € je qualifizierender Optimierung. <b style="color:var(--purple-dark)">Dazu</b> ein Prozentsatz der Marge (Marge gesamt ÷ Divisor) auf OEM, Upsells und WKA. <b style="color:var(--purple-dark)">Je verfehlter KPI</b> −'+esN(pvNum('reduktionProKpi',20))+' %, mindestens '+esN(pvNum('mindestprovision',20))+' % bleiben. <b style="color:var(--purple-dark)">Ab Monat 2</b> unter '+esN(pvNum('mindestleistungOptH',2.5),1)+' Opt./Std. nur noch die Mindestprovision.';
+        var regelVlc='<b style="color:var(--purple-dark)">Bonus:</b> '+esN(vpv.bonusProOpt,2)+' € je Optimierung. <b style="color:var(--purple-dark)">Ab Monat 3</b> Opt./Std. unter '+esN(vm3.optH,1)+' → '+esN(vst.optH&&vst.optH.aus1)+' %, SY/MY unter '+esN(vm3.syMy)+' % → '+esN(vst.syMy&&vst.syMy.aus1)+' %, unter '+esN(vst.syMy&&vst.syMy.grenze)+' % → '+esN(vst.syMy&&vst.syMy.aus2)+' %, CR OEM unter '+esN(vm3.crOem)+' % → '+esN(vst.crOem&&vst.crOem.aus1)+' %, unter '+esN(vst.crOem&&vst.crOem.grenze)+' % → '+esN(vst.crOem&&vst.crOem.aus2)+' %. <b style="color:var(--purple-dark)">Es gilt die schlechteste Stufe.</b> Extra Pay folgt.';
+        var sections=[
+          {n:1,t:'Person',sum:esc(emp.role||'–')+' · '+esc(emp.phase||'–')+' · '+esc(emp.contract==='part'?'Teilzeit':emp.contract==='full'?'Vollzeit':(emp.contract||'–'))+' · '+(emp.email?esc(emp.email):'<span style="color:var(--red)">keine E-Mail</span>'),body:SEG.person},
+          {n:2,t:'Vertrag',sum:'Beginn '+esD(emp.startDate)+' · Gültig ab '+esD(pv.gueltigAb)+' · '+(emp.endDate?'Ende '+esD(emp.endDate):'unbefristet')+(esBm?' · Beschäftigungsmonat '+esBm:''),body:SEG.vertrag},
+          {n:3,t:'Arbeitszeit',sum:(esWorkDaysTxt?esWorkDaysTxt+' · ':'')+esN(esWeekTotal,1)+' Std. pro Woche',body:SEG.zeit},
+          {n:4,t:deOnly('Provision')+vlcOnly('Bonus'),sum:deOnly(esN(pvNum('grundgehalt',2800))+' € Grundgehalt · '+esN(pvNum('basisProOpt',1),2)+' €/Opt. · −'+esN(pvNum('reduktionProKpi',20))+' % je KPI · Mindestprov. '+esN(pvNum('mindestprovision',20))+' %')+vlcOnly(esN(vpv.serviceRate)+' € Service Rate · '+esN(vpv.bonusProOpt,2)+' €/Opt. · Stufen '+stufenUniq.join('/')+' % · Extra Pay folgt'),body:SEG.prov},
+          {n:5,t:'Provisionsrelevante KPIs',sum:deOnly('6 Kennzahlen')+vlcOnly('3 Kennzahlen')+(mLabel?' · aktuell „'+mLabel+'“':''),body:SEG.kpi},
+          {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('9 Kennzahlen')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
+        ];
+        if(asPopup){
+          // Popup „Mitarbeiter hinzufügen“: gleiche Felder, als Boxen untereinander, Titel nur als Text
+          var pcard='';
+          sections.forEach(function(sec){
+            pcard+='<div id="aeSec'+sec.n+'" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)">'
+              +'<div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">'+sec.t+(sec.n===4?'<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text3)">'+deOnly('Olching')+vlcOnly('weWow')+'</span>':(sec.n>=5?'<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text3)">vorbelegt</span>':''))+'</div>'
+              +(sec.n===4?'<div style="font-size:12.5px;color:var(--text);background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);border-radius:12px;padding:12px 14px;margin-bottom:12px;line-height:1.6"><div style="font-size:10.5px;font-weight:700;color:#C9502F;letter-spacing:.08em;margin-bottom:4px">SO WIRD GERECHNET</div>'+deOnly(regelDe)+vlcOnly(regelVlc)+'</div>':'')
+              +(sec.body||'')+'</div>';
+          });
+          html=pcard;
+          return;
+        }
+        var card='<div class="card"><div class="card-title"><i class="ti ti-user"></i> Stammdaten &amp; Provisionsvereinbarung '
+          +deOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;margin-left:4px">Provisionsvereinbarung Olching</span>')
+          +vlcOnly('<span style="font-size:10.5px;font-weight:600;color:var(--purple-dark);background:var(--s-tint-strong);padding:2px 8px;border-radius:20px;margin-left:4px">Bonusvereinbarung weWow · VLC</span>')+'</div>';
+        card+='<div style="font-size:12.5px;color:var(--text);background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);border-radius:12px;padding:12px 14px;margin-bottom:12px;line-height:1.6"><div style="font-size:10.5px;font-weight:700;color:#C9502F;letter-spacing:.08em;margin-bottom:4px">SO WIRD GERECHNET</div>'+deOnly(regelDe)+vlcOnly(regelVlc)+'</div>';
+        sections.forEach(function(sec){
+          var open=!!esOpenSections[sec.n];
+          card+='<div class="es-acc" data-sec="'+sec.n+'" style="background:var(--s-sub);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">'
+            +'<div onclick="esToggleSection('+sec.n+',this.parentNode)" style="display:flex;align-items:center;gap:14px;padding:15px 18px;cursor:pointer">'
+            +'<span style="width:28px;height:28px;border-radius:7px;background:#1d1c1a;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+sec.n+'</span>'
+            +'<span style="font-weight:700;font-size:14.5px;min-width:230px">'+sec.t+'</span>'
+            +'<span style="font-size:13px;color:var(--text2);flex:1;min-width:0">'+sec.sum+'</span>'
+            +'<i class="ti ti-chevron-right es-acc-ch" style="color:var(--text3);font-size:15px;transition:transform .15s;'+(open?'transform:rotate(90deg)':'')+'"></i></div>'
+            +'<div class="es-acc-body" style="'+(open?'':'display:none;')+'padding:16px 18px 18px;border-top:1px solid var(--border)">'+(sec.body||'')+'</div></div>';
+        });
+        var esHist=(typeof employeeHistory!=='undefined'&&employeeHistory[emp.id])||[];
+        var esLast=null; esHist.forEach(function(r){if(r.changedAt&&(!esLast||r.changedAt>esLast.changedAt))esLast=r;});
+        var esLastTxt=esLast?'Zuletzt geändert am '+new Date(esLast.changedAt).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})+(esLast.changedByName?' von '+esc(esLast.changedByName):''):'Änderungen werden erst mit „Alles speichern“ übernommen.';
+        card+='<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:13px 18px;background:var(--s-sub);border:1px solid var(--border);border-radius:10px">'
+          +'<span id="pv-save-status" style="font-size:12.5px;color:var(--text3);margin-right:auto">'+esLastTxt+'</span>'
+          +'<button class="btn" style="width:auto;height:34px" onclick="renderEmpDetail()"><i class="ti ti-arrow-back-up"></i> Verwerfen</button>'
+          +'<button class="btn btn-primary" style="width:auto;height:34px" data-eid="'+emp.id+'" onclick="saveProvisionSettings(this.dataset.eid);saveEmpEinstellungen()"><i class="ti ti-check"></i> Alles speichern</button></div>';
+        card+='</div>'; // close Provisionsvereinbarung card
+        html=_esOuter+card;
+      })();
+  }
+  return html;
+}
+// ══ Mitarbeiter hinzufügen: alle Stammdaten & die Provisionsvereinbarung direkt beim Anlegen ══
+var _aeNew=null,_aeHidMain=false;
+function openAddEmpModal(){
+  // Damit die Felder-IDs eindeutig bleiben: offene Stammdaten im Hauptbereich vorübergehend ausblenden
+  _aeHidMain=false;
+  var body=document.getElementById('aeBody');
+  if(document.getElementById('es-name')&&!body.contains(document.getElementById('es-name'))){
+    var ma=document.getElementById('mainArea');if(ma){ma.innerHTML='';_aeHidMain=true;}
+  }
+  var t0=today();
+  _aeNew={id:'__new__',name:'',role:'SE',phase:'Onboarding',contract:'full',hours:40,startDate:t0,endDate:null,team:'Deutschland',email:'',notes:'',active:true,
+    color:employees.length%COLORS.length,targets:{},provisionSettings:{gueltigAb:t0}};
+  var h=esBuildHtml(_aeNew,true,'');
+  h=h.replace(/setEmpColor\((\d+)\)/g,'aeSetColor($1,this)');
+  body.innerHTML=h;
+  body.scrollTop=0;
+  var n=document.getElementById('es-name');
+  if(n){n.value='';n.placeholder='z. B. Anna Bauer';n.addEventListener('input',function(){var sub=document.getElementById('aeHdSub');if(sub)sub.textContent=n.value.trim()||'Neuer Mitarbeiter';});}
+  var sub=document.getElementById('aeHdSub');if(sub)sub.textContent='Neuer Mitarbeiter';
+  openModal('addEmpModal');
+  setTimeout(function(){if(n)n.focus();},50);
+}
+function closeAddEmpModal(){
+  closeModal('addEmpModal');
+  var b=document.getElementById('aeBody');if(b)b.innerHTML='';
+  if(_aeHidMain){_aeHidMain=false;renderMain();}
+}
+function aeSetColor(i,el){
+  if(_aeNew)_aeNew.color=i;
+  var wrap=el&&el.parentNode;if(!wrap)return;
+  Array.prototype.forEach.call(wrap.children,function(c,ci){var col=COLORS[ci];if(col)c.style.borderColor=(ci===i?col.text:'transparent');});
+}
+var _savingNewEmpFull=false;
+function saveNewEmpFull(){
+  if(_savingNewEmpFull)return;
+  function v(id){var el=document.getElementById(id);return el?el.value:'';}
+  var name=v('es-name').trim();
+  if(!name){alert('Bitte einen Namen eingeben.');var n=document.getElementById('es-name');if(n)n.focus();return;}
+  var role=v('es-role')||'SE',phase=v('es-phase')||'Onboarding',contract=v('es-contract')||'full';
+  var startDate=v('es-start')||null;
+  var payload={name:name,role:role,phase:phase,start_date:startDate,team:'Deutschland',contract:contract,hours:40,active:phase!=='Inaktiv',
+    color_index:_aeNew?_aeNew.color:employees.length%COLORS.length};
+  _savingNewEmpFull=true;
+  var btn=document.getElementById('aeSaveBtn');if(btn){btn.disabled=true;btn.style.opacity='.6';}
+  sb.from('employees').insert(payload).select().single().then(function(res){
+    _savingNewEmpFull=false;if(btn){btn.disabled=false;btn.style.opacity='';}
+    if(res.error){alert('Fehler beim Anlegen in Supabase: '+res.error.message);return;}
+    var e=res.data;
+    logActivity('employee','created','Neuer Mitarbeiter angelegt: '+name,e.id,role+' · '+phase);
+    var STANDARD_TARGETS=[
+      {rk:'crOEM',val:55,dir:'gte'},{rk:'crTW',val:15,dir:'lte'},{rk:'crYes',val:40,dir:'lte'},{rk:'crSuperYes',val:40,dir:'gte'},{rk:'crMegaYes',val:20,dir:'gte'},
+      {rk:'oem_aktivitaeten',val:100,dir:'gte'},{rk:'convOEM',val:24,dir:'gte'},{rk:'optGesamt',val:28,dir:'gte'},{rk:'optPerH',val:3.0,dir:'gte'},{rk:'margeGesamt',val:1500.00,dir:'gte'}
+    ];
+    var ne={id:e.id,name:e.name,role:e.role,phase:e.phase,color:e.color_index,startDate:e.start_date,team:e.team,contract:e.contract,hours:e.hours,active:e.active,targets:{}};
+    STANDARD_TARGETS.forEach(function(t){ne.targets[t.rk]=t.val;ne.targets[t.rk+'Dir']=t.dir;});
+    employees.push(ne);
+    protocols[ne.id]=[];performance[ne.id]=[];
+    if(typeof solidroadData!=='undefined')solidroadData[ne.id]={simulations:[]};
+    if(typeof tasks!=='undefined')tasks[ne.id]=[];
+    sb.from('employee_kpi_targets').insert(STANDARD_TARGETS.map(function(t){return {employee_id:e.id,metric_key:t.rk,val:t.val,dir:t.dir};})).then(function(r2){
+      if(r2.error)console.warn('Standard-KPI-Ziele konnten nicht angelegt werden:',r2.error);
+    });
+    // Alle übrigen Stammdaten & die Provisionsvereinbarung mit den bestehenden Speicherfunktionen aus dem Popup übernehmen
+    selectedEmp=ne.id;view='emp';activeTab='emp-settings';
+    // Während beide Speicherfunktionen die Felder aus dem Popup lesen, darf der Hauptbereich nicht neu gezeichnet werden
+    var _red=window.renderEmpDetail;window.renderEmpDetail=function(){};
+    window._aeCreating=true;
+    try{saveProvisionSettings(ne.id);saveEmpEinstellungen();}finally{window.renderEmpDetail=_red;window._aeCreating=false;}
+    _aeHidMain=false;
+    closeModal('addEmpModal');
+    var b=document.getElementById('aeBody');if(b)b.innerHTML='';
+    renderSidebar();renderMain();
+  }).catch(function(err){
+    _savingNewEmpFull=false;if(btn){btn.disabled=false;btn.style.opacity='';}
+    alert('Unerwarteter Fehler beim Anlegen: '+err.message);
+  });
+}
 function saveNewEmp(){
   if(_savingNewEmp)return;
   var name=document.getElementById('newName').value.trim();
@@ -11285,7 +11370,7 @@ function saveProvisionSettings(empId){
     ['monat1','monat2','monat3plus'].forEach(function(mk){['optH','syMy','crOem','tw','my','oemAnteil'].forEach(function(k){push('provision_vlc_'+mk+'_'+k,(ov[mk]||{})[k],(nv[mk]||{})[k]);});});
     ['optH','syMy','crOem'].forEach(function(k){['aus1','grenze','aus2'].forEach(function(x){push('provision_vlc_stufe_'+k+'_'+x,((ov.stufen||{})[k]||{})[x],((nv.stufen||{})[k]||{})[x]);});});
   })();
-  if(pvHistRows.length){
+  if(pvHistRows.length&&!window._aeCreating){
     sb.from('employee_history').insert(pvHistRows).then(function(res){
       if(res.error)console.warn('Provisions-Historie konnte nicht gespeichert werden:',res.error);
       else renderEmpDetail();
