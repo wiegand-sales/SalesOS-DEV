@@ -11592,7 +11592,7 @@ function openCoachingInfoModal(empId){
     +'<textarea id="coachingInfoNotizField" placeholder="Noch keine Notiz – hier schreiben …" style="width:100%;min-height:54px;border:none;background:transparent;font-size:14px;resize:vertical;color:var(--text);outline:none;padding:0;font-family:inherit" onblur="saveCoachingInfoNotiz(\''+empId+'\')">'+esc(notizTxt)+'</textarea>'
     +'<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-top:4px"><span>Wird beim Verlassen des Feldes automatisch gespeichert</span><span id="coachingInfoNotizStatus"></span></div></div>');
   var role=emp.role||'';
-  var h='<div style="display:flex;align-items:center;padding:14px 16px 10px;border-bottom:1px solid #E4E0D6">'
+  var h='<div style="display:flex;align-items:center;padding:14px 16px 6px">'
     +'<div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Coaching-Historie</div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(emp.name)+(role?' · '+esc(role):'')+(mainCoach?' · Coach '+esc(mainCoach.name.split(' ')[0]):'')+'</div></div>'
     +'<button class="btn" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal(\'coachingInfoModal\')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>';
@@ -11606,7 +11606,7 @@ function openCoachingInfoModal(empId){
     +railBtn('ti-calendar-plus','Session planen',"closeModal('coachingInfoModal');openSessionModal('"+empId+"')")
     +'</div>'
     +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">'
-    +'<div id="ciScroll" style="flex:1;overflow-y:auto;padding:14px 18px 8px">'
+    +'<div id="ciScroll" style="flex:1;overflow-y:auto;padding:14px 18px 12px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 14px,#000 calc(100% - 20px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 14px,#000 calc(100% - 20px),transparent 100%)">'
     +'<div id="ciSecTop"></div>'
     +box+noteBox;
   // ── Verlauf: eine Box, alle Eintraege untereinander, gleich hohe Zeilen ──
@@ -11632,11 +11632,11 @@ function openCoachingInfoModal(empId){
       var dTxt=dowShort[dt.getDay()]+'<br>'+dt.getDate()+'. '+mNamesShort[dt.getMonth()];
       if(item.kind==='comment'){
         var cc=item.c;
-        rows+=tlRow(dTxt,{html:'<i class="ti ti-message-2"></i>'},esc(cc.note),'Kommentar'+(cc.author?' · '+esc(cc.author):''),pill(esc(String(cc.commentType||'').charAt(0).toUpperCase()+String(cc.commentType||'').slice(1))));
+        rows+=tlRow(dTxt,{html:'<i class="ti ti-message-2"></i>',style:'background:#fff;border:1px solid #E4E0D6;color:var(--text)'},esc(cc.note),'Kommentar'+(cc.author?' · '+esc(cc.author):''),pill(esc(String(cc.commentType||'').charAt(0).toUpperCase()+String(cc.commentType||'').slice(1))));
         return;
       }
       if(item.kind==='record'){
-        rows+=tlRow(dTxt,{html:'🎉',style:'background:#fff;border:1.5px solid #F08566'},esc(item.label),'',pill('Bestwert','background:#fff;color:#B5513A;border:1px solid rgba(240,133,102,.6)'),{bar:'#F08566',border:'rgba(240,133,102,.6)'});
+        rows+=tlRow(dTxt,{html:'<i class="ti ti-trophy"></i>',style:'background:#fff;border:1.5px solid #F08566;color:var(--text)'},esc(item.label),'',pill('Bestwert','background:#fff;color:#B5513A;border:1px solid rgba(240,133,102,.6)'),{bar:'#F08566',border:'rgba(240,133,102,.6)'});
         return;
       }
       var p=item.p;
@@ -11646,20 +11646,20 @@ function openCoachingInfoModal(empId){
       var right=(planned?pill('geplant','background:#fff;color:var(--text2);border:1px dashed #B4AC9C'):'')
         +(eff?pill((eff.delta>=0?'+':'')+eff.delta.toFixed(1).replace('.',',')+' '+esc(eff.label),eff.delta>=0?'background:#E6EFE9;color:#2f6b52':'background:#F6E6E1;color:#9A3A2E'):'')
         +(besteSession&&besteSession.p===p?pill('beste Session'):'');
-      rows+=tlRow(dTxt,{html:'<i class="ti ti-'+(planned?'calendar-event':'users')+'"></i>',style:planned?'background:#fff;border:1px dashed #B4AC9C;color:var(--text3)':'background:#3a3833;color:#fff'},esc(p.type||p.art||'Coaching'),(coach?'Coach '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):''),right);
+      rows+=tlRow(dTxt,{html:'<i class="ti ti-'+(planned?'calendar-event':'users')+'"></i>',style:planned?'background:#fff;border:1px dashed #B4AC9C;color:var(--text)':'background:#fff;border:1px solid #E4E0D6;color:var(--text)'},esc(p.type||p.art||'Coaching'),(coach?'Coach '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):''),right);
       var nextSession=null;
       for(var ni=idx+1;ni<combinedTl.length;ni++){if(combinedTl[ni].kind==='session'){nextSession=combinedTl[ni].p;break;}}
       if(nextSession){
         var gapDays=Math.round((new Date(p.date+'T00:00:00')-new Date(nextSession.date+'T00:00:00'))/86400000);
         if(gapDays>=14){
-          rows+=tlRow('',{html:'⚠',style:'background:#fff;border:1px solid rgba(240,133,102,.6);color:#B5513A'},Math.round(gapDays/7)+' Wochen Pause seit dieser Session','',null,{bg:'#FBF4F1',bar:'#F08566'});
+          rows+=tlRow('',{html:'<i class="ti ti-alert-triangle"></i>',style:'background:#fff;border:1px solid rgba(240,133,102,.6);color:var(--text)'},Math.round(gapDays/7)+' Wochen Pause seit dieser Session','',null,{bg:'#FBF4F1',bar:'#F08566'});
         }
       }
     });
   }
   h+=ciBox('ciSecVerlauf','Verlauf <span style="font-size:12px;font-weight:500;color:var(--text3)">('+combinedTl.length+')</span>','','<div>'+rows+'</div>','margin-bottom:6px;padding-bottom:8px');
   h+='</div>'; // Ende Scrollbereich
-  h+='<div style="padding:10px 18px 14px;border-top:1px solid #E4E0D6;background:#EEEDE9">'
+  h+='<div style="padding:4px 18px 14px;background:#EEEDE9">'
     +'<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:6px 6px 6px 14px;position:relative">'
     +'<i class="ti ti-message-plus" style="color:var(--text3);font-size:17px"></i>'
     +'<input id="ciComposer" type="text" placeholder="Kommentar oder Notiz schreiben …" style="flex:1;border:none;background:transparent;font-size:14.5px;outline:none;padding:6px 0;min-width:0" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ciSubmit(\''+empId+'\');}">'
