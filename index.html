@@ -46,7 +46,7 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .rl-btn.on{background:#fff;color:var(--text);box-shadow:0 0 0 1px #E4E0D6,0 2px 6px rgba(40,32,15,.06);}
 .rl-btn.on:before{content:"";position:absolute;left:-13px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#F08566;}
 .rl-soft{background:#ECE9E1;color:var(--text);}
-#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before,#addEmpModal .rl-btn.on:before,#addTaskModal .rl-btn.on:before,#perfPopModal .rl-btn.on:before,#cevModal .rl-btn.on:before,#commentModal .rl-btn.on:before{left:-9px;}
+#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before,#addEmpModal .rl-btn.on:before,#addTaskModal .rl-btn.on:before,#commentModal .rl-btn.on:before,#perfPopModal .rl-btn.on:before,#cevModal .rl-btn.on:before,#commentModal .rl-btn.on:before{left:-9px;}
 /* Ein Popup für alles: Bereiche oben, Abschnitte unter dem Strich (gleiche Größe, aktiv nur dezent hinterlegt) */
 .rl-btn.rl-sub.on{background:#EFECE5!important;box-shadow:none!important;}
 .rl-btn.rl-sub.on:before{display:none!important;}
@@ -8658,127 +8658,115 @@ function deleteHistorieEval(empId,evalId){
   sb.from('reviews').delete().eq('id',evalId).then(function(){renderTab();}).catch(function(){renderTab();});
 }
 function openCommentModal(empId,editCommentId){
-  var emp=employees.find(function(e){return e.id===empId;});
-  var existingComment=editCommentId?(reviews[empId]||[]).find(function(r){return r.id===editCommentId;}):null;
-  var overlay=document.createElement('div');
-  overlay.id='commentModal';
-  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px 16px';
-
-  var box=document.createElement('div');
-  box.style.cssText='background:#F7F5F0;border:1px solid #E4E0D6;border-radius:16px;padding:24px 28px;width:680px;max-width:95vw;max-height:86vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18)';
-
-  var hdr=document.createElement('div');
-  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:18px';
-  hdr.innerHTML='<div style="font-size:17px;font-weight:700">'+(existingComment?'Kommentar bearbeiten':'Kommentar hinzufügen')+'</div>';
-  var closeBtn=document.createElement('button');
-  closeBtn.textContent='×';
-  closeBtn.style.cssText='background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1';
-  closeBtn.onclick=function(){overlay.remove();};
-  hdr.appendChild(closeBtn);
-  box.appendChild(hdr);
-
-  var curName='Unbekannt';
+  // Kommentar im gemeinsamen Popup: eine Kachel zum Schreiben, darunter die letzten fünf Kommentare
+  var emp=employees.find(function(e){return String(e.id)===String(empId);});
+  var old=document.getElementById('commentModal');if(old)old.remove();
+  var curName='Admin';
   if(typeof currentCoach!=='undefined'&&currentCoach)curName=currentCoach.name;
-  else if(typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof appUsers!=='undefined'){
-    var matchUser=appUsers.find(function(u){return u.email===currentAuthUser.email;});
-    if(matchUser)curName=matchUser.name;
+  else if(typeof currentAuthUser!=='undefined'&&currentAuthUser){
+    var mu=(typeof appUsers!=='undefined'?appUsers:[]).find(function(u){return u.email===currentAuthUser.email;});
+    curName=mu?mu.name:((typeof resolveNonEmployeeName==='function'&&resolveNonEmployeeName(currentAuthUser.email))||'Admin');
   }
-
-  var sec1=document.createElement('div');
-  sec1.style.cssText='font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
-  sec1.textContent='① Wer & Wann';
-  box.appendChild(sec1);
-  var sec1body=document.createElement('div');
-  sec1body.style.cssText='border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px';
-  sec1body.innerHTML='<label style="font-size:12px;font-weight:600;color:var(--text2)">Verfasser</label>'
-    +'<div style="font-size:13px;margin-top:4px;color:var(--text)">'+esc(curName)+'</div>'
-    +'<label style="font-size:12px;font-weight:600;color:var(--text2);margin-top:10px;display:block">Datum</label>'
-    +'<input type="date" id="comment-date" value="'+(existingComment?existingComment.date:today())+'" style="display:block;margin-top:4px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);width:220px">';
-  box.appendChild(sec1body);
-
-  var sec2=document.createElement('div');
-  sec2.style.cssText='font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
-  sec2.textContent='② Art des Kommentars';
-  box.appendChild(sec2);
-  var sec2body=document.createElement('div');
-  sec2body.style.cssText='border-left:2px solid var(--border2);padding-left:14px;margin-bottom:16px';
-  var pillWrap=document.createElement('div');
-  pillWrap.style.cssText='display:flex;gap:8px;margin-top:6px';
-  var commentType=existingComment?existingComment.commentType:'diverses';
-  ['skill','will','result','diverses'].forEach(function(t){
-    var p=document.createElement('div');
-    p.textContent=t.charAt(0).toUpperCase()+t.slice(1);
-    p.dataset.type=t;
-    var setActive=function(){
-      pillWrap.querySelectorAll('div').forEach(function(el){el.style.background='#fff';el.style.borderColor='var(--border2)';el.style.color='var(--text2)';});
-      p.style.background='#F08566';p.style.borderColor='#F08566';p.style.color='#fff';
-      commentType=t;
-    };
-    p.style.cssText='padding:7px 16px;border-radius:20px;border:1.5px solid var(--border2);font-size:12.5px;font-weight:600;color:var(--text2);cursor:pointer;background:#fff';
-    p.onclick=setActive;
-    if(t===commentType)setActive();
-    pillWrap.appendChild(p);
-  });
-  sec2body.appendChild(pillWrap);
-  box.appendChild(sec2body);
-
-  var sec3=document.createElement('div');
-  sec3.style.cssText='font-size:11px;font-weight:700;color:#F08566;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px';
-  sec3.textContent='③ Kommentar';
-  box.appendChild(sec3);
-  var sec3body=document.createElement('div');
-  sec3body.style.cssText='border-left:2px solid var(--border2);padding-left:14px;margin-bottom:6px';
-  var textarea=document.createElement('textarea');
-  textarea.id='comment-text';
-  textarea.placeholder='z.B. Kommt regelmäßig zu spät zum Stand-up...';
-  if(existingComment)textarea.value=existingComment.note;
-  textarea.style.cssText='display:block;margin-top:4px;width:100%;font-size:13px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);min-height:100px;resize:vertical;font-family:inherit';
-  sec3body.appendChild(textarea);
-  box.appendChild(sec3body);
-
-  var footer=document.createElement('div');
-  footer.style.cssText='display:flex;justify-content:flex-end;gap:8px;margin-top:6px';
-  var cancelBtn=document.createElement('button');
-  cancelBtn.className='btn';
-  cancelBtn.textContent='Abbrechen';
-  cancelBtn.onclick=function(){overlay.remove();};
-  var saveBtn=document.createElement('button');
-  saveBtn.className='btn btn-primary';
-  saveBtn.textContent='Speichern';
-  saveBtn.textContent=existingComment?'Speichern':'Speichern';
-  saveBtn.onclick=function(){
-    var txt=document.getElementById('comment-text').value.trim();
-    if(!txt){alert('Bitte einen Kommentar eingeben.');return;}
-    var dateVal=document.getElementById('comment-date').value||today();
-    if(!reviews[empId])reviews[empId]=[];
-    if(existingComment){
-      existingComment.date=dateVal;
-      existingComment.commentType=commentType;
-      existingComment.note=txt;
-      saveCommentToDb(empId,existingComment,true);
-    } else {
-      var newC={
-        id:newCommentId(),
-        date:dateVal,
-        isComment:true,
-        commentType:commentType,
-        note:txt,
-        author:curName
+  var st={editId:null,type:'diverses'};
+  var CARD='background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)';
+  var ov=document.createElement('div');ov.id='commentModal';ov.dataset.puShell='1';
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px 16px';
+  ov.innerHTML='<div style="background:#EEEDE9;border:1px solid #E4E0D6;border-radius:16px;width:680px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18);position:relative">'
+    +'<div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div id="cmKick" style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Kommentar hinzufügen</div>'
+    +'<div style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(emp?esc(emp.name)+(emp.role?' · '+esc(emp.role):''):'')+'</div></div>'
+    +'<button class="btn" type="button" id="cmX" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" aria-label="Schließen"><i class="ti ti-x"></i></button></div>'
+    +'<div style="display:flex;min-height:0;flex:1">'
+    +'<div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
+    +'<button class="rl-btn on" type="button" aria-label="Neuer Kommentar" data-target="cmSec1" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById(\'cmSec1\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'start\'})"><i class="ti ti-pencil"></i><span class="rl-tip" style="left:48px">Neuer Kommentar</span></button>'
+    +'<button class="rl-btn" type="button" aria-label="Letzte Kommentare" data-target="cmSec2" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById(\'cmSec2\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'start\'})"><i class="ti ti-list"></i><span class="rl-tip" style="left:48px">Letzte Kommentare</span></button>'
+    +'</div>'
+    +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">'
+    +'<div id="cmScroll" style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px">'
+    +'<div id="cmSec1" style="'+CARD+'"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px"><span id="cmTitle">Neuer Kommentar</span><span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)">von '+esc(curName)+'</span></div>'
+    +'<div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px"><div style="width:170px;flex-shrink:0"><label>Datum</label><input type="date" id="comment-date" value="'+today()+'"></div>'
+    +'<div style="flex:1;min-width:0"><label>Art</label><div id="cmArt" style="display:flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;padding:2px;height:38px;align-items:center"></div></div></div>'
+    +'<label>Kommentar</label><textarea id="comment-text" placeholder="z. B. Kommt regelmäßig zu spät zum Stand-up …" style="min-height:70px;resize:vertical"></textarea>'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-top:12px"><label id="cmNoteWrap" style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;font-size:13px;color:var(--text2)"><input type="checkbox" id="comment-to-note" style="width:16px;height:16px;accent-color:#3a3833;margin:0"> In die Notiz zum Mitarbeiter übernehmen</label>'
+    +'<span style="margin-left:auto;display:flex;gap:8px"><button class="btn" type="button" id="cmCancelEdit" style="height:36px;width:auto;display:none">Bearbeiten abbrechen</button>'
+    +'<button class="btn btn-primary" type="button" id="cmSave" style="height:36px;width:auto"><i class="ti ti-check"></i> <span>Kommentar speichern</span></button></span></div></div>'
+    +'<div id="cmSec2" style="'+CARD+';margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Letzte Kommentare <span id="cmN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span>'
+    +'<button class="btn" type="button" id="cmAll" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px">Alle in Development</button></div><div id="cmList"></div></div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" id="cmClose" style="height:36px;width:auto">Schließen</button></div>'
+    +'</div></div>'
+    +'<div id="cmToast" style="position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:#1d1c1a;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;display:none;white-space:nowrap;-webkit-font-smoothing:antialiased"></div>'
+    +'</div>';
+  document.body.appendChild(ov);
+  var $=function(id){return document.getElementById(id);};
+  $('cmX').onclick=$('cmClose').onclick=function(){ov.remove();};
+  $('cmAll').onclick=function(){ov.remove();selectedEmp=empId;view='emp';activeTab='coaching-eval';renderSidebar();renderMain();};
+  function renderArt(){
+    $('cmArt').innerHTML=['skill','will','result','diverses'].map(function(t){var on=t===st.type;
+      return '<span data-t="'+t+'" style="flex:1;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;'+(on?'background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)':'color:var(--text2);font-weight:500')+'">'+t.charAt(0).toUpperCase()+t.slice(1)+'</span>';}).join('');
+    [].slice.call($('cmArt').children).forEach(function(sp){sp.onclick=function(){st.type=sp.dataset.t;renderArt();};});
+  }
+  function toast(msg){var t=$('cmToast');if(!t)return;t.textContent=msg;t.style.display='block';clearTimeout(window._cmTT);window._cmTT=setTimeout(function(){t.style.display='none';},3000);}
+  function setEdit(c){
+    st.editId=c?c.id:null;st.type=c?(c.commentType||'diverses'):'diverses';
+    $('comment-date').value=c?c.date:today();$('comment-text').value=c?c.note:'';$('comment-to-note').checked=false;
+    $('cmTitle').textContent=c?'Kommentar bearbeiten':'Neuer Kommentar';$('cmKick').textContent=c?'Kommentar bearbeiten':'Kommentar hinzufügen';
+    $('cmSave').lastElementChild.textContent=c?'Änderung speichern':'Kommentar speichern';
+    $('cmCancelEdit').style.display=c?'':'none';$('cmNoteWrap').style.display=c?'none':'flex';
+    renderArt();
+    if(c){$('cmSec1').scrollIntoView({behavior:'smooth',block:'start'});$('comment-text').focus();}
+  }
+  function renderList(){
+    var list=(reviews[empId]||[]).filter(function(r){return r.isComment;}).slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+    $('cmN').textContent='('+list.length+')';
+    var ed=canEditHistorie();
+    $('cmList').innerHTML=list.length?list.slice(0,5).map(function(c){
+      var art=String(c.commentType||'diverses');art=art.charAt(0).toUpperCase()+art.slice(1);
+      var d=c.date?c.date.slice(8,10)+'.'+c.date.slice(5,7)+'.':'';
+      return '<div title="'+esc(c.note||'')+'" style="display:flex;align-items:flex-start;gap:12px;height:84px;padding:12px;border:1px solid #E4E0D6;border-radius:10px;background:#EFECE5;margin-bottom:6px;overflow:hidden">'
+        +'<div style="width:96px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+d+'</span><span style="font-size:13.5px;font-weight:600;color:var(--text);line-height:19px">'+esc(art)+'</span></div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.author||'')+'</div>'
+        +'<div style="font-size:13.5px;line-height:19px;height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text)">'+esc(c.note||'')+'</div></div>'
+        +(ed?'<span style="display:flex;gap:6px;flex-shrink:0;align-self:flex-start">'
+          +'<button class="btn" type="button" title="Bearbeiten" data-cid="'+c.id+'" data-act="edit" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-pencil"></i></button>'
+          +'<button class="btn" type="button" title="Löschen" data-cid="'+c.id+'" data-act="del" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-trash"></i></button></span>':'')
+        +'</div>';
+    }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Noch keine Kommentare.</div>';
+    [].slice.call($('cmList').querySelectorAll('button[data-act]')).forEach(function(b){
+      b.onclick=function(){
+        var c=(reviews[empId]||[]).find(function(r){return String(r.id)===String(b.dataset.cid);});if(!c)return;
+        if(b.dataset.act==='edit')setEdit(c);
+        else{var n0=(reviews[empId]||[]).length;deleteHistorieComment(empId,c.id);if((reviews[empId]||[]).length<n0){if(st.editId===c.id)setEdit(null);renderList();toast('Kommentar gelöscht');delete _puState['coachingInfoModal'];}}
       };
-      reviews[empId].push(newC);
-      saveCommentToDb(empId,newC,false);
+    });
+  }
+  $('cmCancelEdit').onclick=function(){setEdit(null);};
+  $('cmSave').onclick=function(){
+    var txt=$('comment-text').value.trim();
+    if(!txt){alert('Bitte einen Kommentar eingeben.');$('comment-text').focus();return;}
+    var dateVal=$('comment-date').value||today();
+    if(!reviews[empId])reviews[empId]=[];
+    if(st.editId){
+      var ex=reviews[empId].find(function(r){return String(r.id)===String(st.editId);});
+      if(ex){ex.date=dateVal;ex.commentType=st.type;ex.note=txt;saveCommentToDb(empId,ex,true);}
+      toast('Änderung gespeichert');
+    } else {
+      var nc={id:newCommentId(),date:dateVal,isComment:true,commentType:st.type,note:txt,author:curName};
+      reviews[empId].push(nc);saveCommentToDb(empId,nc,false);
+      if($('comment-to-note').checked&&emp){
+        var d=new Date();var stamp=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+        var notiz=(emp.notes&&String(emp.notes).trim()?String(emp.notes).trim()+'\n':'')+stamp+' '+txt;
+        emp.notes=notiz;
+        sb.from('employees').update({notes:notiz}).eq('id',emp.id).then(function(res){if(res&&res.error)alert('Notiz konnte nicht gespeichert werden: '+res.error.message);});
+      }
+      toast('Kommentar gespeichert');
     }
-    overlay.remove();
-    var infoModalOpen=document.getElementById('coachingInfoModal')&&!document.getElementById('coachingInfoModal').classList.contains('hidden');
-    if(infoModalOpen){openCoachingInfoModal(empId);}
-    else{renderTab();}
+    setEdit(null);renderList();
+    delete _puState['coachingInfoModal'];
+    if(view==='emp')renderTab();
   };
-  footer.appendChild(cancelBtn);
-  footer.appendChild(saveBtn);
-  box.appendChild(footer);
-
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
+  var ex0=editCommentId?(reviews[empId]||[]).find(function(r){return String(r.id)===String(editCommentId);}):null;
+  setEdit(ex0||null);renderList();
+  if(!ex0)setTimeout(function(){var t=$('comment-text');if(t)t.focus();},50);
 }
 // ── PROVISION: komplett eigenstaendige Tabelle, unabhaengig von buildOverviewTab (keine geteilte Zustandsvariable) ──
 var provisionMode='year'; // 'month' | 'year' | 'custom'
