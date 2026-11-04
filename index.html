@@ -2498,9 +2498,9 @@ function renderCoachingAnsicht(){
           var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
           if(e2.planned){
             var chipPast=x.d<heute;
-            var chipBg=chipPast?'#F7F5F0':coachPetrolColor(x.coachId);
+            var chipBg=chipPast?'#EFECE5':'#FDF0EB';
             var chipOp=1;
-            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+chipBg+';opacity:'+chipOp+';color:'+(chipPast?'var(--text)':'#fff')+';'+(chipPast?'box-shadow:inset 0 0 0 1px #E4E0D6;':'')+'border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'">'+esc(labelTxt)+'</div>';
+            k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+chipBg+';opacity:'+chipOp+';color:'+(chipPast?'var(--text2)':'var(--text)')+';box-shadow:inset 0 0 0 1px '+(chipPast?'#E4E0D6':'rgba(240,133,102,0.55)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'">'+esc(labelTxt)+'</div>';
           } else {
             var r2=x.r?RS[x.r]:null;
             k+='<div '+dataAttrs+' onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="font-size:10px;background:'+(r2?r2.bg:'var(--bg2)')+';color:'+(r2?r2.color:'var(--text2)')+';border-radius:3px;padding:2px 5px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer" title="'+(coachEmpM?esc(coachEmpM.name)+' / ':'')+esc(x.isGroup?'Gruppencoaching':x.en)+' · '+esc(x.t||'')+'"><i class="ti ti-check" style="font-size:8px"></i> '+esc(labelTxt)+'</div>';
@@ -2584,8 +2584,9 @@ function renderCoachingAnsicht(){
         var isPast=x.d<heute;
         var baseColor=coachPetrolColor(x.coachId);
         // Vergangene Termine: ruhig in Boxfarbe #F7F5F0 mit dunkler Schrift, kommende in der Coach-Farbe
-        var bg=isPast?'#F7F5F0':baseColor, bdr=isPast?'#E4E0D6':'#1d1c1a';
-        var fg=isPast?'var(--text)':'#fff', fgSub=isPast?'var(--text3)':'rgba(255,255,255,0.85)';
+        // Entwurf B: vergangen grau-beige, geplant zart koralle
+        var bg=isPast?'#EFECE5':'#FDF0EB', bdr=isPast?'#E4E0D6':'rgba(240,133,102,0.55)';
+        var fg='var(--text)', fgSub=isPast?'var(--text3)':'#B5513A';
         var opacity=1;
         var colWidthPct=100/totalCols;
         var leftPct=e._col*colWidthPct;
@@ -2593,9 +2594,9 @@ function renderCoachingAnsicht(){
         var wenTxt=x.isGroup?'Gruppencoaching':x.en;
         var labelTxt=(coachEmp?coachEmp.name+' / ':'')+wenTxt+(x.f?' - '+x.f:'');
         var dataAttrs='data-eid="'+esc(x.eid)+'" data-sid="'+esc(x.sid)+'" data-typ="'+esc(x.t||'')+'" data-focus="'+esc(x.f||'')+'" data-datum="'+esc(x.d)+'" data-uhrzeit="'+esc(x.uhrzeit)+'"';
-        k+='<div draggable="true" '+dataAttrs+' ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';opacity:'+opacity+';border-left:3px solid '+bdr+';border-radius:5px;padding:3px 5px;font-size:9.5px;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,0.12)" title="'+esc(labelTxt)+' · '+esc(x.t||'')+'">'
+        k+='<div draggable="true" '+dataAttrs+' ondragstart="dragSessionStart(event,\''+x.sid+'\',\''+x.eid+'\')" onclick="event.stopPropagation();openPlannedSessionFromChip(this)" style="position:absolute;left:calc('+leftPct+'% + 2px);width:calc('+colWidthPct+'% - 4px);top:'+top+'px;height:'+height+'px;background:'+bg+';opacity:'+opacity+';border:1px solid '+bdr+';border-radius:6px;padding:3px 6px;font-size:9.5px;overflow:hidden;cursor:grab" title="'+esc(labelTxt)+' · '+esc(x.t||'')+'">'
           +'<div style="font-weight:700;color:'+fg+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(labelTxt)+'</div>'
-          +'<div style="color:'+fgSub+'">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+'</div>'
+          +'<div style="color:'+fgSub+'">'+x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+(isPast?'':' · geplant')+'</div>'
           +'</div>';
       });
       k+='</div>';
@@ -2623,7 +2624,7 @@ function renderCoachingAnsicht(){
     +'</div>';
   h+=buildCalNavControls();
   h+='</div>';
-  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid #F08566;background:var(--s-tint-strong);display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#F08566;display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#F7B39A;display:inline-block"></span>Abgeschlossen</span></div>';
+  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid #F08566;background:#fff;display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#EFECE5;border:1px solid #E4E0D6;display:inline-block"></span>Vergangen</span></div>';
   h+='</div>';
   h+=(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
 
