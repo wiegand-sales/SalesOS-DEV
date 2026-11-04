@@ -10340,6 +10340,7 @@ function puShellify(ov,id){
       var ic=icons[n-1]||['ti-point',ttl];
       var b=document.createElement('button');b.className='rl-btn'+(n===1?' on':'');b.type='button';b.setAttribute('aria-label',ttl);
       b.style.cssText='width:38px;height:38px;font-size:18px';b.innerHTML='<i class="ti '+ic[0]+'"></i><span class="rl-tip" style="left:48px">'+esc(ttl)+'</span>';
+      b.dataset.target=card.id;
       (function(c){b.onclick=function(){c.scrollIntoView({behavior:'smooth',block:'start'});};})(card);
       rail.appendChild(b);
       return;
@@ -10356,6 +10357,26 @@ function puShellify(ov,id){
   fw.appendChild(foot);
   right.appendChild(sc);right.appendChild(fw);main.appendChild(rail);main.appendChild(right);box.appendChild(main);
   ov.dataset.puShell='1';
+}
+function puSpy(rail){
+  var subs=[].slice.call(rail.querySelectorAll('.rl-btn.rl-sub'));if(!subs.length)return;
+  var items=subs.map(function(b){
+    var tid=b.dataset.target;
+    if(!tid){var mm=(b.getAttribute('onclick')||'').match(/getElementById\('([^']+)'\)/);if(mm)tid=mm[1];}
+    return {b:b,id:tid};
+  }).filter(function(x){return x.id;});
+  function mark(btn){subs.forEach(function(b){b.classList.toggle('on',b===btn);});}
+  items.forEach(function(it){if(!it.b.dataset.puSpy){it.b.dataset.puSpy='1';it.b.addEventListener('click',function(){mark(it.b);});}});
+  var first=items.length?document.getElementById(items[0].id):null;if(!first)return;
+  var sc=first.parentElement;while(sc&&sc!==document.body){var oy=getComputedStyle(sc).overflowY;if(oy==='auto'||oy==='scroll')break;sc=sc.parentElement;}
+  if(!sc||sc===document.body||sc.dataset.puSpy)return;
+  sc.dataset.puSpy='1';
+  sc.addEventListener('scroll',function(){
+    var top=sc.getBoundingClientRect().top+24,cur=items[0];
+    items.forEach(function(it){var el=document.getElementById(it.id);if(el&&el.getBoundingClientRect().top<=top)cur=it;});
+    if(sc.scrollTop+sc.clientHeight>=sc.scrollHeight-4)cur=items[items.length-1];
+    mark(cur.b);
+  },{passive:true});
 }
 function puDecorate(id){
   var m=document.getElementById(id);if(!m)return;
@@ -10378,6 +10399,7 @@ function puDecorate(id){
     var sep=document.createElement('span');sep.style.cssText='width:26px;height:1px;background:#E4E0D6;margin:4px 0;flex-shrink:0';
     rail.insertBefore(sep,top.nextSibling);
   }
+  puSpy(rail);
   top.innerHTML=PU.map(function(p){return '<button class="rl-btn'+(p.k===key?' on':'')+'" type="button" aria-label="'+p.n+'" style="width:38px;height:38px;font-size:18px;flex-shrink:0" onclick="puGo(\''+p.k+'\')"><i class="ti '+p.i+'"></i><span class="rl-tip" style="left:48px">'+p.n+'</span></button>';}).join('');
   // Session: Schalter „Erfassen | Planen“ im Kopf
   if(key==='se'){
@@ -11964,8 +11986,7 @@ function openCoachingInfoModal(empId){
   var sc=function(id){return "var el=document.getElementById('"+id+"');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})";};
   h+='<div style="display:flex;min-height:0;flex:1">'
     +'<div style="width:56px;flex-shrink:0;align-self:stretch;margin:14px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
-    +railBtn('ti-chart-bar','Coaching im Überblick',sc('ciSecTop'),true)+railBtn('ti-message-circle','Verlauf',sc('ciSecVerlauf'))+railBtn('ti-notes','Notiz',sc('ciSecNotiz'))
-    +railBtn('ti-star','QA-Bewertungen',"closeModal('coachingInfoModal');selectedEmp='"+empId+"';view='emp';activeTab='call-performance';renderSidebar();renderMain();")
+    +railBtn('ti-chart-bar','Coaching im Überblick',sc('ciSecTop'),true)+railBtn('ti-notes','Notiz zum Mitarbeiter',sc('ciSecNotiz'))+railBtn('ti-list','Verlauf',sc('ciSecVerlauf'))
     +'<span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span>'
     +railBtn('ti-calendar-plus','Session planen',"closeModal('coachingInfoModal');openSessionModal('"+empId+"')")
     +'</div>'
