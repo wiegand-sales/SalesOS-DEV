@@ -15,7 +15,7 @@
 <style>
 :root{
   /* Feste Flaechen-Palette (Ebenen 3-6): nur diese hellen Toene innerhalb von Boxen verwenden */
-  --page:#EEEDE9;--s-sub:#EFECE5;--s-white:#ffffff;--s-tint:rgba(29,28,26,0.035);--s-tint-strong:rgba(29,28,26,0.07);
+  --page:#EEEDE9;--s-sub:#EFECE5;--s-white:#F7F5F0;--s-tint:rgba(29,28,26,0.035);--s-tint-strong:rgba(29,28,26,0.07);
   --bg:var(--s-white);--bg-solid:var(--s-white);--bg2:var(--s-sub);--bg3:var(--s-sub);
   --text:#1a1a18;--text2:#6b6b67;--text3:#9a9a96;
   --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.12);--glass-edge:#E4E0D6;
@@ -54,7 +54,7 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .sb-pk{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;padding:18px 18px 0;}
 .sb-ptitle{font-size:18px;font-weight:800;padding:2px 18px 12px;letter-spacing:-.01em;}
 .sb-search{margin:0 12px 6px;position:relative;}
-.sb-search input{height:38px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;padding:0 12px 0 34px;font-size:13.5px;font-weight:600;}
+.sb-search input{height:38px;border-radius:10px;background:#F7F5F0;border:1px solid #E4E0D6;padding:0 12px 0 34px;font-size:13.5px;font-weight:600;}
 .sb-search i{position:absolute;left:12px;top:11px;color:var(--text3);font-size:15px;}
 .sb-setlist{padding:0 12px;}
 .sb-setlist a{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;font-weight:600;font-size:14.5px;color:var(--text2);cursor:pointer;margin-bottom:2px;text-decoration:none;}
@@ -94,10 +94,10 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .tb-left{display:flex;align-items:center;gap:14px;}
 .tb-name{font-size:18px;font-weight:700;}
 .tb-meta{font-size:12px;color:var(--text2);margin-top:1px;}
-.btn{padding:8px 13px;font-size:13px;font-weight:500;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border2);background:rgba(255,255,255,0.5);color:var(--text);display:flex;align-items:center;gap:6px;transition:all .15s ease;font-family:inherit;}
+.btn{padding:8px 13px;font-size:13px;font-weight:500;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border2);background:#F7F5F0;color:var(--text);display:flex;align-items:center;gap:6px;transition:all .15s ease;font-family:inherit;}
 .ziel-num::-webkit-outer-spin-button,.ziel-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .ziel-num{-moz-appearance:textfield;}
-.btn:hover{background:rgba(255,255,255,0.85);box-shadow:0 2px 8px rgba(40,32,15,.1);}
+.btn:hover{background:#EFECE5;box-shadow:0 2px 8px rgba(40,32,15,.1);}
 .btn-primary{background:#F08566;color:#fff;border-color:var(--purple);box-shadow:0 6px 16px rgba(29,28,26,0.14);}
 .btn-primary:hover{background:#E8765A;box-shadow:0 4px 14px rgba(29,28,26,0.19);transform:translateY(-1px);}
 .btn-sm{padding:5px 10px;font-size:12px;}
@@ -1246,7 +1246,7 @@ function ddSelectHtml(id,icon,label,items,curVal,pickFn,withSearch){
   var h='<div style="position:relative" onclick="event.stopPropagation()">'
     +'<button type="button" class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="ddToggle(\''+id+'\')"><i class="ti '+icon+'"></i> '+esc(label)+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>'
     +'<div id="dd_'+id+'" class="dd-panel" style="display:none;position:absolute;top:38px;right:0;z-index:40;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;flex-direction:column">';
-  if(withSearch)h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #E4E0D6;border-radius:8px;padding:6px 8px">'
+  if(withSearch)h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:8px;padding:6px 8px">'
     +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
     +'<input placeholder="Suchen…" oninput="ddFilter(\''+id+'\',this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text);height:auto;padding:0">'
     +'</div></div>';
@@ -5851,7 +5851,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   if(overviewEmpDropdownOpen){
     h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
     // Mitarbeiter-Suche + Liste
-    h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #E4E0D6;border-radius:8px;padding:6px 8px">'
+    h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:8px;padding:6px 8px">'
       +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
       +'<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
       +'</div></div>';
@@ -11718,7 +11718,7 @@ function openCoachingInfoModal(empId){
   h+=ciBox('ciSecVerlauf','Verlauf <span style="font-size:12px;font-weight:500;color:var(--text3)">('+combinedTl.length+')</span>','','<div>'+rows+'</div>','margin-bottom:6px;padding-bottom:8px');
   h+='</div>'; // Ende Scrollbereich
   h+='<div style="padding:4px 18px 14px;background:#EEEDE9">'
-    +'<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E0D6;border-radius:14px;padding:6px 6px 6px 14px;position:relative">'
+    +'<div style="display:flex;align-items:center;gap:10px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:6px 6px 6px 14px;position:relative">'
     +'<i class="ti ti-message-plus" style="color:var(--text3);font-size:17px"></i>'
     +'<input id="ciComposer" type="text" placeholder="Kommentar oder Notiz schreiben …" style="flex:1;border:none;background:transparent;font-size:14.5px;outline:none;padding:6px 0;min-width:0" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ciSubmit(\''+empId+'\');}">'
     +'<div style="display:flex;align-items:center;border-radius:10px;background:#EFECE5;border:1px solid #E4E0D6;position:relative">'
