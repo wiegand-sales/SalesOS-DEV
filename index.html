@@ -1241,6 +1241,50 @@ function deleteAppUser(uid,name){
   }).catch(function(err){_deletingAppUser=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 function selectSettingsSub(v){settingsView=v;view='settings';renderSidebar();renderMain();}
+// ── Einheitliches Auswahlfeld (Design wie „Mitarbeiter ausgewählt“): Knopf + Panel in #EFECE5 ──
+function ddSelectHtml(id,icon,label,items,curVal,pickFn,withSearch){
+  var h='<div style="position:relative" onclick="event.stopPropagation()">'
+    +'<button type="button" class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="ddToggle(\''+id+'\')"><i class="ti '+icon+'"></i> '+esc(label)+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>'
+    +'<div id="dd_'+id+'" class="dd-panel" style="display:none;position:absolute;top:38px;right:0;z-index:40;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;flex-direction:column">';
+  if(withSearch)h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #E4E0D6;border-radius:8px;padding:6px 8px">'
+    +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
+    +'<input placeholder="Suchen…" oninput="ddFilter(\''+id+'\',this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text);height:auto;padding:0">'
+    +'</div></div>';
+  h+='<div class="dd-list" style="max-height:280px;overflow-y:auto;padding-top:2px">';
+  items.forEach(function(it){
+    if(it.head){h+='<div class="dd-head" style="font-size:11px;font-weight:700;color:var(--text3);padding:8px 12px 4px">'+esc(it.head)+'</div>';return;}
+    var on=String(it.v)===String(curVal);
+    h+='<div class="dd-opt" data-search="'+esc(String(it.l).toLowerCase())+'" onclick="ddPick(\''+id+'\',\''+pickFn+'\',\''+String(it.v).replace(/'/g,"\\'")+'\')" style="display:grid;grid-template-columns:'+(it.role!==undefined?'34px ':'')+'1fr 16px;align-items:center;gap:6px;padding:7px 12px;margin:0 4px;font-size:13px;cursor:pointer;border-radius:6px;white-space:nowrap;color:var(--text);font-weight:'+(on?600:400)+'" onmouseover="this.style.background=\'rgba(29,28,26,0.06)\'" onmouseout="this.style.background=\'transparent\'">'
+      +(it.role!==undefined?'<span style="font-size:11px;font-weight:700;color:var(--text3)">'+esc(it.role||'')+'</span>':'')
+      +'<span style="overflow:hidden;text-overflow:ellipsis">'+esc(it.l)+'</span>'
+      +'<span>'+(on?'<i class="ti ti-check" style="font-size:14px"></i>':'')+'</span></div>';
+  });
+  h+='<div class="dd-none" style="display:none;padding:12px;text-align:center;font-size:12px;color:var(--text3)">Keine Treffer</div>';
+  h+='</div></div></div>';
+  return h;
+}
+function ddToggle(id){
+  var el=document.getElementById('dd_'+id);if(!el)return;
+  var open=el.style.display==='flex';
+  document.querySelectorAll('.dd-panel').forEach(function(p){p.style.display='none';});
+  document.querySelectorAll('.dd-raised').forEach(function(c){c.style.zIndex='';c.classList.remove('dd-raised');});
+  if(!open){var card=el.closest('.card');if(card){card.style.position='relative';card.style.zIndex='60';card.classList.add('dd-raised');}
+    el.style.display='flex';var i=el.querySelector('input');if(i){i.value='';ddFilter(id,'');setTimeout(function(){i.focus();},0);}}
+}
+function ddFilter(id,q){
+  var el=document.getElementById('dd_'+id);if(!el)return;
+  q=(q||'').toLowerCase().trim();var n=0;
+  el.querySelectorAll('.dd-opt').forEach(function(o){var hit=!q||o.dataset.search.indexOf(q)>=0;o.style.display=hit?'grid':'none';if(hit)n++;});
+  el.querySelectorAll('.dd-head').forEach(function(hd){hd.style.display=q?'none':'block';});
+  var none=el.querySelector('.dd-none');if(none)none.style.display=n?'none':'block';
+}
+function ddPick(id,fn,val){
+  var el=document.getElementById('dd_'+id);if(el)el.style.display='none';
+  document.querySelectorAll('.dd-raised').forEach(function(c){c.style.zIndex='';c.classList.remove('dd-raised');});
+  if(typeof window[fn]==='function')window[fn](val);
+}
+document.addEventListener('click',function(){document.querySelectorAll('.dd-panel').forEach(function(p){p.style.display='none';});document.querySelectorAll('.dd-raised').forEach(function(c){c.style.zIndex='';c.classList.remove('dd-raised');});});
+
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
 function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
 var _bannerRotationOrder=['performance','overview','ziel','coaching','activity'];
@@ -5623,37 +5667,26 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   h+='<div id="overviewChartLegend" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>';
   h+='</div>';
   h+='<div style="display:flex;align-items:center;gap:8px">';
-  h+='<select onchange="setOverviewChartEmp(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#F08566">';
-  h+='<option value=""'+(!overviewChartEmpId?' selected':'')+'>Team (alle)</option>';
-  h+='<optgroup label="Teams">';
-  [['group:Onboarding','Onboarding'],['group:VLC','VLC'],['group:SR','SR'],['group:SE','SE']].forEach(function(g){
-    h+='<option value="'+g[0]+'"'+(overviewChartEmpId===g[0]?' selected':'')+'>'+g[1]+'</option>';
-  });
-  h+='</optgroup>';
-  h+='<optgroup label="Mitarbeiter">';
-  visible.filter(function(e){return e.active!==false;}).forEach(function(e){
-    h+='<option value="'+e.id+'"'+(overviewChartEmpId===e.id?' selected':'')+'>'+e.name+'</option>';
-  });
-  h+='</optgroup>';
-  var _inaktivChart=visible.filter(function(e){return e.active===false;});
-  if(_inaktivChart.length){
-    h+='<optgroup label="Inaktiv">';
-    _inaktivChart.forEach(function(e){
-      h+='<option value="'+e.id+'"'+(overviewChartEmpId===e.id?' selected':'')+'>'+e.name+'</option>';
-    });
-    h+='</optgroup>';
-  }
-  h+='</select>';
+  (function(){
+    var items=[{v:'',l:'Team (alle)'},{head:'Teams'}];
+    [['group:Onboarding','Onboarding'],['group:VLC','VLC'],['group:SR','SR'],['group:SE','SE']].forEach(function(g){items.push({v:g[0],l:g[1]});});
+    items.push({head:'Mitarbeiter'});
+    visible.filter(function(e){return e.active!==false;}).forEach(function(e){items.push({v:e.id,l:e.name,role:e.role});});
+    var ina=visible.filter(function(e){return e.active===false;});
+    if(ina.length){items.push({head:'Inaktiv'});ina.forEach(function(e){items.push({v:e.id,l:e.name,role:e.role});});}
+    var cur=items.find(function(it){return it.v!==undefined&&it.v===(overviewChartEmpId||'');});
+    h+=ddSelectHtml('ovChartEmp','ti-users',cur?cur.l:'Team (alle)',items,overviewChartEmpId||'','setOverviewChartEmp',true);
+  })();
   h+='<div style="display:flex;border:1px solid var(--border2);border-radius:var(--r-md);overflow:hidden;height:34px">';
   [{k:'day',l:'Tag'},{k:'week',l:'Woche'},{k:'month',l:'Monat'}].forEach(function(it){
     h+='<button style="padding:0 12px;height:100%;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+(overviewChartGroup===it.k?'#F08566':'transparent')+';color:'+(overviewChartGroup===it.k?'#fff':'var(--text2)')+'" onclick="setOverviewChartGroup(\''+it.k+'\')">'+it.l+'</button>';
   });
   h+='</div>';
-  h+='<select onchange="setOverviewChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;accent-color:#F08566">';
-  [{k:'akt',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR Ges.'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].forEach(function(it){
-    h+='<option value="'+it.k+'"'+(overviewChartMetric===it.k?' selected':'')+'>'+it.l+'</option>';
-  });
-  h+='</select>';
+  (function(){
+    var items=[{k:'akt',l:'Aktivitäten'},{k:'optGesamt',l:'Opt. Ges. (Anzahl)'},{k:'crOEM',l:'CR Ges.'},{k:'crTeilweise',l:'CR TW'},{k:'crYes',l:'CR Yes'},{k:'crSyMy',l:'CR SY/MY'},{k:'margeGesamt',l:'Margenerhöhung (Gesamt)'}].map(function(it){return {v:it.k,l:it.l};});
+    var cur=items.find(function(it){return it.v===overviewChartMetric;});
+    h+=ddSelectHtml('ovChartMetric','ti-chart-line',cur?cur.l:'Kennzahl',items,overviewChartMetric,'setOverviewChartMetric',false);
+  })();
   h+='</div>';
   h+='</div>';
   h+='<div style="height:280px;position:relative"><canvas id="overviewPerfChart"></canvas></div>';
@@ -5815,9 +5848,9 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
   h+='<div style="position:relative" id="overviewEmpDropdownWrap">';
   h+='<button class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="toggleOverviewEmpDropdown()"><i class="ti ti-users"></i> '+selLabel+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>';
   if(overviewEmpDropdownOpen){
-    h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:var(--bg-solid);border:1px solid var(--border2);border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
+    h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
     // Mitarbeiter-Suche + Liste
-    h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
+    h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #E4E0D6;border-radius:8px;padding:6px 8px">'
       +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
       +'<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
       +'</div></div>';
@@ -9295,7 +9328,7 @@ function buildProvisionTeamTable(){
   h+='<div style="position:relative" id="provisionTeamEmpDropdownWrap">';
   h+='<button class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="toggleProvisionTeamDropdown()"><i class="ti ti-users"></i> '+selLabel+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>';
   if(provisionTeamDropdownOpen){
-    h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:var(--bg-solid);border:1px solid var(--border2);border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
+    h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
     h+='<div style="padding:0 8px 6px"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
       +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
       +'<input placeholder="Mitarbeiter suchen…" value="'+esc(provisionTeamSearchQuery)+'" oninput="provisionTeamSearchQuery=this.value;filterProvisionTeamEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
