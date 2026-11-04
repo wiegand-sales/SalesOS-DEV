@@ -122,7 +122,7 @@ body.sb-collapsed .sb-rail{border-right:none;}
 #commentModal input:not([type=checkbox]):not([type=radio]):not([type=range]){height:38px;box-sizing:border-box;padding-top:0;padding-bottom:0}
 .modal-ov td input:not([type=checkbox]):not([type=radio]):not([type=range]){height:auto;padding-top:revert;padding-bottom:revert}
 /* Flächen in Popups: kein zusätzlicher Abstand unter dem letzten Feld */
-#ncSecNew>div[style*="#EFECE5"]>*:last-child,#qaSecBew>div[style*="#EFECE5"]>*:last-child{margin-bottom:0!important}
+#ncSecNew>div[style*="#EFECE5"]>*:last-child,#spSecNew>div[style*="#EFECE5"]>*:last-child,#qaSecBew>div[style*="#EFECE5"]>*:last-child{margin-bottom:0!important}
 /* Mitarbeiter-Kopf: Reiter als Schalter */
 #empTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
 #empTabBar.emp-seg .tab{height:28px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text2);background:transparent;white-space:nowrap}
@@ -585,13 +585,14 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 <div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:86vh;overflow:hidden;padding:0;width:680px;display:flex;flex-direction:column;background:#EEEDE9">
   <div id="coachingInfoModalBody" style="display:flex;flex-direction:column;min-height:0;flex:1;max-height:86vh"></div>
 </div></div>
-<div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
+<div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden;position:relative">
   <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Coaching</div><div id="sessionHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('sessionPlanenModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
   <div style="display:flex;min-height:0;flex:1">
-    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Wer & Wann" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('spSecWer');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-users"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span><span class="rl-tip" style="left:48px">Wer & Wann</span></button><button class="rl-btn" type="button" aria-label="Was für ein Coaching" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('spSecWas');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-message-circle"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span><span class="rl-tip" style="left:48px">Was für ein Coaching</span></button><button class="rl-btn" type="button" aria-label="Kontext" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('spSecKon');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-notes"></i><span style="position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">3</span><span class="rl-tip" style="left:48px">Kontext</span></button><span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span><button class="rl-btn" type="button" aria-label="Coaching-Historie" style="width:38px;height:38px;font-size:18px" onclick="openHistorieFromSession()"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Coaching-Historie</span></button></div>
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Session planen" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('spSecNew');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-pencil"></i><span class="rl-tip" style="left:48px">Session planen</span></button><button class="rl-btn" type="button" aria-label="Geplante Sessions" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('spSecList');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-calendar-event"></i><span class="rl-tip" style="left:48px">Geplante Sessions</span></button><span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span><button class="rl-btn" type="button" aria-label="Coaching-Historie" style="width:38px;height:38px;font-size:18px" onclick="openHistorieFromSession()"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Coaching-Historie</span></button></div>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
-        <div id="spSecWer" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Wer &amp; Wann</div>
+        <div id="spSecNew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Session planen</div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Wer &amp; Wann</div>
     <div style="position:relative;margin-bottom:10px">
       <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
       <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleSessionEmpDropdown()">
@@ -607,7 +608,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     </div>
     <div style="margin-top:10px"><label>Coach</label><select id="sessionCoach"></select></div>
         </div>
-        <div id="spSecWas" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Was für ein Coaching</div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Was für ein Coaching</div>
     <div class="f2" style="margin-bottom:10px">
       <div><label>Kategorie</label><select id="sessionKategorie" onchange="onCoachingCategoryChange('sessionKategorie','sessionTyp')"></select></div>
       <div><label>Art des Coachings</label><select id="sessionTyp"></select></div>
@@ -636,14 +637,15 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       </div>
     </div>
         </div>
-        <div id="spSecKon" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Kontext</div>
-    <div id="lastContinueBox"></div>
-    <div><label>Anlass / Notiz für den Coach</label><textarea id="sessionNotiz" placeholder="Warum wird diese Session eingeplant? Was soll der Coach beachten..."></textarea></div>
-        </div>
+<div id="lastContinueBox" style="display:none"></div>
+<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:0 0 8px"><span>Anlass / Notiz für den Coach</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Warum wird die Session eingeplant?</span></div><textarea id="sessionNotiz" placeholder="Warum wird diese Session eingeplant? Was soll der Coach beachten..." style="min-height:72px;resize:vertical"></textarea>
+<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="sessionSpeichernNeu()"><i class="ti ti-check"></i> Session planen</button></div></div>
+        <div id="spSecList" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Geplante Sessions <span id="spListN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span><button class="btn" type="button" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px" onclick="var e=selectedEmp;closeModal('sessionPlanenModal');selectedEmp=e;view='emp';activeTab='session';renderSidebar();renderMain();">Alle in Coaching Sessions</button></div><div id="spList"></div></div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('sessionPlanenModal')">Abbrechen</button><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="sessionSpeichernNeu()"><i class="ti ti-check"></i> Session planen</button></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('sessionPlanenModal')">Schließen</button></div>
     </div>
   </div>
+  <div id="spToast" style="position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:#1d1c1a;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;display:none;white-space:nowrap;-webkit-font-smoothing:antialiased;z-index:5"></div>
 </div></div>
 
 <!-- GRUPPENSESSION ABARBEITEN MODAL -->
@@ -11238,9 +11240,10 @@ function sessionSpeichernNeu(){
     document.getElementById('sessionUhrzeit').value='09:00';
     document.getElementById('sessionEndUhrzeit').value='';
     sessionSelectedEmpIds=[];
-    closeModal('sessionPlanenModal');
+    var _spOpen=!document.getElementById('sessionPlanenModal').classList.contains('hidden');
     renderSidebar();
     renderMain();
+    if(_spOpen)spAfterSave();
   }).catch(function(err){
     _savingSessionPlanen=false;
     alert('Unerwarteter Fehler: '+err.message);
@@ -12175,6 +12178,31 @@ function updateSessionHdSub(){
   var e=employees.find(function(x){return x.id===ids[0];});
   el.textContent=e?(e.name+(e.role?' · '+e.role:'')):'1 Mitarbeiter';
 }
+// ── Session planen im gemeinsamen Popup: geplante Sessions, nach dem Planen offen bleiben ──
+function spRenderList(){
+  var el=document.getElementById('spList');if(!el)return;
+  var t0=today();
+  var list=(protocols[selectedEmp]||[]).filter(function(x){return x.status==='geplant'&&x.date>=t0;}).slice().sort(function(a,b){return String(a.date+(a.uhrzeit||'')).localeCompare(String(b.date+(b.uhrzeit||'')));});
+  var n=document.getElementById('spListN');if(n)n.textContent='('+list.length+')';
+  el.innerHTML=list.length?list.slice(0,5).map(function(x){
+    var coach=x.coachId?employees.find(function(e){return String(e.id)===String(x.coachId);}):null;
+    var meta=[x.uhrzeit?x.uhrzeit+(x.endUhrzeit?'–'+x.endUhrzeit:'')+' Uhr':'',coach?'Coach '+coach.name.split(' ')[0]:'',x.topics&&x.topics.length?x.topics.join(', '):''].filter(Boolean).join(' · ');
+    var txt=x.note||x.notes||'';
+    return '<div title="'+esc(txt)+'" style="display:flex;align-items:flex-start;gap:12px;height:84px;padding:12px;border:1px solid rgba(240,133,102,0.45);border-radius:10px;background:#FDF0EB;margin-bottom:6px;overflow:hidden">'
+      +'<div style="width:150px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+fd(x.date)+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.type||'Session')+'</span></div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(meta)+'</div>'
+      +'<div style="font-size:13.5px;line-height:19px;height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:'+(txt?'var(--text)':'var(--text3)')+'">'+(txt?esc(txt):'Kein Anlass notiert')+'</div></div>'
+      +'<span style="display:flex;gap:6px;flex-shrink:0;align-self:flex-start"><button class="btn" type="button" title="Jetzt erfassen" onclick="openPlannedSession(selectedEmp,\''+x.id+'\',\''+esc(x.type||'').replace(/'/g,'')+'\',\''+esc((x.topics&&x.topics[0])||'').replace(/'/g,'')+'\',\''+x.date+'\',\''+(x.uhrzeit||'')+'\')" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-check"></i></button></span>'
+      +'</div>';
+  }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Keine Sessions geplant.</div>';
+}
+function spAfterSave(){
+  var m=document.getElementById('sessionPlanenModal');
+  if(!m)return;
+  _puSwitching=true;try{openSessionModal(selectedEmp);}finally{_puSwitching=false;}
+  var c=document.getElementById('spSecNew');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});
+  var t=document.getElementById('spToast');if(t){t.textContent='Session geplant';t.style.display='block';clearTimeout(window._spTT);window._spTT=setTimeout(function(){t.style.display='none';},3000);}
+}
 function openSessionModal(empId){
   if(empId)selectedEmp=empId;
   sessionSelectedEmpIds=empId?[empId]:[];
@@ -12201,6 +12229,7 @@ function openSessionModal(empId){
   if(datumEl&&!datumEl.value)datumEl.value=today();
   renderLastContinueBox(selectedEmp);
   updateSessionHdSub();
+  spRenderList();
   openModal('sessionPlanenModal');
 }
 function updateNcHdSub(){
