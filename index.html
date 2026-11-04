@@ -524,21 +524,25 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     </div>
   </div>
 </div></div>
-<div class="modal-ov hidden" id="addTaskModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
+<div class="modal-ov hidden" id="addTaskModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden;position:relative">
   <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Aufgabe hinzufügen</div><div id="atHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('addTaskModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
   <div style="display:flex;min-height:0;flex:1">
-    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Aufgabe" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('atSec1');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-checkbox"></i><span class="rl-tip" style="left:48px">Aufgabe</span></button></div>
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Aufgabe" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('atSec1');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-square-plus"></i><span class="rl-tip" style="left:48px">Aufgabe</span></button><button class="rl-btn" type="button" aria-label="Offene Aufgaben" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('atSec2');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-calendar-due"></i><span class="rl-tip" style="left:48px">Offene Aufgaben</span></button><button class="rl-btn" type="button" aria-label="Zuletzt erledigt" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('atSec3');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-circle-check"></i><span class="rl-tip" style="left:48px">Zuletzt erledigt</span></button></div>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px">
-        <div id="atSec1" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:4px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Aufgabe</div>
+        <div id="atSec1" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Aufgabe</div>
   <div style="margin-bottom:10px"><label>Aufgabentitel</label><input type="text" id="taskText" placeholder="z.B. Pitch-Skript lesen – pages 1 to 9"></div>
   <div style="margin-bottom:10px"><label>Beschreibung</label><textarea id="taskDesc" placeholder="Was soll der Mitarbeiter tun..." style="min-height:80px"></textarea></div>
   <div class="f3"><div><label>Priorität</label><select id="taskPrio"><option value="high">Hoch</option><option value="medium" selected>Mittel</option><option value="low">Niedrig</option></select></div><div><label>Fälligkeitsdatum</label><input type="date" id="taskDue"></div><div><label>Quelle</label><input type="text" id="taskQuelle" placeholder="Session 10.06"></div></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="saveNewTask()"><i class="ti ti-check"></i> Aufgabe hinzufügen</button></div>
         </div>
+        <div id="atSec2" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Offene Aufgaben <span id="atOpenN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span></div><div id="atOpen"></div></div>
+        <div id="atSec3" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Zuletzt erledigt <span style="font-weight:500;color:var(--text3);font-size:12.5px">die letzten drei</span><button class="btn" type="button" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px" onclick="closeModal('addTaskModal');view='emp';activeTab='tasks';renderSidebar();renderMain();">Alle im Reiter „Task“</button></div><div id="atDone"></div></div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('addTaskModal')">Abbrechen</button><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="saveNewTask()"><i class="ti ti-check"></i> Aufgabe hinzufügen</button></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('addTaskModal')">Schließen</button></div>
     </div>
   </div>
+  <div id="atToast" style="position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:#1d1c1a;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;display:none;gap:12px;align-items:center;z-index:5;white-space:nowrap;-webkit-font-smoothing:antialiased"><span id="atToastMsg"></span><span style="color:#F7B39A;cursor:pointer" onclick="atUndo()">Rückgängig</span></div>
 </div></div>
 
 <div class="modal-ov hidden" id="ratingModal"><div class="modal">
@@ -9782,8 +9786,9 @@ function toggleTask(id){
   if(!t)return;
   t.done=!t.done;
   t.status=t.done?'done':'open';
+  t.completedAt=t.done?new Date().toISOString():null;
   renderTab();
-  sb.from('tasks').update({done:t.done,status:t.status}).eq('id',id).then(function(res){
+  taskDbUpdate(id,{done:t.done,status:t.status,completed_at:t.completedAt}).then(function(res){
     if(res.error){
       alert('Fehler beim Speichern: '+res.error.message+'\n\nDie Änderung ist lokal sichtbar, aber NICHT gespeichert.');
       t.done=!t.done;t.status=t.done?'done':'open';renderTab();
@@ -9799,8 +9804,9 @@ function setTaskStatus(id,newStatus){
   var oldStatus=t.status,oldDone=t.done;
   t.status=newStatus;
   t.done=(newStatus==='done');
+  t.completedAt=t.done?(t.completedAt||new Date().toISOString()):null;
   renderTab();
-  sb.from('tasks').update({status:newStatus,done:t.done}).eq('id',id).then(function(res){
+  taskDbUpdate(id,{status:newStatus,done:t.done,completed_at:t.completedAt}).then(function(res){
     if(res.error){
       alert('Fehler beim Speichern: '+res.error.message+'\n\nDie Änderung ist lokal sichtbar, aber NICHT gespeichert.');
       t.status=oldStatus;t.done=oldDone;renderTab();
@@ -9853,8 +9859,9 @@ function saveNewTask(){
     document.getElementById('taskDesc').value='';
     document.getElementById('taskDue').value='';
     var tsrc=document.getElementById('taskQuelle');if(tsrc)tsrc.value='';
-    closeModal('addTaskModal');
-    renderTab();
+    var _atm=document.getElementById('addTaskModal');
+    if(_atm&&!_atm.classList.contains('hidden')){atRender();atToast('Aufgabe hinzugefügt: '+text,null);var _tt=document.getElementById('taskText');if(_tt)_tt.focus();}
+    if(view==='emp')renderEmpDetail();else renderTab();
   }).catch(function(err){
     _savingNewTask=false;
     alert('Unerwarteter Fehler: '+err.message);
@@ -10466,11 +10473,77 @@ function openPerfPopup(empId){
   document.getElementById('ppBody').scrollTop=0;
   openModal('perfPopModal');
 }
+// ── Task im gemeinsamen Popup: offene und zuletzt erledigte Aufgaben, Abhaken mit Rückgängig ──
+function taskDbUpdate(id,fields){
+  // completed_at gibt es erst nach 06_aufgaben_erledigt_am.sql – fehlt die Spalte, wird ohne sie gespeichert
+  return sb.from('tasks').update(fields).eq('id',id).then(function(res){
+    if(res.error&&fields.hasOwnProperty('completed_at')&&/completed_at/i.test(res.error.message||'')){
+      var f2=Object.assign({},fields);delete f2.completed_at;
+      return sb.from('tasks').update(f2).eq('id',id);
+    }
+    return res;
+  });
+}
+function atRender(){
+  var list=(tasks[selectedEmp]||[]);
+  var t0=today();
+  function dd(ds){return Math.round((new Date(t0+'T00:00:00')-new Date(ds+'T00:00:00'))/86400000);}
+  function dmy(ds){return ds?ds.slice(8,10)+'.'+ds.slice(5,7)+'.':'';}
+  var CH='font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;white-space:nowrap;';
+  function row(t,done){
+    var right='';
+    if(done){var ca=t.completedAt?String(t.completedAt).slice(0,10):'';right=ca?'<span style="'+CH+'background:#fff;border:1px solid #E4E0D6;color:var(--text2)">erledigt '+dmy(ca)+'</span>':'';}
+    else{
+      if(t.dueDate){var o=dd(t.dueDate);
+        right+=o>0?'<span style="'+CH+'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A">seit '+o+' '+(o===1?'Tag':'Tagen')+' fällig</span>'
+          :'<span style="'+CH+'background:#fff;border:1px solid #E4E0D6;color:var(--text2)">'+(o===0?'heute fällig':'fällig '+dmy(t.dueDate))+'</span>';}
+      if(t.priority==='high')right+='<span style="'+CH+'background:#3a3833;border:1px solid #3a3833;color:#fff">Hoch</span>';
+    }
+    var subTxt=[t.description,t.source?'Quelle: '+t.source:''].filter(Boolean).join(' · ');
+    return '<div style="display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 12px;border:1px solid #E4E0D6;border-radius:10px;background:'+(done?'#F7F5F0':'#EFECE5')+';margin-bottom:6px">'
+      +'<span role="checkbox" aria-checked="'+(done?'true':'false')+'" title="'+(done?'Wieder öffnen':'Als erledigt markieren')+'" onclick="atToggle(\''+t.id+'\')" style="width:22px;height:22px;border-radius:7px;border:1.5px solid '+(done?'#3a3833':'#B4AC9C')+';background:'+(done?'#3a3833':'#fff')+';flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff">'+(done?'<i class="ti ti-check" style="font-size:14px"></i>':'')+'</span>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:'+(done?500:600)+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(done?'text-decoration:line-through;color:var(--text3)':'')+'">'+esc(t.text||'')+'</div>'
+      +(subTxt?'<div style="font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(subTxt)+'</div>':'')+'</div>'
+      +'<span style="display:flex;gap:6px;flex-shrink:0">'+right+'</span></div>';
+  }
+  var open=list.filter(function(t){return t.status!=='done'&&!t.done;}).sort(function(a,b){return (a.dueDate||'9999').localeCompare(b.dueDate||'9999');});
+  var done=list.filter(function(t){return t.status==='done'||t.done;}).sort(function(a,b){return String(b.completedAt||b.createdAt||'').localeCompare(String(a.completedAt||a.createdAt||''));}).slice(0,3);
+  var oEl=document.getElementById('atOpen'),dEl=document.getElementById('atDone'),nEl=document.getElementById('atOpenN');
+  if(nEl)nEl.textContent='('+open.length+')';
+  if(oEl)oEl.innerHTML=open.length?open.map(function(t){return row(t,false);}).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Keine offenen Aufgaben.</div>';
+  if(dEl)dEl.innerHTML=done.length?done.map(function(t){return row(t,true);}).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Noch nichts erledigt.</div>';
+}
+var _atLast=null;
+function atToast(msg,undo){
+  var t=document.getElementById('atToast');if(!t)return;
+  document.getElementById('atToastMsg').textContent=msg;
+  t.lastElementChild.style.display=undo?'':'none';
+  _atLast=undo;t.style.display='flex';
+  clearTimeout(window._atTT);window._atTT=setTimeout(function(){t.style.display='none';},4000);
+}
+function atUndo(){if(!_atLast)return;var id=_atLast;_atLast=null;document.getElementById('atToast').style.display='none';atToggle(id,true);}
+function atToggle(id,isUndo){
+  var t=(tasks[selectedEmp]||[]).find(function(x){return String(x.id)===String(id);});if(!t)return;
+  var old={status:t.status,done:t.done,completedAt:t.completedAt};
+  var nowDone=!(t.status==='done'||t.done);
+  t.status=nowDone?'done':'open';t.done=nowDone;t.completedAt=nowDone?new Date().toISOString():null;
+  atRender();
+  if(view==='emp')renderEmpDetail();
+  if(!isUndo)atToast((nowDone?'Erledigt: ':'Wieder geöffnet: ')+t.text,t.id);
+  taskDbUpdate(t.id,{status:t.status,done:t.done,completed_at:t.completedAt}).then(function(res){
+    if(res&&res.error){alert('Fehler beim Speichern: '+res.error.message);t.status=old.status;t.done=old.done;t.completedAt=old.completedAt;atRender();if(view==='emp')renderEmpDetail();return;}
+    var e0=employees.find(function(x){return x.id===selectedEmp;});
+    logActivity('task','status_changed','Aufgabe '+(nowDone?'erledigt':'wieder geöffnet')+': "'+t.text+'"',selectedEmp,e0?e0.name:'');
+  });
+}
 function openAddTaskModal(empId){
   if(empId)selectedEmp=empId;
   var e=employees.find(function(x){return String(x.id)===String(selectedEmp);});
   var sub=document.getElementById('atHdSub');if(sub)sub.textContent=e?(e.name+(e.role?' · '+e.role:'')):'—';
+  atRender();
+  var tt=document.getElementById('atToast');if(tt)tt.style.display='none';
   openModal('addTaskModal');
+  var sc=document.getElementById('atSec1');if(sc&&sc.parentElement)sc.parentElement.scrollTop=0;
 }
 function puInit(){
   Object.keys(PU_OPEN).forEach(function(id){
@@ -10795,7 +10868,8 @@ function loadTasksFromSupabase(){
       byEmp[r.employee_id].push({
         id:r.id,text:r.text,description:r.description||'',done:r.done,
         status:r.status||(r.done?'done':'open'),
-        priority:r.priority,dueDate:r.due_date,source:r.source||''
+        priority:r.priority,dueDate:r.due_date,source:r.source||'',
+        completedAt:r.completed_at||null,createdAt:r.created_at||null
       });
     });
     Object.keys(byEmp).forEach(function(k){byEmp[k].sort(function(a,b){return (b.dueDate||'').localeCompare(a.dueDate||'');});});
