@@ -6683,12 +6683,9 @@ function renderEmpDetail(){
     +'<div class="tab-bar" id="empTabBar">'
     +'<div class="tab" data-tab="performance" onclick="switchTab(\'performance\')">KPI Performance</div>'
     +'<div class="tab" data-tab="call-performance" onclick="switchTab(\'call-performance\')">QA Performance</div>'
-    +'<div class="tab" data-tab="provision" onclick="switchTab(\'provision\')">Provision</div>'
-    +'<div class="tab" data-tab="timeline" onclick="switchTab(\'timeline\')">Timeline</div>'
     +'<div class="tab" data-tab="session" onclick="switchTab(\'session\')">Coaching Sessions</div>'
     +'<div class="tab" data-tab="coaching-eval" onclick="switchTab(\'coaching-eval\')">Development</div>'
     +'<div class="tab" data-tab="tasks" onclick="switchTab(\'tasks\')" id="tasksTabBtn">Task'+(tc>0?' <span style="background:var(--purple);color:#fff;border-radius:20px;font-size:10px;font-weight:600;padding:1px 6px">'+tc+'</span>':'')+'</div>'
-    +'<div class="tab" data-tab="solidroad" onclick="switchTab(\'solidroad\')">SolidRoad</div>'
     +'<div class="tab" data-tab="emp-settings" onclick="switchTab(\'emp-settings\')">Einstellungen</div>'
     +'</div>'
     +'<div class="content" id="tabContent"></div>';
@@ -6700,7 +6697,8 @@ function renderTabBar(){
   var bar=document.getElementById('empTabBar');
   if(!bar)return;
   var hid=typeof hiddenTabsForRole==='function'?hiddenTabsForRole():[];
-  if(hid.indexOf(activeTab)>=0){ activeTab='performance'; setTimeout(renderTab,0); }
+  // Reiter Provision, Timeline und SolidRoad gibt es auf Mitarbeiterebene nicht mehr
+  if(hid.indexOf(activeTab)>=0||['provision','timeline','solidroad'].indexOf(activeTab)>=0){ activeTab='performance'; setTimeout(renderTab,0); }
   bar.querySelectorAll('.tab').forEach(function(el){ el.style.display=hid.indexOf(el.dataset.tab)>=0?'none':''; });
   bar.querySelectorAll('.tab').forEach(function(el){
     el.classList.toggle('active',el.dataset.tab===activeTab);
@@ -8348,8 +8346,6 @@ var PERM_ROWS=[
   {key:'coaching',label:'Coaching-Sessions & Aufgaben',group:'Bereiche',tables:['protocols','tasks'],tabs:['session','tasks']},
   {key:'qa',label:'QA-Bewertungen',group:'Bereiche',tables:['call_ratings','call_rating_scores'],tabs:['call-performance']},
   {key:'dev',label:'Development / Halbjahresgespräch',group:'Bereiche',tables:['reviews','review_kpis'],tabs:['coaching-eval']},
-  {key:'timeline',label:'Timeline & Dokumente',group:'Bereiche',tables:['employee_documents','employee_history'],tabs:['timeline']},
-  {key:'solidroad',label:'SolidRoad',group:'Bereiche',tables:['solidroad_simulations'],tabs:['solidroad']},
   {key:'activity',label:'Aktivitäten',group:'Bereiche',seeOnly:true,nav:['nav-coaching-activity']},
   {key:'stammdaten',label:'Mitarbeiter anlegen & Stammdaten',group:'Verwaltung',tables:['employees'],tabs:['emp-settings']},
   {key:'settings',label:'Einstellungen',group:'Verwaltung',adminOnly:true}
