@@ -11588,7 +11588,7 @@ function openCoachingInfoModal(empId){
   var box=ciBox('ciSecTopBox','Coaching im Überblick',chips,chartHtml);
   var notizTxt=emp.notes||'';
   var noteBox=ciBox('ciSecNotiz','Notiz zum Mitarbeiter','<span style="font-size:12px;font-weight:600;color:var(--text3)">nur für Coaches und Admins</span>',
-    '<div style="background:#FBF6E9;border:1px solid #EADFC4;border-radius:10px;padding:10px 12px">'
+    '<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;padding:10px 12px">'
     +'<textarea id="coachingInfoNotizField" placeholder="Noch keine Notiz – hier schreiben …" style="width:100%;min-height:54px;border:none;background:transparent;font-size:14px;resize:vertical;color:var(--text);outline:none;padding:0;font-family:inherit" onblur="saveCoachingInfoNotiz(\''+empId+'\')">'+esc(notizTxt)+'</textarea>'
     +'<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-top:4px"><span>Wird beim Verlassen des Feldes automatisch gespeichert</span><span id="coachingInfoNotizStatus"></span></div></div>');
   var role=emp.role||'';
@@ -11618,11 +11618,11 @@ function openCoachingInfoModal(empId){
   var RH=58;
   function tlRow(dateTxt,mark,title,sub,right,opt){opt=opt||{};
     return '<div title="'+esc((title||'')+(sub?' – '+sub:''))+'" style="display:flex;align-items:center;gap:12px;height:'+RH+'px;padding:0 12px;margin-bottom:6px;border-radius:10px;border:1px solid '+(opt.border||'#E4E0D6')+';background:'+(opt.bg||'#EFECE5')+';'+(opt.bar?'box-shadow:inset 3px 0 0 '+opt.bar+';':'')+'">'
-      +'<div style="width:58px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--text3);line-height:1.25">'+dateTxt+'</div>'
+      +'<div style="width:58px;flex-shrink:0;font-size:12px;font-weight:500;color:var(--text3);line-height:1.25">'+dateTxt+'</div>'
       +'<div style="width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;'+(mark.style||'background:#F7F5F0;border:1px solid #E4E0D6;color:var(--text2)')+'">'+mark.html+'</div>'
-      +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+title+'</div>'+(sub?'<div style="font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>':'')+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+title+'</div>'+(sub?'<div style="font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>':'')+'</div>'
       +(right?'<div style="flex-shrink:0;display:flex;gap:6px;align-items:center">'+right+'</div>':'')+'</div>';}
-  function pill(t,st){return '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;'+(st||'background:#F7F5F0;color:var(--text2);border:1px solid #E4E0D6')+'">'+t+'</span>';}
+  function pill(t,st){return '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap;'+(st||'background:#F7F5F0;color:var(--text2);border:1px solid #E4E0D6')+'">'+t+'</span>';}
   var rows='';
   if(!combinedTl.length){
     rows='<div style="text-align:center;color:var(--text3);padding:20px 0">Noch keine Sessions vorhanden</div>';
