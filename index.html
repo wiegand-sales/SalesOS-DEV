@@ -983,7 +983,7 @@ function loadEmployeesFromSupabase(){
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
-        isPureCoach: e.is_pure_coach===true, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null
+        isPureCoach: e.is_pure_coach===true, boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null
       };
     });
     return true;
@@ -1116,10 +1116,27 @@ function toggleSettingsNav(){
 }
 // ── Benutzer & Rechte: eine gemeinsame Liste fuer alle Personen ──
 var userFilter='all', userSearch='', userShowAllAgents=false, loginInfo=null, loginInfoLoading=false, userMsg='';
-function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; return (p.isPureCoach||p.role==='SC'||p.role==='SDM')?'Coach':'Sales Agent'; }
+var BOARD_ROLE_LABEL={admin:'Admin',coach:'Coach',viewer:'Betrachter',agent:'Sales Agent'};
+function positionRole(p){ return (p.isPureCoach||p.role==='SC'||p.role==='SDM')?'Coach':'Sales Agent'; }
+function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
+function updateEmpBoardRole(sel){
+  var emp=employees.find(function(e){return String(e.id)===String(sel.dataset.eid);});if(!emp)return;
+  var v=sel.value||null,old=emp.boardRole||null;
+  if(v===old)return;
+  if(v==='admin'&&!confirm(emp.name+' bekommt Admin-Rechte und darf damit alles im Board sehen und ändern. Fortfahren?')){renderMain();return;}
+  emp.boardRole=v;renderMain();
+  sb.from('employees').update({board_role:v}).eq('id',emp.id).then(function(res){
+    if(res.error){
+      emp.boardRole=old;renderMain();
+      alert(/board_role/i.test(res.error.message||'')?'Die Spalte „Board-Rolle“ fehlt noch in der Datenbank. Bitte zuerst 07_board_rolle.sql ausführen.':'Fehler beim Speichern: '+res.error.message);
+      return;
+    }
+    logActivity('employee','role_changed','Board-Rolle geändert: '+(old?BOARD_ROLE_LABEL[old]:'aus Position')+' → '+(v?BOARD_ROLE_LABEL[v]:'aus Position'),emp.id,emp.name);
+  });
+}
 function allPersons(){
   var list=appUsers.map(function(u){return {kind:'app',id:u.id,name:u.name,email:u.email,role:u.role,authUserId:u.authUserId,sub:''};});
-  employees.forEach(function(e){ list.push({kind:'emp',id:e.id,name:e.name,email:e.email||'',role:e.role,isPureCoach:e.isPureCoach,active:e.active,authUserId:e.auth_user_id||null,sub:(e.role||'')+(e.active===false?' · inaktiv':'')}); });
+  employees.forEach(function(e){ list.push({kind:'emp',id:e.id,name:e.name,email:e.email||'',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole||null,active:e.active,authUserId:e.auth_user_id||null,sub:(e.role||'')+(e.active===false?' · inaktiv':'')}); });
   return list;
 }
 function loadLoginInfo(){
@@ -1169,7 +1186,11 @@ function buildUserOverviewHtml(){
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
     var roleCell=p.kind==='app'
       ?'<select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:140px;height:30px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select>'
-      :'<span title="Ergibt sich aus der Position (SC/SDM = Coach) – änderbar im Mitarbeiter unter Einstellungen" style="display:inline-flex;align-items:center;width:140px;height:30px;box-sizing:border-box;padding:4px 10px;font-size:12.5px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--s-white);color:var(--text2)">'+r+'</span>';
+      :(function(){var pr=positionRole(p),set=!!p.boardRole;
+        return '<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-eid="'+p.id+'" onchange="updateEmpBoardRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px;'+(set?'border-color:rgba(240,133,102,0.7);background:#FDF0EB':'')+'">'
+          +'<option value=""'+(set?'':' selected')+'>'+(set?'Automatisch ('+pr+')':pr)+'</option>'
+          +['admin','coach','viewer','agent'].map(function(k){return '<option value="'+k+'"'+(p.boardRole===k?' selected':'')+'>'+BOARD_ROLE_LABEL[k]+'</option>';}).join('')
+          +'</select></span><span style="font-size:11.5px;white-space:nowrap;color:'+(set?'#B5513A':'var(--text3)')+'">'+(set?'gesetzt · Position '+esc(p.role||'–'):'aus Position')+'</span></span>';})();
     var target=p.kind==='app'?'app':'emp';
     var lgCell=lg===null?'<span style="font-size:12px;color:var(--text3)">…</span>'
       :lg?'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:4px;background:var(--purple)"></span>Aktiv <span style="color:var(--text3)">· '+relTime(lg.last_sign_in_at)+'</span></span>'
@@ -1185,7 +1206,7 @@ function buildUserOverviewHtml(){
       +'<td style="'+TD+';font-size:12.5px;color:'+acc[1]+'">'+acc[0]+'</td><td style="'+TD+';text-align:right;white-space:nowrap"><div style="display:inline-flex;gap:6px">'+actions+'</div></td></tr>';
   }
   function table(list){
-    return '<div class="std-wrap"><table class="std-table" style="min-width:900px"><colgroup><col style="width:24%"><col style="width:13%"><col style="width:22%"><col style="width:17%"><col style="width:11%"><col style="width:13%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Board</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
+    return '<div class="std-wrap"><table class="std-table" style="min-width:900px"><colgroup><col style="width:22%"><col style="width:22%"><col style="width:19%"><col style="width:15%"><col style="width:10%"><col style="width:12%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Board</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
   }
   var match=function(p){ return (!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.email||'').toLowerCase().indexOf(q)>=0) && (userFilter==='all'||personRole(p)===userFilter); };
   var order={'Admin':0,'Coach':1,'Betrachter':2};
@@ -1577,7 +1598,10 @@ function resolveCurrentCoach(){
     var match = employees.find(function(e){return e.auth_user_id===uid;});
     currentCoach = match || null;
     coachFilterView = currentCoach ? currentCoach.id : 'overview';
-    if(currentCoach && !(currentCoach.isPureCoach || currentCoach.role==='SC' || currentCoach.role==='SDM')){
+    if(currentCoach && currentCoach.boardRole && BOARD_ROLE_LABEL[currentCoach.boardRole]){
+      // bewusst gesetzte Board-Rolle geht vor der Position
+      currentUserRole=currentCoach.boardRole;
+    } else if(currentCoach && !(currentCoach.isPureCoach || currentCoach.role==='SC' || currentCoach.role==='SDM')){
       // Mitarbeiter mit Login, aber kein Coach: Agent (nutzt nur die Chrome-Erweiterung, kein Board-Zugang)
       currentUserRole='agent';
     } else if(currentCoach){
