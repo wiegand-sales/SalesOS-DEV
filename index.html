@@ -233,7 +233,7 @@ thead th *{color:inherit;}
 .std-table tbody tr:nth-child(even) td{background:var(--s-tint);--band:rgba(29,28,26,0.06);}
 .std-table tbody tr:last-child td{border-bottom:none!important;}
 .std-table tbody tr:not(.sum):hover td{background:rgba(29,28,26,0.16)!important;box-shadow:inset 0 2px 0 var(--teal-dark),inset 0 -2px 0 var(--teal-dark)!important;}
-.std-table tr.sum td{background:rgba(29,28,26,0.07)!important;color:var(--text)!important;font-weight:700;padding:13px 14px!important;border-top:2px solid #3a3833!important;}
+.std-table tr.sum td{background:rgba(29,28,26,0.07)!important;color:var(--text)!important;font-weight:700;padding:13px 14px!important;border-top:2px solid #F08566!important;}
 .std-table .r{text-align:right;}
 .std-table td.r .btn,.std-table td.r a.btn{display:inline-flex;vertical-align:middle;}
 /* Rechte-Auswahl und Wizard-Bausteine */
@@ -262,9 +262,9 @@ thead th *{color:inherit;}
 #crBreakdownTooltip,#crBreakdownTooltip *{color:#fff!important;}
 /* Summe & Durchschnitt: transparentes Schwarz */
 tr.perf-sum-row,tr.perf-avg-row,.std-table tr.sum{background:#fff!important;color:var(--text)!important;}
-tr.perf-sum-row td{background:rgba(29,28,26,0.07)!important;color:var(--text)!important;border-top:2px solid #3a3833!important;border-bottom:none!important;font-weight:700;}
-tr.perf-sum-row td,.std-table tr.sum td{box-shadow:inset 0 2px 0 #3a3833!important;}
-tr.perf-sum-row td:first-child,.std-table tr.sum td:first-child{box-shadow:inset 4px 0 0 #3a3833,inset 0 2px 0 #3a3833!important;}
+tr.perf-sum-row td{background:rgba(29,28,26,0.07)!important;color:var(--text)!important;border-top:2px solid #F08566!important;border-bottom:none!important;font-weight:700;}
+tr.perf-sum-row td,.std-table tr.sum td{box-shadow:inset 0 2px 0 #F08566!important;}
+tr.perf-sum-row td:first-child,.std-table tr.sum td:first-child{box-shadow:inset 4px 0 0 #F08566,inset 0 2px 0 #F08566!important;}
 tr.perf-sum-row [style*="color:#fff"],tr.perf-sum-row [style*="color: #fff"],.std-table tr.sum [style*="color:#fff"]{color:var(--text)!important;}
 tr.perf-sum-row:hover td{background:rgba(29,28,26,0.11)!important;}
 tr.perf-avg-row td{background:#F7F5F0!important;color:var(--text2)!important;font-weight:600!important;border-top:1px dashed rgba(29,28,26,0.35)!important;border-bottom:none!important;}
@@ -4009,7 +4009,7 @@ function zielvereinbarungHtml(){
       +'<div style="'+GH+';justify-content:center">%</div>'
       +'</div>'
       +rowsHtml
-      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:rgba(29,28,26,0.07);border-top:2px solid #3a3833;box-shadow:inset 4px 0 0 #3a3833">'
+      +'<div style="display:grid;grid-template-columns:'+weekGridTemplate+';background:rgba(29,28,26,0.07);border-top:2px solid #F08566;box-shadow:inset 4px 0 0 #F08566">'
       +'<div style="font-weight:700;color:var(--text);padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center">Team gesamt</div>'
       +'<div style="font-weight:700;color:#C9502F;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamUrlaubSum+'</div>'
       +'<div style="font-weight:700;color:#B8741A;text-align:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">'+teamKrankSum+'</div>'
@@ -4076,7 +4076,7 @@ function zielvereinbarungHtml(){
       +'</div>');
     if(isCurrent)monthRows.push(weekDetailHtml);
   }
-  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:rgba(29,28,26,0.07);border-top:2px solid #3a3833;box-shadow:inset 4px 0 0 #3a3833">'
+  var yearTotalRow='<div style="display:grid;grid-template-columns:'+yearGridTemplate+';background:rgba(29,28,26,0.07);border-top:2px solid #F08566;box-shadow:inset 4px 0 0 #F08566">'
     +'<div style="font-weight:800;color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center">Jahresergebnis</div>'
     +'<div style="color:var(--text);padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">–</div>'
     +'<div style="font-weight:800;color:#C9502F;padding:10px 14px;border-top:2px solid #C9502F;display:flex;align-items:center;justify-content:center">'+yearUrlaubSum+'</div>'
@@ -5738,7 +5738,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       liste=visible.filter(function(e){return e.id===overviewChartEmpId;});
     }
     var labels=weeks.map(function(w){return w.label;});
-    var colors={gesamt:'#3a3833',oem:'#8C8577',ups:'#B4AC9C',wka:'#D3CCBD'}; // Diagramm in den Hintergrundfarben (Entwurf C)
+    var colors={gesamt:'#F08566',oem:'#8C8577',ups:'#B4AC9C',wka:'#D3CCBD'}; // Diagramm in den Hintergrundfarben (Entwurf C)
 
     function seriesFor(valFn,color,label,fillOrder){
       var data=weeks.map(function(w){
@@ -5807,7 +5807,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       datasets.push({
         label:'Ziel ('+target+')',
         data:labels.map(function(){return target;}),
-        borderColor:'#F08566',borderDash:[5,4],borderWidth:1.5,
+        borderColor:'#3a3833',borderDash:[5,4],borderWidth:1.5,
         pointRadius:0,fill:false,order:99
       });
     }
@@ -6529,17 +6529,17 @@ function renderTeam(){
     // Team Performance Trend Chart (inkl. kombinierter Filter-Zeile)
     +(function(){
       var TMETRICS=[
-        {k:'margeGesamt',l:'Marge Gesamt',c:'#3a3833'},
-        {k:'oem_aktivitaeten',l:'Aktivitäten',c:'#3a3833'},
-        {k:'optGesamt',  l:'Opt. Gesamt', c:'#3a3833'},
-        {k:'convOEM',    l:'Opt. OEM',    c:'#3a3833'},
-        {k:'ups_yes',    l:'Opt. Upsell', c:'#3a3833'},
-        {k:'wka_gesamt_yes',        l:'Opt. WKA',    c:'#3a3833'},
-        {k:'crOEM',      l:'CR Ges.',      c:'#3a3833'},
-        {k:'crTeilweise',l:'CR TW',       c:'#3a3833'},
-        {k:'crYes',      l:'CR Yes',      c:'#3a3833'},
-        {k:'crSuperYes', l:'CR SY',       c:'#3a3833'},
-        {k:'crMegaYes',  l:'CR MY',       c:'#3a3833'},
+        {k:'margeGesamt',l:'Marge Gesamt',c:'#F08566'},
+        {k:'oem_aktivitaeten',l:'Aktivitäten',c:'#F08566'},
+        {k:'optGesamt',  l:'Opt. Gesamt', c:'#F08566'},
+        {k:'convOEM',    l:'Opt. OEM',    c:'#F08566'},
+        {k:'ups_yes',    l:'Opt. Upsell', c:'#F08566'},
+        {k:'wka_gesamt_yes',        l:'Opt. WKA',    c:'#F08566'},
+        {k:'crOEM',      l:'CR Ges.',      c:'#F08566'},
+        {k:'crTeilweise',l:'CR TW',       c:'#F08566'},
+        {k:'crYes',      l:'CR Yes',      c:'#F08566'},
+        {k:'crSuperYes', l:'CR SY',       c:'#F08566'},
+        {k:'crMegaYes',  l:'CR MY',       c:'#F08566'},
       ];
       var s='<div class="card" style="margin-bottom:22px">';
       s+='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px">';
@@ -6605,17 +6605,17 @@ function renderTeam(){
   window._teamChartData=null;
   (function(allRows,metric,days,kpiTargets){
     var mMap={
-      crOEM:      {f:'crOEM',      l:'CR OEM %', c:'#3a3833'},
-      crTeilweise:{f:'crTeilweise',l:'CR TW %',  c:'#3a3833'},
-      crYes:      {f:'crYes',      l:'CR Yes %', c:'#3a3833'},
-      crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#3a3833'},
-      crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#3a3833'},
-      oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',c:'#3a3833'},
-      optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#3a3833'},
-      convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#3a3833'},
-      ups_yes:    {f:'ups_yes',    l:'Opt. Upsell',c:'#3a3833'},
-      wka_gesamt_yes:        {f:'wka_gesamt_yes',        l:'Opt. WKA', c:'#3a3833'},
-      margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#3a3833'}
+      crOEM:      {f:'crOEM',      l:'CR OEM %', c:'#F08566'},
+      crTeilweise:{f:'crTeilweise',l:'CR TW %',  c:'#F08566'},
+      crYes:      {f:'crYes',      l:'CR Yes %', c:'#F08566'},
+      crSuperYes: {f:'crSuperYes', l:'CR SY %',  c:'#F08566'},
+      crMegaYes:  {f:'crMegaYes',  l:'CR MY %',  c:'#F08566'},
+      oem_aktivitaeten:{f:'oem_aktivitaeten',l:'Aktivitäten',c:'#F08566'},
+      optGesamt:  {f:'optGesamt',  l:'Opt. Gesamt',c:'#F08566'},
+      convOEM:    {f:'convOEM',    l:'Opt. OEM', c:'#F08566'},
+      ups_yes:    {f:'ups_yes',    l:'Opt. Upsell',c:'#F08566'},
+      wka_gesamt_yes:        {f:'wka_gesamt_yes',        l:'Opt. WKA', c:'#F08566'},
+      margeGesamt:{f:'margeGesamt',l:'Marge Gesamt €',  c:'#F08566'}
     };
     var m=mMap[metric]||mMap.crOEM;
     if(!allRows||!allRows.length){return;}
@@ -6684,7 +6684,7 @@ function renderTeam(){
       datasets.push({
         label:'Ziel ('+target+')',
         data:dates.map(function(){return target;}),
-        borderColor:'#F08566',borderDash:[5,4],borderWidth:1.5,
+        borderColor:'#3a3833',borderDash:[5,4],borderWidth:1.5,
         pointRadius:0,fill:false,order:2
       });
     }
