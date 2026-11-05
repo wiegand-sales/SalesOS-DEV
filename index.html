@@ -343,6 +343,10 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .modal-ov>.modal{width:860px!important;max-width:95vw!important;max-height:86vh!important;}
 /* Gemeinsames Popup: in jedem Bereich gleich breit und gleich hoch */
 #perfPopModal>.modal,#coachingInfoModal>.modal,#neuesCoachingModal>.modal,#sessionPlanenModal>.modal,#qaBewertungModal>.modal,#addTaskModal>.modal,#empSetModal>.modal,#cevModal>div,#commentModal>div{height:86vh!important;max-height:86vh!important;}
+/* Gemeinsames Popup: Inhalt läuft unten weich aus, Fußleiste wie in der Übersicht */
+.pu-rail+div>div:first-child{-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)}
+.pu-footbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:6px;min-height:52px;box-sizing:border-box}
+.pu-footbar .btn{height:34px!important}
 .modal-ov.hidden{display:none;}
 .modal{background:#F7F5F0;border:1px solid #E4E0D6;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:16px;padding:24px;width:640px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18);}
 .modal-title{font-size:16px;font-weight:600;margin-bottom:16px;}
@@ -10427,6 +10431,16 @@ function puDecorate(id){
     rail.insertBefore(sep,top.nextSibling);
   }
   puSpy(rail);
+  // Fußleiste in allen Bereichen wie in der Übersicht: eigene Leiste mit Rahmen
+  var right=rail.nextElementSibling;
+  var foot=right&&right.lastElementChild;
+  if(foot&&foot!==right.firstElementChild&&!foot.dataset.puFoot&&!foot.querySelector('#ciComposer')){
+    foot.dataset.puFoot='1';
+    var bar=document.createElement('div');bar.className='pu-footbar';
+    while(foot.firstChild)bar.appendChild(foot.firstChild);
+    foot.style.cssText='padding:4px 18px 14px;background:#EEEDE9';
+    foot.appendChild(bar);
+  }
   top.innerHTML=PU.map(function(p){return '<button class="rl-btn'+(p.k===key?' on':'')+'" type="button" aria-label="'+p.n+'" style="width:38px;height:38px;font-size:18px;flex-shrink:0" onclick="puGo(\''+p.k+'\')"><i class="ti '+p.i+'"></i><span class="rl-tip" style="left:48px">'+p.n+'</span></button>';}).join('');
   // Session: Schalter „Erfassen | Planen“ im Kopf
   if(key==='se'){
