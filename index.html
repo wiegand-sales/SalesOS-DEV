@@ -1584,7 +1584,10 @@ function resolveCurrentCoach(){
       currentUserRole='coach';
     } else {
       var au=appUsers.find(function(u){return u.authUserId===uid;})||appUsers.find(function(u){return u.email===email;});
-      currentUserRole = au ? au.role : 'admin'; // unbekannter Login ohne Eintrag: sicherheitshalber wie Admin behandeln, nicht wie Viewer
+      // Unbekannter Login ohne Eintrag bekommt KEINEN Zugriff. Ausnahme: die fest hinterlegten Admin-Adressen,
+      // damit Admins nicht ausgesperrt werden, falls die Benutzerliste einmal nicht geladen werden kann.
+      var lm=String(email||'').toLowerCase();
+      currentUserRole = au ? au.role : (ADMIN_NAME_MAP[lm] ? 'admin' : 'none');
     }
   }).catch(function(){currentCoach=null;currentAuthUser=null;currentUserRole=null;});
 }
@@ -1638,6 +1641,19 @@ function showAgentLock(){
   document.body.appendChild(d);
   document.getElementById('agentLockLogout').onclick=function(){ d.remove(); logout(); };
 }
+function showNoAccessLock(){
+  // Login ohne Eintrag als Mitarbeiter, Admin oder Betrachter: kein Zugriff aufs Board
+  var d=document.createElement('div');
+  d.id='noAccessLock';
+  d.style.cssText='position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);display:flex;align-items:center;justify-content:center;padding:24px;font-family:inherit';
+  d.innerHTML='<div style="background:#fff;border-radius:18px;max-width:440px;width:100%;padding:36px 32px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.25)">'
+    +'<h2 style="margin:0 0 10px;font-size:22px;color:#1d1c1a">Kein Zugang</h2>'
+    +'<p style="margin:0 0 22px;font-size:15px;line-height:1.5;color:#3d4f52">Dein Login <b>'+esc((currentAuthUser&&currentAuthUser.email)||'')+'</b> ist für das Board nicht freigeschaltet. Bitte wende dich an einen Admin.</p>'
+    +'<button id="noAccessLogout" style="height:42px;padding:0 22px;border:none;border-radius:10px;background:#F3ECE8;color:#F08566;font-weight:700;font-size:14px;cursor:pointer">Abmelden</button>'
+    +'</div>';
+  document.body.appendChild(d);
+  document.getElementById('noAccessLogout').onclick=function(){ d.remove(); logout(); };
+}
 function initAppAfterLogin(){
   if(_appInitStarted)return;   // verhindert doppelten Init durch ueberlappende Auth-Events
   _appInitStarted = true;
@@ -1648,6 +1664,7 @@ function initAppAfterLogin(){
     return resolveCurrentCoach();
   }).then(function(){
     if(currentUserRole==='agent'){ showAgentLock(); return; }
+    if(currentUserRole==='none'){ showNoAccessLock(); return; }
     Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase()]).then(function(){
       lsLoad();               // Rest der Daten (protocols, ...) bleibt vorerst lokal
       runAppInit();
