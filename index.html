@@ -1185,7 +1185,7 @@ function buildUserOverviewHtml(){
     var r=personRole(p), rc=RC[r], acc=ACC[r], lg=loginOf(p);
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
     var roleCell=p.kind==='app'
-      ?'<select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:140px;height:30px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select>'
+      ?'<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select></span></span>'
       :(function(){var pr=positionRole(p),set=!!p.boardRole;
         return '<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-eid="'+p.id+'" onchange="updateEmpBoardRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px;'+(set?'border-color:rgba(240,133,102,0.7);background:#FDF0EB':'')+'">'
           +'<option value=""'+(set?'':' selected')+'>'+(set?'Automatisch ('+pr+')':pr)+'</option>'
@@ -1193,7 +1193,7 @@ function buildUserOverviewHtml(){
           +'</select></span><span style="font-size:11.5px;white-space:nowrap;color:'+(set?'#B5513A':'var(--text3)')+'">'+(set?'gesetzt · Position '+esc(p.role||'–'):'aus Position')+'</span></span>';})();
     var target=p.kind==='app'?'app':'emp';
     var lgCell=lg===null?'<span style="font-size:12px;color:var(--text3)">…</span>'
-      :lg?'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:4px;background:var(--purple)"></span>Aktiv <span style="color:var(--text3)">· '+relTime(lg.last_sign_in_at)+'</span></span>'
+      :lg?'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:4px;background:var(--purple)"></span>Aktiv</span>'
       :(p.email?'<button class="btn sbtn" onclick="personLogin(\'create\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-plus"></i> Zugang anlegen</button>':'<span style="font-size:12px;color:var(--text3)">E-Mail fehlt</span>');
     var actions='';
     if(lg) actions+='<button class="btn sbtn" title="Passwort neu setzen" aria-label="Passwort neu setzen" onclick="personLogin(\'reset\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-key"></i></button>'
@@ -1201,12 +1201,16 @@ function buildUserOverviewHtml(){
     if(p.kind==='app') actions+='<button class="btn sbtn" title="Person entfernen" aria-label="Person entfernen" onclick="deleteAppUser(\''+p.id+'\',\''+String(p.name).replace(/'/g,"\\'")+'\')"><i class="ti ti-trash"></i></button>';
     else actions+='<button class="btn sbtn" title="Mitarbeiter öffnen" aria-label="Mitarbeiter öffnen" onclick="selectEmp(\''+p.id+'\')"><i class="ti ti-arrow-right"></i></button>';
     var bg='';
+    var lastCell=(lg&&lg.last_sign_in_at)?(function(){var d=new Date(lg.last_sign_in_at);return '<span style="font-size:12.5px;color:var(--text2);white-space:nowrap">'+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear()+' · '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+'</span>';})():'<span style="font-size:12.5px;color:var(--text3)">–</span>';
+    var ZG={'Admin':'Alles','Coach':'Laut Rollen &amp; Rechte','Betrachter':'Nur ansehen','Sales Agent':'Nur Erweiterung'};
+    var accCell=r==='Sales Agent'?'<span style="font-size:12.5px;color:var(--text2)" title="Sales Agents kommen nicht ins Board, sie sehen ihre Zahlen in der Erweiterung">'+ZG[r]+'</span>'
+      :'<a href="#" onclick="selectSettingsSub(\'roles\');return false" title="Was diese Rolle darf, legst du unter Rollen &amp; Rechte fest" style="font-size:12.5px;color:'+acc[1]+';text-decoration:none;white-space:nowrap">'+ZG[r]+' ›</a>';
     return '<tr style="'+bg+'"><td style="'+TD+'"><div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:6px;background:#F3ECE8;color:var(--purple);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+esc(ini)+'</span><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">'+esc(p.name)+'</span><span style="font-size:11.5px;color:var(--text3)">'+esc(p.kind==='app'?(p.role==='admin'?'Admin':'Betrachter'):p.sub)+'</span></div></div></td>'
-      +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+'</td>'
-      +'<td style="'+TD+';font-size:12.5px;color:'+acc[1]+'">'+acc[0]+'</td><td style="'+TD+';text-align:right;white-space:nowrap"><div style="display:inline-flex;gap:6px">'+actions+'</div></td></tr>';
+      +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+'</td><td style="'+TD+'">'+lastCell+'</td>'
+      +'<td style="'+TD+'">'+accCell+'</td><td style="'+TD+';text-align:right;white-space:nowrap"><div style="display:inline-flex;gap:6px">'+actions+'</div></td></tr>';
   }
   function table(list){
-    return '<div class="std-wrap"><table class="std-table" style="min-width:900px"><colgroup><col style="width:22%"><col style="width:22%"><col style="width:19%"><col style="width:15%"><col style="width:10%"><col style="width:12%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Board</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
+    return '<div class="std-wrap"><table class="std-table" style="min-width:900px"><colgroup><col style="width:18%"><col style="width:20%"><col style="width:18%"><col style="width:11%"><col style="width:12%"><col style="width:12%"><col style="width:9%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Letzter Login</th><th scope="col" style="'+TH+'">Zugriff</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
   }
   var match=function(p){ return (!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.email||'').toLowerCase().indexOf(q)>=0) && (userFilter==='all'||personRole(p)===userFilter); };
   var order={'Admin':0,'Coach':1,'Betrachter':2};
