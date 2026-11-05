@@ -1156,10 +1156,10 @@ function buildUserOverviewHtml(){
   var counts={all:0,Admin:0,Coach:0,Betrachter:0,'Sales Agent':0};
   persons.forEach(function(p){ if(p.kind==='emp'&&p.active===false&&personRole(p)==='Sales Agent')return; counts.all++; counts[personRole(p)]++; });
   function chip(key,label){ return '<button class="'+(userFilter===key?'active':'')+'" onclick="setUserFilter(\''+key+'\')">'+label+'&nbsp;<span style="opacity:.7">'+counts[key]+'</span></button>'; }
-  var h='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">'
-    +'<div class="chart-toggle">'+chip('all','Alle')+chip('Admin','Admin')+chip('Coach','Coach')+chip('Betrachter','Betrachter')+chip('Sales Agent','Sales Agents')+'</div>'
-    +'<div style="display:flex;gap:8px;align-items:center"><input id="userSearch" value="'+esc(userSearch)+'" oninput="setUserSearch(this.value)" placeholder="Name oder E-Mail suchen" aria-label="Suchen" style="width:230px">'
-    +'<button class="btn btn-primary" style="width:auto" onclick="openModal(\'addAppUserModal\')"><i class="ti ti-plus"></i> Admin / Betrachter</button></div></div>';
+  var h='';
+  var _tb='<div class="chart-toggle">'+chip('all','Alle')+chip('Admin','Admin')+chip('Coach','Coach')+chip('Betrachter','Betrachter')+chip('Sales Agent','Sales Agents')+'</div>'
+    +'<div style="display:flex;gap:8px;align-items:center"><input id="userSearch" value="'+esc(userSearch)+'" oninput="setUserSearch(this.value)" placeholder="Name oder E-Mail suchen" aria-label="Suchen" style="width:230px;height:34px">'
+    +'<button class="btn btn-primary" style="width:auto;height:34px" onclick="openModal(\'addAppUserModal\')"><i class="ti ti-plus"></i> Admin / Betrachter</button></div>';
   if(userMsg) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:13px;line-height:1.5">'+userMsg+' <button class="btn sbtn" style="margin-left:8px" onclick="userMsg=\'\';renderMain()">Ausblenden</button></div>';
   if(loginInfo&&loginInfo.error) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:12.5px;color:var(--text2)">Login-Status nicht verfügbar: '+esc(loginInfo.msg||'')+' <button class="btn sbtn" style="margin-left:8px" onclick="loginInfo=null;renderMain()">Erneut versuchen</button></div>';
   var TH='text-align:left';
@@ -1191,14 +1191,11 @@ function buildUserOverviewHtml(){
   var order={'Admin':0,'Coach':1,'Betrachter':2};
   var team=persons.filter(function(p){return personRole(p)!=='Sales Agent'&&match(p);}).sort(function(a,b){return order[personRole(a)]-order[personRole(b)]||a.name.localeCompare(b.name);});
   var agents=persons.filter(function(p){return personRole(p)==='Sales Agent'&&p.active!==false&&match(p);}).sort(function(a,b){return a.name.localeCompare(b.name);});
-  var sec=function(t,sub){return '<div class="card-title">'+t+'</div><div class="card-sub">'+sub+'</div>';};
-  if(team.length) h+='<div class="card">'+sec('Team &amp; Zugriff aufs Board','Admins, Coaches und Betrachter')+table(team)+'</div>';
-  if(agents.length){
-    var shown=(userShowAllAgents||q||userFilter==='Sales Agent')?agents:agents.slice(0,8);
-    h+='<div class="card">'+sec('Sales Agents','sehen nur die Erweiterung mit ihren eigenen Zahlen · '+shown.length+' von '+agents.length)+table(shown)
-      +(shown.length<agents.length?'<div style="margin-top:12px"><button class="btn sbtn" onclick="userShowAllAgents=true;renderMain()">Alle '+agents.length+' anzeigen</button></div>':'')+'</div>';
-  }
-  if(!team.length&&!agents.length) h+='<div class="card" style="color:var(--text3);font-size:13px">Keine Treffer.</div>';
+  // Eine Tabelle für alle: Filter, Suche und Knopf stehen im Kopf der Box
+  var all=team.concat(agents);
+  h+='<div class="card"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px"><div style="font-weight:700;font-size:14px;color:var(--text)">Benutzer <span style="font-weight:500;color:var(--text3);font-size:12.5px">('+all.length+')</span></div>'
+    +'<div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+_tb+'</div></div>'
+    +(all.length?table(all):'<div style="color:var(--text3);font-size:13px;padding:6px 2px">Keine Treffer.</div>')+'</div>';
   h+='<p style="font-size:12px;color:var(--text3);margin:4px 0 0">Neue Sales Agents und Coaches legst du wie bisher über „Mitarbeiter hinzufügen“ an. Ob jemand Coach ist, ergibt sich aus der Position (SC/SDM).</p>';
   return h;
 }
