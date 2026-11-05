@@ -8545,30 +8545,58 @@ function saveSettingJson(key,val,logText){
     if(logText)logActivity('employee','updated',logText);
   });
 }
-function buildRolesHtml(){
-  var P=rolePerms();
-  var M={E:['Bearbeiten','var(--purple-dark)','var(--s-tint-strong)'],S:['Ansehen','var(--text2)','var(--s-sub)'],'-':['–','var(--text3)','transparent']};
-  function cls(v){return v==='E'?'v-E':v==='S'?'v-S':'v-x';}
-  function cell(role,row){
-    var v=role==='admin'?'E':permFor(row.key,role), m=M[v], fixed=role==='admin'||row.fixed||row.adminOnly||(row.editOrNone&&role==='viewer');
-    if(role==='agent') return '<td style="text-align:center"><span style="font-size:12px;color:var(--text3)">'+(row.key==='performance'||row.key==='provision'?'nur eigene (Erweiterung)':'–')+'</span></td>';
-    if(fixed) return '<td style="text-align:center"><span class="perm-fix '+cls(v)+'" title="Fest vorgegeben">'+(v!=='-'?'<i class="ti ti-lock" style="font-size:12px"></i>':'')+m[0]+'</span></td>';
-    var opts=row.editOrNone?['E','-']:(role==='viewer'||row.seeOnly)?['S','-']:['E','S','-'];
-    return '<td style="text-align:center"><select class="perm-sel '+cls(v)+'" aria-label="'+esc(row.label)+' – '+(role==='coach'?'Coach':'Betrachter')+'" onchange="setPerm(\''+role+'\',\''+row.key+'\',this.value)">'
-      +opts.map(function(o){return '<option value="'+o+'"'+(o===v?' selected':'')+'>'+(o==='-'?'Kein Zugriff':M[o][0])+'</option>';}).join('')+'</select></td>';
-  }
-  var TH='padding:11px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#FFF0EA;text-align:center';
-  var rows='',g='';
-  PERM_ROWS.forEach(function(r){
-    if(r.group!==g){g=r.group;rows+='<tr><th class="grp" colspan="5" scope="colgroup" style="text-align:left;padding:14px 16px 6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)">'+g+'</th></tr>';}
-    rows+='<tr><td style="padding:9px 16px;font-size:13px">'+esc(r.label)+'</td>'+cell('admin',r)+cell('coach',r)+cell('viewer',r)+cell('agent',r)+'</tr>';
-  });
-  return '<div class="card"><div class="card-title">Was darf welche Rolle?</div><div class="card-sub">Je Bereich und Rolle festlegen. Admins haben immer alle Rechte, Sales Agents sehen nur ihre eigenen Zahlen in der Erweiterung.</div>'
-    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text2)"><span class="perm-fix v-E" style="width:auto;padding:0 12px;background:#F08566">Bearbeiten</span><span class="perm-fix v-S" style="width:auto;padding:0 12px;background:var(--s-tint-strong)">Ansehen</span><span class="perm-fix v-x" style="width:auto;padding:0 12px;border:1px solid var(--border2);background:#fff">Kein Zugriff</span><span style="margin-left:6px"><i class="ti ti-lock" style="font-size:12px"></i> = fest vorgegeben</span></div>'
-    +'<div class="std-wrap"><table class="std-table" style="min-width:760px"><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+';text-align:left;padding-left:16px">Recht</th><th scope="col" style="'+TH+'">Admin</th><th scope="col" style="'+TH+'">Coach</th><th scope="col" style="'+TH+'">Betrachter</th><th scope="col" style="'+TH+'">Sales Agent</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +'<div style="font-size:12.5px;line-height:1.55;color:var(--text2);background:var(--s-sub);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 13px;margin-top:12px"><b style="color:var(--text)">So wird es durchgesetzt:</b> Board und Datenbank prüfen dieselben Rechte: Betrachter können nichts speichern, Coaches nur in den Bereichen mit „Bearbeiten“ – auch wer sich direkt mit der Datenbank verbindet. Bereiche mit „–“ werden in Menü und Mitarbeiterprofil ausgeblendet. Sales Agents kommen nicht ins Board und sehen in der Erweiterung nur ihre eigenen Zahlen.</div>';
+function permToggle(role,key,col){
+  // Häkchen-Matrix: „Sehen“ schaltet zwischen Kein Zugriff und Ansehen, „Ändern“ zwischen Ansehen und Bearbeiten
+  var row=PERM_ROWS.find(function(r){return r.key===key;}); if(!row||row.fixed||row.adminOnly)return;
+  var cur=permFor(key,role),nv;
+  if(row.editOrNone) nv=cur==='E'?'-':'E';
+  else if(col==='S') nv=cur==='-'?'S':'-';
+  else nv=cur==='E'?'S':'E';
+  setPerm(role,key,nv);
 }
-
+function buildRolesHtml(){
+  var GROUPS=[['Auswertungen',['performance','ziel','provision','activity']],['Mitarbeiter',['coaching','qa','dev']],['Verwaltung',['stammdaten','histEdit']]];
+  var cnt={coach:0,viewer:0};
+  employees.forEach(function(e){if(e.active===false)return;var r=personRole({kind:'emp',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole});if(r==='Coach')cnt.coach++;if(r==='Betrachter')cnt.viewer++;});
+  (typeof appUsers!=='undefined'?appUsers:[]).forEach(function(u){if(u.role==='viewer')cnt.viewer++;});
+  function box(state,avail,lock,onclick,title){
+    if(!avail)return '<span style="display:inline-block;width:20px;height:20px"></span>';
+    var on=!!state;
+    return '<span role="checkbox" aria-checked="'+on+'" tabindex="'+(lock?'-1':'0')+'" title="'+esc(title||'')+'"'+(lock?'':' onclick="'+onclick+'" onkeydown="if(event.key===\' \'||event.key===\'Enter\'){event.preventDefault();this.click();}"')
+      +' style="display:inline-flex;width:20px;height:20px;border-radius:6px;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;vertical-align:middle;'
+      +(lock?'cursor:default;opacity:.45;':'cursor:pointer;')
+      +(on?'background:#3a3833;border:1.5px solid #3a3833':'background:#fff;border:1.5px solid #B4AC9C')+'">'+(on?'✓':'')+'</span>';
+  }
+  function eye(){return '<i class="ti ti-eye" style="font-size:16px;color:var(--text2)" title="Sehen"></i>';}
+  function pen(){return '<i class="ti ti-pencil" style="font-size:16px;color:var(--text2)" title="Anlegen und ändern"></i>';}
+  var TD='padding:0 8px;height:38px;border-bottom:1px solid #eae7e0;text-align:center;vertical-align:middle';
+  var BL='border-left:1px solid #E4E0D6;';
+  var h='<div class="card"><div style="font-weight:700;font-size:14px;color:var(--text)">Was darf welche Rolle?</div>'
+    +'<div style="font-size:12.5px;color:var(--text3);margin:2px 0 12px">'+eye()+' sehen · '+pen()+' anlegen und ändern. Häkchen anklicken – gilt sofort für alle Personen mit dieser Rolle. Betrachter können nie speichern, darum nur „Sehen“.</div>'
+    +'<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;padding:8px 12px;margin-bottom:12px"><span><b style="color:var(--text)">Admin</b> darf immer alles</span><span><b style="color:var(--text)">Sales Agent</b> nur eigene Zahlen in der Erweiterung</span><span><b style="color:var(--text)">Einstellungen</b> (Benutzer, Rollen, Wizards, Integrationen, Daten) nur Admins</span></div>'
+    +'<div class="std-wrap"><table style="width:100%;border-collapse:collapse;border:1px solid #E4E0D6;border-radius:10px;overflow:hidden">'
+    +'<thead><tr style="background:#EFECE5"><th scope="col" style="text-align:left;padding:9px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);width:56%">Recht</th>'
+    +'<th scope="colgroup" colspan="2" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Coach <span style="font-weight:600;color:var(--text3)">· '+cnt.coach+'</span></th>'
+    +'<th scope="col" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Betrachter <span style="font-weight:600;color:var(--text3)">· '+cnt.viewer+'</span></th></tr>'
+    +'<tr style="background:#EFECE5"><th></th><th style="'+BL+'padding:4px">'+eye()+'</th><th style="padding:4px">'+pen()+'</th><th style="'+BL+'padding:4px">'+eye()+'</th></tr></thead><tbody>';
+  GROUPS.forEach(function(g){
+    h+='<tr><td colspan="4" style="height:32px;background:#EFECE5;padding:0 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)">'+g[0]+'</td></tr>';
+    g[1].forEach(function(k){
+      var row=PERM_ROWS.find(function(r){return r.key===k;});if(!row)return;
+      var c=permFor(k,'coach'),v=permFor(k,'viewer'),lock=!!row.fixed;
+      var desc={performance:'Startseite, Banner, Diagramm, Tabelle',ziel:'Zielplanung, Zielvereinbarung, Ziele im Popup',provision:'Provisionen und Gehälter',activity:'wer hat wann was geändert',coaching:'Sessions erfassen und planen, Aufgaben',qa:'Calls bewerten',dev:'Mitarbeiterentwicklung, Kommentare',stammdaten:'Mitarbeiter anlegen, Person, Vertrag, Provisionsvereinbarung',histEdit:'Bewertungen, Calls, Kommentare'}[k]||'';
+      var label=row.key==='histEdit'?'Nachträglich ändern oder löschen':row.label;
+      var cS=row.editOrNone?box(0,false):box(c!=='-',true,lock,"permToggle('coach','"+k+"','S')",lock?'fest vorgegeben':'');
+      var cE=(row.seeOnly||row.fixed)?box(0,false):box(c==='E',true,false,"permToggle('coach','"+k+"','E')");
+      var vS=row.editOrNone?box(0,false):box(v!=='-',true,lock,"permToggle('viewer','"+k+"','S')",lock?'fest vorgegeben':'');
+      h+='<tr><td style="'+TD+';text-align:left;padding-left:12px;font-size:13px;color:var(--text)">'+esc(label)+(desc?' <span style="font-size:11.5px;color:var(--text3)">· '+esc(desc)+'</span>':'')+'</td>'
+        +'<td style="'+TD+';'+BL+'">'+cS+'</td><td style="'+TD+'">'+cE+'</td><td style="'+TD+';'+BL+'">'+vS+'</td></tr>';
+    });
+  });
+  h+='</tbody></table></div>'
+    +'<div style="font-size:12.5px;line-height:1.55;color:var(--text2);background:var(--s-sub);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 13px;margin-top:12px"><b style="color:var(--text)">So wird es durchgesetzt:</b> Board und Datenbank prüfen dieselben Rechte: Betrachter können nichts speichern, Coaches nur, wo „ändern“ angehakt ist – auch wer sich direkt mit der Datenbank verbindet. Ohne Häkchen bei „sehen“ wird der Bereich in Menü und Mitarbeiterprofil ausgeblendet. Sales Agents kommen nicht ins Board und sehen in der Erweiterung nur ihre eigenen Zahlen.</div></div>';
+  return h;
+}
 // ══ Wizards ══════════════════════════════════════════════════════════════════
 var WIZ_DEFAULT={on:true,time:'13:00',roles:{admin:true,coach:true,viewer:false},slides:{opt:true,marge:true,cr:true,worst:true},minOpt:5};
 function wizCfg(){ var s=settings.wizardSettings||{}; return {on:s.on!==false,time:s.time||WIZ_DEFAULT.time,roles:Object.assign({},WIZ_DEFAULT.roles,s.roles||{}),slides:Object.assign({},WIZ_DEFAULT.slides,s.slides||{}),minOpt:s.minOpt!=null?s.minOpt:WIZ_DEFAULT.minOpt}; }
