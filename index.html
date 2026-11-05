@@ -534,10 +534,10 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 <div class="modal-ov hidden" id="perfPopModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
   <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Performance</div><div id="ppHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('perfPopModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
   <div style="display:flex;min-height:0;flex:1">
-    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Aktueller Monat" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSec1');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-calendar-stats"></i><span class="rl-tip" style="left:48px">Aktueller Monat</span></button><button class="rl-btn" type="button" aria-label="Letzte 8 Wochen" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSec2');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-chart-bar"></i><span class="rl-tip" style="left:48px">Letzte 8 Wochen</span></button></div>
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Wichtigste KPIs" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecB');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-star"></i><span class="rl-tip" style="left:48px">Wichtigste KPIs</span></button><button class="rl-btn" type="button" aria-label="Verlauf" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecV');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-chart-bar"></i><span class="rl-tip" style="left:48px">Verlauf</span></button><button class="rl-btn" type="button" aria-label="Marge" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecM');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-currency-euro"></i><span class="rl-tip" style="left:48px">Marge</span></button><button class="rl-btn" type="button" aria-label="KPIs" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecK');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-table"></i><span class="rl-tip" style="left:48px">KPIs</span></button></div>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div id="ppBody" style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px"></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="var e=_puEmp||selectedEmp;closeModal('perfPopModal');selectedEmp=e;view='emp';activeTab='performance';renderSidebar();renderMain();"><i class="ti ti-arrow-right"></i> Zur KPI Performance</button></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="var e=_puEmp||selectedEmp;closeModal('perfPopModal');selectedEmp=e;view='emp';activeTab='performance';renderSidebar();renderMain();"><i class="ti ti-arrow-right"></i> Zur KPI Performance</button><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('perfPopModal')">Schließen</button></div>
     </div>
   </div>
 </div></div>
@@ -10455,59 +10455,122 @@ function puDecorate(id){
     if(hd)[].slice.call(hd.querySelectorAll('.pu-seg span')).forEach(function(sp){sp.classList.toggle('on',sp.dataset.v===id);});
   }
 }
-// ── Bereich „Performance“ im gemeinsamen Popup: aktueller Monat gegen Ziel und Vormonat, Verlauf der letzten 8 Wochen ──
+// ── Bereich „Performance“: Banner mit den wichtigsten KPIs, Verlauf mit Filter, Marge, KPI-Tabelle ──
+var _ppMetric='opt',_ppPeriod='week',_ppEmp=null;
+function _ppPad(n){return (n<10?'0':'')+n;}
+function _ppIso(d){return d.getFullYear()+'-'+_ppPad(d.getMonth()+1)+'-'+_ppPad(d.getDate());}
+function _ppRanges(period){
+  var t0=today(),d=new Date(t0+'T00:00:00'),out=[];
+  if(period==='day'){
+    var c=new Date(d);
+    while(out.length<8){var dw=c.getDay();if(dw!==0&&dw!==6){var s=_ppIso(c);out.unshift({from:s,to:s,label:['So','Mo','Di','Mi','Do','Fr','Sa'][dw]});}c.setDate(c.getDate()-1);}
+  } else if(period==='week'){
+    var mon=new Date(d);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+    for(var i=7;i>=0;i--){var a=new Date(mon);a.setDate(a.getDate()-i*7);var b=new Date(a);b.setDate(b.getDate()+6);out.push({from:_ppIso(a),to:_ppIso(b),label:String(isoWeekOf(a).week)});}
+  } else {
+    var MN=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    for(var j=7;j>=0;j--){var m=new Date(d.getFullYear(),d.getMonth()-j,1);var e=new Date(m.getFullYear(),m.getMonth()+1,0);out.push({from:_ppIso(m),to:_ppIso(e),label:MN[m.getMonth()]});}
+  }
+  return out;
+}
+function _ppOpt(s){return (s.oem||0)+(s.ups||0)+(s.wka||0);}
+function _ppOptH(emp,from,to){
+  var dates=(performance[emp.id]||[]).filter(function(x){return x.date>=from&&x.date<=to;}).map(function(x){return x.date;});
+  var h=dates.length?perfHoursForDates(emp,dates):0;var s=chartSumsForRange([emp],from,to);
+  return h>0?_ppOpt(s)/h:null;
+}
+function _ppVal(emp,key,from,to){
+  var s=chartSumsForRange([emp],from,to);
+  if(key==='marge')return s.margeGes||0;
+  if(key==='opt')return _ppOpt(s);
+  if(key==='optH')return _ppOptH(emp,from,to);
+  return chartCrFromSums(key,s);
+}
+function _ppTarget(emp,key){var T=empTargets(emp)||{};var t=T[key];if(!t||t.val==null||t.val==='')return null;return {val:+t.val,dir:t.dir||'gte'};}
+function _ppMiss(v,t){if(v==null||!t)return false;return t.dir==='lte'?v>t.val:v<t.val;}
+function _ppFmt(v,kind){if(v==null||isNaN(v))return '–';if(kind==='pct')return Math.round(v)+' %';if(kind==='eur')return '€ '+Math.round(v).toLocaleString('de-DE');if(kind==='dec')return (Math.round(v*10)/10).toFixed(1).replace('.',',');return String(Math.round(v));}
+function _ppPeriods(){
+  var t0=today(),d=new Date(t0+'T00:00:00');
+  var mon=new Date(d);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));var sun=new Date(mon);sun.setDate(sun.getDate()+6);
+  var MN=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  return {day:{from:t0,to:t0,label:'Heute'},week:{from:_ppIso(mon),to:_ppIso(sun),label:'Woche (KW '+String(isoWeekOf(d).week)+')'},month:{from:t0.slice(0,8)+'01',to:t0,label:MN[d.getMonth()]}};
+}
+function _ppMargeTargets(emp){
+  var mk=today().slice(0,7),r=(typeof zielStore!=='undefined'&&zielStore[mk]&&zielStore[mk][emp.id])||{};
+  var perDay=(r.optTag||0)*(r.margeOpt||0);
+  var month=(typeof teamMonthZiel==='function')?teamMonthZiel([emp],mk,true):0;
+  return {day:perDay||null,week:perDay?perDay*5:null,month:month||null};
+}
+function ppRenderChart(){
+  var emp=employees.find(function(e){return String(e.id)===String(_ppEmp);});var el=document.getElementById('ppSecV');if(!emp||!el)return;
+  var MET=[['marge','Marge','eur'],['opt','Opt. Ges.','n'],['crOEM','CR OEM','pct'],['crTeilweise','CR TW','pct'],['crSyMy','CR SY/MY','pct'],['crMegaYes','CR MY','pct']];
+  var mt=MET.find(function(m){return m[0]===_ppMetric;})||MET[1];
+  var rs=_ppRanges(_ppPeriod),vals=rs.map(function(r){return _ppVal(emp,mt[0],r.from,r.to);});
+  var mx=Math.max.apply(null,vals.map(function(v){return v||0;}).concat([1]));
+  function seg(opts,cur,fn){return '<span style="display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;padding:2px">'+opts.map(function(o){var on=o[0]===cur;return '<span onclick="'+fn+'(\''+o[0]+'\')" style="height:30px;padding:0 11px;border-radius:8px;display:flex;align-items:center;font-size:12.5px;cursor:pointer;white-space:nowrap;'+(on?'background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)':'color:var(--text2);font-weight:500')+'">'+o[1]+'</span>';}).join('')+'</span>';}
+  var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'+seg(MET,_ppMetric,'ppSetMetric')+'<span style="margin-left:auto">'+seg([['day','Tag'],['week','Woche'],['month','Monat']],_ppPeriod,'ppSetPeriod')+'</span></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;align-items:end;height:150px;border-bottom:1px solid #E4E0D6;padding-bottom:4px">';
+  vals.forEach(function(v,i){var cur=i===7;h+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px"><span style="font-size:11.5px;font-weight:600;white-space:nowrap;color:'+(cur?'#B5513A':'var(--text2)')+'">'+(v!=null?_ppFmt(v,mt[2]):'–')+'</span><span style="width:100%;max-width:36px;border-radius:5px 5px 0 0;background:'+(cur?'#F08566':'#B4AC9C')+';height:'+Math.max(v?4:2,(v||0)/mx*112)+'px"></span></div>';});
+  h+='</div><div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;margin-top:6px;text-align:center">'+rs.map(function(r,i){return '<div style="font-size:11.5px;color:'+(i===7?'var(--text)':'var(--text3)')+';font-weight:'+(i===7?700:500)+'">'+r.label+'</div>';}).join('')+'</div>';
+  el.innerHTML=h;
+}
+function ppSetMetric(k){_ppMetric=k;ppRenderChart();}
+function ppSetPeriod(k){_ppPeriod=k;ppRenderChart();}
 function openPerfPopup(empId){
   var emp=employees.find(function(e){return String(e.id)===String(empId);});if(!emp)return;
+  _ppEmp=emp.id;
   var sub=document.getElementById('ppHdSub');if(sub)sub.textContent=emp.name+(emp.role?' · '+emp.role:'');
-  var t0=today(),y=+t0.slice(0,4),mo=+t0.slice(5,7);
-  function pad(n){return (n<10?'0':'')+n;}
-  var mFrom=y+'-'+pad(mo)+'-01',mTo=t0;
-  var py=mo===1?y-1:y,pm=mo===1?12:mo-1;var _pLast=new Date(py,pm,0).getDate();var pFrom=py+'-'+pad(pm)+'-01',pTo=py+'-'+pad(pm)+'-'+pad(Math.min(+t0.slice(8,10),_pLast));
-  var cur=chartSumsForRange([emp],mFrom,mTo),prev=chartSumsForRange([emp],pFrom,pTo);
-  var days=(performance[emp.id]||[]).filter(function(x){return x.date>=mFrom&&x.date<=mTo;}).length;
-  var T=empTargets(emp)||{};
-  function tg(k){var v=T[k];if(v&&typeof v==='object')return {val:v.val,dir:v.dir||'gte'};if(typeof v==='number')return {val:v,dir:T[k+'Dir']||'gte'};return null;}
-  function fmt(v,kind){if(v==null||isNaN(v))return '–';if(kind==='pct')return Math.round(v)+' %';if(kind==='eur')return '€ '+Math.round(v).toLocaleString('de-DE');return String(Math.round(v*10)/10).replace('.',',');}
-  var K=[
-    {l:'Opt. Ges.',v:cur.oem+cur.ups+cur.wka,pv:prev.oem+prev.ups+prev.wka,kind:'n'},
-    {l:'Marge Ges.',v:cur.margeGes,pv:prev.margeGes,kind:'eur'},
-    {l:'Opt./Tag',v:days?(cur.oem+cur.ups+cur.wka)/days:null,pv:null,kind:'n'},
-    {l:'CR OEM',v:chartCrFromSums('crOEM',cur),pv:chartCrFromSums('crOEM',prev),kind:'pct',t:tg('crOEM')},
-    {l:'CR TW',v:chartCrFromSums('crTeilweise',cur),pv:chartCrFromSums('crTeilweise',prev),kind:'pct',t:tg('crTW')},
-    {l:'CR Yes',v:chartCrFromSums('crYes',cur),pv:chartCrFromSums('crYes',prev),kind:'pct',t:tg('crYes')},
-    {l:'CR SY/MY',v:chartCrFromSums('crSyMy',cur),pv:chartCrFromSums('crSyMy',prev),kind:'pct'},
-    {l:'CR MY',v:chartCrFromSums('crMegaYes',cur),pv:chartCrFromSums('crMegaYes',prev),kind:'pct',t:tg('crMegaYes')}
-  ];
-  var CARD='background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)';
-  var MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-  var h='<div id="ppSec1" style="'+CARD+'"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Aktueller Monat <span style="font-weight:500;color:var(--text3);font-size:12.5px">'+MON[mo-1]+' '+y+' · '+days+' '+(days===1?'Arbeitstag':'Arbeitstage')+' · Vormonat jeweils bis zum gleichen Tag</span></div>'
-    +'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">';
-  K.forEach(function(k){
-    var miss=false;if(k.t&&k.v!=null){miss=k.t.dir==='lte'?k.v>k.t.val:k.v<k.t.val;}
-    var d=(k.pv!=null&&k.v!=null)?k.v-k.pv:null;
-    h+='<div style="background:'+(miss?'#FDF0EB':'#EFECE5')+';border:1px solid '+(miss?'rgba(240,133,102,0.55)':'#E4E0D6')+';border-radius:10px;padding:9px 11px">'
-      +'<div style="font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase">'+k.l+'</div>'
-      +'<div style="font-size:22px;font-weight:300;line-height:1.2;color:'+(miss?'#B5513A':'var(--text)')+'">'+fmt(k.v,k.kind)+'</div>'
-      +'<div style="font-size:11.5px;color:var(--text3)">'+([k.t?'Ziel '+(k.t.dir==='lte'?'≤ ':'')+fmt(k.t.val,k.kind):'',d!=null?'Vormonat '+(d>=0?'+':'')+(k.kind==='pct'?Math.round(d)+' %':k.kind==='eur'?Math.round(d).toLocaleString('de-DE')+' €':Math.round(d)):''].filter(Boolean).join(' · ')||'&nbsp;')+'</div></div>';
+  var P=_ppPeriods(),CARD='background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)';
+  var sM=chartSumsForRange([emp],P.month.from,P.month.to),sW=chartSumsForRange([emp],P.week.from,P.week.to),sD=chartSumsForRange([emp],P.day.from,P.day.to);
+  // 1) Banner
+  var BK=[['OPT./STD.','optH','dec','optPerH'],['CR OEM','crOEM','pct','crOEM'],['CR TW','crTeilweise','pct','crTeilweise'],['CR SY/MY','crSyMy','pct','crSyMy'],['CR MY','crMegaYes','pct','crMegaYes']];
+  var ban='<div id="ppSecB" style="border-radius:14px;padding:16px 18px;margin-bottom:14px;color:#fff;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)"><div style="font-size:11px;font-weight:600;letter-spacing:.09em;margin-bottom:10px">'+P.month.label.toUpperCase()+' · WICHTIGSTE KPIS</div><div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">';
+  BK.forEach(function(k,i){
+    var vm=_ppVal(emp,k[1],P.month.from,P.month.to),vw=_ppVal(emp,k[1],P.week.from,P.week.to),t=_ppTarget(emp,k[3]),miss=_ppMiss(vm,t);
+    var extra='Woche '+_ppFmt(vw,k[2]);
+    if(k[1]==='crMegaYes'&&t){var den=(sM.yes||0)+(sM.sy||0)+(sM.my||0),r=t.val/100,need=r<1?Math.ceil((r*den-(sM.my||0))/(1-r)):0;extra=need>0?'noch '+need+' MY':'Ziel erreicht';}
+    ban+='<div style="padding:0 14px;'+(i?'border-left:1px solid rgba(255,255,255,.25);':'padding-left:0;')+'"><div style="font-size:11px;font-weight:600;letter-spacing:.09em">'+k[0]+(miss?' <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;vertical-align:1px;margin-left:3px" title="Ziel verfehlt"></span>':'')+'</div>'
+      +'<div style="font-size:32px;font-weight:300;line-height:1.1">'+_ppFmt(vm,k[2])+'</div>'
+      +'<div style="font-size:12.5px;color:rgba(255,255,255,.9)">'+(t?'Ziel '+(t.dir==='lte'?'≤ ':'≥ ')+_ppFmt(t.val,k[2]):'—')+'</div><div style="font-size:12.5px;color:rgba(255,255,255,.9)">'+extra+'</div></div>';
   });
-  h+='</div></div>';
-  // Letzte 8 Wochen
-  var wk=[],dt=new Date(t0+'T00:00:00');var dow=(dt.getDay()+6)%7;dt.setDate(dt.getDate()-dow);
-  for(var i=7;i>=0;i--){var a=new Date(dt);a.setDate(a.getDate()-i*7);var b=new Date(a);b.setDate(b.getDate()+6);
-    var fa=a.getFullYear()+'-'+pad(a.getMonth()+1)+'-'+pad(a.getDate()),fb=b.getFullYear()+'-'+pad(b.getMonth()+1)+'-'+pad(b.getDate());
-    var sw=chartSumsForRange([emp],fa,fb);wk.push({l:pad(a.getDate())+'.'+pad(a.getMonth()+1)+'.',v:sw.oem+sw.ups+sw.wka,cr:chartCrFromSums('crOEM',sw)});}
-  var mx=Math.max.apply(null,wk.map(function(w){return w.v;}).concat([1]));
-  h+='<div id="ppSec2" style="'+CARD+';margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:12px">Letzte 8 Wochen <span style="font-weight:500;color:var(--text3);font-size:12.5px">Optimierungen je Woche, darunter CR OEM</span></div>'
-    +'<div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;align-items:end;height:150px;border-bottom:1px solid #E4E0D6;padding-bottom:4px">';
-  wk.forEach(function(w,i){h+='<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px"><span style="font-size:11.5px;font-weight:600;color:var(--text2)">'+(w.v||'')+'</span><span style="width:100%;max-width:34px;border-radius:5px 5px 0 0;background:'+(i===7?'#3a3833':'#B4AC9C')+';height:'+Math.max(w.v/mx*120,w.v?4:2)+'px"></span></div>';});
-  h+='</div><div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin-top:6px;text-align:center">';
-  wk.forEach(function(w,i){h+='<div><div style="font-size:11.5px;color:'+(i===7?'var(--text)':'var(--text3)')+';font-weight:'+(i===7?700:500)+'">'+(i===7?'diese Wo.':w.l)+'</div><div style="font-size:12px;font-weight:600;color:var(--text2)">'+(w.cr!=null?Math.round(w.cr)+' %':'–')+'</div></div>';});
-  h+='</div></div>';
-  document.getElementById('ppBody').innerHTML=h;
-  document.getElementById('ppBody').scrollTop=0;
+  ban+='</div></div>';
+  // 2) Verlauf (wird separat gezeichnet)
+  var verl='<div id="ppSecV" style="'+CARD+'"></div>';
+  // 3) Marge
+  var MT=_ppMargeTargets(emp);
+  var mg='<div id="ppSecM" style="'+CARD+'"><div style="font-weight:700;font-size:14px;margin-bottom:10px">Marge</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">';
+  [['day',sD,MT.day],['week',sW,MT.week],['month',sM,MT.month]].forEach(function(x){
+    var per=x[0],s=x[1],ziel=x[2],val=s.margeGes||0,opt=_ppOpt(s),avg=opt?val/opt:null,pc=ziel?Math.round(val/ziel*100):null,ok=pc!=null&&pc>=100;
+    var rs=_ppRanges(per),vs=rs.map(function(r){return chartSumsForRange([emp],r.from,r.to).margeGes||0;}),mx=Math.max.apply(null,vs.concat([1]));
+    mg+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;min-width:0">'
+      +'<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)"><span>'+P[per].label+'</span><span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text3)">'+opt+' Opt.</span></div>'
+      +'<div style="border-bottom:1px solid #E4E0D6;margin:6px 0 10px;padding-bottom:10px"><div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;align-items:end;height:36px">'
+      +vs.map(function(v,i){return '<i title="'+rs[i].label+': '+_ppFmt(v,'eur')+'" style="display:block;border-radius:3px 3px 0 0;height:'+Math.max(3,v/mx*36)+'px;background:'+(i===7?'#F08566':'#CFC8BA')+'"></i>';}).join('')+'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-top:3px">'+rs.map(function(r,i){return '<span style="font-size:9.5px;text-align:center;white-space:nowrap;overflow:hidden;color:'+(i===7?'var(--text)':'var(--text3)')+';font-weight:'+(i===7?700:500)+'">'+r.label+'</span>';}).join('')+'</div></div>'
+      +'<div style="font-size:28px;font-weight:300;line-height:1.15;white-space:nowrap">'+_ppFmt(val,'eur')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text3);white-space:nowrap">'
+      +(pc!=null?'<span style="font-size:13px;font-weight:700;color:'+(ok?'#2f6b52':'#B5513A')+'">'+pc+' %</span><span>von '+_ppFmt(ziel,'eur')+'</span>':'<span>kein Ziel hinterlegt</span>')
+      +'<span style="margin-left:auto" title="Margenerhöhung pro Auftrag">'+(avg!=null?'Ø '+Math.round(avg).toLocaleString('de-DE')+' €':'')+'</span></div>'
+      +'<div style="height:4px;border-radius:2px;background:#E4E0D6;margin-top:10px;overflow:hidden"><i style="display:block;height:100%;width:'+(pc!=null?Math.min(100,pc):0)+'%;background:'+(ok?'#3a3833':'#F08566')+'"></i></div></div>';
+  });
+  mg+='</div></div>';
+  // 4) KPI-Tabelle
+  var KR=[['Opt./Std.','optH','dec','optPerH'],['CR OEM','crOEM','pct','crOEM'],['CR TW','crTeilweise','pct','crTeilweise'],['CR Yes','crYes','pct','crYes'],['CR SY/MY','crSyMy','pct','crSyMy'],['Mega Yes (CR MY)','crMegaYes','pct','crMegaYes'],['CR SY','crSuperYes','pct','crSuperYes']];
+  var TH='font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);padding:7px 8px;text-align:right;border-bottom:1px solid #E4E0D6;background:#EFECE5';
+  var tb='<div id="ppSecK" style="'+CARD+';margin-bottom:4px"><div style="display:flex;align-items:center;font-weight:700;font-size:14px;margin-bottom:10px">KPIs<span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)">Heute · Woche · Monat · Ziel</span></div><table style="width:100%;border-collapse:collapse"><tr><th style="'+TH+';text-align:left">Kennzahl</th><th style="'+TH+'">Heute</th><th style="'+TH+'">Woche</th><th style="'+TH+'">Monat</th><th style="'+TH+'">Ziel</th></tr>';
+  KR.forEach(function(k){
+    var hl=k[1]==='crMegaYes',t=_ppTarget(emp,k[3]);
+    var vd=_ppVal(emp,k[1],P.day.from,P.day.to),vw=_ppVal(emp,k[1],P.week.from,P.week.to),vm=_ppVal(emp,k[1],P.month.from,P.month.to);
+    var TD='padding:0 8px;height:38px;border-bottom:1px solid #eae7e0;font-size:13.5px;text-align:right;'+(hl?'background:#FDF0EB;':'');
+    tb+='<tr><td style="'+TD+'text-align:left;'+(hl?'font-weight:700':'')+'">'+k[0]+'</td><td style="'+TD+'">'+_ppFmt(vd,k[2])+'</td><td style="'+TD+'">'+_ppFmt(vw,k[2])+'</td><td style="'+TD+'font-weight:600;'+(_ppMiss(vm,t)?'color:#B5513A':'')+'">'+_ppFmt(vm,k[2])+'</td><td style="'+TD+'font-size:12px;color:var(--text3)">'+(t?(t.dir==='lte'?'≤ ':'≥ ')+_ppFmt(t.val,k[2]):'—')+'</td></tr>';
+  });
+  tb+='</table></div>';
+  var body=document.getElementById('ppBody');
+  body.innerHTML=ban+verl+mg+tb;
+  ppRenderChart();
+  body.scrollTop=0;
   openModal('perfPopModal');
 }
-// ── Task im gemeinsamen Popup: offene und zuletzt erledigte Aufgaben, Abhaken mit Rückgängig ──
 function taskDbUpdate(id,fields){
   // completed_at gibt es erst nach 06_aufgaben_erledigt_am.sql – fehlt die Spalte, wird ohne sie gespeichert
   return sb.from('tasks').update(fields).eq('id',id).then(function(res){
