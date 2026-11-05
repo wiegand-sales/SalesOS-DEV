@@ -46,7 +46,7 @@ body.sb-collapsed .sb-rail{border-right:none;}
 .rl-btn.on{background:#fff;color:var(--text);box-shadow:0 0 0 1px #E4E0D6,0 2px 6px rgba(40,32,15,.06);}
 .rl-btn.on:before{content:"";position:absolute;left:-13px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#F08566;}
 .rl-soft{background:#ECE9E1;color:var(--text);}
-#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before,#addEmpModal .rl-btn.on:before,#addTaskModal .rl-btn.on:before,#commentModal .rl-btn.on:before,#perfPopModal .rl-btn.on:before,#cevModal .rl-btn.on:before,#commentModal .rl-btn.on:before{left:-9px;}
+#coachingInfoModal .rl-btn.on:before,#sessionPlanenModal .rl-btn.on:before,#qaBewertungModal .rl-btn.on:before,#neuesCoachingModal .rl-btn.on:before,#addEmpModal .rl-btn.on:before,#addTaskModal .rl-btn.on:before,#empSetModal .rl-btn.on:before,#commentModal .rl-btn.on:before,#perfPopModal .rl-btn.on:before,#cevModal .rl-btn.on:before,#commentModal .rl-btn.on:before{left:-9px;}
 /* Ein Popup für alles: Bereiche oben, Abschnitte unter dem Strich (gleiche Größe, aktiv nur dezent hinterlegt) */
 .rl-btn.rl-sub.on{background:#EFECE5!important;box-shadow:none!important;}
 .rl-btn.rl-sub.on:before{display:none!important;}
@@ -122,6 +122,10 @@ body.sb-collapsed .sb-rail{border-right:none;}
 #commentModal input:not([type=checkbox]):not([type=radio]):not([type=range]){height:38px;box-sizing:border-box;padding-top:0;padding-bottom:0}
 .modal-ov td input:not([type=checkbox]):not([type=radio]):not([type=range]){height:auto;padding-top:revert;padding-bottom:revert}
 /* Flächen in Popups: kein zusätzlicher Abstand unter dem letzten Feld */
+#espBody td input:not([type=checkbox]):not([type=radio]){height:auto}
+#espBody table{min-width:0!important;table-layout:auto!important}#espBody th,#espBody td{width:auto!important;padding-left:8px!important;padding-right:8px!important}
+#espBody td input[type=time]{min-width:0;width:100%;max-width:118px}
+#espBody>div>*:last-child{margin-bottom:0!important}
 #ncSecNew>div[style*="#EFECE5"]>*:last-child,#spSecNew>div[style*="#EFECE5"]>*:last-child,#qaSecBew>div[style*="#EFECE5"]>*:last-child{margin-bottom:0!important}
 /* Mitarbeiter-Kopf: Reiter als Schalter */
 #empTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
@@ -530,6 +534,20 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="var e=_puEmp||selectedEmp;closeModal('perfPopModal');selectedEmp=e;view='emp';activeTab='performance';renderSidebar();renderMain();"><i class="ti ti-arrow-right"></i> Zur KPI Performance</button></div>
     </div>
   </div>
+</div></div>
+<div class="modal-ov hidden" id="empSetModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden;position:relative">
+  <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Einstellungen</div><div id="esHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeEmpSetModal()" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
+  <div style="display:flex;min-height:0;flex:1">
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Stammdaten &amp; Provisionsvereinbarung" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('espSec1');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-id"></i><span class="rl-tip" style="left:48px">Stammdaten &amp; Provisionsvereinbarung</span></button><button class="rl-btn" type="button" aria-label="Letzte Änderungen" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('espSec2');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-history"></i><span class="rl-tip" style="left:48px">Letzte Änderungen</span></button></div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
+      <div id="espScroll" style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px">
+        <div id="espSec1" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Stammdaten &amp; Provisionsvereinbarung<span id="espLast" style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)"></span></div><div id="espBody"></div><div style="display:flex;justify-content:flex-end;margin-top:2px"><button class="btn btn-primary" type="button" id="espSave" style="height:36px;width:auto" onclick="saveEmpSetModal()"><i class="ti ti-check"></i> Änderungen speichern</button></div></div>
+        <div id="espSec2" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:4px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Letzte Änderungen <span id="espHistN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span><button class="btn" type="button" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px" onclick="var e=_esEmp;closeEmpSetModal();selectedEmp=e;view='emp';activeTab='emp-settings';renderSidebar();renderMain();">Alle in Einstellungen</button></div><div id="espHist"></div></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeEmpSetModal()">Schließen</button></div>
+    </div>
+  </div>
+  <div id="espToast" style="position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:#1d1c1a;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;display:none;white-space:nowrap;-webkit-font-smoothing:antialiased;z-index:5"></div>
 </div></div>
 <div class="modal-ov hidden" id="addTaskModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden;position:relative">
   <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Aufgabe hinzufügen</div><div id="atHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('addTaskModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
@@ -10147,6 +10165,19 @@ function esBuildHtml(emp,asPopup,html){
           {n:5,t:'Provisionsrelevante KPIs',sum:deOnly('6 Kennzahlen')+vlcOnly('3 Kennzahlen')+(mLabel?' · aktuell „'+mLabel+'“':''),body:SEG.kpi},
           {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('9 Kennzahlen')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
         ];
+        if(asPopup==='panels'){
+          // Popup-Bereich „Einstellungen“: die sechs Abschnitte als getönte Flächen in einer Kachel
+          var pp='';
+          sections.forEach(function(sec){
+            var extra=sec.n===3?'':(sec.n===4?deOnly('Olching')+vlcOnly('weWow'):'');
+            pp+='<div id="esSec'+sec.n+'" style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px">'
+              +'<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px"><span>'+sec.t+'</span><span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text3)">'+extra+'</span></div>'
+              +(sec.n===4?'<div style="font-size:12.5px;color:var(--text);background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);border-radius:10px;padding:10px 12px;margin-bottom:10px;line-height:1.6"><div style="font-size:10.5px;font-weight:700;color:#C9502F;letter-spacing:.08em;margin-bottom:3px">SO WIRD GERECHNET</div>'+deOnly(regelDe)+vlcOnly(regelVlc)+'</div>':'')
+              +(sec.body||'')+'</div>';
+          });
+          html=pp;
+          return;
+        }
         if(asPopup){
           // Popup „Mitarbeiter hinzufügen“: gleiche Felder, als Boxen untereinander, Titel nur als Text
           var pcard='';
@@ -10273,10 +10304,11 @@ var PU=[
   {k:'ca',n:'Call',i:'ti-phone',ids:['qaBewertungModal']},
   {k:'en',n:'Mitarbeiterentwicklung',i:'ti-trending-up',ids:['cevModal']},
   {k:'ko',n:'Kommentar',i:'ti-message-plus',ids:['commentModal']},
-  {k:'ta',n:'Task',i:'ti-checkbox',ids:['addTaskModal']}
+  {k:'ta',n:'Task',i:'ti-checkbox',ids:['addTaskModal']},
+  {k:'es',n:'Einstellungen',i:'ti-settings',ids:['empSetModal']}
 ];
 var PU_OPEN={perfPopModal:'openPerfPopup',coachingInfoModal:'openCoachingInfoModal',neuesCoachingModal:'openNeuesCoachingModal',sessionPlanenModal:'openSessionModal',
-  qaBewertungModal:'openQaBewertungModal',cevModal:'openCoachingEval',commentModal:'openCommentModal',addTaskModal:'openAddTaskModal'};
+  qaBewertungModal:'openQaBewertungModal',cevModal:'openCoachingEval',commentModal:'openCommentModal',addTaskModal:'openAddTaskModal',empSetModal:'openEmpSetModal'};
 var PU_SUBICONS={cevModal:[['ti-calendar','Datum'],['ti-adjustments-horizontal','Bewertung'],['ti-notes','Notiz']],
   commentModal:[['ti-user','Wer & Wann'],['ti-tag','Art des Kommentars'],['ti-message-circle','Kommentar']]};
 var _puState={},_puEmp=null,_puSwitching=false,_puSeVariant='neuesCoachingModal';
@@ -10521,6 +10553,56 @@ function atToggle(id,isUndo){
     var e0=employees.find(function(x){return x.id===selectedEmp;});
     logActivity('task','status_changed','Aufgabe '+(nowDone?'erledigt':'wieder geöffnet')+': "'+t.text+'"',selectedEmp,e0?e0.name:'');
   });
+}
+// ── Bereich „Einstellungen“ im gemeinsamen Popup: Stammdaten & Provisionsvereinbarung wie im Reiter, als Flächen ──
+var _esEmp=null,_esHidMain=false;
+function openEmpSetModal(empId){
+  var emp=employees.find(function(e){return String(e.id)===String(empId||selectedEmp);});if(!emp)return;
+  _esEmp=emp.id;selectedEmp=emp.id;
+  var body=document.getElementById('espBody');
+  // Felder-IDs eindeutig halten: offene Stammdaten im Hauptbereich vorübergehend ausblenden
+  var ex=document.getElementById('es-name');
+  if(ex&&!body.contains(ex)){var ma=document.getElementById('mainArea');if(ma){ma.innerHTML='';_esHidMain=true;}}
+  body.innerHTML=esBuildHtml(emp,'panels','');
+  var sub=document.getElementById('esHdSub');if(sub)sub.textContent=emp.name+(emp.role?' · '+emp.role:'');
+  espRenderHist();
+  openModal('empSetModal');
+  var sc=document.getElementById('espScroll');if(sc)sc.scrollTop=0;
+}
+function closeEmpSetModal(){
+  closeModal('empSetModal');
+  var b=document.getElementById('espBody');if(b)b.innerHTML='';
+  if(_esHidMain){_esHidMain=false;renderMain();}
+}
+function espRenderHist(){
+  var el=document.getElementById('espHist');if(!el)return;
+  var evs=(typeof histEvents==='function')?histEvents(_esEmp):[];
+  var n=document.getElementById('espHistN');if(n)n.textContent='('+evs.length+')';
+  var last=document.getElementById('espLast');
+  if(last){if(evs.length){var d0=new Date(evs[0].t);last.textContent='zuletzt geändert '+('0'+d0.getDate()).slice(-2)+'.'+('0'+(d0.getMonth()+1)).slice(-2)+'.'+d0.getFullYear()+' von '+evs[0].who;}else last.textContent='';}
+  el.innerHTML=evs.length?evs.slice(0,5).map(function(ev){
+    var d=new Date(ev.t);var ds=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+    var it=ev.items[0]||{label:'Änderung'};
+    var title=it.label+(ev.items.length>1?' +'+(ev.items.length-1):'');
+    var txt=ev.items.map(function(x){return x.legacy?x.label+' geändert':(ev.items.length>1?x.label+': ':'')+x.ov+' → '+x.nv;}).join(' · ');
+    return '<div title="'+esc(txt)+'" style="display:flex;align-items:flex-start;gap:12px;height:66px;padding:12px;border:1px solid #E4E0D6;border-radius:10px;background:#EFECE5;margin-bottom:6px;overflow:hidden">'
+      +'<div style="width:150px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+ds+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(title)+'</span></div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3);margin-bottom:2px">'+esc(ev.who)+'</div>'
+      +'<div style="font-size:13.5px;line-height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)">'+esc(txt)+'</div></div></div>';
+  }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Noch keine Änderungen.</div>';
+}
+function saveEmpSetModal(){
+  var emp=employees.find(function(e){return String(e.id)===String(_esEmp);});if(!emp)return;
+  selectedEmp=emp.id;
+  var _b=document.getElementById('espBody'),_x=document.getElementById('es-name');
+  if(_x&&_b&&!_b.contains(_x)){var _ma=document.getElementById('mainArea');if(_ma){_ma.innerHTML='';_esHidMain=true;}}
+  // Beide Speicherfunktionen lesen die Felder aus dem Popup; der Hauptbereich wird währenddessen nicht neu gezeichnet
+  var _red=window.renderEmpDetail;window.renderEmpDetail=function(){};
+  try{saveProvisionSettings(emp.id);saveEmpEinstellungen();}finally{window.renderEmpDetail=_red;}
+  var t=document.getElementById('espToast');if(t){t.textContent='Änderungen gespeichert';t.style.display='block';clearTimeout(window._espTT);window._espTT=setTimeout(function(){t.style.display='none';},3000);}
+  var sub=document.getElementById('esHdSub');if(sub)sub.textContent=emp.name+(emp.role?' · '+emp.role:'');
+  if(!_esHidMain&&view==='emp')renderEmpDetail();
+  setTimeout(function(){if(typeof loadEmployeeHistoryFromSupabase==='function')loadEmployeeHistoryFromSupabase().then(function(){espRenderHist();});},1200);
 }
 function openAddTaskModal(empId){
   if(empId)selectedEmp=empId;
