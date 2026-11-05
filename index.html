@@ -7414,7 +7414,7 @@ function renderTab(){
       html+='<div class="card" style="margin-bottom:22px">';
       html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
       html+='<div class="card-title" style="margin:0"><i class="ti ti-flag"></i> Zielvereinbarungen</div>';
-      html+='<button class="btn btn-primary" data-eid="'+emp.id+'" onclick="openGoalModal(this.dataset.eid)"><i class="ti ti-plus"></i> Neues Ziel</button>';
+      html+='<button class="btn btn-primary" data-eid="'+emp.id+'" onclick="openGoalInPopup(this.dataset.eid)"><i class="ti ti-plus"></i> Neues Ziel</button>';
       html+='</div>';
       if(!empGoals.length){
         html+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:14px">Noch keine Ziele vereinbart</div>';
@@ -9473,6 +9473,7 @@ function openCoachingEval(empId,editEvalId){
     +'<div style="display:flex;min-height:0;flex:1">'
     +'<div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
     +'<button class="rl-btn on" type="button" aria-label="Neue Bewertung" data-target="cevSec1" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById(\'cevSec1\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'start\'})"><i class="ti ti-pencil"></i><span class="rl-tip" style="left:48px">Neue Bewertung</span></button>'
+    +'<button class="rl-btn" type="button" aria-label="Ziele" data-target="cevSec3" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById(\'cevSec3\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'start\'})"><i class="ti ti-flag"></i><span class="rl-tip" style="left:48px">Ziele</span></button>'
     +'<button class="rl-btn" type="button" aria-label="Letzte Bewertungen" data-target="cevSec2" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById(\'cevSec2\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'start\'})"><i class="ti ti-list"></i><span class="rl-tip" style="left:48px">Letzte Bewertungen</span></button>'
     +'</div>'
     +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">'
@@ -9483,6 +9484,13 @@ function openCoachingEval(empId,editEvalId){
     +sl
     +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" type="button" id="cevCancelEdit" style="height:36px;width:auto;display:none">Bearbeiten abbrechen</button>'
     +'<button class="btn btn-primary" type="button" id="cevSave" style="height:36px;width:auto"><i class="ti ti-check"></i> <span>Bewertung speichern</span></button></div></div>'
+    +'<div id="cevSec3" style="'+CARD+'"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Ziele <span id="cevGoalN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span></div>'
+    +'<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Neues Ziel</div>'
+    +'<div style="margin-bottom:10px"><label>Zielbeschreibung</label><textarea id="cevg-desc" rows="2" placeholder="z. B. Super Yes Rate auf 18 % steigern bis Jahresende" style="min-height:52px;resize:vertical"></textarea></div>'
+    +'<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px"><div><label>KPI <span style="color:var(--text3)">(optional)</span></label><select id="cevg-metric"><option value="">— kein KPI —</option>'+FOCUS_METRICS.map(function(m){return '<option value="'+m.key+'">'+esc(m.label)+'</option>';}).join('')+'</select></div>'
+    +'<div><label>Zielwert</label><input type="number" id="cevg-target" placeholder="z. B. 18"></div><div><label>Ziel-Datum</label><input type="date" id="cevg-date"></div></div>'
+    +'<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button" id="cevGoalSave" style="height:36px;width:auto"><i class="ti ti-check"></i> Ziel speichern</button></div></div>'
+    +'<div id="cevGoalList"></div></div>'
     +'<div id="cevSec2" style="'+CARD+';margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Letzte Bewertungen <span id="cevN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span>'
     +'<button class="btn" type="button" id="cevAll" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px">Alle in Development</button></div><div id="cevList"></div></div>'
     +'</div>'
@@ -9547,6 +9555,52 @@ function openCoachingEval(empId,editEvalId){
   $('cevSave').onclick=function(){saveCoachEval(empId);};
   var e0=editEvalId?evals().find(function(r){return String(r.id)===String(editEvalId);}):null;
   setEdit(e0||null);renderList();
+
+  // ── Ziele ──
+  function goalCur(g){if(!g.metricKey)return null;var rp=getPerf(empId,30);if(!rp.length)return null;var vs=rp.map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
+  function goalStart(g){if(!g.metricKey||!g.createdAt)return null;var c=String(g.createdAt).slice(0,10);var d0=new Date(c+'T00:00:00');d0.setDate(d0.getDate()-30);var f0=d0.toISOString().slice(0,10);
+    var vs=(performance[empId]||[]).filter(function(x){return x.date>=f0&&x.date<c;}).map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});
+    return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
+  function renderGoals(){
+    var el=$('cevGoalList');if(!el)return;
+    var list=(goals[empId]||[]).slice().sort(function(a,b){var oa=(a.status==='erreicht'||a.status==='verfehlt')?1:0,ob=(b.status==='erreicht'||b.status==='verfehlt')?1:0;return oa-ob||String(a.targetDate||'9999').localeCompare(String(b.targetDate||'9999'));});
+    var open=list.filter(function(g){return g.status!=='erreicht'&&g.status!=='verfehlt';}).length;
+    $('cevGoalN').textContent='('+open+' offen · '+(list.length-open)+' abgeschlossen)';
+    var ed=canEditHistorie();
+    el.innerHTML=list.length?list.map(function(g){
+      var done=g.status==='erreicht',fail=g.status==='verfehlt',closed=done||fail;
+      var cur=goalCur(g),st=goalStart(g),tv=g.targetValue!=null?+g.targetValue:null,pc=null;
+      if(tv!=null&&cur!=null){if(st!=null&&st!==tv)pc=Math.round((cur-st)/(tv-st)*100);else pc=Math.round(cur/tv*100);pc=Math.max(0,Math.min(100,pc));}
+      if(done)pc=100;
+      var lbl=g.metricKey?focusMetricLabel(g.metricKey):'Ziel';
+      var meta=g.metricKey?[st!=null?'Start '+Math.round(st)+' %':'',cur!=null?'jetzt '+Math.round(cur)+' %':'',tv!=null?'Ziel '+tv+' %':''].filter(Boolean).join(' · '):(g.status||'offen');
+      var d=g.targetDate?'bis '+g.targetDate.slice(8,10)+'.'+g.targetDate.slice(5,7)+'.':'ohne Datum';
+      return '<div style="display:flex;align-items:flex-start;gap:12px;height:98px;padding:12px;border:1px solid #E4E0D6;border-radius:10px;background:'+(closed?'#F7F5F0':'#EFECE5')+';margin-bottom:6px;overflow:hidden">'
+        +'<div style="width:110px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+d+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lbl)+'</span></div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(meta)+'</div>'
+        +'<div title="'+esc(g.description)+'" style="font-size:13.5px;line-height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:'+(closed?'var(--text3)':'var(--text)')+'">'+esc(g.description)+'</div>'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="flex:1;height:6px;border-radius:3px;background:#E4E0D6;overflow:hidden"><i style="display:block;height:100%;width:'+(pc!=null?pc:0)+'%;background:'+(done?'#3a3833':'#F08566')+'"></i></span>'
+        +'<span style="font-size:12px;font-weight:700;white-space:nowrap;color:'+(done?'#2f6b52':fail?'#B5513A':'var(--text2)')+'">'+(done?'erreicht':fail?'verfehlt':(pc!=null?pc+' %':esc(g.status||'offen')))+'</span></div></div>'
+        +(ed?'<span style="display:flex;gap:6px;flex-shrink:0;align-self:flex-start"><select data-gid="'+g.id+'" class="cev-gstat" title="Status" style="height:34px;width:118px">'+['offen','in Arbeit','erreicht','verfehlt'].map(function(x){return '<option'+(g.status===x?' selected':'')+'>'+x+'</option>';}).join('')+'</select>'
+          +'<button class="btn" type="button" title="Löschen" data-gid="'+g.id+'" data-act="gdel" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-trash"></i></button></span>':'')
+        +'</div>';
+    }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Noch keine Ziele vereinbart.</div>';
+    [].slice.call(el.querySelectorAll('select.cev-gstat')).forEach(function(sel){sel.onchange=function(){selectedEmp=emp.id;updateGoalStatus(sel.dataset.gid,sel.value);};});
+    [].slice.call(el.querySelectorAll('button[data-act=gdel]')).forEach(function(b){b.onclick=function(){selectedEmp=emp.id;deleteGoal(b.dataset.gid);};});
+  }
+  window._cevGoalsRender=function(){if(document.getElementById('cevModal'))renderGoals();};
+  window._cevGoalSaved=function(){if(!document.getElementById('cevModal'))return;$('cevg-desc').value='';$('cevg-metric').value='';var ms=$('cevg-metric');if(ms&&ms._uiBtn&&typeof ms._uiSync==='function')ms._uiSync();$('cevg-target').value='';$('cevg-date').value='';renderGoals();toast('Ziel gespeichert');};
+  $('cevGoalSave').onclick=function(){
+    var gd=document.getElementById('goal-desc'),gm=document.getElementById('goal-metric'),gt=document.getElementById('goal-target'),gdt=document.getElementById('goal-date');
+    if(gm&&gm.options.length<=1)FOCUS_METRICS.forEach(function(m){var o=document.createElement('option');o.value=m.key;o.textContent=m.label;gm.appendChild(o);});
+    gd.value=$('cevg-desc').value;gm.value=$('cevg-metric').value;gt.value=$('cevg-target').value;gdt.value=$('cevg-date').value;
+    selectedEmp=emp.id;saveNewGoal(emp.id);
+  };
+  renderGoals();
+}
+function openGoalInPopup(empId){
+  openCoachingEval(empId);
+  setTimeout(function(){var el=document.getElementById('cevSec3');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});var d=document.getElementById('cevg-desc');if(d)d.focus();},80);
 }
 var _savingCoachEval=false;
 function saveCoachEval(empId){
@@ -11463,6 +11517,7 @@ function saveNewGoal(empId){
       closeModal('goalModal');
       renderTab();
       _savingNewGoal=false;
+      if(typeof window._cevGoalSaved==='function')window._cevGoalSaved();
     });
   }).catch(function(err){_savingNewGoal=false;alert('Unerwarteter Fehler: '+err.message);});
 }
@@ -11478,6 +11533,7 @@ function updateGoalStatus(goalId,newStatus){
     else logActivity('goal','status_changed','Ziel-Status geändert: '+oldStatus+' → '+newStatus+' · "'+g.description+'"',emp.id,emp.name);
   });
   renderTab();
+  if(typeof window._cevGoalsRender==='function')window._cevGoalsRender();
 }
 function deleteGoal(goalId){
   var emp=employees.find(function(e){return e.id===selectedEmp;});
@@ -11489,6 +11545,7 @@ function deleteGoal(goalId){
     goals[emp.id]=(goals[emp.id]||[]).filter(function(g){return String(g.id)!==String(goalId);});
     logActivity('goal','deleted','Ziel gelöscht: "'+(g0?g0.description:'')+'"',emp.id,emp.name);
     renderTab();
+    if(typeof window._cevGoalsRender==='function')window._cevGoalsRender();
   }).catch(function(err){alert('Unerwarteter Fehler: '+err.message);});
 }
 var _uploadingDoc=false;
