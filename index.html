@@ -8484,10 +8484,11 @@ var PERM_ROWS=[
   {key:'dev',label:'Development / Halbjahresgespräch',group:'Bereiche',tables:['reviews','review_kpis'],tabs:['coaching-eval']},
   {key:'activity',label:'Aktivitäten',group:'Bereiche',seeOnly:true,nav:['nav-coaching-activity']},
   {key:'stammdaten',label:'Mitarbeiter anlegen & Stammdaten',group:'Verwaltung',tables:['employees'],tabs:['emp-settings']},
+  {key:'histEdit',label:'Bewertungen & Kommentare nachträglich ändern oder löschen',group:'Verwaltung',editOrNone:true},
   {key:'settings',label:'Einstellungen',group:'Verwaltung',adminOnly:true}
 ];
-var PERM_DEFAULT={coach:{performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',settings:'-'},
-                  viewer:{performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',settings:'-'}};
+var PERM_DEFAULT={coach:{performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
+                  viewer:{performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
 function rolePerms(){ var s=settings.rolePermissions||{}; return {coach:Object.assign({},PERM_DEFAULT.coach,s.coach||{}),viewer:Object.assign({},PERM_DEFAULT.viewer,s.viewer||{})}; }
 function permFor(key,role){
   role=role||currentUserRole;
@@ -8497,6 +8498,8 @@ function permFor(key,role){
   if(row&&row.adminOnly)return '-';
   if(row&&row.fixed)return 'S';
   var v=rolePerms()[role][key]||'-';
+  if(row&&row.editOrNone&&v!=='E')return '-';
+  if(row&&row.editOrNone&&role==='viewer')return '-';
   if(role==='viewer'&&v==='E')v='S';
   if(row&&row.seeOnly&&v==='E')v='S';
   return v;
@@ -8543,10 +8546,10 @@ function buildRolesHtml(){
   var M={E:['Bearbeiten','var(--purple-dark)','var(--s-tint-strong)'],S:['Ansehen','var(--text2)','var(--s-sub)'],'-':['–','var(--text3)','transparent']};
   function cls(v){return v==='E'?'v-E':v==='S'?'v-S':'v-x';}
   function cell(role,row){
-    var v=role==='admin'?'E':permFor(row.key,role), m=M[v], fixed=role==='admin'||row.fixed||row.adminOnly;
+    var v=role==='admin'?'E':permFor(row.key,role), m=M[v], fixed=role==='admin'||row.fixed||row.adminOnly||(row.editOrNone&&role==='viewer');
     if(role==='agent') return '<td style="text-align:center"><span style="font-size:12px;color:var(--text3)">'+(row.key==='performance'||row.key==='provision'?'nur eigene (Erweiterung)':'–')+'</span></td>';
     if(fixed) return '<td style="text-align:center"><span class="perm-fix '+cls(v)+'" title="Fest vorgegeben">'+(v!=='-'?'<i class="ti ti-lock" style="font-size:12px"></i>':'')+m[0]+'</span></td>';
-    var opts=(role==='viewer'||row.seeOnly)?['S','-']:['E','S','-'];
+    var opts=row.editOrNone?['E','-']:(role==='viewer'||row.seeOnly)?['S','-']:['E','S','-'];
     return '<td style="text-align:center"><select class="perm-sel '+cls(v)+'" aria-label="'+esc(row.label)+' – '+(role==='coach'?'Coach':'Betrachter')+'" onchange="setPerm(\''+role+'\',\''+row.key+'\',this.value)">'
       +opts.map(function(o){return '<option value="'+o+'"'+(o===v?' selected':'')+'>'+(o==='-'?'Kein Zugriff':M[o][0])+'</option>';}).join('')+'</select></td>';
   }
@@ -8719,15 +8722,10 @@ function renderEinstellungen(){
 // ── ACTIONS ──
 function setEvalDate(date){window._evalDate=date;renderTab();}
 
-var BEWERTUNGSHISTORIE_ADMINS=['Peter Rode','Niklas Hojdem','Dogoro Dembele','Kathrin Steininger'];
+// Wer Bewertungen und Kommentare nachträglich ändern oder löschen darf, regelt „Rollen & Rechte“ (Zeile „Bewertungen & Kommentare …“).
+// Admins dürfen es immer, Coaches standardmäßig auch, Betrachter nie.
 function canEditHistorie(){
-  var myName=null;
-  if(typeof currentCoach!=='undefined'&&currentCoach)myName=currentCoach.name;
-  else if(typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof appUsers!=='undefined'){
-    var matchUser=appUsers.find(function(u){return u.email===currentAuthUser.email;});
-    if(matchUser)myName=matchUser.name;
-  }
-  return myName&&BEWERTUNGSHISTORIE_ADMINS.indexOf(myName)>=0;
+  return permFor('histEdit')==='E';
 }
 function deleteHistorieComment(empId,commentId){
   if(!canEditHistorie())return;
