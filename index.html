@@ -340,7 +340,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 /* MODAL */
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:7vh;}
 /* Alle Popups: gleiche Breite, beginnen auf derselben Hoehe */
-.modal-ov>.modal{width:680px!important;max-width:95vw!important;max-height:86vh!important;}
+.modal-ov>.modal{width:860px!important;max-width:95vw!important;max-height:86vh!important;}
 .modal-ov.hidden{display:none;}
 .modal{background:#F7F5F0;border:1px solid #E4E0D6;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:16px;padding:24px;width:640px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.18);}
 .modal-title{font-size:16px;font-weight:600;margin-bottom:16px;}
@@ -600,7 +600,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 
 
 <!-- SESSION PLANEN MODAL -->
-<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:86vh;overflow:hidden;padding:0;width:680px;display:flex;flex-direction:column;background:#EEEDE9">
+<div class="modal-ov hidden" id="coachingInfoModal"><div class="modal" style="max-height:86vh;overflow:hidden;padding:0;width:860px;display:flex;flex-direction:column;background:#EEEDE9">
   <div id="coachingInfoModalBody" style="display:flex;flex-direction:column;min-height:0;flex:1;max-height:86vh"></div>
 </div></div>
 <div class="modal-ov hidden" id="sessionPlanenModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden;position:relative">
@@ -8707,7 +8707,7 @@ function openCommentModal(empId,editCommentId){
   var CARD='background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)';
   var ov=document.createElement('div');ov.id='commentModal';ov.dataset.puShell='1';
   ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px 16px';
-  ov.innerHTML='<div style="background:#EEEDE9;border:1px solid #E4E0D6;border-radius:16px;width:680px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18);position:relative">'
+  ov.innerHTML='<div style="background:#EEEDE9;border:1px solid #E4E0D6;border-radius:16px;width:860px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18);position:relative">'
     +'<div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div id="cmKick" style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Kommentar hinzufügen</div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(emp?esc(emp.name)+(emp.role?' · '+esc(emp.role):''):'')+'</div></div>'
     +'<button class="btn" type="button" id="cmX" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" aria-label="Schließen"><i class="ti ti-x"></i></button></div>'
@@ -9460,7 +9460,7 @@ function openCoachingEval(empId,editEvalId){
   });
   sl+='<div style="'+BAND+';margin:12px 0 6px"><span>Notiz <span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text3)">optional</span></span></div>'
     +'<textarea id="cev-note" placeholder="Beobachtungen, Begründung, nächste Schritte …" style="min-height:56px;resize:vertical"></textarea>';
-  ov.innerHTML='<div style="background:#EEEDE9;border:1px solid #E4E0D6;border-radius:16px;width:680px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18);position:relative">'
+  ov.innerHTML='<div style="background:#EEEDE9;border:1px solid #E4E0D6;border-radius:16px;width:860px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18);position:relative">'
     +'<div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div id="cevKick" style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Mitarbeiterentwicklung</div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(emp?esc(emp.name)+(emp.role?' · '+esc(emp.role):''):'')+'</div></div>'
     +'<button class="btn" type="button" id="cevX" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" aria-label="Schließen"><i class="ti ti-x"></i></button></div>'
@@ -10340,7 +10340,7 @@ function puShellify(ov,id){
   var hdr=kids[0],foot=kids[kids.length-1],mid=kids.slice(1,-1);
   var title=(hdr.firstElementChild&&hdr.firstElementChild.textContent)||'';
   var emp=employees.find(function(e){return String(e.id)===String(_puEmp);});
-  box.style.cssText='background:#EEEDE9;border:1px solid #E4E0D6;border-radius:16px;width:680px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18)';
+  box.style.cssText='background:#EEEDE9;border:1px solid #E4E0D6;border-radius:16px;width:860px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.18)';
   box.innerHTML='';
   var h=document.createElement('div');h.style.cssText='display:flex;align-items:center;padding:14px 16px 6px';
   h.innerHTML='<div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">'+esc(title)+'</div>'
