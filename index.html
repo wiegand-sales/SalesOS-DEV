@@ -492,6 +492,19 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-qt.dsh-ko .tr .n,.dsh-qt.dsh-ko .tr .m,.dsh-qt.dsh-ko .tr .na{color:#FFEDE6}.dsh-qt.dsh-ko .tr .c{color:#fff}
 .dsh-qt.dsh-ko .tr .t{background:rgba(255,255,255,.22)}.dsh-qt.dsh-ko .tr .t i,.dsh-qt.dsh-ko .tr .t i.lo{background:#fff}
 .dsh-qt.dsh-ko .dsh-lo{color:#fff!important;text-decoration:underline;text-decoration-color:rgba(255,255,255,.6);text-underline-offset:3px}
+
+.dsh-chart .area{height:280px}
+.dsh-chart .cols{position:absolute;inset:0;display:flex}
+.dsh-chart .col{flex:1;position:relative;min-width:0}
+.dsh-chart .zf{position:absolute;left:0;right:0;bottom:0;background:rgba(138,127,114,.16);border:1px dashed rgba(58,56,51,.35);border-bottom:0;border-radius:6px 6px 0 0}
+.dsh-chart .zf.fut{background:transparent;border-color:rgba(58,56,51,.25)}
+.dsh-chart .ist{position:absolute;left:22%;right:22%;bottom:0;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;z-index:1}
+.dsh-chart .ist i{display:block;width:100%}
+.dsh-chart .ist.cur{box-shadow:0 0 0 2px #F08566}
+.dsh-chart .pc{position:absolute;left:-4px;right:-4px;text-align:center;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;z-index:2}
+.dsh-chart .pc.lo{color:#B5513A}.dsh-chart .pc.run{color:var(--text3);font-weight:600}
+.dsh-chart .dsh-lg i.zfl{background:rgba(138,127,114,.16);border:1px dashed rgba(58,56,51,.4);box-sizing:border-box}
+.dsh-chart .xl span{font-size:11.5px}.dsh-chart .xl span.nd{opacity:.55}
 @media (max-width:1100px){.dsh-q{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
@@ -8678,7 +8691,10 @@ function dshSlots(list,p){
   sl.forEach(function(s,i){
     s.plan=dshPlanRange(list,s.from,s.to);
     if(s.from<=t&&s.to>=t)cur=i;
-    if(s.from<=t){var sm=chartSumsForRange(list,s.from,s.to<t?s.to:t);s.v=[sm.margeOEM,sm.margeUps,sm.margeWka];s.tot=sm.margeGes;}
+    if(s.from<=t){var sm=chartSumsForRange(list,s.from,s.to<t?s.to:t);
+      // Abschnitte ganz ohne importierte Daten (z. B. vor dem Start des Boards) nicht als 0 % werten
+      if((sm.margeGes||0)===0&&(sm.oem+sm.ups+sm.wka+sm.nerrOem+sm.nerrUps)===0&&s.to<t){s.nodata=true;}
+      else{s.v=[sm.margeOEM,sm.margeUps,sm.margeWka];s.tot=sm.margeGes;}}
   });
   // Plan bis jetzt im laufenden Abschnitt (heute anteilig nach verstrichener Arbeitszeit)
   sl.forEach(function(s,i){
@@ -8688,52 +8704,33 @@ function dshSlots(list,p){
   });
   return {s:sl,cur:cur};
 }
-var dshChartMode='cum';
-function dshSetChartMode(m){dshChartMode=m;renderDashboard();}
+// Diagramm: Ziel je Abschnitt als heller Rahmen, Ist davor (OEM/UPS/WKA), Zielerreichung in % darüber
 function dshFmtK(v){return v>=1e6?(v/1e6).toLocaleString('de-DE',{maximumFractionDigits:1})+' Mio':v>=1000?Math.round(v/1000)+'k':Math.round(v)+'';}
 function dshChart(list,p){
-  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,H=190,GAP=n>15?4:8,U=p==='year'?'Monat':'Tag';
-  var seg='<div class="dsh-seg sm" role="group" aria-label="Darstellung">'+[['cum','Kumuliert'],['slot','Je '+U]].map(function(m){return '<button type="button" class="'+(dshChartMode===m[0]?'on':'')+'" aria-pressed="'+(dshChartMode===m[0])+'" onclick="dshSetChartMode(\''+m[0]+'\')">'+m[1]+'</button>';}).join('')+'</div>';
-  var leg=DSH_AREAS.map(function(a,i){return '<span><i style="background:'+DSH_AC[i]+'"></i>'+a+'</span>';}).join('');
+  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,U=p==='year'?'Monat':'Tag',UU=p==='year'?'Monaten':'Tagen';
   var anyPlan=s.some(function(x){return x.plan>0;});
-  var bars='',info='',lab='';
-  if(dshChartMode==='cum'){
-    var cp=[],acc=0;s.forEach(function(x){acc+=x.plan;cp.push(acc);});
-    var ci=[],c=[0,0,0];s.forEach(function(x,i){if(x.v){c=[c[0]+x.v[0],c[1]+x.v[1],c[2]+x.v[2]];ci.push(c.slice());}});
-    var last=ci.length,tot=last?ci[last-1][0]+ci[last-1][1]+ci[last-1][2]:0;
-    var planNow=cur>=0?(cur>0?cp[cur-1]:0)+(s[cur].planNow||0):(last?cp[last-1]:0);
-    var rate=planNow>0?tot/planNow:null,zielT=cp[n-1]||0;
-    var proj=s.map(function(x,i){return i<last||rate===null?null:tot+rate*(cp[i]-planNow);});
-    var pr=rate!==null?tot+rate*(zielT-planNow):null;
-    var mx=Math.max(zielT,pr||0,tot,1)*1.08;
-    for(var i=0;i<n;i++){
-      if(i<last){var x=ci[i],tt=x[0]+x[1]+x[2];bars+='<div class="col" title="'+s[i].l+': '+dshEur(tt)+(anyPlan?' · Plan '+dshEur(i===cur?cp[i]-s[i].plan+s[i].planNow:cp[i]):'')+'"><div class="stk'+(i===cur?' cur':'')+'" style="height:'+(tt/mx*100).toFixed(2)+'%">'+x.map(function(v,k){return '<i style="height:'+(tt>0?v/tt*100:0).toFixed(2)+'%;background:'+DSH_AC[k]+'"></i>';}).join('')+'</div></div>';}
-      else bars+='<div class="col" title="'+s[i].l+(proj[i]!=null?': Hochrechnung '+dshEur(proj[i]):'')+'">'+(proj[i]!=null?'<div class="ghost" style="height:'+(Math.min(proj[i],mx)/mx*100).toFixed(2)+'%"></div>':'')+'</div>';
-    }
-    var pts='0,100';if(anyPlan){for(var j=0;j<n;j++){var v=j===cur?(j>0?cp[j-1]:0)+s[j].planNow:cp[j],yy=(100-v/mx*100).toFixed(2);pts+=' '+(j/n*100).toFixed(2)+','+yy+' '+((j+1)/n*100).toFixed(2)+','+yy;}}
-    bars+=anyPlan?'<svg class="plan" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="#3a3833" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/></svg>':'';
-    var grid=[0.5,1].map(function(g){var v=mx/1.08*g;return '<div class="gl" style="bottom:'+(v/mx*100).toFixed(1)+'%"><span>'+dshFmtK(v)+'</span></div>';}).join('');
-    var beh=tot-planNow;
-    info=anyPlan?(beh>=0?'<b>'+dshEur(beh)+' vor Plan</b>':'<b class="dsh-lo">'+dshEur(-beh)+' hinter Plan</b>')+' · Ziel <b>'+dshEur(zielT)+'</b>'+(pr!=null?' · Hochrechnung <b>'+dshEur(pr)+'</b> ('+Math.round(pr/zielT*100)+' %)':''):'Für diesen Zeitraum ist kein Ziel hinterlegt';
-    leg+='<span><i class="gh"></i>Hochrechnung</span>'+(anyPlan?'<span><i class="pl"></i>Plan (Ziele je '+U+')</span>':'');
-    bars=grid+bars;
-  } else {
-    var tv=s.map(function(x){return x.v?x.tot:null;}),mx2=Math.max.apply(null,tv.filter(function(v){return v!==null;}).concat(s.map(function(x){return x.plan;})).concat([1]))*1.15;
-    var done=0,over=0,best=null,worst=null;
-    s.forEach(function(x,i){
-      var z=x.plan,mark=z>0?'<b class="zm'+(x.v?'':' fut')+'" style="bottom:'+(z/mx2*100).toFixed(2)+'%"></b>':'';
-      if(x.v){var lo=!x.running&&z>0&&x.tot<z;if(!x.running&&z>0){done++;var r=x.tot/z;if(r>=1)over++;if(!best||r>best.r)best={l:x.l,r:r};if(!worst||r<worst.r)worst={l:x.l,r:r};}
-        bars+='<div class="col" title="'+x.l+': '+dshEur(x.tot)+(z>0?' · Ziel '+dshEur(z):'')+(x.running?' (läuft)':'')+'"><div class="stk'+(x.running?' cur':'')+(lo?' lo':'')+'" style="height:'+(x.tot/mx2*100).toFixed(2)+'%">'+x.v.map(function(v,k){return '<i style="height:'+(x.tot>0?v/x.tot*100:0).toFixed(2)+'%;background:'+DSH_AC[k]+'"></i>';}).join('')+'</div>'+mark+'</div>';
-      } else bars+='<div class="col" title="'+x.l+(z>0?': Ziel '+dshEur(z):'')+'">'+mark+'</div>';
-    });
-    bars=[0.5,1].map(function(g){var v=mx2/1.15*g;return '<div class="gl" style="bottom:'+(v/mx2*100).toFixed(1)+'%"><span>'+dshFmtK(v)+'</span></div>';}).join('')+bars;
-    var uu=p==='year'?'Monaten':'Tagen';
-    info=done?'<b>'+over+' von '+done+' '+uu+'</b> über Ziel'+(best?' · bester '+U+' <b>'+best.l+'</b> ('+Math.round(best.r*100)+' %)':'')+(worst&&worst.r<1?' · schwächster <b class="dsh-lo">'+worst.l+'</b> ('+Math.round(worst.r*100)+' %)':''):(anyPlan?'Noch kein abgeschlossener '+U+' mit Ziel':'Für diesen Zeitraum ist kein Ziel hinterlegt');
-    leg+=(anyPlan?'<span><i class="zl"></i>Ziel je '+U+'</span><span><i style="background:#8A7F72;opacity:.5"></i>unter Ziel</span>':'');
-  }
-  lab=s.map(function(x,i){var lo=dshChartMode==='slot'&&x.v&&!x.running&&x.plan>0&&x.tot<x.plan;return '<span class="'+(i===cur?'cur':lo?'lo':'')+'">'+(n>15&&i%2&&i!==cur&&!lo?'':x.l)+'</span>';}).join('');
-  return '<div class="dsh-chart"><div class="hd">'+seg+'<span class="inf">'+info+'</span><span class="dsh-lg">'+leg+'</span></div>'
-    +'<div class="area" style="gap:'+GAP+'px">'+bars+'</div><div class="xl" style="gap:'+GAP+'px">'+lab+'</div></div>';
+  var mx=Math.max.apply(null,s.map(function(x){return Math.max(x.plan||0,x.v?x.tot:0);}).concat([1]))*1.2;
+  var done=0,under=0,sumI=0,sumP=0,gap=n>15?6:n>10?10:14;
+  var cols='';
+  s.forEach(function(x,i){
+    var z=x.plan||0,fut=!x.v,run=!!x.running;
+    if(x.v){sumI+=x.tot;sumP+=run?(x.planNow||0):z;}
+    if(x.v&&!run&&z>0){done++;if(x.tot<z)under++;}
+    var c='<div class="col" title="'+x.l+(x.v?': '+dshEur(x.tot):'')+(z>0?' · Ziel '+dshEur(z):'')+(run?' (läuft)':'')+(x.nodata?' · keine Daten':'')+'">';
+    if(x.nodata)fut=true;
+    if(z>0)c+='<div class="zf'+(fut?' fut':'')+'" style="height:'+(z/mx*100).toFixed(2)+'%"></div>';
+    if(x.v&&x.tot>0)c+='<div class="ist'+(run?' cur':'')+'" style="height:'+(x.tot/mx*100).toFixed(2)+'%">'+x.v.map(function(v,k){return '<i style="height:'+(v/x.tot*100).toFixed(2)+'%;background:'+DSH_AC[k]+'"></i>';}).join('')+'</div>';
+    if(x.v&&z>0){var r=Math.round(x.tot/(run?(x.planNow||z):z)*100),lo=!run&&x.tot<z;
+      c+='<div class="pc'+(lo?' lo':'')+(run?' run':'')+'" style="bottom:calc('+(Math.max(z,x.tot)/mx*100).toFixed(2)+'% + 4px)">'+(run?'läuft':r+' %')+'</div>';}
+    cols+=c+'</div>';
+  });
+  var grid=[0.33,0.66].map(function(g){var v=mx/1.2*g*1.5;return v<mx?'<div class="gl" style="bottom:'+(v/mx*100).toFixed(1)+'%"><span>'+dshFmtK(v)+'</span></div>':'';}).join('');
+  var dlt=sumI-sumP;
+  var info=anyPlan?(done?'<b'+(under?' class="dsh-lo"':'')+'>'+under+' von '+done+' '+UU+'</b> unter Ziel · ':'')+'aufgelaufen <b class="'+(dlt<0?'dsh-lo':'')+'">'+(dlt>0?'+':'')+dshEur(dlt)+'</b> gegen Plan':'Für diesen Zeitraum ist kein Ziel hinterlegt';
+  var leg=DSH_AREAS.map(function(a,i){return '<span><i style="background:'+DSH_AC[i]+'"></i>'+a+'</span>';}).join('')+(anyPlan?'<span><i class="zfl"></i>Ziel je '+U+'</span>':'');
+  var lab=s.map(function(x,i){var lo=x.v&&!x.running&&x.plan>0&&x.tot<x.plan;return '<span class="'+(i===cur?'cur':lo?'lo':x.nodata?'nd':'')+'"'+(x.nodata?' title="keine Daten"':'')+'>'+(n>15&&i%2&&i!==cur?'':x.l)+'</span>';}).join('');
+  return '<div class="dsh-chart"><div class="hd"><span class="inf">'+info+'</span><span class="dsh-lg">'+leg+'</span></div>'
+    +'<div class="area">'+grid+'<div class="cols" style="gap:'+gap+'px">'+cols+'</div></div><div class="xl" style="gap:'+gap+'px">'+lab+'</div></div>';
 }
 function dshPrevLabel(R){return R.prevLbl.split(' ')[0];}
 function renderDashboard(){
