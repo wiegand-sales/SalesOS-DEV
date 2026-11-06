@@ -477,6 +477,21 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-mx .c.lo{background:#FDF0EB;color:#B5513A;box-shadow:inset 0 0 0 1px rgba(240,133,102,.55)}
 .dsh-mx .c.na{background:#EFECE5;color:var(--text3);font-weight:500;font-size:12px}
 .dsh-mx tr.sum td.rn{color:var(--text)}.dsh-mx tr.sum .c{box-shadow:inset 0 0 0 2px rgba(0,0,0,.18)}
+.dsh-qt{padding:14px 16px 12px}
+.dsh-qt .v.big{font-size:30px;font-weight:400;letter-spacing:-.01em;margin-top:4px;line-height:1.15}
+.dsh-qt .kv{display:flex;gap:16px;font-size:12.5px;color:var(--text3);margin-top:4px}.dsh-qt .kv b{font-weight:700;color:var(--text)}
+.dsh-qt.dsh-ko .kv{color:#FFE1D6}.dsh-qt.dsh-ko .kv b{color:#fff}
+.dsh-qt .tm{margin-top:22px;padding-top:12px;border-top:1px solid rgba(0,0,0,.07)}.dsh-qt.dsh-ko .tm{border-top-color:rgba(255,255,255,.22)}
+.dsh-qt .th,.dsh-qt .tr{display:grid;grid-template-columns:34px minmax(0,1fr) 42px 72px;gap:8px;align-items:center}
+.dsh-qt .th{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}.dsh-qt .th span:last-child{text-align:right}
+.dsh-qt.dsh-ko .th{color:#FFE1D6}
+.dsh-qt .tr{height:28px;font-size:12.5px}
+.dsh-qt .tr .n{font-weight:700;color:var(--text2)}.dsh-qt .tr .na{font-size:12px;color:var(--text3);grid-column:2 / span 3}
+.dsh-qt .tr .t{height:8px;border-radius:4px;background:rgba(255,255,255,.65);overflow:hidden}.dsh-qt .tr .t i{display:block;height:100%;border-radius:4px;background:#8A7F72}.dsh-qt .tr .t i.lo{background:#F5B4A0}
+.dsh-qt .tr .c{text-align:right;font-weight:700}.dsh-qt .tr .m{text-align:right;font-weight:600;color:var(--text2)}
+.dsh-qt.dsh-ko .tr .n,.dsh-qt.dsh-ko .tr .m,.dsh-qt.dsh-ko .tr .na{color:#FFEDE6}.dsh-qt.dsh-ko .tr .c{color:#fff}
+.dsh-qt.dsh-ko .tr .t{background:rgba(255,255,255,.22)}.dsh-qt.dsh-ko .tr .t i,.dsh-qt.dsh-ko .tr .t i.lo{background:#fff}
+.dsh-qt.dsh-ko .dsh-lo{color:#fff!important;text-decoration:underline;text-decoration-color:rgba(255,255,255,.6);text-underline-offset:3px}
 @media (max-width:1100px){.dsh-q{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
@@ -8577,6 +8592,7 @@ function dshCr(s,k){
   if(k==='OEM'){d=s.oem+s.nerrOem;return d>0?s.oem/d*100:null;}
   if(k==='UPS'){d=s.ups+s.nerrUps;return d>0?s.ups/d*100:null;}
   if(k==='WKA'){d=s.wka+s.nerrWkaOem+s.nerrWkaUps+s.wkaOemBeendet+s.wkaUpsBeendet;return d>0?s.wka/d*100:null;}
+  if(k==='ALL'){var o=s.oem+s.ups+s.wka;d=o+s.nerrOem+s.nerrUps+s.nerrWkaOem+s.nerrWkaUps;return d>0?o/d*100:null;}
   if(k==='MY')return chartCrFromSums('crMegaYes',s);
   if(k==='SYMY')return chartCrFromSums('crSyMy',s);
   return null;
@@ -8734,25 +8750,23 @@ function renderDashboard(){
   var pseg='<div class="dsh-seg" role="group" aria-label="Zeitraum">'+per.map(function(p){return '<button type="button" class="'+(dshPeriod===p[0]?'on':'')+'" aria-pressed="'+(dshPeriod===p[0])+'" onclick="dshSetPeriod(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div>';
   // ── 1 · Margenerhöhung: Diagramm, vier Kacheln, drei Bereichskarten ──
   var parts=[S.margeOEM,S.margeUps,S.margeWka],psum=parts[0]+parts[1]+parts[2],tot=S.margeGes,ziel=dshPlanRange(all,R.from,R.end),pct=ziel>0?Math.round(tot/ziel*100):null;
-  var optAll=dshOpt(S,'ALL'),mpoAll=dshMpo(S,'ALL');
-  var tiles='<div class="dsh-q"><div class="dsh-qt dsh-ko"><div class="l">Gesamt · '+R.lbl+'</div><div class="v big">'+dshEur(tot)+'</div><div class="s">'+(ziel>0?'Ziel '+dshEur(ziel)+' · '+pct+' %':'kein Ziel hinterlegt')+'</div><div class="s">'+dshNum(optAll)+' Opt. · Ø '+dshEur1(mpoAll)+' je Auftrag</div><div class="s">'+(prevHas?R.prevLbl+' '+dshEur(P.margeGes):'&nbsp;')+'</div>'+(ziel>0?'<div class="pr"><i style="width:'+Math.min(100,pct)+'%"></i></div>':'')+'</div>';
-  var mini=dshSlots(all,dshPeriod).s;
-  tiles+=DSH_AREAS.map(function(k,i){var v=parts[i],o=dshOpt(S,k),ser=mini.map(function(x){return x.v?x.v[i]:null;}).filter(function(x){return x!==null;}),mx=Math.max.apply(null,ser.concat([1]));
-    return '<div class="dsh-qt"><div class="l"><i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k+'<span class="pc">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div><div class="v">'+dshEur(v)+'</div><div class="s">'+dshNum(o)+' Opt. · Ø '+dshEur1(o>0?v/o:null)+' je Auftrag</div><div class="mini">'+ser.map(function(q,j){return '<i style="height:'+Math.max(4,q/mx*100).toFixed(0)+'%;background:'+(j===ser.length-1?'#F08566':DSH_AC[i])+'"></i>';}).join('')+'</div></div>';}).join('')+'</div>';
-  var WHY={OEM:'Kerngeschäft und Basis der Provision.',UPS:'zeigt, wie viele Upsell-Chancen wir nutzen.',WKA:'zeigt, wie viele Wiederkäufer wir halten.'};
-  var cards=DSH_AREAS.map(function(k){
-    var v=dshCr(S,k),mt=dshMarge(S,k),o=dshOpt(S,k),mp=dshMpo(S,k),pv=dshCr(P,k),pm=dshMpo(P,k);
-    var head='<div class="dsh-g dsh-g3c">'+dshSt('CR',dshPct(v),prevHas?dshPrevLabel(R)+' '+dshPct(pv):'&nbsp;',under(k,v)&&Z[k]!=null?'lo':'')+dshSt('Marge',dshEur(mt),dshNum(o)+' Opt. · '+dshNum(dshFail(S,k))+' n. erfolgr.')+dshSt('Ø je Auftrag',dshEur1(mp),prevHas?dshPrevLabel(R)+' '+dshEur1(pm):'&nbsp;',under('MPO',mp)?'lo':'')+'</div>';
-    var tr='<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:54px">Team</th><th>CR</th><th class="r" style="text-align:right;width:84px">Marge</th><th class="r" style="text-align:right;width:84px">Ø je Auftr.</th></tr></thead><tbody>';
-    var mx=Math.max.apply(null,DSH_TEAMS.map(function(t){return dshCr(T[t].s,k)||0;}).concat([REF[k]||0]))*1.15||100;
-    DSH_TEAMS.forEach(function(t){var c=dshCr(T[t].s,k);
-      if(c===null){tr+='<tr><td class="f">'+t+'</td><td colspan="3" style="color:var(--text3)">'+(t==='VLC'?'nur OEM':'keine Daten')+'</td></tr>';return;}
-      var lo=under(k,c),tm=dshMpo(T[t].s,k),lm=under('MPO',tm);
-      tr+='<tr><td class="f">'+t+'</td><td><div class="dsh-cell">'+dshBar(c,mx,lo)+'<b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></div></td><td class="r" style="font-weight:600">'+dshEur(dshMarge(T[t].s,k))+'</td><td class="r" style="font-weight:600"><span class="'+(lm?'dsh-lo':'')+'">'+dshEur1(tm)+'</span></td></tr>';});
-    return dshCard(k,refLbl(k,'CR '),head+tr+'</tbody></table></div>',WHY[k]);
-  }).join('');
+  // Vier Kacheln: große Zahl, darunter nur CR und Ø je Auftrag, mit Abstand die Teams (CR und Ø je Auftrag)
+  var crAllRef=dshCr(S,'ALL');
+  function tileTeams(k){
+    var mx=Math.max.apply(null,DSH_TEAMS.map(function(t){return dshCr(T[t].s,k)||0;}).concat([(k==='ALL'?crAllRef:REF[k])||0]))*1.15||100;
+    var r='<div class="tm"><div class="th"><span>Team</span><span>CR</span><span></span><span>Ø je Auftr.</span></div>';
+    DSH_TEAMS.forEach(function(t){var c=dshCr(T[t].s,k),mp=dshMpo(T[t].s,k);
+      if(c===null){r+='<div class="tr"><span class="n">'+t+'</span><span class="na">'+(t==='VLC'&&k!=='OEM'&&k!=='ALL'?'nur OEM':'keine Daten')+'</span></div>';return;}
+      var lo=k==='ALL'?(crAllRef!=null&&c<crAllRef-2):under(k,c),lm=under('MPO',mp);
+      r+='<div class="tr"><span class="n">'+t+'</span><span class="t"><i class="'+(lo?'lo':'')+'" style="width:'+Math.min(100,c/mx*100).toFixed(1)+'%"></i></span><span class="c'+(lo?' dsh-lo':'')+'">'+dshPct(c)+'</span><span class="m'+(lm?' dsh-lo':'')+'">'+dshEur1(mp)+'</span></div>';});
+    return r+'</div>';
+  }
+  var tiles='<div class="dsh-q">';
+  tiles+='<div class="dsh-qt dsh-ko"><div class="l">Gesamt · '+R.lbl+'</div><div class="v big">'+dshEur(tot)+'</div><div class="kv"><span>CR <b>'+dshPct(crAllRef)+'</b></span><span>Ø je Auftrag <b>'+dshEur1(dshMpo(S,'ALL'))+'</b></span></div>'+tileTeams('ALL')+'</div>';
+  tiles+=DSH_AREAS.map(function(k,i){var v=parts[i],c=dshCr(S,k),mp=dshMpo(S,k),lo=under(k,c)&&Z[k]!=null,lm=under('MPO',mp);
+    return '<div class="dsh-qt"><div class="l"><i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k+'<span class="pc">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div><div class="v big">'+dshEur(v)+'</div><div class="kv"><span>CR <b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></span><span>Ø je Auftrag <b class="'+(lm?'dsh-lo':'')+'">'+dshEur1(mp)+'</b></span></div>'+tileTeams(k)+'</div>';}).join('')+'</div>';
   var main='<div class="card"><div class="card-title">Margenerhöhung '+R.lbl+pseg+'<span class="dsh-cr">Zeitraum gilt für die ganze Seite</span></div>'+dshChart(all,dshPeriod)+tiles+'</div>';
-  h+=dshGrp('marge','ti-currency-euro','Margenerhöhung','Wie viel Marge gewinnen wir – und woher?',main+'<div class="dsh-g dsh-g3">'+cards+'</div>');
+  h+=dshGrp('marge','ti-currency-euro','Margenerhöhung','Wie viel Marge gewinnen wir – und woher?',main);
   // ── 2 · Teams × Bereich (volle Breite, OEM mit TW, SY/MY und MY) ──
   var tw=KPI_TARGETS.crTeilweise?+KPI_TARGETS.crTeilweise.val:null,sm=KPI_TARGETS.crSyMy&&KPI_TARGETS.crSyMy.val!=null?+KPI_TARGETS.crSyMy.val:null,my=KPI_TARGETS.crMegaYes?+KPI_TARGETS.crMegaYes.val:null;
   var COLS=[
