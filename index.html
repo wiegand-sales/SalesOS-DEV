@@ -593,6 +593,18 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-tc .bx{margin-top:auto;padding-top:10px;border-top:1px solid rgba(0,0,0,.07)}.dsh-tc.dsh-ko .bx{border-color:rgba(255,255,255,.22)}
 .dsh-tc .kv{display:flex;justify-content:space-between;font-size:12px;color:var(--text3);height:24px;align-items:center}.dsh-tc .kv b{color:var(--text);font-weight:700}.dsh-tc .kv b.dsh-lo{color:#B5513A}
 .dsh-tc.dsh-ko .kv{color:#FFE1D6}.dsh-tc.dsh-ko .kv b{color:#fff}.dsh-tc .dl b{color:var(--text)}.dsh-tc.dsh-ko .dl b{color:#fff}
+
+.dsh-tc .bcx{position:relative;flex:1;margin-top:14px;display:flex;align-items:flex-end;gap:3px;border-bottom:1px solid rgba(0,0,0,.14);min-height:60px}
+.dsh-tc.dsh-ko .bcx{border-color:rgba(255,255,255,.35)}
+.dsh-tc .bcx .c{flex:1;position:relative;height:100%;min-width:0}
+.dsh-tc .bcx .b{position:absolute;left:0;right:0;bottom:0;border-radius:3px 3px 0 0;background:#8A7F72}
+.dsh-tc .bcx .b.lo{background:#F5B4A0}.dsh-tc .bcx .b.cur{box-shadow:0 0 0 1.5px #F08566}
+.dsh-tc .bcx .b.fut{background:transparent;border:1px dashed rgba(0,0,0,.18);border-bottom:0}
+.dsh-tc.dsh-ko .bcx .b{background:rgba(255,255,255,.85)}.dsh-tc.dsh-ko .bcx .b.lo{background:rgba(255,255,255,.45)}.dsh-tc.dsh-ko .bcx .b.cur{box-shadow:0 0 0 1.5px #fff}.dsh-tc.dsh-ko .bcx .b.fut{background:transparent;border-color:rgba(255,255,255,.4)}
+.dsh-tc .bcx .zl{position:absolute;left:-3px;right:-3px;border-top:1.5px dashed #3a3833;opacity:.6;z-index:2}.dsh-tc.dsh-ko .bcx .zl{border-color:#fff;opacity:.85}
+.dsh-tc .bcx .gt{position:absolute;left:-1px;right:-1px;height:0;border-top:2px solid #3a3833;opacity:.55;z-index:2;pointer-events:none}
+.dsh-tc .bxs{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;color:var(--text3);margin:4px 0 8px;white-space:nowrap}.dsh-tc .bxs b{color:#B5513A}.dsh-tc.dsh-ko .bxs{color:#FFE1D6}
+.dsh-tc .ex{margin-top:0!important}
 @media (max-width:1100px){.dsh-q{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
@@ -8841,6 +8853,24 @@ function dshTVal(k,list,from,to){
   if(k==='mg')return (s.margeGes||0)>0||(s.oem+s.ups+s.wka)>0?s.margeGes:null;
   return dshKVal(k,list,s,from,to2);
 }
+// Balken je Abschnitt (wie der Filter): Team-Wert als Balken, Ziel gestrichelt, Gesamt als Strich, laufender Abschnitt umrandet
+function dshBars(vals,gv,z,lte,cur,mn,mx,ko,labels){
+  var lo0=Math.min(0,mn),rng=(mx-lo0)||1,H=function(v){return Math.max(0,(v-lo0)/rng*100);};
+  var h='<div class="bcx">'+(z!=null?'<div class="zl" style="bottom:'+H(z).toFixed(1)+'%"></div>':'');
+  vals.forEach(function(v,i){
+    var lb=labels&&labels[i]?labels[i]:'';
+    if(v===null||v===undefined){h+='<div class="c" title="'+esc(lb)+'">'+(i>cur&&z!=null?'<div class="b fut" style="height:'+H(z).toFixed(1)+'%"></div>':'')+'</div>';return;}
+    var bad=z!=null&&(lte?v>z:v<z);
+    h+='<div class="c" title="'+esc(lb)+': '+v.toLocaleString('de-DE',{maximumFractionDigits:1})+(gv&&gv[i]!=null?' · Gesamt '+gv[i].toLocaleString('de-DE',{maximumFractionDigits:1}):'')+'"><div class="b'+(bad?' lo':'')+(i===cur?' cur':'')+'" style="height:'+H(v).toFixed(1)+'%"></div>'
+      +(!ko&&gv&&gv[i]!=null?'<div class="gt" style="bottom:'+H(gv[i]).toFixed(1)+'%"></div>':'')+'</div>';
+  });
+  return h+'</div>';
+}
+function dshBarsFoot(vals,z,lte,cur,labels,unit,ko){
+  var done=0,u=0;vals.forEach(function(v,i){if(v===null||v===undefined||i>=cur)return;done++;if(z!=null&&(lte?v>z:v<z))u++;});
+  var mid=ko||z==null||!done?'':(u?'<b>'+u+'</b> von '+done+' unter Ziel':'alle im Ziel');
+  return '<div class="bxs"><span>'+esc(labels[0]||'')+'</span><span>'+mid+'</span><span>'+esc(labels[labels.length-1]||'')+'</span></div>';
+}
 function dshMini(vals,gv,z,lte,color,cur,mn,mx){
   // kleines Diagramm: Team-Linie, Gesamt gestrichelt, Ziel gestrichelt, Bereich unter Ziel leicht koralle
   var W=200,H=70,n=vals.length,X=function(i){return 3+i*(W-6)/((n-1)||1);},Y=function(v){return 4+(1-(v-mn)/((mx-mn)||1))*(H-8);};
@@ -8889,13 +8919,13 @@ function dshTeamBox(all,T){
   ch+='<div class="sl"><span class="tm"><i style="background:'+TCOL[dshTF]+'"></i>'+dshTF+'</span><span class="v'+(bad(cv,ser.G[cur])?' dsh-lo':'')+'">'+dshKFmt(k,cv)+'</span>'+'<span class="s">'+(dlt!=null?'<b class="'+(dgood?'':'dsh-lo')+'">'+(dlt>0?'▲ ':dlt<0?'▼ ':'')+(kd.u==='%'?Math.round(Math.abs(dlt))+' Pkt.':dshKFmt(k,Math.abs(dlt)))+'</b> ggü. '+TS.cmp+' · ':'')+'Ø Zeitraum <b>'+dshKFmt(k,avg)+'</b>'+(z!=null?' · '+(lte?'max. ':'Ziel ')+'<b>'+dshKFmt(k,z)+'</b>':' · Gesamt <b>'+dshKFmt(k,ser.G[cur])+'</b>')+'</span>'+'<span class="bt">'+TEAMS.map(function(t){var has=ser[t].some(function(v){return v!==null;});return '<button type="button" class="tg'+(t===dshTF?' on':'')+'"'+(has?' onclick="dshSetTF(\''+t+'\')"':' disabled')+'><i style="background:'+TCOL[t]+'"></i>'+t+'</button>';}).join('')+'</span></div>';
   ch+='</div><div class="tv-x">'+sl.map(function(x,i){var l=x.l;if(n>15&&i%2&&i!==cur)l='';return '<span class="'+(i===cur?'cur':(x.f>t0?'fut':''))+'" style="left:'+(X(i)/W*100).toFixed(2)+'%">'+l+'</span>';}).join('')+'</div>';
   // ── Kacheln: Gesamt + Teams, Wert der laufenden Periode, Mini-Diagramm mit Gesamt und Ziel ──
-  var cs=sl[cur],tiles='<div class="dsh-tcs">';
+  var cs=sl[cur],UN=dshTP==='day'?'Tagen':dshTP==='week'?'Wochen':'Monaten',tiles='<div class="dsh-tcs">';
   var gvc=ser.G[cur],gpv=cur>0?ser.G[cur-1]:null;
   tiles+='<div class="dsh-tc dsh-ko"><div class="h">Gesamt<span>'+TS.cur+'</span></div><div class="v">'+dshKFmt(k,gvc)+'</div>'+dshKDelta(k,gvc,gpv,true).replace('ggü. Vorperiode','ggü. '+TS.cmp)
-    +'<div class="mcw" style="color:#fff">'+dshMini(ser.G,null,z,lte,'#fff',cur,mn,mx)+'</div><div class="ex"><span>'+(z!=null?(lte?'max. ':'Ziel ')+dshKFmt(k,z):'Ø Zeitraum '+dshKFmt(k,(function(){var a=ser.G.filter(function(v){return v!==null;});return a.length?a.reduce(function(x,y){return x+y;},0)/a.length:null;})()))+'</span><span>'+TS.cmp+' <b>'+dshKFmt(k,gpv)+'</b></span></div></div>';
+    +dshBars(ser.G,null,z,lte,cur,mn,mx,true,sl.map(function(x){return x.l;}))+dshBarsFoot(ser.G,z,lte,cur,sl.map(function(x){return x.l;}),UN,true)+'<div class="ex"><span>'+(z!=null?(lte?'max. ':'Ziel ')+dshKFmt(k,z):'Ø Zeitraum '+dshKFmt(k,(function(){var a=ser.G.filter(function(v){return v!==null;});return a.length?a.reduce(function(x,y){return x+y;},0)/a.length:null;})()))+'</span><span>'+TS.cmp+' <b>'+dshKFmt(k,gpv)+'</b></span></div></div>';
   TEAMS.forEach(function(t){
     var L=lists[t],v=ser[t][cur],pv2=cur>0?ser[t][cur-1]:null,head='<div class="h">'+t+'<span>'+L.length+' MA</span></div>';
-    if(v===null||v===undefined){tiles+='<div class="dsh-tc na">'+head+'<div class="v">–</div><span class="dl">'+(t==='VLC'&&/U|W/.test(k.slice(-1))?'nur OEM':'keine Daten im Zeitraum')+'</span><div class="mcw"></div><div class="ds"></div><div class="ex"><span>&nbsp;</span></div></div>';return;}
+    if(v===null||v===undefined){tiles+='<div class="dsh-tc na">'+head+'<div class="v">–</div><span class="dl">'+(t==='VLC'&&/U|W/.test(k.slice(-1))?'nur OEM':'keine Daten im Zeitraum')+'</span><div class="bcx"></div><div class="bxs"><span>&nbsp;</span></div><div class="ex"><span>&nbsp;</span></div></div>';return;}
     var lo=bad(v,gvc);
     var em=L.map(function(e){return {e:e,v:dshTVal(k,[e],cs.f,cs.t),z:k==='ze'?100:dshKTarget(k,e)};}).filter(function(x){return x.v!==null;});
     var ds='<div class="ds"></div>',ex='<div class="ex"><span>&nbsp;</span></div>';
@@ -8907,7 +8937,7 @@ function dshTeamBox(all,T){
       ex='<div class="ex"><span>Bester <b>'+fn(so[0].e.name)+' '+dshKFmt(k,so[0].v)+'</b></span>'+(so.length>1?'<span>Schwächster <b>'+fn(so[so.length-1].e.name)+' '+dshKFmt(k,so[so.length-1].v)+'</b></span>':'')+'</div>';
     }
     tiles+='<div class="dsh-tc'+(t===dshTF?' foc':'')+'" onclick="dshSetTF(\''+t+'\')" style="cursor:pointer" title="'+t+' im Diagramm hervorheben">'+head+'<div class="v'+(lo?' dsh-lo':'')+'">'+dshKFmt(k,v)+'</div>'+dshKDelta(k,v,pv2).replace('ggü. Vorperiode','ggü. '+TS.cmp)
-      +'<div class="mcw" style="color:#3a3833">'+dshMini(ser[t],ser.G,z,lte,TCOL[t],cur,mn,mx)+'</div>'+ds+ex+'</div>';
+      +dshBars(ser[t],ser.G,z,lte,cur,mn,mx,false,sl.map(function(x){return x.l;}))+dshBarsFoot(ser[t],z,lte,cur,sl.map(function(x){return x.l;}),UN,false)+ex+'</div>';
   });
   tiles+='</div>';
   // ── Kopf: Titel, Zeitraum und Kennzahl nebeneinander rechts ──
@@ -8916,7 +8946,7 @@ function dshTeamBox(all,T){
     +(dshKpiOpen?'<div class="pan">'+Object.keys(gs).map(function(g){return '<div><div class="g">'+g+'</div>'+gs[g].map(function(x){return '<button type="button" class="'+(x.k===k?'on':'')+'" onclick="dshSetKpi(\''+x.k+'\')">'+x.l+'</button>';}).join('')+'</div>';}).join('')+'</div>':'')+'</div>';
   var per='<div class="dsh-seg" role="group" aria-label="Zeitraum">'+[['day','Tag'],['week','Woche'],['month','Monat']].map(function(p){return '<button type="button" class="'+(dshTP===p[0]?'on':'')+'" aria-pressed="'+(dshTP===p[0])+'" onclick="dshSetTP(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div>';
   return '<div class="card"><div class="card-title">Teams im Vergleich<span class="dsh-tr">'+per+pick+'</span></div><div class="dsh-tv">'+ch+'</div>'+tiles
-    +'<div class="dsh-why">In den Kacheln: Wert der '+(dshTP==='day'?'heutigen Tages':dshTP==='week'?'laufenden Woche':'laufenden Monats')+', kleines Diagramm mit Gesamt (gestrichelt) und Ziel. Punkte = Mitarbeiter. Klick auf eine Kachel hebt das Team oben hervor.</div></div>';
+    +'<div class="dsh-why">In den Kacheln: Wert der '+(dshTP==='day'?'heutigen Tages':dshTP==='week'?'laufenden Woche':'laufenden Monats')+', Balken je Abschnitt mit Ziel (gestrichelt) und Gesamt (Strich auf dem Balken). Klick auf eine Kachel hebt das Team oben hervor.</div></div>';
 }
 
 // Schwarzes Info-Feld beim Überfahren, wie im Performance-Diagramm
