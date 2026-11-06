@@ -381,6 +381,58 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .login-submit-btn{width:100%;height:44px;box-sizing:border-box;border-radius:8px;border:none;background:#fff;color:var(--purple-dark);font-weight:600;font-size:14px;cursor:pointer;margin-top:6px;font-family:inherit;}
 .login-back-link{font-size:12px;color:rgba(255,255,255,.55);margin-top:16px;cursor:pointer;text-decoration:underline;font-family:inherit;}
 .login-message{width:100%;font-size:12px;border-radius:8px;padding:9px 11px;margin-bottom:14px;font-family:inherit;}.login-message-error{background:rgba(189,45,41,.85);color:#fff;}.login-message-info{background:rgba(217,65,9,.85);color:#fff;}
+/* ══ Dashboard (Vertriebskennzahlen) ══ */
+.dsh-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.dsh-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center}
+.dsh-seg button{height:28px;padding:0 13px;border-radius:9px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer}
+.dsh-seg button.on{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.dsh-seg button:hover:not(.on){color:var(--text);background:rgba(255,255,255,.55)}
+.dsh-g{display:grid;gap:14px;margin-bottom:14px}
+.dsh-g2{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g3{grid-template-columns:repeat(3,minmax(0,1fr))}.dsh-g5{grid-template-columns:repeat(5,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr) minmax(0,1.7fr)}
+.dsh-box{background:#F7F5F0;border:1px solid #E4E0D6;border-radius:16px;padding:16px 18px;box-shadow:0 12px 30px rgba(40,32,15,.05);min-width:0}
+.dsh-bh{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
+.dsh-bh h3{margin:0;font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.dsh-bh .r{margin-left:auto;font-size:12px;color:var(--text3)}
+.dsh-why{font-size:12px;color:var(--text3);margin-top:12px;border-top:1px solid #E4E0D6;padding-top:9px}.dsh-why b{color:var(--text2)}
+.dsh-st{background:#EFECE5;border-radius:11px;padding:11px 14px;min-width:0}
+.dsh-st .l{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--text2);text-transform:uppercase}
+.dsh-st .v{font-size:24px;font-weight:700;margin-top:2px;line-height:1.15;white-space:nowrap;color:var(--text)}
+.dsh-st .s{font-size:11.5px;color:var(--text3);margin-top:2px}
+.dsh-st.lo .v{color:#B5513A}.dsh-st.na{opacity:.55}
+.dsh-ko{background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 52%,#C23B66 100%)!important;color:#fff;border:0!important}
+.dsh-ko .l,.dsh-ko .dsh-bh h3{color:#FFE1D6}.dsh-ko .s{color:#FFEDE6}.dsh-ko .v{color:#fff!important}
+.dsh-hb{display:grid;grid-template-columns:48px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px;margin:9px 0}
+.dsh-hb .n{color:var(--text2);font-weight:600}
+.dsh-hb .bar{height:18px;border-radius:6px;background:#EFECE5;overflow:hidden;position:relative}
+.dsh-hb .bar i{position:absolute;inset:0 auto 0 0;border-radius:6px;background:#8A7F72}
+.dsh-hb .bar i.lo{background:#F5B4A0}
+.dsh-hb .bar .z{position:absolute;top:-3px;bottom:-3px;width:2px;background:#F08566;z-index:1}
+.dsh-hb .r{text-align:right;font-weight:700;color:var(--text)}
+.dsh-hb.rk{grid-template-columns:22px 48px minmax(0,1fr) 72px}
+.dsh-lo{color:#B5513A!important}
+.dsh-lg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:8px}
+.dsh-lg span{display:inline-flex;align-items:center;gap:6px}.dsh-lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dsh-hm{display:grid;grid-template-columns:70px repeat(4,minmax(0,1fr));gap:6px;font-size:13px}
+.dsh-hm .c{height:38px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+.dsh-hm .c.lo{background:#FDF0EB;color:#B5513A;box-shadow:inset 0 0 0 1px rgba(240,133,102,.55)}
+.dsh-hm .c.na{background:#EFECE5;color:var(--text3)}
+.dsh-hm .hd{text-align:center;font-size:11.5px;color:var(--text3);font-weight:600}
+.dsh-hm .rn{display:flex;align-items:center;color:var(--text2);font-weight:600}
+.dsh-svg{width:100%;height:auto;display:block}.dsh-svg text{fill:var(--text3);font-family:inherit;font-size:15px}
+.dsh-dg{margin:0 0 6px}
+.dsh-dg-h{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;padding:12px 2px 10px;cursor:pointer;font-family:inherit;text-align:left;color:var(--text)}
+.dsh-dg-h .ch{font-size:16px;transition:transform .15s}
+.dsh-dg.open>.dsh-dg-h .ch{transform:rotate(90deg)}
+.dsh-dg-h .ic{font-size:17px;color:#F08566}
+.dsh-dg-h .t{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.dsh-dg-h .ln{flex:1;height:1px;background:#D8D2C6;min-width:20px}
+.dsh-dg-h .sm{font-size:12.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+.dsh-dg>.dsh-dg-b{display:none;padding-top:4px}.dsh-dg.open>.dsh-dg-b{display:block}
+.dsh-dg.sub .dsh-dg-h{padding:8px 2px}.dsh-dg.sub .dsh-dg-h .t{font-size:12px}
+.dsh-fseg{display:inline-flex;gap:2px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:2px;margin-left:auto}
+.dsh-fseg button{height:28px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.dsh-fseg button.on{background:#fff;color:#C23B66}
+@media (max-width:1100px){.dsh-g3,.dsh-g5{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g2,.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
 </head>
 <body>
@@ -8423,16 +8475,202 @@ var CATEGORY_META={
   criteria:{label:'QA-KRITERIUM',col:'#F7A777',bg:'rgba(247,179,154,0.15)'},
   login:{label:'ZUGRIFF',col:'var(--text2)',bg:'var(--bg2)'}
 };
-// ── DASHBOARD (Vertriebskennzahlen) – Grundgerüst, Inhalte folgen ──
+// ── DASHBOARD (Vertriebskennzahlen) ──
+// Teamwerte für OB, SE, SR, VLC. CR immer aus Rohzahlen: erst summieren, dann teilen (chartSumsForRange).
+var dshPeriod='month',dshFocus='MY',dshOpen=null;
+var DSH_TEAMS=['SE','SR','OB','VLC'];
+var DSH_KPI=['MY','OEM','UPS','WKA'];
+function dshOpenState(){
+  if(!dshOpen){try{dshOpen=JSON.parse(localStorage.getItem('dsh_groups')||'null');}catch(e){dshOpen=null;}
+    if(!dshOpen||typeof dshOpen!=='object')dshOpen={marge:true,conv:true,area:true,teams:true,dev:false};}
+  return dshOpen;
+}
+function dshToggle(k,btn){var s=dshOpenState();s[k]=!(btn&&btn.getAttribute('aria-expanded')==='true');try{localStorage.setItem('dsh_groups',JSON.stringify(s));}catch(e){}renderDashboard();}
+function dshIsOpen(k,def){var s=dshOpenState();return s[k]!=null?!!s[k]:!!def;}
+function dshSetPeriod(p){dshPeriod=p;renderDashboard();}
+function dshSetFocus(k){dshFocus=k;renderDashboard();}
+function dshActive(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach&&e.role!=='SC'&&e.role!=='SDM';});}
+function dshTeamOf(e){if(e.role==='VLC')return 'VLC';if(e.phase==='Onboarding')return 'OB';if(e.role==='SE')return 'SE';if(e.role==='SR')return 'SR';return null;}
+function dshTeam(t){return dshActive().filter(function(e){return dshTeamOf(e)===t;});}
+function dshAll(){return dshActive().filter(function(e){return !!dshTeamOf(e);});}
+function dshYmd(d){return d.toISOString().slice(0,10);}
+function dshMonday(ds){var d=new Date(ds+'T00:00:00Z');var k=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-k);return dshYmd(d);}
+function dshRange(p){
+  var t=today(),y=+t.slice(0,4),m=+t.slice(5,7);
+  if(p==='day')return {from:t,to:t,prevFrom:addDaysUTC(t,-7),prevTo:addDaysUTC(t,-7),prevLbl:'Vorwoche gleicher Tag',lbl:'heute'};
+  if(p==='week'){var mo=dshMonday(t),n=Math.round((new Date(t)-new Date(mo))/86400000);return {from:mo,to:t,prevFrom:addDaysUTC(mo,-7),prevTo:addDaysUTC(mo,n-7),prevLbl:'Vorwoche',lbl:'diese Woche'};}
+  if(p==='quarter'){var qm=Math.floor((m-1)/3)*3+1,f=y+'-'+('0'+qm).slice(-2)+'-01';var pf=new Date(Date.UTC(y,qm-4,1));var n2=Math.round((new Date(t)-new Date(f))/86400000);return {from:f,to:t,prevFrom:dshYmd(pf),prevTo:addDaysUTC(dshYmd(pf),n2),prevLbl:'Vorquartal',lbl:'dieses Quartal'};}
+  var f1=t.slice(0,8)+'01',pm=new Date(Date.UTC(y,m-2,1)),n3=+t.slice(8,10)-1;
+  var pmLast=new Date(Date.UTC(y,m-1,0));var pt=new Date(Date.UTC(y,m-2,1+n3));if(pt>pmLast)pt=pmLast;
+  return {from:f1,to:t,prevFrom:dshYmd(pm),prevTo:dshYmd(pt),prevLbl:'Vormonat',lbl:'dieser Monat'};
+}
+function dshCr(s,k){
+  if(!s)return null;var d;
+  if(k==='OEM'){d=s.oem+s.nerrOem;return d>0?s.oem/d*100:null;}
+  if(k==='UPS'){d=s.ups+s.nerrUps;return d>0?s.ups/d*100:null;}
+  if(k==='WKA'){d=s.wka+s.nerrWkaOem+s.nerrWkaUps+s.wkaOemBeendet+s.wkaUpsBeendet;return d>0?s.wka/d*100:null;}
+  if(k==='MY')return chartCrFromSums('crMegaYes',s);
+  if(k==='SYMY')return chartCrFromSums('crSyMy',s);
+  return null;
+}
+function dshFail(s,k){if(k==='OEM')return s.nerrOem;if(k==='UPS')return s.nerrUps;if(k==='WKA')return s.nerrWkaOem+s.nerrWkaUps+s.wkaOemBeendet+s.wkaUpsBeendet;return 0;}
+function dshOpt(s,k){return k==='OEM'?s.oem:k==='UPS'?s.ups:s.wka;}
+// Ziele: CR OEM und CR MY aus den globalen KPI-Zielen, UPS und WKA aus settings.dashboardTargets (falls gepflegt)
+function dshTarget(k){
+  if(k==='OEM')return KPI_TARGETS.crOEM?+KPI_TARGETS.crOEM.val:null;
+  if(k==='MY')return KPI_TARGETS.crMegaYes?+KPI_TARGETS.crMegaYes.val:null;
+  var dt=settings.dashboardTargets||{};var v=dt['cr'+k];return (v===''||v==null)?null:+v;
+}
+function dshPct(v){return v===null||v===undefined?'–':Math.round(v)+' %';}
+function dshEur(v){return Math.round(v||0).toLocaleString('de-DE')+' €';}
+function dshNum(v){return Math.round(v||0).toLocaleString('de-DE');}
+function dshMargeZiel(list,mk){
+  var wMeta=getMonthWeeksZiel(mk),mRec=zielStore[mk]||{},z=0;
+  list.filter(function(e){return empActiveInZielMonth(e,mk);}).forEach(function(e){
+    var r=mRec[e.id]||{};
+    var sum=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;}).reduce(function(a,b){return a+b;},0);
+    z+=sum*(r.optTag!=null?r.optTag:0)*(r.margeOpt!=null?r.margeOpt:0);
+  });
+  return z;
+}
+function dshWeeks(n){var mo=dshMonday(today()),w=[];for(var i=n-1;i>=0;i--){var f=addDaysUTC(mo,-7*i);w.push({from:f,to:addDaysUTC(f,6),kw:isoWeekNum(new Date(f+'T00:00:00Z'))});}return w;}
+// ── Bausteine ──
+function dshSt(l,v,s,cls){return '<div class="dsh-st '+(cls||'')+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+(s||'&nbsp;')+'</div></div>';}
+function dshBox(t,r,body,why,cls,extra){return '<div class="dsh-box '+(cls||'')+'"'+(extra||'')+'><div class="dsh-bh"><h3>'+t+'</h3><span class="r">'+(r||'')+'</span></div>'+body+(why?'<div class="dsh-why"><b>Warum:</b> '+why+'</div>':'')+'</div>';}
+function dshGrp(k,icon,title,summ,body,def,sub){
+  var open=dshIsOpen(k,def);
+  return '<section class="dsh-dg'+(sub?' sub':'')+(open?' open':'')+'"><button type="button" class="dsh-dg-h" aria-expanded="'+open+'" onclick="dshToggle(\''+k+'\',this)"><i class="ti ti-chevron-right ch"></i><i class="ti '+icon+' ic"></i><span class="t">'+title+'</span><span class="ln"></span><span class="sm">'+summ+'</span></button>'+(open?'<div class="dsh-dg-b">'+body+'</div>':'')+'</section>';
+}
+function dshBars(rows,fmt,mx,ziel,warn){
+  return rows.map(function(r){
+    if(r.v===null)return '<div class="dsh-hb"><span class="n">'+r.t+'</span><span style="font-size:12px;color:var(--text3)">'+(r.t==='VLC'?'nur OEM':'keine Daten')+'</span><span></span></div>';
+    var lo=warn?warn(r):false,w=mx>0?Math.max(0,Math.min(100,r.v/mx*100)):0;
+    return '<div class="dsh-hb"><span class="n">'+r.t+'</span><span class="bar"><i class="'+(lo?'lo':'')+'" style="width:'+w.toFixed(1)+'%"></i>'+(ziel!=null&&mx>0?'<b class="z" style="left:'+Math.min(100,ziel/mx*100).toFixed(1)+'%"></b>':'')+'</span><span class="r'+(lo?' dsh-lo':'')+'">'+fmt(r.v)+'</span></div>';
+  }).join('');
+}
+function dshSvgBars(vals,cols,labels,h,Wd){
+  var W=Wd||1000,n=vals.length,gap=W/n,bw=gap*0.6,base=h-24,mx=0;
+  vals.forEach(function(v){var s=(v.length?v:[v]).reduce(function(a,b){return a+b;},0);if(s>mx)mx=s;});
+  var s='<svg class="dsh-svg" viewBox="0 0 '+W+' '+h+'" role="img" aria-label="Balkendiagramm je Kalenderwoche">';
+  if(mx<=0)mx=1;
+  vals.forEach(function(v,i){
+    var parts=v.length?v:[v],y=base,x=i*gap+(gap-bw)/2;
+    parts.forEach(function(p,k){var hh=p/mx*(base-8);y-=hh;var col=(i===n-1&&k===0)?'#F08566':cols[k%cols.length];s+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,hh).toFixed(1)+'" fill="'+col+'"'+(parts.length===1?' rx="4"':'')+'/>';});
+    if(i%2===0)s+='<text x="'+(x+bw/2).toFixed(0)+'" y="'+(h-4)+'" text-anchor="middle">'+labels[i]+'</text>';
+  });
+  return s+'<line x1="0" x2="'+W+'" y1="'+base+'" y2="'+base+'" stroke="#D8D2C6"/></svg>';
+}
+function dshLines(series,labels,h){
+  var W=1300,all=[];series.forEach(function(se){se.v.forEach(function(v){if(v!==null)all.push(v);});});
+  if(!all.length)return '<div style="font-size:12.5px;color:var(--text3)">Noch keine Daten für den Verlauf.</div>';
+  var mn=Math.max(0,Math.floor((Math.min.apply(null,all)-5)/10)*10),mx=Math.min(100,Math.ceil((Math.max.apply(null,all)+5)/10)*10);if(mx<=mn)mx=mn+10;
+  var y=function(v){return (h-30)-(v-mn)/(mx-mn)*(h-50);},x=function(i){return 50+i*(W-70)/(labels.length-1||1);};
+  var s='<svg class="dsh-svg" viewBox="0 0 '+W+' '+h+'" role="img" aria-label="Verlauf der Conversion Rates je Kalenderwoche">';
+  var step=(mx-mn)>40?20:10;
+  for(var g=mn;g<=mx;g+=step){s+='<line x1="44" x2="'+W+'" y1="'+y(g).toFixed(0)+'" y2="'+y(g).toFixed(0)+'" stroke="#E4E0D6"/><text x="0" y="'+(y(g)+5).toFixed(0)+'">'+g+' %</text>';}
+  series.forEach(function(se){
+    var d='',prev=null;
+    se.v.forEach(function(v,i){if(v===null){prev=null;return;}var px=x(i),py=y(v);if(prev===null)d+='M'+px.toFixed(1)+','+py.toFixed(1);else{var cx=(prev[0]+px)/2;d+=' C'+cx.toFixed(1)+','+prev[1].toFixed(1)+' '+cx.toFixed(1)+','+py.toFixed(1)+' '+px.toFixed(1)+','+py.toFixed(1);}prev=[px,py];});
+    s+='<path d="'+d+'" fill="none" stroke="'+se.c+'" stroke-width="'+(se.w||2)+'"'+(se.dash?' stroke-dasharray="6 5"':'')+'/>';
+  });
+  labels.forEach(function(l,i){if(i%2===0)s+='<text x="'+x(i).toFixed(0)+'" y="'+(h-6)+'" text-anchor="middle">'+l+'</text>';});
+  return s+'</svg>';
+}
+function dshSpark(vals,ziel){
+  var v=vals.filter(function(x){return x!==null;});if(v.length<2)return '';
+  var all=v.concat(ziel!=null?[ziel]:[]),mn=Math.min.apply(null,all)-3,mx=Math.max.apply(null,all)+3,W=600,H=110;
+  var y=function(q){return H-8-(q-mn)/(mx-mn)*(H-20);},d='',prev=null;
+  vals.forEach(function(q,i){if(q===null)return;var px=i*W/(vals.length-1),py=y(q);if(prev===null)d+='M'+px.toFixed(1)+','+py.toFixed(1);else{var cx=(prev[0]+px)/2;d+=' C'+cx.toFixed(1)+','+prev[1].toFixed(1)+' '+cx.toFixed(1)+','+py.toFixed(1)+' '+px.toFixed(1)+','+py.toFixed(1);}prev=[px,py];});
+  return '<svg viewBox="0 0 600 110" preserveAspectRatio="none" style="width:100%;height:110px;display:block" aria-hidden="true">'+(ziel!=null?'<line x1="0" x2="600" y1="'+y(ziel).toFixed(1)+'" y2="'+y(ziel).toFixed(1)+'" stroke="rgba(255,255,255,.45)" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/>':'')+'<path d="'+d+'" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>';
+}
 function renderDashboard(){
   var ma=document.getElementById('mainArea');if(!ma)return;
+  var R=dshRange(dshPeriod),mk=today().slice(0,7);
+  var all=dshAll(),teams={};
+  DSH_TEAMS.forEach(function(t){var l=dshTeam(t);teams[t]={list:l,s:chartSumsForRange(l,R.from,R.to),p:chartSumsForRange(l,R.prevFrom,R.prevTo)};});
+  var S=chartSumsForRange(all,R.from,R.to),P=chartSumsForRange(all,R.prevFrom,R.prevTo);
+  var Z={};DSH_KPI.forEach(function(k){Z[k]=dshTarget(k);});
+  // Ohne gepflegtes Ziel wird bei UPS/WKA der Teamwert als Vergleich genutzt (Linie = Ø Team)
+  var REF={};DSH_KPI.forEach(function(k){REF[k]=Z[k]!=null?Z[k]:dshCr(S,k);});
+  function refLbl(k){return Z[k]!=null?'Ziel '+Math.round(Z[k])+' %':'Ø Team '+dshPct(REF[k]);}
+  function under(k,v){return v!==null&&REF[k]!=null&&v<REF[k]-(Z[k]!=null?0:2);}
+  var W12=dshWeeks(12),wl=W12.map(function(w){return 'KW '+w.kw;});
+  var wkS=W12.map(function(w){return chartSumsForRange(all,w.from,w.to);});
   var h='<div class="content">';
-  h+=buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
-  h+='<div class="card"><div class="card-title">Dashboard</div><div class="card-sub">Vertriebskennzahlen im Überblick</div>'
-    +'<div style="font-size:13px;color:var(--text2);background:#EFECE5;border:1px solid #E4E0D6;border-radius:var(--r-md);padding:14px 16px">Hier entstehen die Kennzahlen des Dashboards.</div></div>';
+  // Kopf
+  var stand=settings.ftpLastSync?new Date(settings.ftpLastSync):null;
+  var per=[['day','Heute'],['week','Woche'],['month','Monat'],['quarter','Quartal']];
+  h+='<div class="card"><div class="dsh-head"><div><div style="font-size:22px;font-weight:700;color:var(--text)">Dashboard</div><div style="font-size:13px;color:var(--text3);margin-top:2px">Teamwerte '+R.lbl+' · '+all.length+' Mitarbeiter'+(stand?' · Stand '+('0'+stand.getHours()).slice(-2)+':'+('0'+stand.getMinutes()).slice(-2)+' Uhr':'')+'</div></div>'
+    +'<div class="dsh-seg" role="group" aria-label="Zeitraum" style="margin-left:auto">'+per.map(function(p){return '<button type="button" class="'+(dshPeriod===p[0]?'on':'')+'" aria-pressed="'+(dshPeriod===p[0])+'" onclick="dshSetPeriod(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div></div></div>';
+  // Fokus-Box + Rangliste
+  var fk=dshFocus,fv=dshCr(S,fk),fp=dshCr(P,fk),fser=wkS.map(function(s){return dshCr(s,fk);});
+  var rank=DSH_TEAMS.map(function(t){return {t:t,v:dshCr(teams[t].s,fk)};}).sort(function(a,b){if(a.v===null)return 1;if(b.v===null)return -1;return b.v-a.v;});
+  var rmx=Math.max.apply(null,rank.map(function(r){return r.v||0;}).concat([REF[fk]||0]))*1.15||100;
+  h+='<div class="dsh-g dsh-g12" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);margin-bottom:14px">'
+    +'<div class="dsh-box dsh-ko" style="box-shadow:0 12px 28px rgba(194,59,102,.22)"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#FFE1D6">Fokus · CR '+fk+'</div>'
+    +'<div class="dsh-fseg" role="group" aria-label="Fokus-Kennzahl">'+DSH_KPI.map(function(k){return '<button type="button" class="'+(k===fk?'on':'')+'" aria-pressed="'+(k===fk)+'" onclick="dshSetFocus(\''+k+'\')">'+k+'</button>';}).join('')+'</div></div>'
+    +'<div style="display:flex;align-items:flex-end;gap:16px;margin-top:8px;flex-wrap:wrap"><div style="font-size:52px;font-weight:600;line-height:1">'+dshPct(fv)+'</div><div style="font-size:13px;color:#FFEDE6;padding-bottom:6px">'+(Z[fk]!=null?'Ziel '+Math.round(Z[fk])+' % · ':'')+R.prevLbl+' '+dshPct(fp)+'</div></div>'
+    +'<div style="margin-top:10px">'+dshSpark(fser,Z[fk])+'</div><div style="font-size:11.5px;color:#FFE1D6">Verlauf 12 Wochen'+(Z[fk]!=null?' · gestrichelt = Ziel':'')+'</div></div>'
+    +dshBox('Teams nach CR '+fk,R.lbl+' · Linie = '+refLbl(fk),rank.map(function(r,i){
+      if(r.v===null)return '<div class="dsh-hb rk"><span style="color:var(--text3)">–</span><span class="n">'+r.t+'</span><span style="font-size:12px;color:var(--text3)">'+(r.t==='VLC'?'nur OEM':'keine Daten')+'</span><span></span></div>';
+      var lo=under(fk,r.v);return '<div class="dsh-hb rk"><span style="color:var(--text3)">'+(i+1)+'</span><span class="n">'+r.t+'</span><span class="bar"><i class="'+(lo?'lo':'')+'" style="width:'+(r.v/rmx*100).toFixed(1)+'%"></i>'+(REF[fk]!=null?'<b class="z" style="left:'+(REF[fk]/rmx*100).toFixed(1)+'%"></b>':'')+'</span><span class="r'+(lo?' dsh-lo':'')+'">'+dshPct(r.v)+'</span></div>';
+    }).join(''),'zeigt, welches Team das Fokus-Thema mitzieht und wer Unterstützung braucht.')+'</div>';
+  // Kachelreihe
+  var mZiel=dshMargeZiel(all,mk),mIst=S.margeGes;
+  var mSub=dshPeriod==='month'&&mZiel>0?Math.round(mIst/mZiel*100)+' % vom Monatsziel · '+R.prevLbl+' '+dshEur(P.margeGes):R.prevLbl+' '+dshEur(P.margeGes);
+  h+='<div class="dsh-g dsh-g5" style="margin-bottom:22px">'+dshSt('Marge',dshEur(mIst),mSub,'dsh-ko')
+    +DSH_KPI.map(function(k){var v=dshCr(S,k);return dshSt('CR '+k,dshPct(v),(Z[k]!=null?'Ziel '+Math.round(Z[k])+' % · ':'')+R.prevLbl+' '+dshPct(dshCr(P,k)),Z[k]!=null&&v!==null&&v<Z[k]?'lo':'');}).join('')+'</div>';
+  // Marge
+  var mRows=DSH_TEAMS.map(function(t){return {t:t,v:teams[t].s.margeGes};}),mMax=Math.max.apply(null,mRows.map(function(r){return r.v;}))*1.05||1;
+  var TC=['#5C564F','#8A7F72','#B8AC9B','#D9CFBF'];
+  var stack=W12.map(function(w){return DSH_TEAMS.map(function(t){return chartSumsForRange(teams[t].list,w.from,w.to).margeGes;});});
+  var best=mRows.slice().sort(function(a,b){return b.v-a.v;})[0];
+  h+=dshGrp('marge','ti-currency-euro','Marge','Wo entsteht die Marge?'+(best&&best.v>0?' · '+best.t+' trägt '+Math.round(best.v/(S.margeGes||1)*100)+' %':''),
+    '<div class="dsh-g dsh-g12">'+dshBox('Marge nach Teams',R.lbl,dshBars(mRows,dshEur,mMax),'zeigt, welches Team die Marge trägt.')
+    +dshBox('Marge je Woche nach Teams','letzte 12 Wochen',dshSvgBars(stack,TC,wl,200)+'<div class="dsh-lg">'+DSH_TEAMS.map(function(t,i){return '<span><i style="background:'+TC[i]+'"></i>'+t+'</span>';}).join('')+'</div>','zeigt, ob die Marge wächst und welches Team sie trägt. Der unterste Block der laufenden Woche ist hervorgehoben.')+'</div>',true);
+  // Conversion
+  var myRows=DSH_TEAMS.map(function(t){return {t:t,v:dshCr(teams[t].s,'MY')};}),myMax=Math.max.apply(null,myRows.map(function(r){return r.v||0;}).concat([REF.MY||0]))*1.2||40;
+  var hm='<div class="dsh-hm"><div></div>'+DSH_KPI.map(function(k){return '<div class="hd">'+k+'</div>';}).join('');
+  var strong=null,weak=null;
+  DSH_TEAMS.forEach(function(t){hm+='<div class="rn">'+t+'</div>';DSH_KPI.forEach(function(k){var v=dshCr(teams[t].s,k);
+    if(v===null){hm+='<div class="c na">–</div>';return;}
+    var d=REF[k]!=null?v-REF[k]:0;if(!strong||d>strong.d)strong={t:t,k:k,v:v,d:d};if(!weak||d<weak.d)weak={t:t,k:k,v:v,d:d};
+    if(under(k,v))hm+='<div class="c lo">'+dshPct(v)+'</div>';else hm+='<div class="c" style="background:'+(d>=3?'#5C564F':'#8A7F72')+'">'+dshPct(v)+'</div>';});});
+  hm+='</div>';
+  var nUnder=0;DSH_TEAMS.forEach(function(t){DSH_KPI.forEach(function(k){if(under(k,dshCr(teams[t].s,k)))nUnder++;});});
+  h+=dshGrp('conv','ti-percentage','Conversion','Wie gut schließen die Teams ab? · '+nUnder+' Werte unter Ziel',
+    '<div class="dsh-g dsh-g12">'+dshBox('CR MY nach Teams','Linie = '+refLbl('MY'),dshBars(myRows,dshPct,myMax,REF.MY,function(r){return under('MY',r.v);}),'CR MY ist provisionsrelevant, darum steht sie vorne.')
+    +dshBox('CR nach Team und Bereich','Koralle = unter '+(Z.UPS==null||Z.WKA==null?'Ziel bzw. Ø Team':'Ziel'),hm+(strong&&weak?'<div style="font-size:12.5px;color:var(--text3);margin-top:10px">Am stärksten: <b style="color:var(--text2)">'+strong.t+' bei '+strong.k+' ('+dshPct(strong.v)+')</b> · größter Hebel: <b class="dsh-lo">'+weak.t+' bei '+weak.k+' ('+dshPct(weak.v)+')</b></div>':''),'zeigt auf einen Blick, wo Coaching am meisten bringt.')+'</div>',true);
+  // OEM · UPS · WKA
+  var WHY={OEM:'Kerngeschäft und Basis der Provision.',UPS:'zeigt, wie viele Upsell-Chancen wir nutzen.',WKA:'zeigt, wie viele Wiederkäufer wir halten.'};
+  h+=dshGrp('area','ti-arrows-split','OEM · UPS · WKA','Wo liegen Chancen neben OEM?','<div class="dsh-g dsh-g3">'+['OEM','UPS','WKA'].map(function(k){
+    var v=dshCr(S,k),rows=DSH_TEAMS.map(function(t){return {t:t,v:dshCr(teams[t].s,k)};}),mx=Math.max.apply(null,rows.map(function(r){return r.v||0;}).concat([REF[k]||0]))*1.15||100;
+    return dshBox(k,refLbl(k),'<div class="dsh-g dsh-g2" style="margin-bottom:10px">'+dshSt('CR',dshPct(v),R.prevLbl+' '+dshPct(dshCr(P,k)),under(k,v)&&Z[k]!=null?'lo':'')+dshSt('Optimierungen',dshNum(dshOpt(S,k)),dshNum(dshFail(S,k))+(k==='WKA'?' NERR/beendet':' NERR'))+'</div>'
+      +dshBars(rows,dshPct,mx,REF[k],function(r){return under(k,r.v);}),WHY[k]);
+  }).join('')+'</div>',true);
+  // Teams im Detail
+  var tb='',worstT=null,worstN=-1;
+  var tinfo=DSH_TEAMS.map(function(t){var T=teams[t],n=0;DSH_KPI.forEach(function(k){if(under(k,dshCr(T.s,k)))n++;});if(n>worstN){worstN=n;worstT=t;}return {t:t,n:n};});
+  tinfo.forEach(function(ti){
+    var t=ti.t,T=teams[t],bestK=null,bestD=-1e9,tiles=dshSt('Marge',dshEur(T.s.margeGes),Math.round(T.s.margeGes/(S.margeGes||1)*100)+' % vom Team');
+    DSH_KPI.forEach(function(k){var v=dshCr(T.s,k);if(v!==null&&REF[k]!=null&&v-REF[k]>bestD){bestD=v-REF[k];bestK=k;}});
+    DSH_KPI.forEach(function(k){var v=dshCr(T.s,k);
+      if(v===null){tiles+=dshSt('CR '+k,'–',t==='VLC'?'nur OEM':'keine Daten','na');return;}
+      tiles+=dshSt('CR '+k+(k===bestK?' · Bestwert':''),dshPct(v),refLbl(k),k===bestK?'dsh-ko':(under(k,v)?'lo':''));});
+    var wk=W12.map(function(w){return [chartSumsForRange(T.list,w.from,w.to).margeGes];});
+    var body='<div class="dsh-g dsh-g12" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">'+dshBox('Kennzahlen '+R.lbl,'Koralle = Bestwert des Teams','<div class="dsh-g dsh-g5" style="margin:0">'+tiles+'</div>')+dshBox('Marge je Woche','letzte 12 Wochen',dshSvgBars(wk,['#8A7F72'],wl,150,560),'die laufende Woche ist hervorgehoben.')+'</div>';
+    var summ=dshEur(T.s.margeGes)+' Marge'+(ti.n?' · <span class="dsh-lo">'+ti.n+' '+(ti.n===1?'Kennzahl':'Kennzahlen')+' unter Ziel</span>':' · alles im Ziel');
+    tb+=dshGrp('team_'+t,'ti-users',t+' · '+T.list.length+' Mitarbeiter',summ,body,t===worstT&&worstN>0,true);
+  });
+  h+=dshGrp('teams','ti-users','Teams im Detail','Jedes Team einzeln · Bestwert in Koralle','<div style="padding-left:22px;border-left:2px solid #E4E0D6;margin-left:7px">'+tb+'</div>',true);
+  // Entwicklung
+  var DEVS=[{k:'OEM',c:'#5C564F'},{k:'WKA',c:'#8A7F72'},{k:'UPS',c:'#B8AC9B',dash:true},{k:'MY',c:'#F08566',w:3}];
+  h+=dshGrp('dev','ti-chart-line','Entwicklung','Werden wir besser? · Verlauf 12 Wochen',dshBox('CR-Entwicklung · 12 Wochen','je Kalenderwoche, alle Teams',dshLines(DEVS.map(function(d){return {v:wkS.map(function(s){return dshCr(s,d.k);}),c:d.c,dash:d.dash,w:d.w};}),wl,260)
+    +'<div class="dsh-lg">'+DEVS.map(function(d){return '<span><i style="background:'+d.c+';height:3px"></i>CR '+d.k+(d.dash?' (gestrichelt)':'')+'</span>';}).join('')+'</div>','zeigt, ob Coaching und Fokus-Themen über Wochen wirken.'),false);
   h+='</div>';
   ma.innerHTML=h;
 }
+
 function renderActivity(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   var coachList=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
@@ -11315,7 +11553,7 @@ function loadSettingsFromSupabase(){
       if(r.key==='ftpLastSync')settings.ftpLastSync=r.value||'';
       if(r.key==='tokenExpiry')settings.tokenExpiry=r.value||'';
       if(r.key==='extensionUrl')settings.extensionUrl=r.value||'';
-      if(r.key==='rolePermissions'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='ftpUnmatched'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
+      if(r.key==='rolePermissions'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
     return true;
