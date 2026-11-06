@@ -6453,7 +6453,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       function fc(v,t,dir){if(!t&&t!==0)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
       var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
-        +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="selectEmp(\''+rowEmp.id+'\')">'+stackCell(rowEmp.name,rowEmp.role||'',null,'left')+'</td>'
+        +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="'+(rowEmp.id==='__agg__'?'':'openPerfPopup(\''+rowEmp.id+'\')')+'">'+stackCell(rowEmp.name,rowEmp.role||'',null,'left')+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCell(g.label,(overviewPerfGroup!=='day'?g.count+' Tage':''),null,'left')+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;'+(akt>0?fc(+aktPerHour.toFixed(1),rowEmpT.oem_aktivitaeten.val,rowEmpT.oem_aktivitaeten.dir):'')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Akt./Std. = Aktivitäten / Stunden\',\'Aktivitäten\','+akt+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Akt./Std.\','+aktPerHour.toFixed(1)+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(aktPerHour.toFixed(1),akt)+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notR/akt*100),rowEmpT.notReached.val,rowEmpT.notReached.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NE = NE / Aktivitäten\',\'NE\','+notR+',\'Aktivitäten\','+akt+',\'NE-Quote\',\''+(akt>0?Math.round(notR/akt*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((akt>0?Math.round(notR/akt*100)+'%':'—'),(akt>0?notR:'—'))+'</td>'
@@ -10293,7 +10293,7 @@ function buildProvisionTeamTable(){
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
       var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
-        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
+        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="openPerfPopup(\''+emp.id+'\')" title="Popup öffnen">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+stackCellLeft(g.label,g.count+' Einsatztage')+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(abwTage.krank,null)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(abwTage.urlaub,null)+'</td>'
