@@ -8686,6 +8686,13 @@ function dshSlots(list,p){
   if(p==='year'){var MS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
     for(var i=1;i<=12;i++){var f=y+'-'+('0'+i).slice(-2)+'-01';sl.push({from:f,to:dshYmd(new Date(Date.UTC(y,i,0))),l:MS[i-1]});}}
   else if(p==='day'){var d=t,a=[];while(a.length<10){var fe=bayernFeiertage(+d.slice(0,4));if(dshIsWork(d)&&!fe[d])a.unshift(d);d=addDaysUTC(d,-1);}a.forEach(function(x){sl.push({from:x,to:x,l:dl(x)});});}
+  else if(p==='week'){
+    // Woche: alle Kalenderwochen des laufenden Monats, jeweils nur die Tage innerhalb des Monats
+    var m0=t.slice(0,8)+'01',mEnd=dshYmd(new Date(Date.UTC(y,+t.slice(5,7),0))),mo=dshMonday(m0);
+    while(mo<=mEnd){var fr=addDaysUTC(mo,4),f3=mo<m0?m0:mo,t3=fr>mEnd?mEnd:fr;
+      if(f3<=t3)sl.push({from:f3,to:t3,l:'KW '+isoWeekNum(new Date(mo+'T00:00:00Z'))+' · '+(f3===t3?dl(f3):f3.slice(8,10)+'.–'+dl(t3))});
+      mo=addDaysUTC(mo,7);}
+  }
   else{var R=dshRange(p),d2=R.from,fe2=bayernFeiertage(y);while(d2<=R.end){if(dshIsWork(d2)&&!fe2[d2])sl.push({from:d2,to:d2,l:p==='week'?WD[new Date(d2+'T00:00:00Z').getUTCDay()]:dl(d2)});d2=addDaysUTC(d2,1);}}
   var frac=dshDayFrac(list),cur=-1;
   sl.forEach(function(s,i){
@@ -8707,7 +8714,7 @@ function dshSlots(list,p){
 // Diagramm: Ziel je Abschnitt als heller Rahmen, Ist davor (OEM/UPS/WKA), Zielerreichung in % darüber
 function dshFmtK(v){return v>=1e6?(v/1e6).toLocaleString('de-DE',{maximumFractionDigits:1})+' Mio':v>=1000?Math.round(v/1000)+'k':Math.round(v)+'';}
 function dshChart(list,p){
-  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,U=p==='year'?'Monat':'Tag',UU=p==='year'?'Monaten':'Tagen';
+  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,U=p==='year'?'Monat':p==='week'?'Woche':'Tag',UU=p==='year'?'Monaten':p==='week'?'Wochen':'Tagen';
   var anyPlan=s.some(function(x){return x.plan>0;});
   var mx=Math.max.apply(null,s.map(function(x){return Math.max(x.plan||0,x.v?x.tot:0);}).concat([1]))*1.2;
   var done=0,under=0,sumI=0,sumP=0,gap=n>15?6:n>10?10:14;
