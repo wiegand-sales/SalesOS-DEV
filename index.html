@@ -4722,7 +4722,7 @@ function empTargets(emp){
     crMegaYes:  {val:pval('crMegaYes','my',8),        dir:dir('crMYDir','crMegaYes','gte')},
     optPerH:     {val:pval('optPerH','optH',2.0),         dir:dir('optPerHDir','optPerH','gte')},
     optPerDay:   {val:val('optPerDay',16),          dir:dir('optPerDayDir','optPerDay','gte')},
-    crYes:       {val:pval('crYes','crYes',null),             dir:dir('crYesDir','crYes','gte')},
+    crYes:       {val:pval('crYes','crYes',null),             dir:provKpi?'lte':dir('crYesDir','crYes','lte')}, // CR YES ist ein Max.-Wert
     crSyMy:      {val:pval('crSyMy','syMy',null),             dir:dir('crSyMyDir','crSyMy','gte')},
     anteilOEM:   {val:pval('anteilOEM','oemAnteil',null),          dir:dir('anteilOEMDir','anteilOEM','gte')},
     notReached:  {val:pval('notReached','notReached',null),         dir:dir('notReachedDir','notReached','lte')},
@@ -6637,7 +6637,7 @@ function renderTeam(){
       // CR Spalten
       +crCell(ea('crOEM'),empTargets(e).crOEM.val,empTargets(e).crOEM.dir)
       +crCell(ea('crTeilweise'),empTargets(e).crTeilweise.val,empTargets(e).crTeilweise.dir)
-      +crCell(ea('crYes'),empTargets(e).crYes?empTargets(e).crYes.val:null,'gte')
+      +crCell(ea('crYes'),empTargets(e).crYes?empTargets(e).crYes.val:null,empTargets(e).crYes?empTargets(e).crYes.dir:'lte')
       +crCell(ea('crSuperYes'),empTargets(e).crSuperYes.val,empTargets(e).crSuperYes.dir)
       +crCell(ea('crMegaYes'),empTargets(e).crMegaYes.val,empTargets(e).crMegaYes.dir)
       // Marge
@@ -11067,7 +11067,8 @@ function esBuildHtml(emp,asPopup,html){
         var pv=(emp.provisionSettings)||{};
         function pvNum(key,def){return pv[key]!=null?pv[key]:def;}
         var m1=pv.monat1||{}, m2=pv.monat2||{}, m3=pv.monat3plus||{};
-        function pvMonatNum(mObj,key,def){return mObj[key]!=null?mObj[key]:def;}
+        // Gespeichert leer (null) = bewusst kein Ziel → Feld bleibt leer; nie gespeichert → Standardwert vorschlagen
+        function pvMonatNum(mObj,key,def){if(Object.prototype.hasOwnProperty.call(mObj,key))return mObj[key]==null||mObj[key]===''?'':mObj[key];return def;}
         // Box als nummerierte Abschnitte: Inhalte werden in Segmente gesammelt und unten zusammengesetzt.
         // Alle Eingabefelder bleiben (auch zugeklappt) im DOM, damit Speichern unveraendert alle Werte liest.
         var _esOuter=html; html=''; var SEG={};
@@ -11229,7 +11230,7 @@ function esBuildHtml(emp,asPopup,html){
             }
             tbl+='<tr style="'+rowBg+'"><td style="padding:9px 8px;padding-left:12px;font-weight:600;color:var(--text2);font-size:12.5px;border-bottom:1px solid #ebe9e3;width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fld.lbl+'</td>';
             monatSets.forEach(function(mset,mi){
-              tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;'+(mi===esCurIdx?'background:var(--band)':'')+'"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
+              tbl+='<td style="padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;'+(mi===esCurIdx?'background:var(--band)':'')+'"><input type="number" id="pv-'+mset.key+'-'+fld.f+'" value="'+pvMonatNum(mset.obj,fld.f,mset.defs[fld.f])+'" placeholder="–" step="'+(fld.step||1)+'" min="0" style="width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)"></td>';
             });
             tbl+='</tr>';
           });
@@ -11296,14 +11297,14 @@ function esBuildHtml(emp,asPopup,html){
         })();
         html+='</div>'; // pv-vlc-block (Stufen)
         cut('prov');
-        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet.</p>';
+        html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet. Leeres Feld = kein Ziel, der Wert wird nicht geprüft.</p>';
         html+=buildKpiTable([
           {lbl:'Aktivitäten/Tag (Min.)',f:'aktivitaeten',unit:''},
           {lbl:'NE - Nicht Erreicht (Max.) (%)',f:'notReached',unit:'%'},
           {lbl:'NM - Nicht Möglich (Max.) (%)',f:'notPossible',unit:'%'},
           {lbl:'NEF - Nicht Erfolgreich (Max.) (%)',f:'notSuccessful',unit:'%'},
           {lbl:'CR TW (Max.) (%)',f:'tw',vlc:true},
-          {lbl:'CR YES (Min.) (%)',f:'crYes',unit:'%'},
+          {lbl:'CR YES (Max.) (%)',f:'crYes',unit:'%'},
           {lbl:'CR SY (Min.) (%)',f:'sy',unit:'%'},
           {lbl:'CR MY (Min.) (%)',f:'my',vlc:true},
           {lbl:'Anteil OEM (Min.) (%)',f:'oemAnteil',vlc:true},
@@ -12990,9 +12991,9 @@ function saveProvisionSettings(empId){
     reduktionProKpi:val('pv-reduktionProKpi'),
     mindestprovision:val('pv-mindestprovision'),
     mindestleistungOptH:val('pv-mindestleistungOptH'),
-    monat1:{optH:val('pv-monat1-optH'),crOem:val('pv-monat1-crOem'),tw:val('pv-monat1-tw'),sy:val('pv-monat1-sy'),my:val('pv-monat1-my'),syMy:val('pv-monat1-syMy'),oemAnteil:val('pv-monat1-oemAnteil'),crYes:val('pv-monat1-crYes'),notReached:val('pv-monat1-notReached'),notPossible:val('pv-monat1-notPossible'),notSuccessful:val('pv-monat1-notSuccessful'),aktivitaeten:val('pv-monat1-aktivitaeten'),convOEM:val('pv-monat1-convOEM'),optGesamt:val('pv-monat1-optGesamt'),margeZiel:val('pv-monat1-margeZiel')},
-    monat2:{optH:val('pv-monat2-optH'),crOem:val('pv-monat2-crOem'),tw:val('pv-monat2-tw'),sy:val('pv-monat2-sy'),my:val('pv-monat2-my'),syMy:val('pv-monat2-syMy'),oemAnteil:val('pv-monat2-oemAnteil'),crYes:val('pv-monat2-crYes'),notReached:val('pv-monat2-notReached'),notPossible:val('pv-monat2-notPossible'),notSuccessful:val('pv-monat2-notSuccessful'),aktivitaeten:val('pv-monat2-aktivitaeten'),convOEM:val('pv-monat2-convOEM'),optGesamt:val('pv-monat2-optGesamt'),margeZiel:val('pv-monat2-margeZiel')},
-    monat3plus:{optH:val('pv-monat3plus-optH'),crOem:val('pv-monat3plus-crOem'),tw:val('pv-monat3plus-tw'),sy:val('pv-monat3plus-sy'),my:val('pv-monat3plus-my'),syMy:val('pv-monat3plus-syMy'),oemAnteil:val('pv-monat3plus-oemAnteil'),crYes:val('pv-monat3plus-crYes'),notReached:val('pv-monat3plus-notReached'),notPossible:val('pv-monat3plus-notPossible'),notSuccessful:val('pv-monat3plus-notSuccessful'),aktivitaeten:val('pv-monat3plus-aktivitaeten'),convOEM:val('pv-monat3plus-convOEM'),optGesamt:val('pv-monat3plus-optGesamt'),margeZiel:val('pv-monat3plus-margeZiel')}
+    monat1:{optH:nval('pv-monat1-optH'),crOem:nval('pv-monat1-crOem'),tw:nval('pv-monat1-tw'),sy:nval('pv-monat1-sy'),my:nval('pv-monat1-my'),syMy:nval('pv-monat1-syMy'),oemAnteil:nval('pv-monat1-oemAnteil'),crYes:nval('pv-monat1-crYes'),notReached:nval('pv-monat1-notReached'),notPossible:nval('pv-monat1-notPossible'),notSuccessful:nval('pv-monat1-notSuccessful'),aktivitaeten:nval('pv-monat1-aktivitaeten'),convOEM:nval('pv-monat1-convOEM'),optGesamt:nval('pv-monat1-optGesamt'),margeZiel:nval('pv-monat1-margeZiel')},
+    monat2:{optH:nval('pv-monat2-optH'),crOem:nval('pv-monat2-crOem'),tw:nval('pv-monat2-tw'),sy:nval('pv-monat2-sy'),my:nval('pv-monat2-my'),syMy:nval('pv-monat2-syMy'),oemAnteil:nval('pv-monat2-oemAnteil'),crYes:nval('pv-monat2-crYes'),notReached:nval('pv-monat2-notReached'),notPossible:nval('pv-monat2-notPossible'),notSuccessful:nval('pv-monat2-notSuccessful'),aktivitaeten:nval('pv-monat2-aktivitaeten'),convOEM:nval('pv-monat2-convOEM'),optGesamt:nval('pv-monat2-optGesamt'),margeZiel:nval('pv-monat2-margeZiel')},
+    monat3plus:{optH:nval('pv-monat3plus-optH'),crOem:nval('pv-monat3plus-crOem'),tw:nval('pv-monat3plus-tw'),sy:nval('pv-monat3plus-sy'),my:nval('pv-monat3plus-my'),syMy:nval('pv-monat3plus-syMy'),oemAnteil:nval('pv-monat3plus-oemAnteil'),crYes:nval('pv-monat3plus-crYes'),notReached:nval('pv-monat3plus-notReached'),notPossible:nval('pv-monat3plus-notPossible'),notSuccessful:nval('pv-monat3plus-notSuccessful'),aktivitaeten:nval('pv-monat3plus-aktivitaeten'),convOEM:nval('pv-monat3plus-convOEM'),optGesamt:nval('pv-monat3plus-optGesamt'),margeZiel:nval('pv-monat3plus-margeZiel')}
   };
   // Bonusvereinbarung weWow (VLC) – leere Felder bleiben null (= keine Pruefung)
   function nval(id){var el=document.getElementById(id);if(!el||el.value==='')return null;var n=parseFloat(el.value);return isNaN(n)?null:n;}
