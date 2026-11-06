@@ -8554,7 +8554,8 @@ var CATEGORY_META={
 // Alle CR aus Rohzahlen: erst summieren, dann teilen (chartSumsForRange). Der Zeitraum gilt für die ganze Seite.
 var dshPeriod='days',dshOpen=null,dshEmpTeam='all';
 // Ansicht wie in der Performance-Tabelle: Tage (laufender Monat), Wochen (alle KW des Jahres), Monate (laufendes Jahr)
-function dshRangeKey(p){return p==='days'?'month':'year';}
+// Kacheln und Abschnitte: Tage = heute, Wochen = laufende Woche, Monate = laufender Monat, Jahre = Geschäftsjahr bis heute
+function dshRangeKey(p){return p==='days'?'day':p==='weeks'?'week':p==='months'?'month':'year';}
 var DSH_TEAMS=['SE','SR','OB','VLC'],DSH_AREAS=['OEM','UPS','WKA'],DSH_AC=['#5C564F','#A89C8E','#D3C8B6'];
 function dshOpenState(){
   if(!dshOpen){try{dshOpen=JSON.parse(localStorage.getItem('dsh_groups2')||'null');}catch(e){dshOpen=null;}
@@ -8686,7 +8687,7 @@ function dshSlots(list,p){
   var t=today(),y=+t.slice(0,4),sl=[],WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
   function dl(d){return d.slice(8,10)+'.'+d.slice(5,7)+'.';}
   if(p==='days')p='month';
-  if(p==='months')p='year';
+  if(p==='months'||p==='years')p='year';
   if(p==='weeks'){buildYearWeeksForChart(y).forEach(function(w){sl.push({from:w.from,to:w.to,l:'KW '+w.kw});});}
   else if(p==='year'){var MS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
     for(var i=1;i<=12;i++){var f=y+'-'+('0'+i).slice(-2)+'-01';sl.push({from:f,to:dshYmd(new Date(Date.UTC(y,i,0))),l:MS[i-1]});}}
@@ -8719,7 +8720,7 @@ function dshSlots(list,p){
 // Diagramm: Ziel je Abschnitt als heller Rahmen, Ist davor (OEM/UPS/WKA), Zielerreichung in % darüber
 function dshFmtK(v){return v>=1e6?(v/1e6).toLocaleString('de-DE',{maximumFractionDigits:1})+' Mio':v>=1000?Math.round(v/1000)+'k':Math.round(v)+'';}
 function dshChart(list,p){
-  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,U=p==='months'?'Monat':p==='weeks'?'Woche':'Tag',UU=p==='months'?'Monaten':p==='weeks'?'Wochen':'Tagen';
+  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,U=(p==='months'||p==='years')?'Monat':p==='weeks'?'Woche':'Tag',UU=(p==='months'||p==='years')?'Monaten':p==='weeks'?'Wochen':'Tagen';
   var anyPlan=s.some(function(x){return x.plan>0;});
   var mx=Math.max.apply(null,s.map(function(x){return Math.max(x.plan||0,x.v?x.tot:0);}).concat([1]))*1.2;
   var done=0,under=0,sumI=0,sumP=0,gap=n>40?3:n>15?6:n>10?10:14,step=n>40?4:n>15?2:1,showPc=n<=31;
@@ -8755,7 +8756,7 @@ function renderDashboard(){
   function refLbl(k,pre){return Z[k]!=null?'Ziel '+(pre||'')+(k==='MPO'?dshEur1(Z[k]):Math.round(Z[k])+' %'):'Ø Team '+(k==='MPO'?dshEur1(REF[k]):dshPct(REF[k]));}
   function under(k,v){return v!==null&&v!==undefined&&REF[k]!=null&&v<REF[k]-(Z[k]!=null?0:(k==='MPO'?1:2));}
   var h='<div class="content">'+buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
-  var per=[['days','Tage'],['weeks','Wochen'],['months','Monate']];
+  var per=[['days','Tage'],['weeks','Wochen'],['months','Monate'],['years','Jahre']];
   var pseg='<div class="dsh-seg" role="group" aria-label="Zeitraum">'+per.map(function(p){return '<button type="button" class="'+(dshPeriod===p[0]?'on':'')+'" aria-pressed="'+(dshPeriod===p[0])+'" onclick="dshSetPeriod(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div>';
   // ── 1 · Margenerhöhung: Diagramm, vier Kacheln, drei Bereichskarten ──
   var parts=[S.margeOEM,S.margeUps,S.margeWka],psum=parts[0]+parts[1]+parts[2],tot=S.margeGes,ziel=dshPlanRange(all,R.from,R.end),pct=ziel>0?Math.round(tot/ziel*100):null;
@@ -8774,7 +8775,7 @@ function renderDashboard(){
   tiles+='<div class="dsh-qt dsh-ko"><div class="l">Gesamt · '+R.lbl+'</div><div class="v big">'+dshEur(tot)+'</div><div class="kv"><span>CR <b>'+dshPct(crAllRef)+'</b></span><span>Ø je Auftrag <b>'+dshEur1(dshMpo(S,'ALL'))+'</b></span></div>'+tileTeams('ALL')+'</div>';
   tiles+=DSH_AREAS.map(function(k,i){var v=parts[i],c=dshCr(S,k),mp=dshMpo(S,k),lo=under(k,c)&&Z[k]!=null,lm=under('MPO',mp);
     return '<div class="dsh-qt"><div class="l"><i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k+'<span class="pc">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div><div class="v big">'+dshEur(v)+'</div><div class="kv"><span>CR <b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></span><span>Ø je Auftrag <b class="'+(lm?'dsh-lo':'')+'">'+dshEur1(mp)+'</b></span></div>'+tileTeams(k)+'</div>';}).join('')+'</div>';
-  var main='<div class="card"><div class="card-title">Margenerhöhung '+R.lbl+pseg+'<span class="dsh-cr">Zeitraum gilt für die ganze Seite</span></div>'+dshChart(all,dshPeriod)+tiles+'</div>';
+  var main='<div class="card"><div class="card-title">Margenerhöhung'+pseg+'<span class="dsh-cr">Kacheln und Auswertungen: '+(dshPeriod==='days'?'heute':dshPeriod==='weeks'?'laufende Woche':dshPeriod==='months'?'laufender Monat':'Geschäftsjahr '+R.lbl+' bis heute')+'</span></div>'+dshChart(all,dshPeriod)+tiles+'</div>';
   h+=dshGrp('marge','ti-currency-euro','Margenerhöhung','Wie viel Marge gewinnen wir – und woher?',main);
   // ── 2 · Teams × Bereich (volle Breite, OEM mit TW, SY/MY und MY) ──
   var tw=KPI_TARGETS.crTeilweise?+KPI_TARGETS.crTeilweise.val:null,sm=KPI_TARGETS.crSyMy&&KPI_TARGETS.crSyMy.val!=null?+KPI_TARGETS.crSyMy.val:null,my=KPI_TARGETS.crMegaYes?+KPI_TARGETS.crMegaYes.val:null;
