@@ -381,58 +381,63 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .login-submit-btn{width:100%;height:44px;box-sizing:border-box;border-radius:8px;border:none;background:#fff;color:var(--purple-dark);font-weight:600;font-size:14px;cursor:pointer;margin-top:6px;font-family:inherit;}
 .login-back-link{font-size:12px;color:rgba(255,255,255,.55);margin-top:16px;cursor:pointer;text-decoration:underline;font-family:inherit;}
 .login-message{width:100%;font-size:12px;border-radius:8px;padding:9px 11px;margin-bottom:14px;font-family:inherit;}.login-message-error{background:rgba(189,45,41,.85);color:#fff;}.login-message-info{background:rgba(217,65,9,.85);color:#fff;}
-/* ══ Dashboard (Vertriebskennzahlen) ══ */
-.dsh-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+/* ══ Dashboard ══ */
+.dsh-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 6px}
+.dsh-hint{font-size:12px;color:var(--text3)}
 .dsh-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center}
 .dsh-seg button{height:28px;padding:0 13px;border-radius:9px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer}
 .dsh-seg button.on{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .dsh-seg button:hover:not(.on){color:var(--text);background:rgba(255,255,255,.55)}
-.dsh-g{display:grid;gap:14px;margin-bottom:14px}
-.dsh-g2{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g3{grid-template-columns:repeat(3,minmax(0,1fr))}.dsh-g5{grid-template-columns:repeat(5,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr) minmax(0,1.7fr)}
-.dsh-box{background:#F7F5F0;border:1px solid #E4E0D6;border-radius:16px;padding:16px 18px;box-shadow:0 12px 30px rgba(40,32,15,.05);min-width:0}
-.dsh-bh{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
-.dsh-bh h3{margin:0;font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
-.dsh-bh .r{margin-left:auto;font-size:12px;color:var(--text3)}
+.dsh-g{display:grid;gap:14px;margin-bottom:22px}.dsh-g>.card{margin-bottom:0;min-width:0}
+.dsh-g2{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.dsh-g3{grid-template-columns:repeat(3,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)}
+.dsh-cr{margin-left:auto;font-size:12px;font-weight:400;color:var(--text3)}
 .dsh-why{font-size:12px;color:var(--text3);margin-top:12px;border-top:1px solid #E4E0D6;padding-top:9px}.dsh-why b{color:var(--text2)}
-.dsh-st{background:#EFECE5;border-radius:11px;padding:11px 14px;min-width:0}
-.dsh-st .l{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--text2);text-transform:uppercase}
-.dsh-st .v{font-size:24px;font-weight:700;margin-top:2px;line-height:1.15;white-space:nowrap;color:var(--text)}
-.dsh-st .s{font-size:11.5px;color:var(--text3);margin-top:2px}
-.dsh-st.lo .v{color:#B5513A}.dsh-st.na{opacity:.55}
-.dsh-ko{background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 52%,#C23B66 100%)!important;color:#fff;border:0!important}
-.dsh-ko .l,.dsh-ko .dsh-bh h3{color:#FFE1D6}.dsh-ko .s{color:#FFEDE6}.dsh-ko .v{color:#fff!important}
-.dsh-hb{display:grid;grid-template-columns:48px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px;margin:9px 0}
-.dsh-hb .n{color:var(--text2);font-weight:600}
-.dsh-hb .bar{height:18px;border-radius:6px;background:#EFECE5;overflow:hidden;position:relative}
-.dsh-hb .bar i{position:absolute;inset:0 auto 0 0;border-radius:6px;background:#8A7F72}
-.dsh-hb .bar i.lo{background:#F5B4A0}
-.dsh-hb .bar .z{position:absolute;top:-3px;bottom:-3px;width:2px;background:#F08566;z-index:1}
-.dsh-hb .r{text-align:right;font-weight:700;color:var(--text)}
-.dsh-hb.rk{grid-template-columns:22px 48px minmax(0,1fr) 72px}
+.dsh-st{background:#EFECE5;border-radius:10px;padding:10px 13px;min-width:0}
+.dsh-st .l{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--text2);text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.dsh-st .v{font-size:20px;font-weight:700;margin-top:2px;line-height:1.2;white-space:nowrap;color:var(--text)}
+.dsh-st .s{font-size:11px;color:var(--text3);margin-top:2px}
+.dsh-st.lo .v{color:#B5513A}
+.dsh-dot{display:inline-block;width:9px;height:9px;border-radius:3px}
+.dsh-big{font-size:34px;font-weight:700;line-height:1.1;color:var(--text)}
+.dsh-sub{font-size:12.5px;color:var(--text3);margin-top:4px}.dsh-sub b{color:var(--text)}
+.dsh-prog{height:7px;border-radius:4px;background:#EFECE5;margin-top:10px;overflow:hidden}.dsh-prog i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#E9773F,#DE5A5E 55%,#C23B66)}
+.dsh-comp{display:flex;height:30px;border-radius:8px;overflow:hidden;margin:14px 0 10px;background:#EFECE5}
+.dsh-comp i{display:flex;align-items:center;padding-left:10px;font-style:normal;font-size:11.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden}
+.dsh-tiles{display:grid;gap:8px}
+.dsh-svg{width:100%;height:auto;display:block}.dsh-svg text{fill:var(--text3);font-family:inherit;font-size:15px}
+.dsh-lg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:8px}.dsh-lg span{display:inline-flex;align-items:center;gap:6px}.dsh-lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dsh-cell{display:flex;align-items:center;gap:10px}.dsh-cell b{white-space:nowrap;font-weight:600;min-width:44px;text-align:right}
+.dsh-mb{flex:1;min-width:50px}.dsh-mb .t{display:block;height:10px;border-radius:5px;background:#EFECE5;overflow:hidden}.dsh-mb .t i{display:block;height:100%;border-radius:5px;background:#8A7F72}.dsh-mb .t i.lo{background:#F5B4A0}
+.dsh-hb{display:grid;grid-template-columns:48px minmax(0,1fr) 80px;gap:10px;align-items:center;font-size:13px;margin:9px 0}
+.dsh-hb .n{color:var(--text2);font-weight:600}.dsh-hb .r{text-align:right;font-weight:600}
+.dsh-hb .bar{height:14px;border-radius:5px;background:#EFECE5;overflow:hidden;position:relative}
+.dsh-hb .bar i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:#8A7F72}.dsh-hb .bar i.lo{background:#F5B4A0}
+.dsh-hb .bar .z{position:absolute;top:-3px;bottom:-3px;width:2px;background:#F08566}
+.dsh-sep{height:1px;background:#E4E0D6;margin:12px 0}
 .dsh-lo{color:#B5513A!important}
-.dsh-lg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:8px}
-.dsh-lg span{display:inline-flex;align-items:center;gap:6px}.dsh-lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
-.dsh-hm{display:grid;grid-template-columns:70px repeat(4,minmax(0,1fr));gap:6px;font-size:13px}
-.dsh-hm .c{height:38px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+.dsh-hm{display:grid;grid-template-columns:60px repeat(3,minmax(0,1fr));gap:6px;font-size:13px}
+.dsh-hm .c{height:50px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;color:#fff;line-height:1.25}
+.dsh-hm .c small{font-size:11px;font-weight:600;opacity:.85}
 .dsh-hm .c.lo{background:#FDF0EB;color:#B5513A;box-shadow:inset 0 0 0 1px rgba(240,133,102,.55)}
 .dsh-hm .c.na{background:#EFECE5;color:var(--text3)}
-.dsh-hm .hd{text-align:center;font-size:11.5px;color:var(--text3);font-weight:600}
+.dsh-hm .hd{text-align:center;font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.04em}
 .dsh-hm .rn{display:flex;align-items:center;color:var(--text2);font-weight:600}
-.dsh-svg{width:100%;height:auto;display:block}.dsh-svg text{fill:var(--text3);font-family:inherit;font-size:15px}
-.dsh-dg{margin:0 0 6px}
+.dsh-note{font-size:12px;color:var(--text3);margin-top:10px}.dsh-note b{color:var(--text2)}
+.dsh-dg{margin:0 0 4px}
 .dsh-dg-h{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;padding:12px 2px 10px;cursor:pointer;font-family:inherit;text-align:left;color:var(--text)}
-.dsh-dg-h .ch{font-size:16px;transition:transform .15s}
-.dsh-dg.open>.dsh-dg-h .ch{transform:rotate(90deg)}
-.dsh-dg-h .ic{font-size:17px;color:#F08566}
-.dsh-dg-h .t{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.dsh-dg-h .ch{font-size:15px;transition:transform .15s}.dsh-dg.open>.dsh-dg-h .ch{transform:rotate(90deg)}
+.dsh-dg-h .ic{font-size:16px;color:#F08566}
+.dsh-dg-h .t{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .dsh-dg-h .ln{flex:1;height:1px;background:#D8D2C6;min-width:20px}
-.dsh-dg-h .sm{font-size:12.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
-.dsh-dg>.dsh-dg-b{display:none;padding-top:4px}.dsh-dg.open>.dsh-dg-b{display:block}
-.dsh-dg.sub .dsh-dg-h{padding:8px 2px}.dsh-dg.sub .dsh-dg-h .t{font-size:12px}
-.dsh-fseg{display:inline-flex;gap:2px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:2px;margin-left:auto}
-.dsh-fseg button{height:28px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
-.dsh-fseg button.on{background:#fff;color:#C23B66}
-@media (max-width:1100px){.dsh-g3,.dsh-g5{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g2,.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
+.dsh-dg-h .sm{font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+.dsh-dg-b{padding-top:4px}
+.dsh-tm{font-size:11px;font-weight:600;color:var(--text3);margin-left:4px}
+.dsh-chips{display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.dsh-wk{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:7px;background:#FDF0EB;color:#B5513A;font-size:12px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(240,133,102,.45);white-space:nowrap}
+.dsh-wk em{font-style:normal;font-weight:400;color:var(--text3)}
+.dsh-wk.ok{background:#EFECE5;color:var(--text2);box-shadow:none}
+.dsh-pill{display:inline-flex;height:26px;align-items:center;padding:0 9px;border-radius:8px;background:linear-gradient(135deg,#E9773F,#DE5A5E 55%,#C23B66);color:#fff;font-weight:700}
+@media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
 </head>
 <body>
@@ -8476,33 +8481,55 @@ var CATEGORY_META={
   login:{label:'ZUGRIFF',col:'var(--text2)',bg:'var(--bg2)'}
 };
 // ── DASHBOARD (Vertriebskennzahlen) ──
-// Teamwerte für OB, SE, SR, VLC. CR immer aus Rohzahlen: erst summieren, dann teilen (chartSumsForRange).
-var dshPeriod='month',dshFocus='MY',dshOpen=null;
-var DSH_TEAMS=['SE','SR','OB','VLC'];
-var DSH_KPI=['MY','OEM','UPS','WKA'];
+// Banner oben wie auf allen Seiten; darunter Margenerhöhung, OEM · UPS · WKA und Mitarbeiter.
+// Alle CR aus Rohzahlen: erst summieren, dann teilen (chartSumsForRange). Der Zeitraum gilt für die ganze Seite.
+var dshPeriod='month',dshOpen=null,dshEmpTeam='all';
+var DSH_TEAMS=['SE','SR','OB','VLC'],DSH_AREAS=['OEM','UPS','WKA'],DSH_AC=['#5C564F','#A89C8E','#D3C8B6'];
 function dshOpenState(){
-  if(!dshOpen){try{dshOpen=JSON.parse(localStorage.getItem('dsh_groups')||'null');}catch(e){dshOpen=null;}
-    if(!dshOpen||typeof dshOpen!=='object')dshOpen={marge:true,conv:true,area:true,teams:true,dev:false};}
+  if(!dshOpen){try{dshOpen=JSON.parse(localStorage.getItem('dsh_groups2')||'null');}catch(e){dshOpen=null;}
+    if(!dshOpen||typeof dshOpen!=='object')dshOpen={marge:true,area:true,emp:true};}
   return dshOpen;
 }
-function dshToggle(k,btn){var s=dshOpenState();s[k]=!(btn&&btn.getAttribute('aria-expanded')==='true');try{localStorage.setItem('dsh_groups',JSON.stringify(s));}catch(e){}renderDashboard();}
-function dshIsOpen(k,def){var s=dshOpenState();return s[k]!=null?!!s[k]:!!def;}
+function dshToggle(k,btn){var s=dshOpenState();s[k]=!(btn&&btn.getAttribute('aria-expanded')==='true');try{localStorage.setItem('dsh_groups2',JSON.stringify(s));}catch(e){}renderDashboard();}
 function dshSetPeriod(p){dshPeriod=p;renderDashboard();}
-function dshSetFocus(k){dshFocus=k;renderDashboard();}
+function dshSetEmpTeam(t){dshEmpTeam=t;renderDashboard();}
 function dshActive(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach&&e.role!=='SC'&&e.role!=='SDM';});}
 function dshTeamOf(e){if(e.role==='VLC')return 'VLC';if(e.phase==='Onboarding')return 'OB';if(e.role==='SE')return 'SE';if(e.role==='SR')return 'SR';return null;}
-function dshTeam(t){return dshActive().filter(function(e){return dshTeamOf(e)===t;});}
 function dshAll(){return dshActive().filter(function(e){return !!dshTeamOf(e);});}
+function dshTeam(t){return dshAll().filter(function(e){return dshTeamOf(e)===t;});}
 function dshYmd(d){return d.toISOString().slice(0,10);}
-function dshMonday(ds){var d=new Date(ds+'T00:00:00Z');var k=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-k);return dshYmd(d);}
+function dshMonday(ds){var d=new Date(ds+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return dshYmd(d);}
+function dshIsWork(ds){var w=new Date(ds+'T00:00:00Z').getUTCDay();return w>0&&w<6;}
+function dshPrevWork(ds){var d=addDaysUTC(ds,-1);while(!dshIsWork(d))d=addDaysUTC(d,-1);return d;}
 function dshRange(p){
   var t=today(),y=+t.slice(0,4),m=+t.slice(5,7);
-  if(p==='day')return {from:t,to:t,prevFrom:addDaysUTC(t,-7),prevTo:addDaysUTC(t,-7),prevLbl:'Vorwoche gleicher Tag',lbl:'heute'};
-  if(p==='week'){var mo=dshMonday(t),n=Math.round((new Date(t)-new Date(mo))/86400000);return {from:mo,to:t,prevFrom:addDaysUTC(mo,-7),prevTo:addDaysUTC(mo,n-7),prevLbl:'Vorwoche',lbl:'diese Woche'};}
-  if(p==='quarter'){var qm=Math.floor((m-1)/3)*3+1,f=y+'-'+('0'+qm).slice(-2)+'-01';var pf=new Date(Date.UTC(y,qm-4,1));var n2=Math.round((new Date(t)-new Date(f))/86400000);return {from:f,to:t,prevFrom:dshYmd(pf),prevTo:addDaysUTC(dshYmd(pf),n2),prevLbl:'Vorquartal',lbl:'dieses Quartal'};}
-  var f1=t.slice(0,8)+'01',pm=new Date(Date.UTC(y,m-2,1)),n3=+t.slice(8,10)-1;
-  var pmLast=new Date(Date.UTC(y,m-1,0));var pt=new Date(Date.UTC(y,m-2,1+n3));if(pt>pmLast)pt=pmLast;
-  return {from:f1,to:t,prevFrom:dshYmd(pm),prevTo:dshYmd(pt),prevLbl:'Vormonat',lbl:'dieser Monat'};
+  if(p==='day'){var pd=dshPrevWork(t);return {from:t,to:t,end:t,prevFrom:pd,prevTo:pd,prevLbl:'Vortag',lbl:'heute'};}
+  if(p==='week'){var mo=dshMonday(t),n=Math.round((new Date(t)-new Date(mo))/86400000);return {from:mo,to:t,end:addDaysUTC(mo,6),prevFrom:addDaysUTC(mo,-7),prevTo:addDaysUTC(mo,n-7),prevLbl:'Vorwoche',lbl:'diese Woche'};}
+  if(p==='year'){var f=y+'-01-01';return {from:f,to:t,end:y+'-12-31',prevFrom:(y-1)+'-01-01',prevTo:(y-1)+t.slice(4),prevLbl:'Vorjahr bis '+t.slice(8,10)+'.'+t.slice(5,7)+'.',lbl:String(y)};}
+  var pm=new Date(Date.UTC(y,m-2,1)),pmLast=new Date(Date.UTC(y,m-1,0)),pt=new Date(Date.UTC(y,m-2,+t.slice(8,10)));if(pt>pmLast)pt=pmLast;
+  var MN=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  return {from:t.slice(0,8)+'01',to:t,end:dshYmd(new Date(Date.UTC(y,m,0))),prevFrom:dshYmd(pm),prevTo:dshYmd(pt),prevLbl:'Vormonat bis '+t.slice(8,10)+'.',lbl:MN[m-1]};
+}
+// Ziel für einen Zeitraum: Monatsziel aus der Zielvereinbarung, anteilig nach Arbeitstagen (Mo–Fr)
+function dshMonthZiel(list,mk){
+  if(!zielStore[mk])return 0;
+  var wMeta=getMonthWeeksZiel(mk),mRec=zielStore[mk]||{},z=0;
+  list.filter(function(e){return empActiveInZielMonth(e,mk);}).forEach(function(e){
+    var r=mRec[e.id]||{};
+    var sum=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;}).reduce(function(a,b){return a+b;},0);
+    z+=sum*(r.optTag!=null?r.optTag:0)*(r.margeOpt!=null?r.margeOpt:0);
+  });
+  return z;
+}
+function dshZiel(list,from,to){
+  var z=0,d=from,cache={};
+  while(d<=to){
+    var mk=d.slice(0,7);
+    if(!cache[mk]){var y=+mk.slice(0,4),m=+mk.slice(5,7),n=0,last=new Date(Date.UTC(y,m,0)).getUTCDate();for(var i=1;i<=last;i++){if(dshIsWork(mk+'-'+('0'+i).slice(-2)))n++;}cache[mk]={z:dshMonthZiel(list,mk),n:n};}
+    if(dshIsWork(d)&&cache[mk].n)z+=cache[mk].z/cache[mk].n;
+    d=addDaysUTC(d,1);
+  }
+  return z;
 }
 function dshCr(s,k){
   if(!s)return null;var d;
@@ -8513,160 +8540,132 @@ function dshCr(s,k){
   if(k==='SYMY')return chartCrFromSums('crSyMy',s);
   return null;
 }
-function dshFail(s,k){if(k==='OEM')return s.nerrOem;if(k==='UPS')return s.nerrUps;if(k==='WKA')return s.nerrWkaOem+s.nerrWkaUps+s.wkaOemBeendet+s.wkaUpsBeendet;return 0;}
-function dshOpt(s,k){return k==='OEM'?s.oem:k==='UPS'?s.ups:s.wka;}
-// Ziele: CR OEM und CR MY aus den globalen KPI-Zielen, UPS und WKA aus settings.dashboardTargets (falls gepflegt)
+function dshFail(s,k){return k==='OEM'?s.nerrOem:k==='UPS'?s.nerrUps:s.nerrWkaOem+s.nerrWkaUps+s.wkaOemBeendet+s.wkaUpsBeendet;}
+function dshOpt(s,k){return k==='OEM'?s.oem:k==='UPS'?s.ups:k==='WKA'?s.wka:s.oem+s.ups+s.wka;}
+function dshMarge(s,k){return k==='OEM'?s.margeOEM:k==='UPS'?s.margeUps:k==='WKA'?s.margeWka:s.margeGes;}
+function dshMpo(s,k){var o=dshOpt(s,k);return o>0?dshMarge(s,k)/o:null;}
+// Ziele: CR OEM aus den globalen KPI-Zielen; UPS, WKA und Ø je Auftrag aus settings.dashboardTargets, sonst Teamdurchschnitt
 function dshTarget(k){
   if(k==='OEM')return KPI_TARGETS.crOEM?+KPI_TARGETS.crOEM.val:null;
-  if(k==='MY')return KPI_TARGETS.crMegaYes?+KPI_TARGETS.crMegaYes.val:null;
-  var dt=settings.dashboardTargets||{};var v=dt['cr'+k];return (v===''||v==null)?null:+v;
+  var dt=settings.dashboardTargets||{},v=dt[k==='MPO'?'margeOpt':'cr'+k];
+  return (v===''||v==null)?null:+v;
 }
 function dshPct(v){return v===null||v===undefined?'–':Math.round(v)+' %';}
 function dshEur(v){return Math.round(v||0).toLocaleString('de-DE')+' €';}
+function dshEur1(v){return v===null||v===undefined?'–':v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' €';}
 function dshNum(v){return Math.round(v||0).toLocaleString('de-DE');}
-function dshMargeZiel(list,mk){
-  var wMeta=getMonthWeeksZiel(mk),mRec=zielStore[mk]||{},z=0;
-  list.filter(function(e){return empActiveInZielMonth(e,mk);}).forEach(function(e){
-    var r=mRec[e.id]||{};
-    var sum=wMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;}).reduce(function(a,b){return a+b;},0);
-    z+=sum*(r.optTag!=null?r.optTag:0)*(r.margeOpt!=null?r.margeOpt:0);
-  });
-  return z;
-}
-function dshWeeks(n){var mo=dshMonday(today()),w=[];for(var i=n-1;i>=0;i--){var f=addDaysUTC(mo,-7*i);w.push({from:f,to:addDaysUTC(f,6),kw:isoWeekNum(new Date(f+'T00:00:00Z'))});}return w;}
-// ── Bausteine ──
+// ── Bausteine im Board-Stil ──
 function dshSt(l,v,s,cls){return '<div class="dsh-st '+(cls||'')+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+(s||'&nbsp;')+'</div></div>';}
-function dshBox(t,r,body,why,cls,extra){return '<div class="dsh-box '+(cls||'')+'"'+(extra||'')+'><div class="dsh-bh"><h3>'+t+'</h3><span class="r">'+(r||'')+'</span></div>'+body+(why?'<div class="dsh-why"><b>Warum:</b> '+why+'</div>':'')+'</div>';}
-function dshGrp(k,icon,title,summ,body,def,sub){
-  var open=dshIsOpen(k,def);
-  return '<section class="dsh-dg'+(sub?' sub':'')+(open?' open':'')+'"><button type="button" class="dsh-dg-h" aria-expanded="'+open+'" onclick="dshToggle(\''+k+'\',this)"><i class="ti ti-chevron-right ch"></i><i class="ti '+icon+' ic"></i><span class="t">'+title+'</span><span class="ln"></span><span class="sm">'+summ+'</span></button>'+(open?'<div class="dsh-dg-b">'+body+'</div>':'')+'</section>';
+function dshCard(title,right,body,why){return '<div class="card"><div class="card-title">'+title+(right?'<span class="dsh-cr">'+right+'</span>':'')+'</div>'+body+(why?'<div class="dsh-why"><b>Warum:</b> '+why+'</div>':'')+'</div>';}
+function dshGrp(k,icon,title,summ,body){
+  var s=dshOpenState(),open=s[k]!==false;
+  return '<section class="dsh-dg'+(open?' open':'')+'"><button type="button" class="dsh-dg-h" aria-expanded="'+open+'" onclick="dshToggle(\''+k+'\',this)"><i class="ti ti-chevron-right ch"></i><i class="ti '+icon+' ic"></i><span class="t">'+title+'</span><span class="ln"></span><span class="sm">'+summ+'</span></button>'+(open?'<div class="dsh-dg-b">'+body+'</div>':'')+'</section>';
 }
-function dshBars(rows,fmt,mx,ziel,warn){
-  return rows.map(function(r){
-    if(r.v===null)return '<div class="dsh-hb"><span class="n">'+r.t+'</span><span style="font-size:12px;color:var(--text3)">'+(r.t==='VLC'?'nur OEM':'keine Daten')+'</span><span></span></div>';
-    var lo=warn?warn(r):false,w=mx>0?Math.max(0,Math.min(100,r.v/mx*100)):0;
-    return '<div class="dsh-hb"><span class="n">'+r.t+'</span><span class="bar"><i class="'+(lo?'lo':'')+'" style="width:'+w.toFixed(1)+'%"></i>'+(ziel!=null&&mx>0?'<b class="z" style="left:'+Math.min(100,ziel/mx*100).toFixed(1)+'%"></b>':'')+'</span><span class="r'+(lo?' dsh-lo':'')+'">'+fmt(r.v)+'</span></div>';
-  }).join('');
+function dshBar(v,mx,lo){return '<span class="dsh-mb"><span class="t"><i class="'+(lo?'lo':'')+'" style="width:'+(mx>0?Math.max(0,Math.min(100,v/mx*100)):0).toFixed(1)+'%"></i></span></span>';}
+function dshHb(n,v,txt,mx,ref,lo){
+  return '<div class="dsh-hb"><span class="n">'+n+'</span><span class="bar"><i class="'+(lo?'lo':'')+'" style="width:'+(mx>0?Math.max(0,Math.min(100,v/mx*100)):0).toFixed(1)+'%"></i>'+(ref!=null&&mx>0?'<b class="z" style="left:'+Math.min(100,ref/mx*100).toFixed(1)+'%"></b>':'')+'</span><span class="r'+(lo?' dsh-lo':'')+'">'+txt+'</span></div>';
 }
-function dshSvgBars(vals,cols,labels,h,Wd){
-  var W=Wd||1000,n=vals.length,gap=W/n,bw=gap*0.6,base=h-24,mx=0;
-  vals.forEach(function(v){var s=(v.length?v:[v]).reduce(function(a,b){return a+b;},0);if(s>mx)mx=s;});
-  var s='<svg class="dsh-svg" viewBox="0 0 '+W+' '+h+'" role="img" aria-label="Balkendiagramm je Kalenderwoche">';
-  if(mx<=0)mx=1;
-  vals.forEach(function(v,i){
-    var parts=v.length?v:[v],y=base,x=i*gap+(gap-bw)/2;
-    parts.forEach(function(p,k){var hh=p/mx*(base-8);y-=hh;var col=(i===n-1&&k===0)?'#F08566':cols[k%cols.length];s+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,hh).toFixed(1)+'" fill="'+col+'"'+(parts.length===1?' rx="4"':'')+'/>';});
-    if(i%2===0)s+='<text x="'+(x+bw/2).toFixed(0)+'" y="'+(h-4)+'" text-anchor="middle">'+labels[i]+'</text>';
-  });
-  return s+'<line x1="0" x2="'+W+'" y1="'+base+'" y2="'+base+'" stroke="#D8D2C6"/></svg>';
+function dshStackSvg(buckets,labels,h){
+  var W=1000,base=h-26,n=buckets.length,gap=(W-50)/n,bw=Math.min(56,gap*0.62),mx=0;
+  buckets.forEach(function(b){var s=b[0]+b[1]+b[2];if(s>mx)mx=s;});mx=mx>0?mx*1.1:1;
+  var s='<svg class="dsh-svg" viewBox="0 0 '+W+' '+h+'" role="img" aria-label="Margenerhöhung nach OEM, UPS und WKA im Zeitverlauf">';
+  [0.5,1].forEach(function(g){var v=mx/1.1*g,y=base-(base-10)*v/mx;s+='<line x1="50" x2="'+W+'" y1="'+y.toFixed(0)+'" y2="'+y.toFixed(0)+'" stroke="#E4E0D6"/><text x="0" y="'+(y+5).toFixed(0)+'">'+(v>=1000?Math.round(v/1000)+'k':Math.round(v))+'</text>';});
+  buckets.forEach(function(b,i){var y=base,x=50+i*gap+(gap-bw)/2;
+    b.forEach(function(v,k){var hh=Math.max(0,v)/mx*(base-10);y-=hh;s+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hh.toFixed(1)+'" fill="'+(i===n-1&&k===0?'#F08566':DSH_AC[k])+'"/>';});
+    if(n<=14||i%2===0)s+='<text x="'+(x+bw/2).toFixed(0)+'" y="'+(h-6)+'" text-anchor="middle">'+labels[i]+'</text>';});
+  return s+'<line x1="50" x2="'+W+'" y1="'+base+'" y2="'+base+'" stroke="#D8D2C6"/></svg>';
 }
-function dshLines(series,labels,h){
-  var W=1300,all=[];series.forEach(function(se){se.v.forEach(function(v){if(v!==null)all.push(v);});});
-  if(!all.length)return '<div style="font-size:12.5px;color:var(--text3)">Noch keine Daten für den Verlauf.</div>';
-  var mn=Math.max(0,Math.floor((Math.min.apply(null,all)-5)/10)*10),mx=Math.min(100,Math.ceil((Math.max.apply(null,all)+5)/10)*10);if(mx<=mn)mx=mn+10;
-  var y=function(v){return (h-30)-(v-mn)/(mx-mn)*(h-50);},x=function(i){return 50+i*(W-70)/(labels.length-1||1);};
-  var s='<svg class="dsh-svg" viewBox="0 0 '+W+' '+h+'" role="img" aria-label="Verlauf der Conversion Rates je Kalenderwoche">';
-  var step=(mx-mn)>40?20:10;
-  for(var g=mn;g<=mx;g+=step){s+='<line x1="44" x2="'+W+'" y1="'+y(g).toFixed(0)+'" y2="'+y(g).toFixed(0)+'" stroke="#E4E0D6"/><text x="0" y="'+(y(g)+5).toFixed(0)+'">'+g+' %</text>';}
-  series.forEach(function(se){
-    var d='',prev=null;
-    se.v.forEach(function(v,i){if(v===null){prev=null;return;}var px=x(i),py=y(v);if(prev===null)d+='M'+px.toFixed(1)+','+py.toFixed(1);else{var cx=(prev[0]+px)/2;d+=' C'+cx.toFixed(1)+','+prev[1].toFixed(1)+' '+cx.toFixed(1)+','+py.toFixed(1)+' '+px.toFixed(1)+','+py.toFixed(1);}prev=[px,py];});
-    s+='<path d="'+d+'" fill="none" stroke="'+se.c+'" stroke-width="'+(se.w||2)+'"'+(se.dash?' stroke-dasharray="6 5"':'')+'/>';
-  });
-  labels.forEach(function(l,i){if(i%2===0)s+='<text x="'+x(i).toFixed(0)+'" y="'+(h-6)+'" text-anchor="middle">'+l+'</text>';});
-  return s+'</svg>';
-}
-function dshSpark(vals,ziel){
-  var v=vals.filter(function(x){return x!==null;});if(v.length<2)return '';
-  var all=v.concat(ziel!=null?[ziel]:[]),mn=Math.min.apply(null,all)-3,mx=Math.max.apply(null,all)+3,W=600,H=110;
-  var y=function(q){return H-8-(q-mn)/(mx-mn)*(H-20);},d='',prev=null;
-  vals.forEach(function(q,i){if(q===null)return;var px=i*W/(vals.length-1),py=y(q);if(prev===null)d+='M'+px.toFixed(1)+','+py.toFixed(1);else{var cx=(prev[0]+px)/2;d+=' C'+cx.toFixed(1)+','+prev[1].toFixed(1)+' '+cx.toFixed(1)+','+py.toFixed(1)+' '+px.toFixed(1)+','+py.toFixed(1);}prev=[px,py];});
-  return '<svg viewBox="0 0 600 110" preserveAspectRatio="none" style="width:100%;height:110px;display:block" aria-hidden="true">'+(ziel!=null?'<line x1="0" x2="600" y1="'+y(ziel).toFixed(1)+'" y2="'+y(ziel).toFixed(1)+'" stroke="rgba(255,255,255,.45)" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/>':'')+'<path d="'+d+'" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>';
+function dshBuckets(list,p,R){
+  var out=[],lab=[];
+  function add(f,t,l){var s=chartSumsForRange(list,f,t);out.push([s.margeOEM,s.margeUps,s.margeWka]);lab.push(l);}
+  if(p==='year'){var y=+R.from.slice(0,4),m=+R.to.slice(5,7),MS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    for(var i=1;i<=m;i++){var f=y+'-'+('0'+i).slice(-2)+'-01';add(f,dshYmd(new Date(Date.UTC(y,i,0))),MS[i-1]);}
+    return {b:out,l:lab,r:'je Monat'};}
+  var days=[];
+  if(p==='day'){var d=R.to;while(days.length<10){if(dshIsWork(d))days.unshift(d);d=addDaysUTC(d,-1);}}
+  else{var d2=R.from;while(d2<=R.to){if(dshIsWork(d2))days.push(d2);d2=addDaysUTC(d2,1);}}
+  var WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  days.forEach(function(d){add(d,d,p==='week'?WD[new Date(d+'T00:00:00Z').getUTCDay()]:d.slice(8,10)+'.'+d.slice(5,7)+'.');});
+  return {b:out,l:lab,r:p==='day'?'letzte 10 Arbeitstage':'je Arbeitstag'};
 }
 function renderDashboard(){
   var ma=document.getElementById('mainArea');if(!ma)return;
-  var R=dshRange(dshPeriod),mk=today().slice(0,7);
-  var all=dshAll(),teams={};
-  DSH_TEAMS.forEach(function(t){var l=dshTeam(t);teams[t]={list:l,s:chartSumsForRange(l,R.from,R.to),p:chartSumsForRange(l,R.prevFrom,R.prevTo)};});
-  var S=chartSumsForRange(all,R.from,R.to),P=chartSumsForRange(all,R.prevFrom,R.prevTo);
-  var Z={};DSH_KPI.forEach(function(k){Z[k]=dshTarget(k);});
-  // Ohne gepflegtes Ziel wird bei UPS/WKA der Teamwert als Vergleich genutzt (Linie = Ø Team)
-  var REF={};DSH_KPI.forEach(function(k){REF[k]=Z[k]!=null?Z[k]:dshCr(S,k);});
-  function refLbl(k){return Z[k]!=null?'Ziel '+Math.round(Z[k])+' %':'Ø Team '+dshPct(REF[k]);}
-  function under(k,v){return v!==null&&REF[k]!=null&&v<REF[k]-(Z[k]!=null?0:2);}
-  var W12=dshWeeks(12),wl=W12.map(function(w){return 'KW '+w.kw;});
-  var wkS=W12.map(function(w){return chartSumsForRange(all,w.from,w.to);});
-  var h='<div class="content">';
-  // Kopf
-  var stand=settings.ftpLastSync?new Date(settings.ftpLastSync):null;
-  var per=[['day','Heute'],['week','Woche'],['month','Monat'],['quarter','Quartal']];
-  h+='<div class="card"><div class="dsh-head"><div><div style="font-size:22px;font-weight:700;color:var(--text)">Dashboard</div><div style="font-size:13px;color:var(--text3);margin-top:2px">Teamwerte '+R.lbl+' · '+all.length+' Mitarbeiter'+(stand?' · Stand '+('0'+stand.getHours()).slice(-2)+':'+('0'+stand.getMinutes()).slice(-2)+' Uhr':'')+'</div></div>'
-    +'<div class="dsh-seg" role="group" aria-label="Zeitraum" style="margin-left:auto">'+per.map(function(p){return '<button type="button" class="'+(dshPeriod===p[0]?'on':'')+'" aria-pressed="'+(dshPeriod===p[0])+'" onclick="dshSetPeriod(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div></div></div>';
-  // Fokus-Box + Rangliste
-  var fk=dshFocus,fv=dshCr(S,fk),fp=dshCr(P,fk),fser=wkS.map(function(s){return dshCr(s,fk);});
-  var rank=DSH_TEAMS.map(function(t){return {t:t,v:dshCr(teams[t].s,fk)};}).sort(function(a,b){if(a.v===null)return 1;if(b.v===null)return -1;return b.v-a.v;});
-  var rmx=Math.max.apply(null,rank.map(function(r){return r.v||0;}).concat([REF[fk]||0]))*1.15||100;
-  h+='<div class="dsh-g dsh-g12" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);margin-bottom:14px">'
-    +'<div class="dsh-box dsh-ko" style="box-shadow:0 12px 28px rgba(194,59,102,.22)"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#FFE1D6">Fokus · CR '+fk+'</div>'
-    +'<div class="dsh-fseg" role="group" aria-label="Fokus-Kennzahl">'+DSH_KPI.map(function(k){return '<button type="button" class="'+(k===fk?'on':'')+'" aria-pressed="'+(k===fk)+'" onclick="dshSetFocus(\''+k+'\')">'+k+'</button>';}).join('')+'</div></div>'
-    +'<div style="display:flex;align-items:flex-end;gap:16px;margin-top:8px;flex-wrap:wrap"><div style="font-size:52px;font-weight:600;line-height:1">'+dshPct(fv)+'</div><div style="font-size:13px;color:#FFEDE6;padding-bottom:6px">'+(Z[fk]!=null?'Ziel '+Math.round(Z[fk])+' % · ':'')+R.prevLbl+' '+dshPct(fp)+'</div></div>'
-    +'<div style="margin-top:10px">'+dshSpark(fser,Z[fk])+'</div><div style="font-size:11.5px;color:#FFE1D6">Verlauf 12 Wochen'+(Z[fk]!=null?' · gestrichelt = Ziel':'')+'</div></div>'
-    +dshBox('Teams nach CR '+fk,R.lbl+' · Linie = '+refLbl(fk),rank.map(function(r,i){
-      if(r.v===null)return '<div class="dsh-hb rk"><span style="color:var(--text3)">–</span><span class="n">'+r.t+'</span><span style="font-size:12px;color:var(--text3)">'+(r.t==='VLC'?'nur OEM':'keine Daten')+'</span><span></span></div>';
-      var lo=under(fk,r.v);return '<div class="dsh-hb rk"><span style="color:var(--text3)">'+(i+1)+'</span><span class="n">'+r.t+'</span><span class="bar"><i class="'+(lo?'lo':'')+'" style="width:'+(r.v/rmx*100).toFixed(1)+'%"></i>'+(REF[fk]!=null?'<b class="z" style="left:'+(REF[fk]/rmx*100).toFixed(1)+'%"></b>':'')+'</span><span class="r'+(lo?' dsh-lo':'')+'">'+dshPct(r.v)+'</span></div>';
-    }).join(''),'zeigt, welches Team das Fokus-Thema mitzieht und wer Unterstützung braucht.')+'</div>';
-  // Kachelreihe
-  var mZiel=dshMargeZiel(all,mk),mIst=S.margeGes;
-  var mSub=dshPeriod==='month'&&mZiel>0?Math.round(mIst/mZiel*100)+' % vom Monatsziel · '+R.prevLbl+' '+dshEur(P.margeGes):R.prevLbl+' '+dshEur(P.margeGes);
-  h+='<div class="dsh-g dsh-g5" style="margin-bottom:22px">'+dshSt('Marge',dshEur(mIst),mSub,'dsh-ko')
-    +DSH_KPI.map(function(k){var v=dshCr(S,k);return dshSt('CR '+k,dshPct(v),(Z[k]!=null?'Ziel '+Math.round(Z[k])+' % · ':'')+R.prevLbl+' '+dshPct(dshCr(P,k)),Z[k]!=null&&v!==null&&v<Z[k]?'lo':'');}).join('')+'</div>';
-  // Marge
-  var mRows=DSH_TEAMS.map(function(t){return {t:t,v:teams[t].s.margeGes};}),mMax=Math.max.apply(null,mRows.map(function(r){return r.v;}))*1.05||1;
-  var TC=['#5C564F','#8A7F72','#B8AC9B','#D9CFBF'];
-  var stack=W12.map(function(w){return DSH_TEAMS.map(function(t){return chartSumsForRange(teams[t].list,w.from,w.to).margeGes;});});
-  var best=mRows.slice().sort(function(a,b){return b.v-a.v;})[0];
-  h+=dshGrp('marge','ti-currency-euro','Marge','Wo entsteht die Marge?'+(best&&best.v>0?' · '+best.t+' trägt '+Math.round(best.v/(S.margeGes||1)*100)+' %':''),
-    '<div class="dsh-g dsh-g12">'+dshBox('Marge nach Teams',R.lbl,dshBars(mRows,dshEur,mMax),'zeigt, welches Team die Marge trägt.')
-    +dshBox('Marge je Woche nach Teams','letzte 12 Wochen',dshSvgBars(stack,TC,wl,200)+'<div class="dsh-lg">'+DSH_TEAMS.map(function(t,i){return '<span><i style="background:'+TC[i]+'"></i>'+t+'</span>';}).join('')+'</div>','zeigt, ob die Marge wächst und welches Team sie trägt. Der unterste Block der laufenden Woche ist hervorgehoben.')+'</div>',true);
-  // Conversion
-  var myRows=DSH_TEAMS.map(function(t){return {t:t,v:dshCr(teams[t].s,'MY')};}),myMax=Math.max.apply(null,myRows.map(function(r){return r.v||0;}).concat([REF.MY||0]))*1.2||40;
-  var hm='<div class="dsh-hm"><div></div>'+DSH_KPI.map(function(k){return '<div class="hd">'+k+'</div>';}).join('');
-  var strong=null,weak=null;
-  DSH_TEAMS.forEach(function(t){hm+='<div class="rn">'+t+'</div>';DSH_KPI.forEach(function(k){var v=dshCr(teams[t].s,k);
-    if(v===null){hm+='<div class="c na">–</div>';return;}
-    var d=REF[k]!=null?v-REF[k]:0;if(!strong||d>strong.d)strong={t:t,k:k,v:v,d:d};if(!weak||d<weak.d)weak={t:t,k:k,v:v,d:d};
-    if(under(k,v))hm+='<div class="c lo">'+dshPct(v)+'</div>';else hm+='<div class="c" style="background:'+(d>=3?'#5C564F':'#8A7F72')+'">'+dshPct(v)+'</div>';});});
-  hm+='</div>';
-  var nUnder=0;DSH_TEAMS.forEach(function(t){DSH_KPI.forEach(function(k){if(under(k,dshCr(teams[t].s,k)))nUnder++;});});
-  h+=dshGrp('conv','ti-percentage','Conversion','Wie gut schließen die Teams ab? · '+nUnder+' Werte unter Ziel',
-    '<div class="dsh-g dsh-g12">'+dshBox('CR MY nach Teams','Linie = '+refLbl('MY'),dshBars(myRows,dshPct,myMax,REF.MY,function(r){return under('MY',r.v);}),'CR MY ist provisionsrelevant, darum steht sie vorne.')
-    +dshBox('CR nach Team und Bereich','Koralle = unter '+(Z.UPS==null||Z.WKA==null?'Ziel bzw. Ø Team':'Ziel'),hm+(strong&&weak?'<div style="font-size:12.5px;color:var(--text3);margin-top:10px">Am stärksten: <b style="color:var(--text2)">'+strong.t+' bei '+strong.k+' ('+dshPct(strong.v)+')</b> · größter Hebel: <b class="dsh-lo">'+weak.t+' bei '+weak.k+' ('+dshPct(weak.v)+')</b></div>':''),'zeigt auf einen Blick, wo Coaching am meisten bringt.')+'</div>',true);
-  // OEM · UPS · WKA
+  var R=dshRange(dshPeriod),all=dshAll(),S=chartSumsForRange(all,R.from,R.to),P=chartSumsForRange(all,R.prevFrom,R.prevTo),T={};
+  DSH_TEAMS.forEach(function(t){var l=dshTeam(t);T[t]={list:l,s:chartSumsForRange(l,R.from,R.to)};});
+  var REF={},Z={};DSH_AREAS.concat(['MPO']).forEach(function(k){Z[k]=dshTarget(k);REF[k]=Z[k]!=null?Z[k]:(k==='MPO'?dshMpo(S,'ALL'):dshCr(S,k));});
+  function refLbl(k,pre){return Z[k]!=null?'Ziel '+(pre||'')+(k==='MPO'?dshEur1(Z[k]):Math.round(Z[k])+' %'):'Ø Team '+(k==='MPO'?dshEur1(REF[k]):dshPct(REF[k]));}
+  function under(k,v){return v!==null&&v!==undefined&&REF[k]!=null&&v<REF[k]-(Z[k]!=null?0:(k==='MPO'?1:2));}
+  var h='<div class="content">'+buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
+  // Zeitraum (gilt für die ganze Seite)
+  var per=[['day','Heute'],['week','Woche'],['month','Monat'],['year','Jahr']];
+  h+='<div class="dsh-bar"><div class="dsh-seg" role="group" aria-label="Zeitraum">'+per.map(function(p){return '<button type="button" class="'+(dshPeriod===p[0]?'on':'')+'" aria-pressed="'+(dshPeriod===p[0])+'" onclick="dshSetPeriod(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div><span class="dsh-hint">'+fd(R.from)+(R.from!==R.to?' – '+fd(R.to):'')+' · '+all.length+' Mitarbeiter · gilt für die ganze Seite</span></div>';
+  // ── 1 · Margenerhöhung ──
+  var parts=[S.margeOEM,S.margeUps,S.margeWka],psum=parts[0]+parts[1]+parts[2],tot=S.margeGes,ziel=dshZiel(all,R.from,R.end),pct=ziel>0?Math.round(tot/ziel*100):null;
+  var comp='<div class="dsh-comp">'+parts.map(function(v,i){var sh=psum>0?v/psum*100:0;return '<i style="width:'+sh.toFixed(1)+'%;background:'+DSH_AC[i]+(i===2?';color:var(--text)':'')+'" title="'+DSH_AREAS[i]+' '+Math.round(sh)+' %">'+(sh>=10?DSH_AREAS[i]+' '+Math.round(sh)+' %':'')+'</i>';}).join('')+'</div>';
+  var tiles='<div class="dsh-tiles">'+DSH_AREAS.map(function(k,i){var v=parts[i],o=dshOpt(S,k);return dshSt('<i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k,dshEur(v),(psum>0?Math.round(v/psum*100):0)+' % · '+dshNum(o)+' Opt. · Ø '+dshEur1(o>0?v/o:null)+' je Auftrag');}).join('')+'</div>';
+  var left=dshCard('Margenerhöhung '+R.lbl,'gesamt','<div class="dsh-big">'+dshEur(tot)+'</div><div class="dsh-sub">'+(ziel>0?'Ziel '+dshEur(ziel)+' · <b>'+pct+' %</b> · ':'')+R.prevLbl+' '+dshEur(P.margeGes)+'</div>'
+    +(ziel>0?'<div class="dsh-prog"><i style="width:'+Math.min(100,pct)+'%"></i></div>':'')+comp+tiles,'zeigt, wie viel Marge wir dazugewinnen und aus welchem Bereich sie kommt.');
+  var BK=dshBuckets(all,dshPeriod,R);
+  var right=dshCard('Verlauf nach Bereich',BK.r,dshStackSvg(BK.b,BK.l,240)+'<div class="dsh-lg">'+DSH_AREAS.map(function(k,i){return '<span><i style="background:'+DSH_AC[i]+'"></i>'+k+'</span>';}).join('')+'<span><i style="background:#F08566"></i>'+(dshPeriod==='year'?'laufender Monat':'heute')+'</span></div>','zeigt, ob die Marge gleichmäßig wächst oder einzelne Tage abfallen.');
+  h+=dshGrp('marge','ti-currency-euro','Margenerhöhung','Wie viel Marge gewinnen wir – und woher?','<div class="dsh-g dsh-g12">'+left+right+'</div>');
+  // ── 2 · OEM · UPS · WKA ──
   var WHY={OEM:'Kerngeschäft und Basis der Provision.',UPS:'zeigt, wie viele Upsell-Chancen wir nutzen.',WKA:'zeigt, wie viele Wiederkäufer wir halten.'};
-  h+=dshGrp('area','ti-arrows-split','OEM · UPS · WKA','Wo liegen Chancen neben OEM?','<div class="dsh-g dsh-g3">'+['OEM','UPS','WKA'].map(function(k){
-    var v=dshCr(S,k),rows=DSH_TEAMS.map(function(t){return {t:t,v:dshCr(teams[t].s,k)};}),mx=Math.max.apply(null,rows.map(function(r){return r.v||0;}).concat([REF[k]||0]))*1.15||100;
-    return dshBox(k,refLbl(k),'<div class="dsh-g dsh-g2" style="margin-bottom:10px">'+dshSt('CR',dshPct(v),R.prevLbl+' '+dshPct(dshCr(P,k)),under(k,v)&&Z[k]!=null?'lo':'')+dshSt('Optimierungen',dshNum(dshOpt(S,k)),dshNum(dshFail(S,k))+(k==='WKA'?' NERR/beendet':' NERR'))+'</div>'
-      +dshBars(rows,dshPct,mx,REF[k],function(r){return under(k,r.v);}),WHY[k]);
-  }).join('')+'</div>',true);
-  // Teams im Detail
-  var tb='',worstT=null,worstN=-1;
-  var tinfo=DSH_TEAMS.map(function(t){var T=teams[t],n=0;DSH_KPI.forEach(function(k){if(under(k,dshCr(T.s,k)))n++;});if(n>worstN){worstN=n;worstT=t;}return {t:t,n:n};});
-  tinfo.forEach(function(ti){
-    var t=ti.t,T=teams[t],bestK=null,bestD=-1e9,tiles=dshSt('Marge',dshEur(T.s.margeGes),Math.round(T.s.margeGes/(S.margeGes||1)*100)+' % vom Team');
-    DSH_KPI.forEach(function(k){var v=dshCr(T.s,k);if(v!==null&&REF[k]!=null&&v-REF[k]>bestD){bestD=v-REF[k];bestK=k;}});
-    DSH_KPI.forEach(function(k){var v=dshCr(T.s,k);
-      if(v===null){tiles+=dshSt('CR '+k,'–',t==='VLC'?'nur OEM':'keine Daten','na');return;}
-      tiles+=dshSt('CR '+k+(k===bestK?' · Bestwert':''),dshPct(v),refLbl(k),k===bestK?'dsh-ko':(under(k,v)?'lo':''));});
-    var wk=W12.map(function(w){return [chartSumsForRange(T.list,w.from,w.to).margeGes];});
-    var body='<div class="dsh-g dsh-g12" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">'+dshBox('Kennzahlen '+R.lbl,'Koralle = Bestwert des Teams','<div class="dsh-g dsh-g5" style="margin:0">'+tiles+'</div>')+dshBox('Marge je Woche','letzte 12 Wochen',dshSvgBars(wk,['#8A7F72'],wl,150,560),'die laufende Woche ist hervorgehoben.')+'</div>';
-    var summ=dshEur(T.s.margeGes)+' Marge'+(ti.n?' · <span class="dsh-lo">'+ti.n+' '+(ti.n===1?'Kennzahl':'Kennzahlen')+' unter Ziel</span>':' · alles im Ziel');
-    tb+=dshGrp('team_'+t,'ti-users',t+' · '+T.list.length+' Mitarbeiter',summ,body,t===worstT&&worstN>0,true);
+  var cards=DSH_AREAS.map(function(k){
+    var v=dshCr(S,k),mt=dshMarge(S,k),o=dshOpt(S,k);
+    var head='<div class="dsh-g dsh-g2" style="margin-bottom:10px">'+dshSt('CR',dshPct(v),R.prevLbl.split(' ')[0]+' '+dshPct(dshCr(P,k)),under(k,v)&&Z[k]!=null?'lo':'')+dshSt('Margenerhöhung',dshEur(mt),dshNum(o)+' Opt. · '+dshNum(dshFail(S,k))+(k==='WKA'?' NERR/beendet':' NERR'))+'</div>';
+    var tr='<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:64px">Team</th><th>CR</th><th class="r" style="text-align:right;width:96px">Marge</th></tr></thead><tbody>';
+    var mx=Math.max.apply(null,DSH_TEAMS.map(function(t){return dshCr(T[t].s,k)||0;}).concat([REF[k]||0]))*1.15||100;
+    DSH_TEAMS.forEach(function(t){var c=dshCr(T[t].s,k);
+      if(c===null){tr+='<tr><td class="f">'+t+'</td><td colspan="2" style="color:var(--text3)">'+(t==='VLC'?'nur OEM':'keine Daten')+'</td></tr>';return;}
+      var lo=under(k,c);tr+='<tr><td class="f">'+t+'</td><td><div class="dsh-cell">'+dshBar(c,mx,lo)+'<b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></div></td><td class="r" style="font-weight:600">'+dshEur(dshMarge(T[t].s,k))+'</td></tr>';});
+    return dshCard(k,refLbl(k,'CR '),head+tr+'</tbody></table></div>',WHY[k]);
+  }).join('');
+  var hm='<div class="dsh-hm"><div></div>'+DSH_AREAS.map(function(k){return '<div class="hd">'+k+'</div>';}).join(''),strong=null,weak=null;
+  DSH_TEAMS.forEach(function(t){hm+='<div class="rn">'+t+'</div>';DSH_AREAS.forEach(function(k){var c=dshCr(T[t].s,k),m=dshMarge(T[t].s,k);
+    if(c===null){hm+='<div class="c na">–</div>';return;}
+    var d=REF[k]!=null?c-REF[k]:0;if(!strong||d>strong.d)strong={t:t,k:k,c:c,d:d};if(!weak||d<weak.d)weak={t:t,k:k,c:c,d:d};
+    hm+='<div class="c'+(under(k,c)?' lo':'')+'"'+(under(k,c)?'':' style="background:'+(d>=2?'#5C564F':'#8A7F72')+'"')+'><span>'+dshPct(c)+'</span><small>'+dshEur(m)+'</small></div>';});});
+  hm+='</div>'+(strong&&weak?'<div class="dsh-note">Am stärksten: <b>'+strong.t+' bei '+strong.k+' ('+dshPct(strong.c)+')</b> · größter Hebel: <b class="dsh-lo">'+weak.t+' bei '+weak.k+' ('+dshPct(weak.c)+')</b></div>':'');
+  var mpoRows=DSH_AREAS.map(function(k){return {n:k,v:dshMpo(S,k)};}),mpoT=DSH_TEAMS.map(function(t){return {n:t,v:dshMpo(T[t].s,'ALL')};});
+  var mmx=Math.max.apply(null,mpoRows.concat(mpoT).map(function(r){return r.v||0;}).concat([REF.MPO||0]))*1.15||30;
+  function mpoHtml(rows){return rows.map(function(r){if(r.v===null)return '<div class="dsh-hb"><span class="n">'+r.n+'</span><span style="font-size:12px;color:var(--text3)">keine Daten</span><span></span></div>';return dshHb(r.n,r.v,dshEur1(r.v),mmx,REF.MPO,under('MPO',r.v));}).join('');}
+  var nUnder=0;DSH_TEAMS.forEach(function(t){DSH_AREAS.forEach(function(k){if(under(k,dshCr(T[t].s,k)))nUnder++;});});
+  h+=dshGrp('area','ti-arrows-split','OEM · UPS · WKA','CR und Margenerhöhung je Bereich und Team'+(nUnder?' · '+nUnder+' Werte unter Ziel':''),
+    '<div class="dsh-g dsh-g3">'+cards+'</div><div class="dsh-g dsh-g12" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">'
+    +dshCard('Teams × Bereich','CR und Margenerhöhung · Koralle = CR unter '+(Z.UPS==null||Z.WKA==null?'Ziel bzw. Ø Team':'Ziel'),hm,'zeigt in einer Ansicht, welches Team in welchem Bereich Abschlüsse und Marge liegen lässt.')
+    +dshCard('Ø Marge je Auftrag','Linie = '+refLbl('MPO'),mpoHtml(mpoRows)+'<div class="dsh-sep"></div>'+mpoHtml(mpoT),'je höher die Marge je Auftrag, desto besser wird hochgestuft (SY/MY statt Yes).')+'</div>');
+  // ── 3 · Mitarbeiter ──
+  var teamUps=dshCr(S,'UPS'),teamWka=dshCr(S,'WKA');
+  var rows=all.map(function(e){
+    var rr=(performance[e.id]||[]).filter(function(x){return x.date>=R.from&&x.date<=R.to;});if(!rr.length)return null;
+    var s=chartSumsForRange([e],R.from,R.to),tg=empTargets(e),hrs=0,seen={};
+    rr.forEach(function(x){if(!seen[x.date]){seen[x.date]=1;hrs+=workHoursForDate(e,x.date)||0;}});
+    var o=dshOpt(s,'ALL'),K=[
+      {l:'CR MY',v:dshCr(s,'MY'),z:tg.crMegaYes&&tg.crMegaYes.val,u:'%'},
+      {l:'CR SY/MY',v:dshCr(s,'SYMY'),z:tg.crSyMy&&tg.crSyMy.val,u:'%'},
+      {l:'CR OEM',v:dshCr(s,'OEM'),z:tg.crOEM&&tg.crOEM.val,u:'%'},
+      {l:'CR UPS',v:dshCr(s,'UPS'),z:Z.UPS!=null?Z.UPS:teamUps,u:'%',avg:Z.UPS==null},
+      {l:'CR WKA',v:dshCr(s,'WKA'),z:Z.WKA!=null?Z.WKA:teamWka,u:'%',avg:Z.WKA==null},
+      {l:'Opt./Std.',v:hrs>0?o/hrs:null,z:tg.optPerH&&tg.optPerH.val,u:''},
+      {l:'Ø je Auftrag',v:dshMpo(s,'ALL'),z:REF.MPO,u:'€',avg:Z.MPO==null}];
+    K=K.filter(function(k){return k.v!==null&&k.z!=null&&k.z>0;}).map(function(k){var f=k.u==='%'?1:10,rv=Math.round(k.v*f)/f,rz=Math.round(k.z*f)/f;k.g=(rv-rz)/rz;return k;}).sort(function(a,b){return a.g-b.g;}).slice(0,3);
+    return {e:e,t:dshTeamOf(e),mg:s.margeGes,o:o,mpo:dshMpo(s,'ALL'),w:K};
+  }).filter(Boolean);
+  if(dshEmpTeam!=='all')rows=rows.filter(function(r){return r.t===dshEmpTeam;});
+  rows.sort(function(a,b){return b.mg-a.mg;});
+  var mgMax=Math.max.apply(null,rows.map(function(r){return r.mg;}).concat([1])),best=null;
+  rows.forEach(function(r){if(r.mpo!==null&&r.o>=10&&(!best||r.mpo>best.mpo))best=r;});
+  function fmtK(k,v){return k.u==='%'?Math.round(v)+' %':k.u==='€'?dshEur1(v):v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});}
+  var tseg='<div class="dsh-seg" role="group" aria-label="Team">'+[['all','Alle']].concat(DSH_TEAMS.map(function(t){return [t,t];})).map(function(x){return '<button type="button" class="'+(dshEmpTeam===x[0]?'on':'')+'" aria-pressed="'+(dshEmpTeam===x[0])+'" onclick="dshSetEmpTeam(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</div>';
+  var et='<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:19%">Mitarbeiter</th><th style="width:17%">Margenerhöhung</th><th class="r" style="text-align:right;width:10%">Ø je Auftrag</th><th class="r" style="text-align:right;width:7%">Opt.</th><th>Drei größte Schwächen</th></tr></thead><tbody>';
+  if(!rows.length)et+='<tr><td colspan="5" style="color:var(--text3)">Keine Daten im gewählten Zeitraum.</td></tr>';
+  rows.forEach(function(r){
+    var chips=r.w.map(function(k){return k.g>=0?'<span class="dsh-wk ok">'+k.l+' '+fmtK(k,k.v)+' <em>im Ziel</em></span>':'<span class="dsh-wk">'+k.l+' '+fmtK(k,k.v)+' <em>'+(k.avg?'Ø ':'Ziel ')+fmtK(k,k.z)+'</em></span>';}).join('');
+    var mpoTxt=r===best?'<span class="dsh-pill">'+dshEur1(r.mpo)+'</span>':'<span style="font-weight:600" class="'+(under('MPO',r.mpo)?'dsh-lo':'')+'">'+dshEur1(r.mpo)+'</span>';
+    et+='<tr style="cursor:pointer" onclick="selectEmp(\''+r.e.id+'\')"><td class="f">'+esc(r.e.name)+' <span class="dsh-tm">'+r.t+'</span></td><td><div class="dsh-cell">'+dshBar(r.mg,mgMax,false)+'<b>'+dshEur(r.mg)+'</b></div></td><td class="r">'+mpoTxt+'</td><td class="r">'+dshNum(r.o)+'</td><td><div class="dsh-chips">'+chips+'</div></td></tr>';
   });
-  h+=dshGrp('teams','ti-users','Teams im Detail','Jedes Team einzeln · Bestwert in Koralle','<div style="padding-left:22px;border-left:2px solid #E4E0D6;margin-left:7px">'+tb+'</div>',true);
-  // Entwicklung
-  var DEVS=[{k:'OEM',c:'#5C564F'},{k:'WKA',c:'#8A7F72'},{k:'UPS',c:'#B8AC9B',dash:true},{k:'MY',c:'#F08566',w:3}];
-  h+=dshGrp('dev','ti-chart-line','Entwicklung','Werden wir besser? · Verlauf 12 Wochen',dshBox('CR-Entwicklung · 12 Wochen','je Kalenderwoche, alle Teams',dshLines(DEVS.map(function(d){return {v:wkS.map(function(s){return dshCr(s,d.k);}),c:d.c,dash:d.dash,w:d.w};}),wl,260)
-    +'<div class="dsh-lg">'+DEVS.map(function(d){return '<span><i style="background:'+d.c+';height:3px"></i>CR '+d.k+(d.dash?' (gestrichelt)':'')+'</span>';}).join('')+'</div>','zeigt, ob Coaching und Fokus-Themen über Wochen wirken.'),false);
+  et+='</tbody></table></div>';
+  h+=dshGrp('emp','ti-users','Mitarbeiter','Wer bringt wie viel – und wo hakt es?',dshCard('Mitarbeiter',R.lbl+' · sortiert nach Margenerhöhung · Koralle = bester Ø je Auftrag','<div style="margin-bottom:12px">'+tseg+'</div>'+et,'je Mitarbeiter die drei Kennzahlen mit dem größten Abstand zum Ziel – das sind die Coaching-Themen. Ziele individuell aus Stammdaten und Provisionsvereinbarung.'));
   h+='</div>';
   ma.innerHTML=h;
 }
