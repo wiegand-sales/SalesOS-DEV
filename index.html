@@ -9053,7 +9053,7 @@ function renderDashboard(){
   // ── 2 · Team-Steckbriefe: eine Kennzahl, Gesamt + SE/SR/OB/VLC ──
   h+=dshTeamBox(all,T);
   // ── 3 · Mitarbeiter (wie bisher) ──
-  h+=dshEmpSection(R,all,S,Z,REF,under);
+  // Mitarbeiter-Abschnitt vorerst ausgeblendet (dshEmpSection bleibt erhalten)
   h+='</div>';
   // Scrollposition beim Neuzeichnen behalten (Filter, Kennzahl, Team), sonst springt die Seite nach oben
   var oc=ma.querySelector('.content'),st=oc?oc.scrollTop:0;
