@@ -1878,22 +1878,24 @@ function wizardMargeInfo(){
   var pct=monatZiel>0?Math.round(monatIst/monatZiel*100):0;
   return {ist:monatIst,ziel:monatZiel,pct:pct};
 }
-function wizardOverdueList(scopeList){
-  return scopeList.filter(function(e){var t=tageSeitLetzterSession(e.id);return t===null||t>30;});
+function wizardOverdueList(scopeList,days){
+  var lim=(days!=null&&days!=='')?+days:30;
+  return scopeList.filter(function(e){var t=tageSeitLetzterSession(e.id);return t===null||t>lim;});
 }
-function wizardQaFaelligList(scopeList){
-  var cutoff=addDaysUTC(today(),-60);
+function wizardQaFaelligList(scopeList,days){
+  var cutoff=addDaysUTC(today(),-((days!=null&&days!=='')?+days:60));
   return scopeList.filter(function(e){
     var cnt=(callRatings[e.id]||[]).filter(function(r){return r.date>=cutoff;}).length;
     return cnt<5;
   });
 }
-function wizardUpcomingSessions(coachIdOrNull){
-  var all=[];
+function wizardUpcomingSessions(coachIdOrNull,days){
+  var all=[],von=today(),bis=(days!=null&&days!=='')?addDaysUTC(von,+days):null;
   employeeActiveList().forEach(function(e){
     (protocols[e.id]||[]).forEach(function(p){
       if(p.status!=='geplant')return;
-      if(p.date<today())return;
+      if(p.date<von)return;
+      if(bis&&p.date>bis)return;
       if(coachIdOrNull!==null&&p.coachId!==coachIdOrNull)return;
       all.push({empName:e.name,date:p.date});
     });
@@ -1915,64 +1917,7 @@ function wizardTopWorst(scopeList,count){
   scored.sort(function(a,b){return b.score-a.score;});
   return {top:scored.slice(0,count),worst:scored.slice(-count).reverse()};
 }
-function buildAdminWizardPages(){
-  var liste=employeeActiveList();
-  var overdue=wizardOverdueList(liste);
-  var qaList=wizardQaFaelligList(liste);
-  var marge=wizardMargeInfo();
-  var upcoming=wizardUpcomingSessions(null);
-  var coachEmps=employees.filter(function(e){return(e.role==='SDM'||e.role==='SC')&&e.active!==false;});
-  var coachCounts={};
-  liste.forEach(function(e){
-    (protocols[e.id]||[]).forEach(function(p){
-      if(p.status==='geplant')return;
-      if(p.coachId)coachCounts[p.coachId]=(coachCounts[p.coachId]||0)+1;
-    });
-  });
-  var dist=coachEmps.map(function(c){return{n:String(coachCounts[c.id]||0),l:c.name.split(' ')[0].toUpperCase()};}).sort(function(a,b){return(+b.n)-(+a.n);});
-  return [
-    {type:'stat',icon:'ti-alert-triangle',stat:String(overdue.length),title:'Überfällige Coachings',sub:overdue.length?('Team-weit: '+overdue.slice(0,3).map(function(e){return e.name;}).join(', ')+(overdue.length>3?' und weitere.':'.')):'Aktuell ist niemand überfällig.'},
-    {type:'stat',icon:'ti-clipboard-check',stat:String(qaList.length),title:'QA fällig',sub:qaList.length?(qaList.length+' Mitarbeiter mit unter 5 QA-Calls in den letzten 60 Tagen.'):'Alle Mitarbeiter sind im QA-Ziel.'},
-    {type:'stat',icon:'ti-chart-bar',stat:'€ '+Math.round(marge.ist).toLocaleString('de-DE'),title:'Margenerhöhung diesen Monat',sub:'Ziel: € '+Math.round(marge.ziel).toLocaleString('de-DE')+' · aktuell bei '+marge.pct+'% des Monatsziels.'},
-    {type:'tasklist',title:'Anstehende Sessions',sub:'Die nächsten geplanten Coachings im Team.',items:upcoming.length?upcoming.slice(0,5).map(function(u){return{icon:'ti-calendar-event',text:u.empName+' · '+fd(u.date)};}):[{icon:'ti-calendar-off',text:'Keine geplanten Sessions'}]},
-    {type:'stagerow',title:'Verteilung über Coaches',sub:'Alle abgeschlossenen Coachings, gesamt.',boxes:dist.length?dist:[{n:'0',l:'—'}]},
-    {type:'quote',quote:nextMotivationQuote()}
-  ];
-}
-function buildCoachWizardPages(coach){
-  var coachees=getCoacheesFor(coach.id);
-  var overdue=wizardOverdueList(coachees);
-  var qaList=wizardQaFaelligList(coachees);
-  var marge=wizardMargeInfo();
-  var upcoming=wizardUpcomingSessions(coach.id);
-  var tw=wizardTopWorst(coachees,3);
-  return [
-    {type:'stat',icon:'ti-alert-triangle',stat:String(overdue.length),title:'Überfällige Coaching Sessions',sub:overdue.length?(overdue.slice(0,3).map(function(e){return e.name;}).join(', ')+(overdue.length>3?' und weitere.':'.')):'Bei deinen Mitarbeitern ist aktuell niemand überfällig.'},
-    {type:'tasklist',title:'Geplante Coaching Sessions',sub:'Deine anstehenden Termine.',items:upcoming.length?upcoming.slice(0,5).map(function(u){return{icon:'ti-calendar-event',text:u.empName+' · '+fd(u.date)};}):[{icon:'ti-calendar-off',text:'Keine geplanten Sessions'}]},
-    {type:'stat',icon:'ti-clipboard-check',stat:String(qaList.length),title:'QA fällig',sub:qaList.length?(qaList.map(function(e){return e.name;}).join(', ')+' brauchen eine QA-Bewertung.'):'Alle deine Mitarbeiter sind im QA-Ziel.'},
-    {type:'stat',icon:'ti-chart-bar',stat:'€ '+Math.round(marge.ist).toLocaleString('de-DE'),title:'Margenerhöhung diesen Monat',sub:'Ziel: € '+Math.round(marge.ziel).toLocaleString('de-DE')+' · aktuell bei '+marge.pct+'% des Monatsziels.'},
-    {type:'stagerow',title:'Top 3 Mitarbeiter',sub:'Ø CR OEM der letzten 30 Tage.',boxes:tw.top.length?tw.top.map(function(x){return{n:Math.round(x.score)+'%',l:x.e.name.split(' ')[0].toUpperCase()};}):[{n:'—',l:'Keine Daten'}]},
-    {type:'stagerow',title:'Worst 3 Mitarbeiter',sub:'Ø CR OEM der letzten 30 Tage.',boxes:tw.worst.length?tw.worst.map(function(x){return{n:Math.round(x.score)+'%',l:x.e.name.split(' ')[0].toUpperCase()};}):[{n:'—',l:'Keine Daten'}]},
-    {type:'quote',quote:nextMotivationQuote()}
-  ];
-}
-var wizardPage=0,wizardPages=[];
-function openLoginWizard(){
-  wizardPages=currentCoach?buildCoachWizardPages(currentCoach):buildAdminWizardPages();
-  wizardPage=0;
-  renderWizardPage();
-  document.getElementById('loginWizardOverlay').classList.remove('hidden');
-}
-function closeLoginWizard(){
-  document.getElementById('loginWizardOverlay').classList.add('hidden');
-}
 // ── Taeglicher Team-Ueberblick-Wizard (13 Uhr) ──
-function closeDailyWizard(){
-  document.getElementById('dailyWizardOverlay').classList.add('hidden');
-  localStorage.setItem('dailyWizardShownDate',today());
-}
-var dailyWizardPage=0;
-var dailyWizardPages=[];
 function fmtEur(v){return Math.round(v).toLocaleString('de-DE')+' €';}
 function dailyWizardVisible(){return employees.filter(function(e){return !e.isPureCoach&&e.active!==false;});}
 // ── 13-Uhr-Wizard: Hilfsfunktionen (CR immer aus Rohzahlen: erst summieren, dann teilen) ──
@@ -2065,15 +2010,17 @@ function buildDailyWizardCr(){
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+t('CR OEM','crOEM')+t('CR TW','crTW')+t('CR SY/MY','crSyMy')+t('CR MY','crMY')+'</div>';
   return h+dwFoot('Große Zahl: heute · darunter: laufender Monat');
 }
-// Schwaechste 3: nur Verkaeufer (keine Coaches SC/SDM, keine inaktiven) mit mehr als 5 Optimierungen heute
-function dwWorstCandidates(){
+// Schwaechste 3: nur Verkaeufer (keine Coaches SC/SDM, keine inaktiven) mit mehr als minOpt Optimierungen heute
+function dwWorstCandidates(minOpt){
+  var lim=(minOpt!=null)?+minOpt:5;
   return employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&e.role!=='SC'&&e.role!=='SDM';})
     .map(function(e){return {e:e,s:dwSums(dwRowsToday(e.id))};})
-    .filter(function(x){return x.s.opt>wizCfg().minOpt;});
+    .filter(function(x){return x.s.opt>lim;});
 }
-function dailyWizardWorstPage(title,metric){
+function dailyWizardWorstPage(title,metric,minOpt){
+  var lim=(minOpt!=null)?+minOpt:5;
   var isMarge=metric==='marge';
-  var rows=dwWorstCandidates().map(function(x){
+  var rows=dwWorstCandidates(lim).map(function(x){
     return {name:x.e.name,val:isMarge?x.s.marge:dwCr(x.s,metric),marge:x.s.marge,opt:x.s.opt};
   }).filter(function(x){return x.val!==null;}).sort(function(a,b){return a.val-b.val;}).slice(0,3);
   var cols='grid-template-columns:minmax(0,1fr) 84px 64px;gap:10px';
@@ -2087,81 +2034,197 @@ function dailyWizardWorstPage(title,metric){
         +'<span style="text-align:right;color:#FFF0EA;white-space:nowrap">'+(isMarge?Math.round(r.opt):fmtEur(r.marge))+'</span>'
         +'<span style="text-align:right;font-weight:700;color:#ffb3b3;white-space:nowrap">'+(isMarge?fmtEur(r.val):Math.round(r.val)+'%')+'</span></div>';
     } else {
-      h+='<div style="height:40px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;font-size:12.5px;color:#FFE1D6">'+(i===0&&!rows.length?'Noch niemand mit mehr als 5 Optimierungen heute':'—')+'</div>';
+      h+='<div style="height:40px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;font-size:12.5px;color:#FFE1D6">'+(i===0&&!rows.length?'Noch niemand mit mehr als '+lim+' Optimierungen heute':'—')+'</div>';
     }
   }
-  return h+dwFoot('Nur Verkäufer mit mehr als '+wizCfg().minOpt+' Optimierungen heute');
+  return h+dwFoot('Nur Verkäufer mit mehr als '+lim+' Optimierungen heute');
 }
-function renderDailyWizardPage(){
-  document.getElementById('dailyWizardBody').innerHTML=dailyWizardPages[dailyWizardPage]();
-  var dotsEl=document.getElementById('dailyWizardDots');
-  dotsEl.innerHTML=dailyWizardPages.map(function(_,i){
-    return '<div style="width:'+(i===dailyWizardPage?'16px':'6px')+';height:6px;border-radius:3px;background:'+(i===dailyWizardPage?'#F7B39A':'rgba(255,255,255,0.3)')+'"></div>';
-  }).join('');
-  var btn=document.getElementById('dailyWizardNextBtn');
-  btn.textContent=dailyWizardPage>=dailyWizardPages.length-1?'Fertig':'Weiter →';
+
+// ═══════════════ WIZARD-ENGINE (Einstellungen → Wizards, settings.wizardConfig) ═══════════════
+// Drei Wizards (Login · Admin, Login · Coach, Tagesüberblick) teilen sich einen Katalog von 11 Slides.
+var WIZ_KPIS=[['crOEM','CR OEM'],['crTW','CR TW'],['crSyMy','CR SY/MY'],['crMY','CR MY'],['marge','Marge'],['opt','Optimierungen']];
+function wizKpiLabel(k){var x=WIZ_KPIS.filter(function(p){return p[0]===k;})[0];return x?x[1]:k;}
+function wizKpiFmt(v,k){if(v===null||v===undefined)return '—';if(k==='marge')return fmtEur(v);if(k==='opt')return dwNum(v);return Math.round(v)+'%';}
+// Rangliste der letzten 30 Tage, CR immer erst summieren, dann teilen
+function wizRanked(scope,kpi,minOpt){
+  var cutoff=addDaysUTC(today(),-30);
+  return scope.map(function(e){
+    var rows=(performance[e.id]||[]).filter(function(x){return (x.date||'')>=cutoff;});
+    if(!rows.length)return null;
+    var s=dwSums(rows),v=kpi==='marge'?s.marge:kpi==='opt'?s.opt:dwCr(s,kpi);
+    if(v===null||s.opt<(minOpt||0))return null;
+    return {e:e,v:v};
+  }).filter(Boolean).sort(function(a,b){return b.v-a.v;});
 }
-function dailyWizardNext(){
-  if(dailyWizardPage>=dailyWizardPages.length-1){closeDailyWizard();return;}
-  dailyWizardPage++;
-  renderDailyWizardPage();
+function wizFirst(e){return e.name.split(' ')[0].toUpperCase();}
+function wizNames(l){return l.slice(0,3).map(function(e){return e.name;}).join(', ')+(l.length>3?' und weitere.':'.');}
+var WIZ_SLIDES={
+  overdue:{label:'Überfällige Sessions',desc:'Mitarbeiter ohne Coaching seit mehr als X Tagen',def:{days:30},build:function(ctx,c){
+    var l=wizardOverdueList(ctx.scope,c.days);
+    return [{type:'stat',icon:'ti-alert-triangle',stat:String(l.length),title:ctx.own?'Überfällige Coaching Sessions':'Überfällige Coachings',
+      sub:l.length?((ctx.own?'':'Team-weit: ')+wizNames(l)):(ctx.own?'Bei deinen Mitarbeitern ist aktuell niemand überfällig.':'Aktuell ist niemand überfällig.')}];}},
+  upcoming:{label:'Geplante Sessions',desc:'Die nächsten geplanten Coachings (max. 5)',def:{days:null},build:function(ctx,c){
+    var u=wizardUpcomingSessions(ctx.own?ctx.coach.id:null,c.days);
+    return [{type:'tasklist',title:ctx.own?'Geplante Coaching Sessions':'Anstehende Sessions',
+      sub:(ctx.own?'Deine anstehenden Termine':'Die nächsten geplanten Coachings im Team')+(c.days?' · nächste '+c.days+' Tage.':'.'),
+      items:u.length?u.slice(0,5).map(function(x){return{icon:'ti-calendar-event',text:x.empName+' · '+fd(x.date)};}):[{icon:'ti-calendar-off',text:'Keine geplanten Sessions'}]}];}},
+  qa:{label:'QA fällig',desc:'Mitarbeiter mit unter 5 QA-Calls in X Tagen',def:{days:60},build:function(ctx,c){
+    var l=wizardQaFaelligList(ctx.scope,c.days);
+    return [{type:'stat',icon:'ti-clipboard-check',stat:String(l.length),title:'QA fällig',
+      sub:l.length?(ctx.own?l.map(function(e){return e.name;}).join(', ')+' brauchen eine QA-Bewertung.':l.length+' Mitarbeiter mit unter 5 QA-Calls in den letzten '+c.days+' Tagen.'):(ctx.own?'Alle deine Mitarbeiter sind im QA-Ziel.':'Alle Mitarbeiter sind im QA-Ziel.')}];}},
+  margeUp:{label:'Margenerhöhung',desc:'Marge im laufenden Monat gegen das Monatsziel',def:{},build:function(){
+    var m=wizardMargeInfo();
+    return [{type:'stat',icon:'ti-chart-bar',stat:'€ '+Math.round(m.ist).toLocaleString('de-DE'),title:'Margenerhöhung diesen Monat',sub:'Ziel: € '+Math.round(m.ziel).toLocaleString('de-DE')+' · aktuell bei '+m.pct+'% des Monatsziels.'}];}},
+  top3:{label:'Top 3',desc:'Die besten 3 der letzten 30 Tage in einer KPI',def:{kpi:'crOEM'},build:function(ctx,c){
+    var r=wizRanked(ctx.scope,c.kpi,0).slice(0,3);
+    return [{type:'stagerow',title:'Top 3 Mitarbeiter',sub:(c.kpi==='marge'||c.kpi==='opt'?'Summe ':'Ø ')+wizKpiLabel(c.kpi)+' der letzten 30 Tage.',
+      boxes:r.length?r.map(function(x){return{n:wizKpiFmt(x.v,c.kpi),l:wizFirst(x.e)};}):[{n:'—',l:'Keine Daten'}]}];}},
+  worst3:{label:'Worst 3',desc:'Die schwächsten 3 der letzten 30 Tage in einer KPI',def:{kpi:'crOEM',minOpt:0},build:function(ctx,c){
+    var r=wizRanked(ctx.scope,c.kpi,c.minOpt).slice(-3).reverse();
+    return [{type:'stagerow',title:'Worst 3 Mitarbeiter',sub:(c.kpi==='marge'||c.kpi==='opt'?'Summe ':'Ø ')+wizKpiLabel(c.kpi)+' der letzten 30 Tage'+(c.minOpt>0?' · ab '+c.minOpt+' Opt.':'')+'.',
+      boxes:r.length?r.map(function(x){return{n:wizKpiFmt(x.v,c.kpi),l:wizFirst(x.e)};}):[{n:'—',l:'Keine Daten'}]}];}},
+  dist:{label:'Verteilung über Coaches',desc:'Abgeschlossene Coachings je Coach, gesamt',def:{},build:function(){
+    var coachEmps=employees.filter(function(e){return(e.role==='SDM'||e.role==='SC')&&e.active!==false;}),cnt={};
+    employeeActiveList().forEach(function(e){(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'&&p.coachId)cnt[p.coachId]=(cnt[p.coachId]||0)+1;});});
+    var d=coachEmps.map(function(c){return{n:String(cnt[c.id]||0),l:wizFirst(c)};}).sort(function(a,b){return(+b.n)-(+a.n);});
+    return [{type:'stagerow',title:'Verteilung über Coaches',sub:'Alle abgeschlossenen Coachings, gesamt.',boxes:d.length?d:[{n:'0',l:'—'}]}];}},
+  opt:{label:'Optimierungen',desc:'Optimierungen heute mit Prognose fürs Tagesende',def:{},build:function(){return [{html:buildDailyWizardOpt()}];}},
+  margeToday:{label:'Marge',desc:'Marge heute mit Prognose fürs Tagesende',def:{},build:function(){return [{html:buildDailyWizardMarge()}];}},
+  cr:{label:'Conversion Rates',desc:'CR des Teams heute und im laufenden Monat',def:{},build:function(){return [{html:buildDailyWizardCr()}];}},
+  worstKpi:{label:'Schwächste 3 je KPI',desc:'Marge, CR OEM, TW, SY/MY, MY heute – je eine Slide',def:{minOpt:5},build:function(ctx,c){
+    return [['Marge','marge'],['CR OEM','crOEM'],['CR TW','crTW'],['CR SY/MY','crSyMy'],['CR MY','crMY']].map(function(k){return {html:dailyWizardWorstPage(k[0],k[1],c.minOpt)};});}}
+};
+var WIZ_SLIDE_IDS=['overdue','upcoming','qa','margeUp','top3','worst3','dist','opt','margeToday','cr','worstKpi'];
+function wizSlideList(onIds,extra){
+  var list=onIds.map(function(id){return {id:id,on:true};});
+  WIZ_SLIDE_IDS.forEach(function(id){if(onIds.indexOf(id)<0)list.push({id:id,on:false});});
+  return list.map(function(s){return Object.assign({},WIZ_SLIDES[s.id].def,(extra&&extra[s.id])||{},s);});
 }
-function showDailyWizard(){
-  var ws=wizCfg().slides;
-  dailyWizardPages=[];
-  if(ws.opt)dailyWizardPages.push(buildDailyWizardOpt);
-  if(ws.marge)dailyWizardPages.push(buildDailyWizardMarge);
-  if(ws.cr)dailyWizardPages.push(buildDailyWizardCr);
-  if(ws.worst)dailyWizardPages.push(
-    function(){return dailyWizardWorstPage('Marge','marge');},
-    function(){return dailyWizardWorstPage('CR OEM','crOEM');},
-    function(){return dailyWizardWorstPage('CR TW','crTW');},
-    function(){return dailyWizardWorstPage('CR SY/MY','crSyMy');},
-    function(){return dailyWizardWorstPage('CR MY','crMY');});
-  if(!dailyWizardPages.length)dailyWizardPages.push(buildDailyWizardOpt);
-  dailyWizardPage=0;
-  renderDailyWizardPage();
-  document.getElementById('dailyWizardOverlay').classList.remove('hidden');
+// Standardbelegung = Stand vor dem Umbau; der Tagesüberblick übernimmt die bisherigen wizardSettings
+function wizDefaultConfig(){
+  var old=wizCfg(),dOn=[];
+  if(old.slides.opt)dOn.push('opt');if(old.slides.marge)dOn.push('margeToday');if(old.slides.cr)dOn.push('cr');if(old.slides.worst)dOn.push('worstKpi');
+  return {v:1,wizards:[
+    {id:'login_admin',name:'Login · Admin',on:true,trigger:{login:true,time:false,at:'09:00'},freq:'every',roles:{admin:true,coach:false,viewer:true},scope:'team',quote:true,slides:wizSlideList(['overdue','qa','margeUp','upcoming','dist'])},
+    {id:'login_coach',name:'Login · Coach',on:true,trigger:{login:true,time:false,at:'09:00'},freq:'every',roles:{admin:false,coach:true,viewer:false},scope:'own',quote:true,slides:wizSlideList(['overdue','upcoming','qa','margeUp','top3','worst3'])},
+    {id:'daily',name:'Tagesüberblick',on:old.on,trigger:{login:false,time:true,at:old.time},freq:'daily',roles:Object.assign({},old.roles),scope:'team',quote:false,slides:wizSlideList(dOn.length?dOn:['opt'],{worstKpi:{minOpt:old.minOpt}})}
+  ]};
 }
-function checkDailyWizard(){
-  if(!currentUserRole)return; // nur fuer eingeloggte Nutzer
-  var lastShown=localStorage.getItem('dailyWizardShownDate');
-  var now=new Date(), wc=wizCfg(), tp=(wc.time||'13:00').split(':');
-  if(!wc.on||!wc.roles[currentUserRole])return;
-  if(now.getHours()*60+now.getMinutes()>=(+tp[0])*60+(+tp[1]||0)&&lastShown!==today()){
-    showDailyWizard();
-  }
+// Gespeicherte Konfiguration mit der Standardbelegung zusammenführen (fehlende Felder/Slides werden ergänzt, nichts geht verloren)
+function wizConfig(){
+  var def=wizDefaultConfig(),st=settings.wizardConfig;
+  if(!st||!Array.isArray(st.wizards))return def;
+  def.wizards=def.wizards.map(function(dw){
+    var sw=st.wizards.filter(function(x){return x&&x.id===dw.id;})[0];
+    if(!sw)return dw;
+    var w=Object.assign({},dw,sw);
+    w.trigger=Object.assign({},dw.trigger,sw.trigger||{});
+    w.roles=Object.assign({},dw.roles,sw.roles||{});
+    var seen={},list=[];
+    (sw.slides||[]).forEach(function(s){
+      if(!s||!WIZ_SLIDES[s.id]||seen[s.id])return;seen[s.id]=1;
+      list.push(Object.assign({},WIZ_SLIDES[s.id].def,s));
+    });
+    dw.slides.forEach(function(s){if(!seen[s.id])list.push(Object.assign({},s,{on:false}));});
+    w.slides=list;
+    return w;
+  });
+  return def;
 }
-setInterval(checkDailyWizard,60000); // jede Minute pruefen, ob 13 Uhr erreicht und heute noch nicht gezeigt
-function wizardNext(){
-  if(wizardPage>=wizardPages.length-1){closeLoginWizard();return;}
-  wizardPage++;
-  renderWizardPage();
+function wizGet(id){return wizConfig().wizards.filter(function(w){return w.id===id;})[0]||null;}
+
+// ── Ablauf: Seiten bauen, anzeigen, Reihenfolge mehrerer fälliger Wizards ──
+var wizRun={w:null,pages:[],i:0,preview:false},wizQueue=[];
+function wizBuildPages(w){
+  var own=w.scope==='own'&&!!currentCoach;
+  var ctx={own:own,coach:own?currentCoach:null,scope:own?getCoacheesFor(currentCoach.id):employeeActiveList()};
+  var pages=[];
+  w.slides.forEach(function(s){
+    if(!s.on||!WIZ_SLIDES[s.id])return;
+    try{pages=pages.concat(WIZ_SLIDES[s.id].build(ctx,s));}catch(e){console.warn('Wizard-Slide '+s.id+' fehlgeschlagen:',e);}
+  });
+  if(w.quote&&pages.length)pages.push({type:'quote',quote:nextMotivationQuote()});
+  return pages;
 }
-function renderWizardPage(){
-  var pageCount=wizardPages.length;
-  var dotsEl=document.getElementById('wizardDots');
-  dotsEl.innerHTML='';
-  for(var i=0;i<pageCount;i++){
-    var d=document.createElement('span');
-    d.className='wizard-dot'+(i===wizardPage?' active':'');
-    dotsEl.appendChild(d);
-  }
-  document.getElementById('wizardNextBtn').innerHTML=wizardPage===pageCount-1?'Los geht\'s <i class="ti ti-check"></i>':'Weiter <i class="ti ti-arrow-right"></i>';
-  var p=wizardPages[wizardPage];
+function wizPageHtml(p){
+  if(p.html)return p.html;
+  if(p.type==='quote')return '<div class="wizard-icon"><i class="ti ti-bulb"></i></div><div class="wizard-quote">"'+p.quote+'"</div>';
+  if(p.type==='tasklist')return '<div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>'
+    +p.items.map(function(it){return '<div class="wizard-taskrow"><i class="ti '+it.icon+'"></i>'+esc(it.text)+'</div>';}).join('');
+  if(p.type==='stagerow')return '<div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>'
+    +'<div class="wizard-stagerow">'+p.boxes.map(function(b){return '<div class="wizard-stagebox"><strong>'+b.n+'</strong><span>'+esc(b.l)+'</span></div>';}).join('')+'</div>';
+  return '<div class="wizard-icon"><i class="ti '+p.icon+'"></i></div><div class="wizard-stat">'+p.stat+'</div><div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+esc(p.sub)+'</div>';
+}
+function wizOverlayOpen(){var o=document.getElementById('loginWizardOverlay');return !!o&&!o.classList.contains('hidden');}
+function wizShownKey(w){return w.id==='daily'?'dailyWizardShownDate':'wizShown_'+w.id;}
+function wizShownToday(w){try{return localStorage.getItem(wizShownKey(w))===today();}catch(e){return false;}}
+function wizMarkShown(w){try{localStorage.setItem(wizShownKey(w),today());}catch(e){}}
+function wizOpen(w,opts){
+  opts=opts||{};
+  var pages=wizBuildPages(w);
+  if(!opts.preview&&(w.freq==='daily'||opts.source==='time'))wizMarkShown(w);
+  if(!pages.length){ if(opts.preview)alert('In diesem Wizard ist keine Slide eingeschaltet.'); else wizDrain(); return; }
+  wizRun={w:w,pages:pages,i:0,preview:!!opts.preview};
+  wizRender();
+  document.getElementById('loginWizardOverlay').classList.remove('hidden');
+}
+function wizRender(){
+  var p=wizRun.pages[wizRun.i],n=wizRun.pages.length,last=wizRun.i>=n-1;
   var body=document.getElementById('wizardBody');
-  if(p.type==='quote'){
-    body.innerHTML='<div class="wizard-icon"><i class="ti ti-bulb"></i></div><div class="wizard-quote">"'+p.quote+'"</div>';
-  } else if(p.type==='tasklist'){
-    body.innerHTML='<div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>'
-      +p.items.map(function(it){return '<div class="wizard-taskrow"><i class="ti '+it.icon+'"></i>'+it.text+'</div>';}).join('');
-  } else if(p.type==='stagerow'){
-    body.innerHTML='<div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>'
-      +'<div class="wizard-stagerow">'+p.boxes.map(function(b){return '<div class="wizard-stagebox"><strong>'+b.n+'</strong><span>'+b.l+'</span></div>';}).join('')+'</div>';
-  } else {
-    body.innerHTML='<div class="wizard-icon"><i class="ti '+p.icon+'"></i></div><div class="wizard-stat">'+p.stat+'</div><div class="wizard-title">'+p.title+'</div><div class="wizard-sub">'+p.sub+'</div>';
+  body.innerHTML=wizPageHtml(p);
+  body.style.padding=p.html?'32px 28px 24px':'';
+  var dots=document.getElementById('wizardDots');dots.innerHTML='';
+  for(var i=0;i<n;i++){var d=document.createElement('span');d.className='wizard-dot'+(i===wizRun.i?' active':'');dots.appendChild(d);}
+  document.getElementById('wizardNextBtn').innerHTML=last?(wizRun.w&&wizRun.w.quote?'Los geht\'s <i class="ti ti-check"></i>':'Fertig <i class="ti ti-check"></i>'):'Weiter <i class="ti ti-arrow-right"></i>';
+}
+function wizardNext(){
+  if(wizRun.i>=wizRun.pages.length-1){closeLoginWizard();return;}
+  wizRun.i++;wizRender();
+}
+function closeLoginWizard(){
+  document.getElementById('loginWizardOverlay').classList.add('hidden');
+  var wasPreview=wizRun.preview;
+  wizRun={w:null,pages:[],i:0,preview:false};
+  if(!wasPreview)setTimeout(wizDrain,250);
+}
+function wizDrain(){
+  if(wizOverlayOpen())return;
+  while(wizQueue.length){
+    var q=wizQueue.shift(),w=wizGet(q.id);
+    if(w){wizOpen(w,{source:q.source});return;}
   }
 }
+function wizEnqueue(w,source){
+  if(wizQueue.some(function(q){return q.id===w.id;}))return;
+  if(wizRun.w&&wizRun.w.id===w.id&&wizOverlayOpen())return;
+  wizQueue.push({id:w.id,source:source});
+}
+function wizForMe(w){return !!(w.on&&currentUserRole&&w.roles[currentUserRole]);}
+function wizTimeReached(at){var tp=String(at||'00:00').split(':'),n=new Date();return n.getHours()*60+n.getMinutes()>=(+tp[0])*60+(+tp[1]||0);}
+// Bei Anmeldung (frischer Login-Klick)
+function openLoginWizard(){
+  wizConfig().wizards.forEach(function(w){
+    if(!wizForMe(w)||!w.trigger.login)return;
+    if(w.freq==='daily'&&wizShownToday(w))return;
+    wizEnqueue(w,'login');
+  });
+  wizDrain();
+}
+// Uhrzeit-Auslöser: beim Laden und jede Minute, höchstens einmal pro Tag und Gerät
+function checkDailyWizard(){
+  if(!currentUserRole)return;
+  wizConfig().wizards.forEach(function(w){
+    if(!wizForMe(w)||!w.trigger.time)return;
+    if(wizShownToday(w)||!wizTimeReached(w.trigger.at))return;
+    wizEnqueue(w,'time');
+  });
+  wizDrain();
+}
+setInterval(checkDailyWizard,60000);
+// Kompatibilität: alte Aufrufe zeigen die Vorschau des Tagesüberblicks
+function showDailyWizard(){var w=wizGet('daily');if(w)wizOpen(w,{preview:true});}
+function closeDailyWizard(){closeLoginWizard();}
+function dailyWizardNext(){wizardNext();}
 function buildCoachingAbdeckungTab(liste,hD,heute){
   var HIDDEN=[];
   var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
@@ -8598,33 +8661,200 @@ function buildRolesHtml(){
   return h;
 }
 // ══ Wizards ══════════════════════════════════════════════════════════════════
+// Alt-Einstellung des Tagesüberblicks (settings.wizardSettings) bleibt erhalten und wird beim Speichern mitgeführt.
 var WIZ_DEFAULT={on:true,time:'13:00',roles:{admin:true,coach:true,viewer:false},slides:{opt:true,marge:true,cr:true,worst:true},minOpt:5};
 function wizCfg(){ var s=settings.wizardSettings||{}; return {on:s.on!==false,time:s.time||WIZ_DEFAULT.time,roles:Object.assign({},WIZ_DEFAULT.roles,s.roles||{}),slides:Object.assign({},WIZ_DEFAULT.slides,s.slides||{}),minOpt:s.minOpt!=null?s.minOpt:WIZ_DEFAULT.minOpt}; }
-function setWiz(path,val){
-  var c=wizCfg(), p=path.split('.');
-  if(p.length===1)c[p[0]]=val; else c[p[0]][p[1]]=val;
-  settings.wizardSettings=c; saveSettingJson('wizardSettings',c,'Wizard-Einstellung geändert'); renderMain();
+var wizEdit={id:null,draft:null,dirty:false},wizPick={key:null,top:0,left:0},wizDragIdx=null;
+function wizClone(o){return JSON.parse(JSON.stringify(o));}
+function wizRoleTxt(r){var a=[];if(r.admin)a.push('Admin');if(r.coach)a.push('Coach');if(r.viewer)a.push('Betrachter');return a.length?a.join(', '):'niemand';}
+function wizTrigTxt(w){
+  var a=[];if(w.trigger.login)a.push('Bei Anmeldung');if(w.trigger.time)a.push('ab '+w.trigger.at+' Uhr');
+  return (a.length?a.join(' + '):'kein Auslöser')+' · '+(w.freq==='daily'?'1× pro Tag':'jede Anmeldung');
+}
+function wizRerender(){
+  var el=document.getElementById('wizCard');
+  if(el)el.outerHTML=buildWizardsHtml();
+  wizRenderPick();
+}
+// Panel liegt direkt im body, damit es nicht von Box/Tabelle verschoben oder abgeschnitten wird
+function wizRenderPick(){
+  var l=document.getElementById('wizPickLayer');
+  if(!l){l=document.createElement('div');l.id='wizPickLayer';document.body.appendChild(l);}
+  if(wizPick.key){
+    var b=document.querySelector('[data-wizpick="'+wizPick.key+'"]');
+    if(!b){wizPick.key=null;}else{var r=b.getBoundingClientRect();wizPick.top=r.bottom+4;wizPick.left=r.left;wizPick.width=r.width;}
+  }
+  l.innerHTML=wizPickPanel();
+}
+function wizPickClose(){if(!wizPick.key)return;wizPick.key=null;var el=document.getElementById('wizCard');if(el)el.outerHTML=buildWizardsHtml();wizRenderPick();}
+function wizToggleOpen(id){
+  if(wizEdit.id===id){
+    if(wizEdit.dirty&&!confirm('Ungespeicherte Änderungen verwerfen?'))return;
+    wizEdit={id:null,draft:null,dirty:false};
+  } else {
+    if(wizEdit.dirty&&!confirm('Ungespeicherte Änderungen am geöffneten Wizard verwerfen?'))return;
+    wizEdit={id:id,draft:wizClone(wizGet(id)),dirty:false};
+  }
+  wizPick.key=null;wizRerender();
+}
+function wizSet(path,val){
+  var d=wizEdit.draft;if(!d)return;
+  var p=path.split('.'),o=d;
+  for(var i=0;i<p.length-1;i++)o=o[p[i]];
+  o[p[p.length-1]]=val;
+  wizEdit.dirty=true;wizPick.key=null;wizRerender();
+}
+function wizSlideSet(i,prop,val){var d=wizEdit.draft;if(!d||!d.slides[i])return;d.slides[i][prop]=val;wizEdit.dirty=true;wizPick.key=null;wizRerender();}
+function wizNum(v,min,max,allowEmpty){
+  if(allowEmpty&&String(v).trim()==='')return null;
+  var n=parseInt(v,10);if(isNaN(n))n=min;return Math.max(min,Math.min(max,n));
+}
+// Speichern: neue Konfiguration + Tagesüberblick zusätzlich im alten Format (wizardSettings)
+function wizPersist(cfg,logText){
+  var plain={v:1,wizards:cfg.wizards.map(function(w){return wizClone(w);})};
+  settings.wizardConfig=plain;
+  var d=plain.wizards.filter(function(w){return w.id==='daily';})[0];
+  var p1=saveSettingJson('wizardConfig',plain,logText);
+  if(d){
+    var on=function(id){return d.slides.some(function(s){return s.id===id&&s.on;});};
+    var wk=d.slides.filter(function(s){return s.id==='worstKpi';})[0];
+    var legacy={on:d.on,time:d.trigger.at,roles:Object.assign({},d.roles),slides:{opt:on('opt'),marge:on('margeToday'),cr:on('cr'),worst:on('worstKpi')},minOpt:wk&&wk.minOpt!=null?wk.minOpt:5};
+    settings.wizardSettings=legacy;
+    saveSettingJson('wizardSettings',legacy);
+  }
+  return p1;
+}
+function wizSave(){
+  var d=wizEdit.draft;if(!d)return;
+  if(!d.trigger.login&&!d.trigger.time){alert('Bitte mindestens einen Auslöser wählen: bei Anmeldung oder Uhrzeit.');return;}
+  if(d.trigger.time&&!/^\d{2}:\d{2}$/.test(d.trigger.at||'')){alert('Bitte eine gültige Uhrzeit eintragen.');return;}
+  var cfg=wizConfig();
+  cfg.wizards=cfg.wizards.map(function(w){return w.id===d.id?wizClone(d):w;});
+  wizPersist(cfg,'Wizard „'+d.name+'“ geändert');
+  wizEdit.dirty=false;wizRerender();
+  if(typeof showToast==='function')showToast('Wizard gespeichert');
+}
+function wizToggleActive(id,val){
+  var cfg=wizConfig();
+  cfg.wizards.forEach(function(w){if(w.id===id)w.on=val;});
+  if(wizEdit.draft&&wizEdit.draft.id===id)wizEdit.draft.on=val;
+  wizPersist(cfg,'Wizard „'+(wizGet(id)||{}).name+'“ '+(val?'eingeschaltet':'ausgeschaltet'));
+  wizRerender();
+}
+function wizPreview(id){
+  var w=(wizEdit.draft&&wizEdit.draft.id===id)?wizEdit.draft:wizGet(id);
+  if(w)wizOpen(wizClone(w),{preview:true});
+}
+// Reihenfolge per Ziehen (nur über den Griff)
+function wizDragStart(ev,i){wizDragIdx=i;ev.dataTransfer.effectAllowed='move';try{ev.dataTransfer.setData('text/plain',String(i));}catch(e){}}
+function wizDragOver(ev,i){
+  if(wizDragIdx===null)return;ev.preventDefault();
+  var rows=document.querySelectorAll('#wizSlideBody tr');
+  rows.forEach(function(r,k){r.style.boxShadow=k===i?(i<wizDragIdx?'inset 0 2px 0 #F08566':'inset 0 -2px 0 #F08566'):'';});
+}
+function wizDrop(ev,i){
+  ev.preventDefault();
+  var from=wizDragIdx;wizDragIdx=null;
+  if(from===null||from===i||!wizEdit.draft)return wizRerender();
+  var s=wizEdit.draft.slides,it=s.splice(from,1)[0];s.splice(i,0,it);
+  wizEdit.dirty=true;wizRerender();
+}
+function wizDragEnd(ev){
+  var tr=ev.target&&ev.target.closest?ev.target.closest('tr'):null;if(tr)tr.draggable=false;
+  if(wizDragIdx!==null){wizDragIdx=null;wizRerender();}
+}
+// Auswahl im Board-Stil (Knopf + Panel), Panel fest positioniert, damit die Tabelle es nicht abschneidet
+function wizPickBtn(key,val,opts){
+  var cur=opts.filter(function(o){return o[0]===val;})[0]||opts[0];
+  return '<button type="button" class="btn sbtn" data-wizpick="'+key+'" style="justify-content:space-between;min-width:150px" onclick="wizPickToggle(\''+key+'\',this)"><span>'+esc(cur[1])+'</span><i class="ti ti-chevron-'+(wizPick.key===key?'up':'down')+'" style="font-size:11px"></i></button>';
+}
+function wizPickToggle(key,btn){
+  wizPick.key=wizPick.key===key?null:key;
+  wizRerender();
+}
+function wizPickPanel(){
+  if(!wizPick.key||!wizEdit.draft)return '';
+  var k=wizPick.key.split(':'),i=+k[0],prop=k[1],s=wizEdit.draft.slides[i];if(!s)return '';
+  return '<div id="wizPickPanel" style="position:fixed;top:'+wizPick.top+'px;left:'+wizPick.left+'px;min-width:'+wizPick.width+'px;z-index:300;background:#EFECE5;border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(40,32,15,0.14);padding:6px 0">'
+    +WIZ_KPIS.map(function(o){return '<div role="option" aria-selected="'+(s[prop]===o[0])+'" onclick="wizSlideSet('+i+',\''+prop+'\',\''+o[0]+'\')" style="padding:7px 14px;font-size:12.5px;cursor:pointer;white-space:nowrap;'+(s[prop]===o[0]?'font-weight:700;color:var(--text)':'color:var(--text2)')+'" onmouseover="this.style.background=\'rgba(29,28,26,0.06)\'" onmouseout="this.style.background=\'transparent\'">'+esc(o[1])+'</div>';}).join('')
+    +'</div>';
+}
+document.addEventListener('mousedown',function(e){
+  if(!wizPick.key)return;
+  if(e.target.closest&&(e.target.closest('#wizPickPanel')||e.target.closest('[onclick^="wizPickToggle"]')))return;
+  wizPickClose();
+});
+window.addEventListener('scroll',function(){wizPickClose();},true);
+function wizSlideSettingHtml(s,i){
+  var num=function(prop,val,min,max,ph,allowEmpty){return '<input type="number" min="'+min+'" max="'+max+'" value="'+(val==null?'':val)+'"'+(ph?' placeholder="'+ph+'"':'')+' aria-label="'+prop+'" onchange="wizSlideSet('+i+',\''+prop+'\',wizNum(this.value,'+min+','+max+','+(allowEmpty?'true':'false')+'))" style="width:76px;height:34px;padding:0 10px;margin:0">';};
+  var row=function(inner){return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;font-size:13px;color:var(--text2)">'+inner+'</div>';};
+  switch(s.id){
+    case 'overdue':return row('<span>älter als</span>'+num('days',s.days,1,365)+'<span>Tage</span>');
+    case 'upcoming':return row('<span>nächste</span>'+num('days',s.days,1,365,'alle',true)+'<span>Tage</span>');
+    case 'qa':return row('<span>in den letzten</span>'+num('days',s.days,1,365)+'<span>Tagen</span>');
+    case 'top3':return row(wizPickBtn(i+':kpi',s.kpi,WIZ_KPIS));
+    case 'worst3':return row(wizPickBtn(i+':kpi',s.kpi,WIZ_KPIS)+'<span>ab</span>'+num('minOpt',s.minOpt,0,500)+'<span>Opt.</span>');
+    case 'worstKpi':return row('<span>mehr als</span>'+num('minOpt',s.minOpt,0,500)+'<span>Opt. heute</span>');
+    default:return '<span style="color:var(--text3)">—</span>';
+  }
+}
+function wizEditorHtml(d){
+  function chk(path,label,on){return '<label class="wz-chip'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="wizSet(\''+path+'\',this.checked)">'+label+'</label>';}
+  function rad(val,label){var on=d.freq===val;return '<label class="wz-chip'+(on?' on':'')+'"><input type="radio" name="wizFreq" '+(on?'checked':'')+' onchange="wizSet(\'freq\',\''+val+'\')">'+label+'</label>';}
+  function sw(on,label,js){return '<label class="wz-switch" title="'+label+'"><input type="checkbox" aria-label="'+label+'" '+(on?'checked':'')+' onchange="'+js+'"><span></span></label>';}
+  var lbl='font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px';
+  var h='<div style="padding:16px;background:rgba(29,28,26,0.025);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2)">'
+    +'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:16px">'
+    +'<div><div style="'+lbl+'">Auslöser</div><div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px 0">'+chk('trigger.login','Bei Anmeldung',d.trigger.login)+chk('trigger.time','Uhrzeit',d.trigger.time)
+      +'<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text2)'+(d.trigger.time?'':';opacity:.45')+'">ab <input type="time" value="'+esc(d.trigger.at||'')+'" '+(d.trigger.time?'':'disabled ')+'aria-label="Uhrzeit" onchange="wizSet(\'trigger.at\',this.value)" style="width:110px"> Uhr</span></div></div>'
+    +'<div><div style="'+lbl+'">Häufigkeit</div><div>'+rad('daily','1× pro Tag')+rad('every','Jede Anmeldung')+'</div></div>'
+    +'<div><div style="'+lbl+'">Für wen</div><div>'+chk('roles.admin','Admin',d.roles.admin)+chk('roles.coach','Coach',d.roles.coach)+chk('roles.viewer','Betrachter',d.roles.viewer)+'</div></div>'
+    +'</div>'
+    +'<div style="'+lbl+'">Slides · Reihenfolge per Ziehen</div>'
+    +'<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:26%">Slide</th><th>Inhalt</th><th style="width:330px">Einstellung</th><th class="r" style="text-align:right;width:100px">Anzeigen</th></tr></thead><tbody id="wizSlideBody">';
+  var nr=0;
+  d.slides.forEach(function(s,i){
+    var def=WIZ_SLIDES[s.id];if(!def)return;
+    h+='<tr ondragstart="wizDragStart(event,'+i+')" ondragover="wizDragOver(event,'+i+')" ondrop="wizDrop(event,'+i+')" ondragend="wizDragEnd(event)" style="height:54px'+(s.on?'':';opacity:.55')+'">'
+      +'<td class="f"><span style="display:inline-flex;align-items:center;gap:8px"><i class="ti ti-grip-vertical" title="Ziehen zum Sortieren" style="cursor:grab;color:var(--text3);font-size:16px" onmousedown="this.closest(\'tr\').draggable=true" onmouseup="this.closest(\'tr\').draggable=false"></i>'
+      +'<span style="display:inline-block;min-width:16px;color:var(--text3);font-weight:600">'+(s.on?(++nr):'')+'</span>'+esc(def.label)+'</span></td>'
+      +'<td style="color:var(--text2)">'+esc(def.desc)+'</td>'
+      +'<td>'+wizSlideSettingHtml(s,i)+'</td>'
+      +'<td class="r">'+sw(s.on,'Slide '+def.label+' anzeigen','wizSlideSet('+i+',\'on\',this.checked)')+'</td></tr>';
+  });
+  h+='</tbody></table></div>'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-top:14px"><span style="font-size:12px;color:var(--text3)">'
+    +(wizEdit.dirty?'Ungespeicherte Änderungen':'Uhrzeit-Auslöser: höchstens einmal pro Tag und Gerät. „Jede Anmeldung“ gilt für den Auslöser bei Anmeldung.')+'</span>'
+    +'<span style="margin-left:auto;display:flex;gap:8px"><button class="btn" style="width:auto;height:34px" onclick="wizPreview(\''+d.id+'\')"><i class="ti ti-player-play"></i> Vorschau</button>'
+    +'<button class="btn btn-primary" style="width:auto;height:34px" onclick="wizSave()"><i class="ti ti-check"></i> Speichern</button></span></div>'
+    +'</div>';
+  return h;
 }
 function buildWizardsHtml(){
-  var c=wizCfg();
-  function chip(path,label,on){return '<label class="wz-chip'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)">'+label+'</label>';}
-  function sw(path,on,label){return '<label class="wz-switch" title="'+label+'"><input type="checkbox" aria-label="'+label+'" '+(on?'checked':'')+' onchange="setWiz(\''+path+'\',this.checked)"><span></span></label>';}
-  var card1='<div class="card">'
-    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div class="card-title" style="display:flex;align-items:center;gap:8px">Tagesüberblick '+sStatus(c.on?'Aktiv':'Aus',c.on?'ok':'off')+'</div><div class="card-sub" style="margin-top:-6px">Slides mit Optimierungen, Marge, Conversion Rates und den schwächsten 3 je KPI</div></div>'
-    +'<div style="display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600">'+(c.on?'Eingeschaltet':'Ausgeschaltet')+sw('on',c.on,'Tagesüberblick ein- oder ausschalten')+'</div></div>'
-    +'<div class="std-wrap" style="margin-bottom:14px"><table class="std-table"><thead><tr><th style="width:28%">Einstellung</th><th>Auswahl</th></tr></thead><tbody>'
-    +'<tr><td class="f">Zeitpunkt<span class="s">einmal pro Tag und Gerät</span></td><td><div style="display:flex;align-items:center;gap:8px"><label for="wizTime" style="margin:0;font-size:13px;color:var(--text2)">täglich ab</label><input id="wizTime" type="time" value="'+c.time+'" onchange="setWiz(\'time\',this.value)" style="width:130px"><span style="font-size:13px;color:var(--text2)">Uhr</span></div></td></tr>'
-    +'<tr><td class="f">Für wen<span class="s">wer den Überblick angezeigt bekommt</span></td><td>'+chip('roles.admin','Admin',c.roles.admin)+chip('roles.coach','Coach',c.roles.coach)+chip('roles.viewer','Betrachter',c.roles.viewer)+'</td></tr>'
-    +'</tbody></table></div>'
-    +'<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:28%">Slide</th><th>Inhalt</th><th class="r" style="text-align:right;width:120px">Anzeigen</th></tr></thead><tbody>'
-    +'<tr><td class="f">Optimierungen</td><td style="color:var(--text2)">Optimierungen heute und Prognose für den Monat</td><td class="r">'+sw('slides.opt',c.slides.opt,'Slide Optimierungen anzeigen')+'</td></tr>'
-    +'<tr><td class="f">Marge</td><td style="color:var(--text2)">Marge heute und Prognose für den Monat</td><td class="r">'+sw('slides.marge',c.slides.marge,'Slide Marge anzeigen')+'</td></tr>'
-    +'<tr><td class="f">Conversion Rates</td><td style="color:var(--text2)">CR des Teams im Überblick</td><td class="r">'+sw('slides.cr',c.slides.cr,'Slide Conversion Rates anzeigen')+'</td></tr>'
-    +'<tr><td class="f">Schwächste 3 je KPI</td><td style="color:var(--text2)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>nur Verkäufer mit mehr als</span><input id="wizMin" type="number" min="0" max="50" value="'+c.minOpt+'" onchange="setWiz(\'minOpt\',Math.max(0,parseInt(this.value)||0))" style="width:80px"><span>Opt.</span></div></td><td class="r">'+sw('slides.worst',c.slides.worst,'Slide Schwächste 3 je KPI anzeigen')+'</td></tr>'
-    +'</tbody></table></div>'
-    +'<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn sbtn" onclick="showDailyWizard()"><i class="ti ti-player-play"></i> Vorschau anzeigen</button></div></div>';
-  var soon=function(t,d){return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="display:flex;flex-direction:column;gap:3px"><span class="card-title" style="margin:0">'+t+'</span><span style="font-size:12px;color:var(--text2)">'+d+'</span></div>'+sStatus('in Planung','off')+'</div>';};
-  return card1+soon('Wochenstart','Montags: Vorwoche im Rückblick und Fokus-KPI je Mitarbeiter')+soon('Coaching-Erinnerung','Hinweis, wenn ein Mitarbeiter länger kein Coaching hatte');
+  var cfg=wizConfig();
+  if(wizEdit.id&&!wizEdit.draft)wizEdit.id=null;
+  var cols='<colgroup><col style="width:22%"><col><col style="width:18%"><col style="width:90px"><col style="width:80px"><col style="width:56px"></colgroup>';
+  var th='<thead><tr><th>Wizard</th><th>Auslöser</th><th>Für wen</th><th class="r" style="text-align:right">Slides</th><th class="r" style="text-align:right">Aktiv</th><th></th></tr></thead>';
+  var h='<div class="card" id="wizCard"><div class="card-title">Wizards</div><div class="card-sub">Wann welcher Wizard für wen erscheint und welche Slides er zeigt</div><div class="std-wrap">';
+  var part='<table class="std-table">'+cols+th+'<tbody>';
+  cfg.wizards.forEach(function(saved){
+    var isOpen=wizEdit.id===saved.id,w=isOpen?wizEdit.draft:saved;
+    var n=w.slides.filter(function(s){return s.on;}).length;
+    part+='<tr onclick="if(!event.target.closest(\'.wz-switch\'))wizToggleOpen(\''+w.id+'\')" style="cursor:pointer">'
+      +'<td class="f">'+esc(w.name)+(isOpen&&wizEdit.dirty?' <span style="color:#F08566" title="ungespeichert">●</span>':'')+'</td>'
+      +'<td style="color:var(--text2)">'+esc(wizTrigTxt(w))+'</td>'
+      +'<td style="color:var(--text2)">'+esc(wizRoleTxt(w.roles))+'</td>'
+      +'<td class="r">'+n+'</td>'
+      +'<td class="r"><label class="wz-switch" title="Wizard ein- oder ausschalten"><input type="checkbox" aria-label="'+esc(w.name)+' aktiv" '+(saved.on?'checked':'')+' onchange="wizToggleActive(\''+w.id+'\',this.checked)"><span></span></label></td>'
+      +'<td class="r"><i class="ti ti-chevron-'+(isOpen?'up':'down')+'" style="color:var(--text3)"></i></td></tr>';
+    if(isOpen){
+      h+=part+'</tbody></table>'+wizEditorHtml(w);
+      part='<table class="std-table">'+cols+'<tbody>';
+    }
+  });
+  h+=part+'</tbody></table></div></div>';
+  // leere Rest-Tabelle (geöffneter Wizard war der letzte) entfernen
+  return h.replace(/<table class="std-table"><colgroup>(?:(?!<\/colgroup>).)*<\/colgroup><tbody><\/tbody><\/table>/,'');
 }
 
 // ══ Integrationen & Daten (gemeinsame Bausteine) ═════════════════════════════
@@ -11072,7 +11302,7 @@ function loadSettingsFromSupabase(){
       if(r.key==='ftpLastSync')settings.ftpLastSync=r.value||'';
       if(r.key==='tokenExpiry')settings.tokenExpiry=r.value||'';
       if(r.key==='extensionUrl')settings.extensionUrl=r.value||'';
-      if(r.key==='rolePermissions'||r.key==='wizardSettings'||r.key==='ftpUnmatched'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
+      if(r.key==='rolePermissions'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='ftpUnmatched'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
     return true;
