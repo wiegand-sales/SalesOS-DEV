@@ -568,6 +568,13 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-tv .tt-r.f{color:#fff;font-weight:700}.dsh-tv .tt-r.f b{font-weight:700}
 .dsh-tv .tt-z{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;color:rgba(255,255,255,.7)}
 .dsh-tv .ib,.dsh-tv .tb,.dsh-tv .mk{z-index:4}
+
+.dsh-tv .sl{position:absolute;left:-50px;right:0;top:0;height:46px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #E4E0D6;z-index:4;white-space:nowrap}
+.dsh-tv .sl .tm{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text)}.dsh-tv .sl .tm i{width:12px;height:12px;border-radius:50%}
+.dsh-tv .sl .v{font-size:24px;font-weight:400;color:var(--text)}
+.dsh-tv .sl .s{font-size:12.5px;color:var(--text3);overflow:hidden;text-overflow:ellipsis}.dsh-tv .sl .s b{color:var(--text)}.dsh-tv .sl .s b.dsh-lo{color:#B5513A}
+.dsh-tv .sl .bt{margin-left:auto;display:flex;gap:6px}
+.dsh-tv .hs{top:46px}.dsh-tv .xh{top:46px}
 @media (max-width:1100px){.dsh-q{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
@@ -8840,7 +8847,7 @@ function dshTeamBox(all,T){
   function bad(v,ref){if(v===null||v===undefined)return false;var r=z!=null?z:ref;if(r==null)return false;var tol=z!=null?0:(kd.u==='%'?2:Math.abs(r)*0.03);return lte?v>r+tol:v<r-tol;}
   if(!ser[dshTF]||!ser[dshTF].some(function(v){return v!==null;}))dshTF='SE';
   // ── großes Diagramm, ein Team im Fokus ──
-  var W=1000,H=330,TOP=128,BOT=30,X=function(i){return 14+i*(W-28)/((n-1)||1);},Y=function(v){return TOP+(1-(v-mn)/((mx-mn)||1))*(H-TOP-BOT);};
+  var W=1000,H=330,TOP=70,BOT=30,X=function(i){return 14+i*(W-28)/((n-1)||1);},Y=function(v){return TOP+(1-(v-mn)/((mx-mn)||1))*(H-TOP-BOT);};
   var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" class="big" aria-label="'+esc(kd.l)+' je Team im Verlauf">';
   if(z!=null){var yz=Y(z);svg+=lte?'<rect x="0" y="0" width="'+W+'" height="'+yz+'" fill="rgba(240,133,102,.07)"/>':'<rect x="0" y="'+yz+'" width="'+W+'" height="'+(H-yz)+'" fill="rgba(240,133,102,.07)"/>';}
   function line(arr,st){var p=[];arr.forEach(function(v,i){if(v!==null)p.push(X(i).toFixed(1)+','+Y(v).toFixed(1));});return p.length>1?'<polyline points="'+p.join(' ')+'" fill="none" '+st+' vector-effect="non-scaling-stroke"/>':'';}
@@ -8860,8 +8867,8 @@ function dshTeamBox(all,T){
   if(bi>=0&&bi!==wi){ch+='<div class="mk" style="left:'+(X(bi)/W*100).toFixed(2)+'%;top:calc('+(Y(fd2[bi])/H*100).toFixed(2)+'% - 30px)">Bestwert '+dshKFmt(k,fd2[bi])+'</div>';
     ch+='<div class="mk lo" style="left:'+(X(wi)/W*100).toFixed(2)+'%;top:calc('+(Y(fd2[wi])/H*100).toFixed(2)+'% + 12px)">Tiefpunkt '+dshKFmt(k,fd2[wi])+'</div>';}
   var cv=fd2[cur],pv=cur>0?fd2[cur-1]:null,vals=fd2.filter(function(v){return v!==null;}),avg=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:null;
-  ch+='<div class="ib"><div class="t">'+dshTF+' · '+esc(kd.l)+'</div><div class="v'+(bad(cv,ser.G[cur])?' dsh-lo':'')+'">'+dshKFmt(k,cv)+'</div><div class="s">'+dshKDelta(k,cv,pv).replace('ggü. Vorperiode','ggü. '+TS.cmp)+'<br>Ø Zeitraum <b>'+dshKFmt(k,avg)+'</b>'+(z!=null?' · '+(lte?'max. ':'Ziel ')+'<b>'+dshKFmt(k,z)+'</b>':' · Gesamt <b>'+dshKFmt(k,ser.G[cur])+'</b>')+'</div></div>';
-  ch+='<div class="tb">'+TEAMS.map(function(t){var has=ser[t].some(function(v){return v!==null;});return '<button type="button" class="tg'+(t===dshTF?' on':'')+'"'+(has?' onclick="dshSetTF(\''+t+'\')"':' disabled')+'><i style="background:'+TCOL[t]+'"></i>'+t+'</button>';}).join('')+'<span>grau: andere Teams · gepunktet: Gesamt'+(z!=null?' · gestrichelt: Ziel':'')+'</span></div>';
+  var dlt=(cv!=null&&pv!=null)?cv-pv:null,dgood=dlt!=null&&(lte?dlt<=0:dlt>=0);
+  ch+='<div class="sl"><span class="tm"><i style="background:'+TCOL[dshTF]+'"></i>'+dshTF+'</span><span class="v'+(bad(cv,ser.G[cur])?' dsh-lo':'')+'">'+dshKFmt(k,cv)+'</span>'+'<span class="s">'+(dlt!=null?'<b class="'+(dgood?'':'dsh-lo')+'">'+(dlt>0?'▲ ':dlt<0?'▼ ':'')+(kd.u==='%'?Math.round(Math.abs(dlt))+' Pkt.':dshKFmt(k,Math.abs(dlt)))+'</b> ggü. '+TS.cmp+' · ':'')+'Ø Zeitraum <b>'+dshKFmt(k,avg)+'</b>'+(z!=null?' · '+(lte?'max. ':'Ziel ')+'<b>'+dshKFmt(k,z)+'</b>':' · Gesamt <b>'+dshKFmt(k,ser.G[cur])+'</b>')+'</span>'+'<span class="bt">'+TEAMS.map(function(t){var has=ser[t].some(function(v){return v!==null;});return '<button type="button" class="tg'+(t===dshTF?' on':'')+'"'+(has?' onclick="dshSetTF(\''+t+'\')"':' disabled')+'><i style="background:'+TCOL[t]+'"></i>'+t+'</button>';}).join('')+'</span></div>';
   ch+='</div><div class="tv-x">'+sl.map(function(x,i){var l=x.l;if(n>15&&i%2&&i!==cur)l='';return '<span class="'+(i===cur?'cur':(x.f>t0?'fut':''))+'" style="left:'+(X(i)/W*100).toFixed(2)+'%">'+l+'</span>';}).join('')+'</div>';
   // ── Kacheln: Gesamt + Teams, Wert der laufenden Periode, Mini-Diagramm mit Gesamt und Ziel ──
   var cs=sl[cur],tiles='<div class="dsh-tcs">';
@@ -9052,7 +9059,7 @@ function renderDashboard(){
   var oc=ma.querySelector('.content'),st=oc?oc.scrollTop:0;
   ma.innerHTML=h;
   var nc=ma.querySelector('.content');if(nc&&st)nc.scrollTop=st;
-  dshAlignInfo();
+
 }
 function dshEmpSection(R,all,S,Z,REF,under){
   // ── 3 · Mitarbeiter ──
