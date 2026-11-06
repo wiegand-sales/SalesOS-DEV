@@ -4705,13 +4705,13 @@ function empTargets(emp){
       }
     }
   }
-  // Diese Kennzahlen lassen sich in den Stammdaten nicht pflegen (nur ueber die Provisionsvereinbarung).
-  // Alte Einzelwerte aus employee_kpi_targets (z.B. Standardwerte beim Anlegen) duerfen sie deshalb nicht
-  // ueberschreiben: Gibt es eine Provisionsvereinbarung, gilt deren Wert; leer = in diesem Monat keine Pruefung.
-  var PROV_ONLY={crOEM:1,crTW:1,crSuperYes:1,crMegaYes:1,optPerH:1,crSyMy:1,anteilOEM:1};
+  // Massgeblich sind die individuellen Ziele aus „Stammdaten & Provisionsvereinbarung“ (provisionsrelevante und
+  // ergaenzende KPIs, gestaffelt nach Beschaeftigungsmonat). Alte Einzelwerte aus employee_kpi_targets
+  // (frueher automatisch beim Anlegen gesetzt, in der Oberflaeche nicht mehr pflegbar) gelten nur noch,
+  // wenn es fuer den Mitarbeiter keine Vereinbarung gibt (kein Eintrittsdatum). Leeres Feld = keine Pruefung.
   function pval(key,provKey,fallback){
-    if(PROV_ONLY[key]&&provKpi)return provKpi[provKey]!=null&&provKpi[provKey]!==''?provKpi[provKey]:null;
-    if(t[key]!=null)return t[key]; // manueller Mitarbeiter-Override (in den Stammdaten pflegbar) hat Vorrang
+    if(provKpi&&provKey&&Object.prototype.hasOwnProperty.call(provKpi,provKey))return provKpi[provKey]!=null&&provKpi[provKey]!==''?+provKpi[provKey]:null;
+    if(t[key]!=null)return t[key];
     if(provKpi&&provKpi[provKey]!=null)return provKpi[provKey];
     return (g[key]&&g[key].val!=null)?g[key].val:fallback;
   }
@@ -6407,7 +6407,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table class="perf-tbl" style="width:100%;min-width:1400px;border-collapse:collapse;table-layout:fixed"><thead><tr>'
       +sortTh('Mitarbeiter','name',';width:160px')
       +sortTh(firstColLabel,'period',';width:120px')
-      +[['Akt./Std.','aktPerH'],['NE','notR'],['NM','notP'],['NErr','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
+      +[['Akt./Std.','aktPerH'],['NE','notR'],['NM','notP'],['NEF','notS'],['OEM','convOEM'],['Upsells','ups'],['WKA','wka_gesamt_yes'],['Opt. Ges.','optGes'],['Opt./Std.','optPerH2'],['CR OEM','crOEM'],['CR TW','crTW'],['CR Yes','crYes'],['CR SY/MY','crSyMy'],['CR SY','crSY'],['CR MY','crMY'],['Anteil OEM','anteilOEM']].map(function(cc){
         return sortTh(cc[0],cc[1],';text-align:right');
       }).join('')
       +[['Marge Ges.','marge']].map(function(cc){
@@ -6441,7 +6441,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;cursor:help" onmouseenter="showInfoTooltip(event,\'Akt./Std. = Aktivitäten / Stunden\',\'Aktivitäten\','+akt+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Akt./Std.\','+aktPerHour.toFixed(1)+')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(aktPerHour.toFixed(1),akt)+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notR/akt*100),rowEmpT.notReached.val,rowEmpT.notReached.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NE = NE / Aktivitäten\',\'NE\','+notR+',\'Aktivitäten\','+akt+',\'NE-Quote\',\''+(akt>0?Math.round(notR/akt*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((akt>0?Math.round(notR/akt*100)+'%':'—'),(akt>0?notR:'—'))+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;'+(akt>0?fc(Math.round(notP/akt*100),rowEmpT.notPossible.val,rowEmpT.notPossible.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NM = NM / Aktivitäten\',\'NM\','+notP+',\'Aktivitäten\','+akt+',\'NM-Quote\',\''+(akt>0?Math.round(notP/akt*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((akt>0?Math.round(notP/akt*100)+'%':'—'),(akt>0?notP:'—'))+'</td>'
-        +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;'+((notS+optGes)>0?fc(Math.round(notS/(notS+optGes)*100),rowEmpT.notSuccessful.val,rowEmpT.notSuccessful.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NErr = NErr / (NErr + Opt.Ges.)\',\'NErr\','+notS+',\'Opt.Ges.\','+optGes+',\'NErr-Quote\',\''+((notS+optGes)>0?Math.round(notS/(notS+optGes)*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(((notS+optGes)>0?Math.round(notS/(notS+optGes)*100)+'%':'—'),((notS+optGes)>0?notS:'—'))+'</td>'
+        +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;'+((notS+optGes)>0?fc(Math.round(notS/(notS+optGes)*100),rowEmpT.notSuccessful.val,rowEmpT.notSuccessful.dir):'color:var(--text2)')+';cursor:help" onmouseenter="showInfoTooltip(event,\'NEF = NEF / (NEF + Opt.Ges.)\',\'NEF\','+notS+',\'Opt.Ges.\','+optGes+',\'NEF-Quote\',\''+((notS+optGes)>0?Math.round(notS/(notS+optGes)*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(((notS+optGes)>0?Math.round(notS/(notS+optGes)*100)+'%':'—'),((notS+optGes)>0?notS:'—'))+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(convOEM/optGes*100)+'%':'—'),(optGes>0?convOEM:'—'))+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'Upsells = Opt.Upsells / Opt.Ges.\',\'Opt.Upsells\','+ups+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(ups/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(ups/optGes*100)+'%':'—'),(optGes>0?ups:'—'))+'</td>'
         +'<td style="padding:16px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'WKA = Opt.WKA / Opt.Ges.\',\'Opt.WKA\','+wka_gesamt_yes+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(wka_gesamt_yes/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?Math.round(wka_gesamt_yes/optGes*100)+'%':'—'),(optGes>0?wka_gesamt_yes:'—'))+'</td>'
@@ -7454,7 +7454,7 @@ function renderTab(){
       +'<select onchange="setEmpChartMetric(this.value)" style="width:auto;height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer">';
     [
       {k:'aktivitaeten',l:'Aktivitäten (NE+NM+NERR+Opt.Ges.)'},
-      {k:'ne',l:'NE'},{k:'nm',l:'NM'},{k:'nerr',l:'NERR'},
+      {k:'ne',l:'NE'},{k:'nm',l:'NM'},{k:'nerr',l:'NEF'},
       {k:'optGesamt',l:'Opt. Ges.'},
       {k:'convOEM',l:'OEM'},{k:'ups_yes',l:'UPS'},
       {k:'wka_gesamt_yes',l:'WKA (WKA OEM + WKA UPS)'},
@@ -8402,7 +8402,7 @@ function renderTab(){
         if(key==='margeGesamt')return s.margeGes;
         return 0;
       }
-      var mLabels={aktivitaeten:'Aktivitäten',ne:'NE',nm:'NM',nerr:'NERR',convOEM:'OEM',ups_yes:'UPS',wka_gesamt_yes:'WKA',optGesamt:'Opt. Gesamt',crOEM:'CR OEM %',crTeilweise:'CR TW %',crYes:'CR YES %',crSyMy:'CR SY/MY %',crSuperYes:'CR SY %',crMegaYes:'CR MY %',margeGesamt:'Marge Gesamt €'};
+      var mLabels={aktivitaeten:'Aktivitäten',ne:'NE',nm:'NM',nerr:'NEF',convOEM:'OEM',ups_yes:'UPS',wka_gesamt_yes:'WKA',optGesamt:'Opt. Gesamt',crOEM:'CR OEM %',crTeilweise:'CR TW %',crYes:'CR YES %',crSyMy:'CR SY/MY %',crSuperYes:'CR SY %',crMegaYes:'CR MY %',margeGesamt:'Marge Gesamt €'};
       var m={f:empChartMetric,l:mLabels[empChartMetric]||empChartMetric,c:'#F08566'};
 
       var vals=periods.map(function(p){
@@ -11305,7 +11305,7 @@ function esBuildHtml(emp,asPopup,html){
           {lbl:'SY-Anteil (mind.) %',f:'sy',unit:'%'},
           {lbl:'NE - nicht erreicht (max.) %',f:'notReached',unit:'%'},
           {lbl:'NM - nicht möglich (max.) %',f:'notPossible',unit:'%'},
-          {lbl:'NErr - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
+          {lbl:'NEF - nicht erfolgreich (max.) %',f:'notSuccessful',unit:'%'},
           {lbl:'Aktivitäten/Tag (mind.)',f:'aktivitaeten',unit:''},
           {lbl:'Conv. OEM/Tag (mind.)',f:'convOEM',unit:''},
           {lbl:'Opt. Gesamt/Tag (mind.)',f:'optGesamt',unit:''},
@@ -12850,7 +12850,7 @@ function histFieldInfo(field){
     provision_divOEM:'Divisor OEM',provision_divUpsell:'Divisor Upsells',provision_divWka:'Divisor WKA',provision_reduktionProKpi:'Reduzierung je KPI',
     provision_mindestprovision:'Mindestprovision',provision_mindestleistungOptH:'Mindestleistung Opt./Std.',
     provision_vlc_serviceRate:'Service Rate (VLC)',provision_vlc_bonusProOpt:'Bonus/Opt. (VLC)',provision_vlc_extraPayPct:'Extra Pay % (VLC)',provision_vlc_extraPayAbH:'Extra Pay ab/Std. (VLC)'};
-  var SUB={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NErr',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
+  var SUB={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NEF',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
   var MON={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
   var PCT={crOem:1,tw:1,sy:1,my:1,syMy:1,oemAnteil:1,crYes:1,notReached:1,notPossible:1,notSuccessful:1};
   var EUR={provision_grundgehalt:1,provision_basisProOpt:2,provision_vlc_serviceRate:1,provision_vlc_bonusProOpt:2,provision_vlc_extraPayAbH:2};
@@ -13017,7 +13017,7 @@ function saveProvisionSettings(empId){
     var ovNorm=(ov==null||ov==='')?null:ov, nvNorm=(nv==null||nv==='')?null:nv;
     if(String(ovNorm)!==String(nvNorm))pvHistRows.push({employee_id:empId,field:'provision_'+k,old_value:ovNorm!=null?String(ovNorm):null,new_value:nvNorm!=null?String(nvNorm):null,changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorNamePv});
   });
-  var MONAT_SUBFIELD_LABELS={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NErr',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
+  var MONAT_SUBFIELD_LABELS={optH:'Opt./Std.',crOem:'CR OEM',tw:'TW-Anteil',sy:'SY-Anteil',my:'MY-Anteil',syMy:'SY/MY-Anteil',oemAnteil:'OEM-Anteil',crYes:'CR Yes',notReached:'NE',notPossible:'NM',notSuccessful:'NEF',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM/Tag',optGesamt:'Opt. Gesamt/Tag',margeZiel:'Marge Ziel'};
   var MONAT_LABELS={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
   ['monat1','monat2','monat3plus'].forEach(function(mk){
     var oldM=oldSettings[mk]||{}, newM=settings[mk]||{};
