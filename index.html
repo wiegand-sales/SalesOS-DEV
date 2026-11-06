@@ -482,7 +482,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-qt .kv{display:flex;gap:16px;font-size:12.5px;color:var(--text3);margin-top:4px}.dsh-qt .kv b{font-weight:700;color:var(--text)}
 .dsh-qt.dsh-ko .kv{color:#FFE1D6}.dsh-qt.dsh-ko .kv b{color:#fff}
 .dsh-qt .tm{margin-top:22px;padding-top:12px;border-top:1px solid rgba(0,0,0,.07)}.dsh-qt.dsh-ko .tm{border-top-color:rgba(255,255,255,.22)}
-.dsh-qt .th,.dsh-qt .tr{display:grid;grid-template-columns:34px minmax(0,1fr) 42px 72px;gap:8px;align-items:center}
+.dsh-qt .th,.dsh-qt .tr{display:grid;grid-template-columns:30px minmax(24px,1fr) 38px 58px;gap:6px;align-items:center}
 .dsh-qt .th{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}.dsh-qt .th span:last-child{text-align:right}
 .dsh-qt.dsh-ko .th{color:#FFE1D6}
 .dsh-qt .tr{height:28px;font-size:12.5px}
@@ -505,6 +505,34 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-chart .pc.lo{color:#B5513A}.dsh-chart .pc.run{color:var(--text3);font-weight:600}
 .dsh-chart .dsh-lg i.zfl{background:rgba(138,127,114,.16);border:1px dashed rgba(58,56,51,.4);box-sizing:border-box}
 .dsh-chart .xl span{font-size:11.5px}.dsh-chart .xl span.nd{opacity:.55}
+
+.dsh-q{grid-template-columns:minmax(0,1.15fr) repeat(4,minmax(0,1fr))!important}
+.dsh-donut .dw{position:relative;width:132px;height:132px;margin:8px auto 4px}.dsh-donut .dw svg{width:100%;height:100%}
+.dsh-donut .dw .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}.dsh-donut .dw .c b{font-size:14px;font-weight:700;color:var(--text)}.dsh-donut .dw .c span{font-size:11px;color:var(--text3)}
+.dsh-donut .lr{display:grid;grid-template-columns:12px minmax(0,1fr) 38px 80px;gap:6px;align-items:center;height:24px;font-size:12.5px}
+.dsh-donut .lr i{width:10px;height:10px;border-radius:3px}.dsh-donut .lr .n{font-weight:700;color:var(--text2)}.dsh-donut .lr .p{text-align:right;font-weight:700}.dsh-donut .lr .e{text-align:right;color:var(--text2)}
+.dsh-donut .lg2{margin-top:6px}.dsh-donut .tm{margin-top:12px}
+.dsh-kpick{position:relative;margin-left:10px;font-size:13px;font-weight:600}
+.dsh-kpick .pan{position:absolute;top:40px;left:0;z-index:30;background:#EFECE5;border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 12px 30px rgba(40,32,15,.16);padding:8px;display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:4px 10px;min-width:660px}
+.dsh-kpick .pan .g{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase;padding:6px 8px 2px}
+.dsh-kpick .pan button{display:block;width:100%;text-align:left;border:0;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--text2);padding:6px 8px;border-radius:7px;cursor:pointer}
+.dsh-kpick .pan button:hover{background:rgba(29,28,26,.06)}.dsh-kpick .pan button.on{background:#fff;color:var(--text);font-weight:700}
+.dsh-tcs{display:grid;grid-template-columns:minmax(0,1.15fr) repeat(4,minmax(0,1fr));gap:10px}
+.dsh-tc{background:#EFECE5;border-radius:12px;padding:14px 16px 12px;min-width:0;height:262px;display:flex;flex-direction:column;overflow:hidden}
+.dsh-tc.dsh-ko{color:#fff;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 52%,#C23B66 100%)}
+.dsh-tc .h{display:flex;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--text2);text-transform:uppercase}.dsh-tc.dsh-ko .h{color:#FFE1D6}
+.dsh-tc .h span{margin-left:auto;font-weight:500;letter-spacing:0;text-transform:none;color:var(--text3)}.dsh-tc.dsh-ko .h span{color:#FFE1D6}
+.dsh-tc .v{font-size:30px;font-weight:400;margin-top:4px;line-height:1.15;color:var(--text);height:35px}.dsh-tc.dsh-ko .v{color:#fff}
+.dsh-tc .dl{font-size:12px;color:var(--text3);height:18px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dsh-tc.dsh-ko .dl{color:#FFEDE6}.dsh-tc.dsh-ko .dl b{color:#fff}
+.dsh-tc .dl b.up{color:var(--text)}.dsh-tc .dl b.dn{color:#B5513A}
+.dsh-tc .sp{display:block;width:100%;height:56px;margin-top:12px}
+.dsh-tc .ds{position:relative;height:30px;margin-top:12px;border-top:1px solid rgba(0,0,0,.08)}.dsh-tc.dsh-ko .ds{border-color:rgba(255,255,255,.25)}
+.dsh-tc .ds i{position:absolute;top:10px;width:9px;height:9px;border-radius:50%;background:#8A7F72;transform:translateX(-4px)}.dsh-tc .ds i.lo{background:#F08566}
+.dsh-tc .ds b{position:absolute;top:3px;bottom:2px;width:2px;background:#3a3833;opacity:.5}
+.dsh-tc .ex{margin-top:auto;font-size:11.5px;color:var(--text3);display:flex;flex-direction:column;gap:2px;white-space:nowrap;overflow:hidden;min-height:34px}
+.dsh-tc .ex span{overflow:hidden;text-overflow:ellipsis}.dsh-tc .ex b{color:var(--text);font-weight:600}.dsh-tc.dsh-ko .ex{color:#FFE1D6}.dsh-tc.dsh-ko .ex b{color:#fff}
+.dsh-tc.na{opacity:.6}
+@media (max-width:1100px){.dsh-tcs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-q{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
@@ -8648,6 +8676,88 @@ function dshStackSvg(buckets,labels,h){
     if(n<=14||i%2===0)s+='<text x="'+(x+bw/2).toFixed(0)+'" y="'+(h-6)+'" text-anchor="middle">'+labels[i]+'</text>';});
   return s+'<line x1="50" x2="'+W+'" y1="'+base+'" y2="'+base+'" stroke="#D8D2C6"/></svg>';
 }
+// ── Team-Steckbriefe: Kennzahl wählbar, Kacheln immer gleich hoch ──
+var dshKpi='crO',dshKpiOpen=false;
+var DSH_KPIS=[
+ {k:'akt',l:'Aktivitäten',g:'Produktivität',u:'n'},{k:'oph',l:'Opt./Std.',g:'Produktivität',u:'d'},
+ {k:'crG',l:'CR Gesamt',g:'Conversion',u:'%'},{k:'crO',l:'CR OEM',g:'Conversion',u:'%'},{k:'crU',l:'CR UPS',g:'Conversion',u:'%'},{k:'crW',l:'CR WKA',g:'Conversion',u:'%'},
+ {k:'tw',l:'CR TW',g:'Upgrade',u:'%',lte:true},{k:'sm',l:'CR SY/MY',g:'Upgrade',u:'%'},{k:'my',l:'CR MY',g:'Upgrade',u:'%'},
+ {k:'mG',l:'Ø Marge/Opt. Gesamt',g:'Ø Marge je Optimierung',u:'€'},{k:'mO',l:'Ø Marge/Opt. OEM',g:'Ø Marge je Optimierung',u:'€'},{k:'mU',l:'Ø Marge/Opt. UPS',g:'Ø Marge je Optimierung',u:'€'},{k:'mW',l:'Ø Marge/Opt. WKA',g:'Ø Marge je Optimierung',u:'€'}];
+function dshKD(k){return DSH_KPIS.filter(function(x){return x.k===k;})[0];}
+function dshSetKpi(k){dshKpi=k;dshKpiOpen=false;renderDashboard();}
+function dshToggleKpi(){dshKpiOpen=!dshKpiOpen;renderDashboard();}
+document.addEventListener('mousedown',function(e){if(dshKpiOpen&&!(e.target.closest&&e.target.closest('.dsh-kpick'))){dshKpiOpen=false;if(view==='dashboard')renderDashboard();}});
+function dshHours(list,from,to){var h=0;list.forEach(function(e){var seen={};(performance[e.id]||[]).forEach(function(x){if(x.date>=from&&x.date<=to&&!seen[x.date]){seen[x.date]=1;h+=workHoursForDate(e,x.date)||0;}});});return h;}
+function dshKVal(k,list,s,from,to){
+  switch(k){
+    case 'akt':return s.akt;
+    case 'oph':var hh=dshHours(list,from,to);return hh>0?(s.oem+s.ups+s.wka)/hh:null;
+    case 'crG':return dshCr(s,'ALL');case 'crO':return dshCr(s,'OEM');case 'crU':return dshCr(s,'UPS');case 'crW':return dshCr(s,'WKA');
+    case 'tw':return chartCrFromSums('crTeilweise',s);case 'sm':return dshCr(s,'SYMY');case 'my':return dshCr(s,'MY');
+    case 'mG':return dshMpo(s,'ALL');case 'mO':return dshMpo(s,'OEM');case 'mU':return dshMpo(s,'UPS');case 'mW':return dshMpo(s,'WKA');
+  }return null;
+}
+function dshKTarget(k,e){
+  var tg=e?empTargets(e):null,pick=function(key){var t=tg&&tg[key]?tg[key]:KPI_TARGETS[key];return t&&t.val!=null?+t.val:null;};
+  if(k==='oph')return pick('optPerH');if(k==='crO')return pick('crOEM');if(k==='tw')return pick('crTeilweise');if(k==='sm')return pick('crSyMy');if(k==='my')return pick('crMegaYes');
+  return null;
+}
+function dshKFmt(k,v){if(v===null||v===undefined||isNaN(v))return '–';var u=dshKD(k).u;
+  if(u==='n')return Math.round(v).toLocaleString('de-DE');if(u==='%')return Math.round(v)+' %';
+  if(u==='€')return v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' €';
+  return v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});}
+function dshKDelta(k,a,b,light){if(a===null||b===null||a===undefined||b===undefined)return '<span class="dl">&nbsp;</span>';var d=a-b,kd=dshKD(k),good=kd.lte?d<=0:d>=0;
+  var t=kd.u==='%'?Math.round(Math.abs(d))+' Pkt.':kd.u==='n'?Math.round(Math.abs(d)).toLocaleString('de-DE'):Math.abs(d).toLocaleString('de-DE',{maximumFractionDigits:1})+(kd.u==='€'?' €':'');
+  return '<span class="dl"><b class="'+(light?'':good?'up':'dn')+'">'+(d>0?'▲ ':d<0?'▼ ':'')+t+'</b> ggü. Vorperiode</span>';}
+function dshKSpark(vals,lo){var v=vals.filter(function(x){return x!==null;});if(v.length<2)return '<div class="sp"></div>';
+  var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),W=200,H=44,pts=[];
+  vals.forEach(function(x,i){if(x!==null)pts.push((i*W/(vals.length-1)).toFixed(1)+','+(H-5-(x-mn)/((mx-mn)||1)*(H-10)).toFixed(1));});
+  var l=pts[pts.length-1].split(',');
+  return '<svg class="sp" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts.join(' ')+'" fill="none" stroke="'+(lo?'#F08566':'currentColor')+'" stroke-opacity=".7" stroke-width="2" vector-effect="non-scaling-stroke"/><circle cx="'+l[0]+'" cy="'+l[1]+'" r="3.5" fill="'+(lo?'#F08566':'currentColor')+'"/></svg>';}
+function dshTeamCards(R,all,S,P,T){
+  var k=dshKpi,kd=dshKD(k),W12=[],mo=dshMonday(today());
+  for(var i=11;i>=0;i--){var f=addDaysUTC(mo,-7*i);W12.push({f:f,t:addDaysUTC(f,6)});}
+  var gv=dshKVal(k,all,S,R.from,R.to),gz=dshKTarget(k,null),ref=gz!=null?gz:gv;
+  function bad(v,z,tolBase){if(v===null||v===undefined)return false;var r=z!=null?z:tolBase;if(r==null)return false;var tol=z!=null?0:(kd.u==='%'?2:Math.abs(r)*0.03);return kd.lte?v>r+tol:v<r-tol;}
+  var refL=gz!=null?(kd.lte?'max. ':'Ziel ')+dshKFmt(k,gz):'Ø Team '+dshKFmt(k,gv);
+  var gs={};DSH_KPIS.forEach(function(x){(gs[x.g]=gs[x.g]||[]).push(x);});
+  var pick='<div class="dsh-kpick'+(dshKpiOpen?' open':'')+'"><button type="button" class="btn" style="width:auto;height:34px" onclick="dshToggleKpi()" aria-expanded="'+dshKpiOpen+'"><span style="color:var(--text3);font-weight:500;margin-right:6px">Kennzahl</span>'+kd.l+'<i class="ti ti-chevron-'+(dshKpiOpen?'up':'down')+'" style="font-size:12px;margin-left:6px"></i></button>'
+    +(dshKpiOpen?'<div class="pan">'+Object.keys(gs).map(function(g){return '<div><div class="g">'+g+'</div>'+gs[g].map(function(x){return '<button type="button" class="'+(x.k===k?'on':'')+'" onclick="dshSetKpi(\''+x.k+'\')">'+x.l+'</button>';}).join('')+'</div>';}).join('')+'</div>':'')+'</div>';
+  // Gesamt
+  var gp=dshKVal(k,all,P,R.prevFrom,R.prevTo),gser=W12.map(function(w){return dshKVal(k,all,chartSumsForRange(all,w.f,w.t),w.f,w.t);});
+  var html='<div class="dsh-tcs">';
+  html+='<div class="dsh-tc dsh-ko"><div class="h">Gesamt<span>alle Teams</span></div><div class="v">'+dshKFmt(k,gv)+'</div>'+dshKDelta(k,gv,gp,true)+'<div style="color:#fff">'+dshKSpark(gser,false)+'</div>'
+    +'<div class="ds"></div><div class="ex"><span>'+refL+'</span><span>Vorperiode <b>'+dshKFmt(k,gp)+'</b></span></div></div>';
+  DSH_TEAMS.forEach(function(t){
+    var L=T[t].list,s=T[t].s,v=dshKVal(k,L,s,R.from,R.to);
+    var head='<div class="h">'+t+'<span>'+L.length+' MA</span></div>';
+    if(v===null){html+='<div class="dsh-tc na">'+head+'<div class="v">–</div><span class="dl">'+(t==='VLC'&&/U|W/.test(k.slice(-1))?'nur OEM':'keine Daten im Zeitraum')+'</span><div class="sp"></div><div class="ds"></div><div class="ex"><span>&nbsp;</span></div></div>';return;}
+    var lo=bad(v,gz,gv),pv=dshKVal(k,L,chartSumsForRange(L,R.prevFrom,R.prevTo),R.prevFrom,R.prevTo);
+    var ser=W12.map(function(w){return dshKVal(k,L,chartSumsForRange(L,w.f,w.t),w.f,w.t);});
+    var em=L.map(function(e){var es=chartSumsForRange([e],R.from,R.to);return {e:e,v:dshKVal(k,[e],es,R.from,R.to),z:dshKTarget(k,e)};}).filter(function(x){return x.v!==null;});
+    var ds='<div class="ds"></div>',ex='<div class="ex"><span>&nbsp;</span></div>';
+    if(em.length){
+      var vals=em.map(function(x){return x.v;}),zr=k==='akt'?(gv!=null&&all.length?gv/all.length:null):ref;
+      var mn=Math.min.apply(null,vals.concat(zr!=null?[zr]:[])),mx=Math.max.apply(null,vals.concat(zr!=null?[zr]:[])),pad=(mx-mn)*0.1||1;mn-=pad;mx+=pad;
+      ds='<div class="ds">'+(zr!=null?'<b style="left:'+((zr-mn)/(mx-mn)*100).toFixed(1)+'%"></b>':'')+em.map(function(x){var b=k==='akt'?(zr!=null&&x.v<zr*0.9):bad(x.v,x.z!=null?x.z:gz,gv);return '<i class="'+(b?'lo':'')+'" style="left:'+((x.v-mn)/(mx-mn)*100).toFixed(1)+'%" title="'+esc(x.e.name)+': '+dshKFmt(k,x.v)+'"></i>';}).join('')+'</div>';
+      var so=em.slice().sort(function(a,b){return kd.lte?a.v-b.v:b.v-a.v;}),fn=function(n){return esc(n.split(' ')[0]);};
+      ex='<div class="ex"><span>Bester <b>'+fn(so[0].e.name)+' '+dshKFmt(k,so[0].v)+'</b></span>'+(so.length>1?'<span>Schwächster <b>'+fn(so[so.length-1].e.name)+' '+dshKFmt(k,so[so.length-1].v)+'</b></span>':'')+'</div>';
+    }
+    html+='<div class="dsh-tc">'+head+'<div class="v'+(lo?' dsh-lo':'')+'">'+dshKFmt(k,v)+'</div>'+dshKDelta(k,v,pv)+'<div style="color:#5C564F">'+dshKSpark(ser,lo)+'</div>'+ds+ex+'</div>';
+  });
+  html+='</div>';
+  return '<div class="card"><div class="card-title">Teams im Vergleich'+pick+'<span class="dsh-cr">Verlauf 12 Wochen · Punkte = Mitarbeiter, Strich = '+(k==='akt'?'Ø je Mitarbeiter':refL)+'</span></div>'+html+'</div>';
+}
+
+// Kreisdiagramm: Aufteilung der Margenerhöhung auf OEM, UPS und WKA
+function dshDonutTile(parts,psum,S){
+  var r=54,c=2*Math.PI*r,off=0,seg='';
+  parts.forEach(function(v,i){var f=psum>0?v/psum:0;if(f<=0)return;seg+='<circle cx="70" cy="70" r="'+r+'" fill="none" stroke="'+DSH_AC[i]+'" stroke-width="22" stroke-dasharray="'+(f*c).toFixed(2)+' '+c.toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 70 70)"/>';off+=f*c;});
+  var leg=DSH_AREAS.map(function(k,i){var v=parts[i];return '<div class="lr"><i style="background:'+DSH_AC[i]+'"></i><span class="n">'+k+'</span><span class="p">'+(psum>0?Math.round(v/psum*100):0)+' %</span><span class="e">'+dshEur(v)+'</span></div>';}).join('');
+  var o=dshOpt(S,'ALL'),oa=[S.oem,S.ups,S.wka];
+  var leg2=DSH_AREAS.map(function(k,i){return '<div class="lr"><i style="background:'+DSH_AC[i]+'"></i><span class="n">'+k+'</span><span class="p">'+(o>0?Math.round(oa[i]/o*100):0)+' %</span><span class="e">'+dshNum(oa[i])+' Opt.</span></div>';}).join('');
+  return '<div class="dsh-qt dsh-donut"><div class="l">Aufteilung</div><div class="dw"><svg viewBox="0 0 140 140" role="img" aria-label="Aufteilung der Margenerhöhung auf OEM, UPS und WKA"><circle cx="70" cy="70" r="'+r+'" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="22"/>'+seg+'</svg><div class="c"><b>'+dshEur(psum)+'</b><span>Marge</span></div></div><div class="lg2">'+leg+'</div><div class="tm"><div class="th"><span>Optimierungen</span></div>'+leg2+'</div></div>';
+}
 // ── Plan: Tagesziele je Mitarbeiter aus der Zielvereinbarung, verteilt nach Wochenarbeitszeit ──
 // Monatsziel je Mitarbeiter = Einsatztage x Opt./Tag x Marge/Opt.; verteilt auf seine Arbeitstage
 // (Kalender aus der Zielvereinbarung, sonst Mo–Fr ohne Feiertage) im Verhältnis seiner Arbeitsstunden.
@@ -8764,7 +8874,7 @@ function renderDashboard(){
   var crAllRef=dshCr(S,'ALL');
   function tileTeams(k){
     var mx=Math.max.apply(null,DSH_TEAMS.map(function(t){return dshCr(T[t].s,k)||0;}).concat([(k==='ALL'?crAllRef:REF[k])||0]))*1.15||100;
-    var r='<div class="tm"><div class="th"><span>Team</span><span>CR</span><span></span><span>Ø je Auftr.</span></div>';
+    var r='<div class="tm"><div class="th"><span>Team</span><span>CR</span><span></span><span>Ø/Auftr.</span></div>';
     DSH_TEAMS.forEach(function(t){var c=dshCr(T[t].s,k),mp=dshMpo(T[t].s,k);
       if(c===null){r+='<div class="tr"><span class="n">'+t+'</span><span class="na">'+(t==='VLC'&&k!=='OEM'&&k!=='ALL'?'nur OEM':'keine Daten')+'</span></div>';return;}
       var lo=k==='ALL'?(crAllRef!=null&&c<crAllRef-2):under(k,c),lm=under('MPO',mp);
@@ -8774,32 +8884,11 @@ function renderDashboard(){
   var tiles='<div class="dsh-q">';
   tiles+='<div class="dsh-qt dsh-ko"><div class="l">Gesamt · '+R.lbl+'</div><div class="v big">'+dshEur(tot)+'</div><div class="kv"><span>CR <b>'+dshPct(crAllRef)+'</b></span><span>Ø je Auftrag <b>'+dshEur1(dshMpo(S,'ALL'))+'</b></span></div>'+tileTeams('ALL')+'</div>';
   tiles+=DSH_AREAS.map(function(k,i){var v=parts[i],c=dshCr(S,k),mp=dshMpo(S,k),lo=under(k,c)&&Z[k]!=null,lm=under('MPO',mp);
-    return '<div class="dsh-qt"><div class="l"><i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k+'<span class="pc">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div><div class="v big">'+dshEur(v)+'</div><div class="kv"><span>CR <b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></span><span>Ø je Auftrag <b class="'+(lm?'dsh-lo':'')+'">'+dshEur1(mp)+'</b></span></div>'+tileTeams(k)+'</div>';}).join('')+'</div>';
+    return '<div class="dsh-qt"><div class="l"><i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k+'<span class="pc">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div><div class="v big">'+dshEur(v)+'</div><div class="kv"><span>CR <b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></span><span>Ø je Auftrag <b class="'+(lm?'dsh-lo':'')+'">'+dshEur1(mp)+'</b></span></div>'+tileTeams(k)+'</div>';}).join('')+dshDonutTile(parts,psum,S)+'</div>';
   var main='<div class="card"><div class="card-title">Margenerhöhung'+pseg+'<span class="dsh-cr">Kacheln und Auswertungen: '+(dshPeriod==='days'?'heute':dshPeriod==='weeks'?'laufende Woche':dshPeriod==='months'?'laufender Monat':'Geschäftsjahr '+R.lbl+' bis heute')+'</span></div>'+dshChart(all,dshPeriod)+tiles+'</div>';
-  h+=dshGrp('marge','ti-currency-euro','Margenerhöhung','Wie viel Marge gewinnen wir – und woher?',main);
-  // ── 2 · Teams × Bereich (volle Breite, OEM mit TW, SY/MY und MY) ──
-  var tw=KPI_TARGETS.crTeilweise?+KPI_TARGETS.crTeilweise.val:null,sm=KPI_TARGETS.crSyMy&&KPI_TARGETS.crSyMy.val!=null?+KPI_TARGETS.crSyMy.val:null,my=KPI_TARGETS.crMegaYes?+KPI_TARGETS.crMegaYes.val:null;
-  var COLS=[
-    {g:'OEM',l:'CR OEM',f:function(s){return dshCr(s,'OEM');},z:Z.OEM,ref:REF.OEM,m:function(s){return dshMarge(s,'OEM');}},
-    {g:'OEM',l:'CR TW',f:function(s){return chartCrFromSums('crTeilweise',s);},z:tw,lte:true},
-    {g:'OEM',l:'CR SY/MY',f:function(s){return dshCr(s,'SYMY');},z:sm},
-    {g:'OEM',l:'CR MY',f:function(s){return dshCr(s,'MY');},z:my},
-    {g:'UPS',l:'CR UPS',f:function(s){return dshCr(s,'UPS');},z:Z.UPS,ref:REF.UPS,m:function(s){return dshMarge(s,'UPS');}},
-    {g:'WKA',l:'CR WKA',f:function(s){return dshCr(s,'WKA');},z:Z.WKA,ref:REF.WKA,m:function(s){return dshMarge(s,'WKA');}}];
-  COLS.forEach(function(c){if(c.ref==null)c.ref=c.z!=null?c.z:c.f(S);});
-  function bad(c,v){if(v===null||c.ref==null)return false;var tol=c.z!=null?0:2;return c.lte?v>c.ref+tol:v<c.ref-tol;}
-  var mt='<div class="dsh-mx"><table><thead><tr><th></th><th colspan="4" class="grp">OEM</th><th class="grp">UPS</th><th class="grp">WKA</th></tr><tr><th></th>'+COLS.map(function(c){return '<th>'+c.l.replace('CR ','')+'<small>'+(c.z!=null?(c.lte?'max. ':'Ziel ')+Math.round(c.z)+' %':'Ø '+dshPct(c.ref))+'</small></th>';}).join('')+'</tr></thead><tbody>';
-  var nBad=0;
-  DSH_TEAMS.concat(['Σ']).forEach(function(t){
-    var s=t==='Σ'?S:T[t].s;
-    mt+='<tr'+(t==='Σ'?' class="sum"':'')+'><td class="rn">'+(t==='Σ'?'Gesamt':t)+'</td>'+COLS.map(function(c,ci){var v=c.f(s);
-      if(v===null)return '<td><div class="c na">'+(t==='VLC'&&c.g!=='OEM'?'nur OEM':'–')+'</div></td>';
-      var b=bad(c,v);if(b&&t!=='Σ')nBad++;
-      var d=c.ref!=null?(c.lte?c.ref-v:v-c.ref):0;
-      return '<td><div class="c'+(b?' lo':'')+(ci===4||ci===0||ci===5?' first':'')+'"'+(b?'':' style="background:'+(d>=2?'#5C564F':'#8A7F72')+'"')+'><span>'+dshPct(v)+'</span>'+(c.m?'<small>'+dshEur(c.m(s))+'</small>':'')+'</div></td>';}).join('')+'</tr>';
-  });
-  mt+='</tbody></table></div>';
-  h+=dshGrp('matrix','ti-layout-grid','Teams × Bereich','OEM mit TW, SY/MY und MY · UPS · WKA'+(nBad?' · '+nBad+' Werte unter Ziel':''),dshCard('CR je Team und Bereich','Koralle = unter Ziel bzw. Ø Team · bei TW ist weniger besser',mt,'zeigt in einer Ansicht, welches Team wo Abschlüsse, Upgrades und Marge liegen lässt.'));
+  h+=main;
+  // ── 2 · Team-Steckbriefe: eine Kennzahl, Gesamt + SE/SR/OB/VLC ──
+  h+=dshTeamCards(R,all,S,P,T);
   // ── 3 · Mitarbeiter (wie bisher) ──
   h+=dshEmpSection(R,all,S,Z,REF,under);
   h+='</div>';
@@ -8837,7 +8926,7 @@ function dshEmpSection(R,all,S,Z,REF,under){
     et+='<tr style="cursor:pointer" onclick="selectEmp(\''+r.e.id+'\')"><td class="f">'+esc(r.e.name)+' <span class="dsh-tm">'+r.t+'</span></td><td><div class="dsh-cell">'+dshBar(r.mg,mgMax,false)+'<b>'+dshEur(r.mg)+'</b></div></td><td class="r">'+mpoTxt+'</td><td class="r">'+dshNum(r.o)+'</td><td><div class="dsh-chips">'+chips+'</div></td></tr>';
   });
   et+='</tbody></table></div>';
-  return dshGrp('emp','ti-users','Mitarbeiter','Wer bringt wie viel – und wo hakt es?',dshCard('Mitarbeiter',R.lbl+' · sortiert nach Margenerhöhung · Koralle = bester Ø je Auftrag','<div style="margin-bottom:12px">'+tseg+'</div>'+et,'je Mitarbeiter die drei Kennzahlen mit dem größten Abstand zum Ziel – das sind die Coaching-Themen. Ziele individuell aus Stammdaten und Provisionsvereinbarung.'));
+  return (dshCard('Mitarbeiter',R.lbl+' · sortiert nach Margenerhöhung · Koralle = bester Ø je Auftrag','<div style="margin-bottom:12px">'+tseg+'</div>'+et,'je Mitarbeiter die drei Kennzahlen mit dem größten Abstand zum Ziel – das sind die Coaching-Themen. Ziele individuell aus Stammdaten und Provisionsvereinbarung.'));
 }
 
 function renderActivity(){
