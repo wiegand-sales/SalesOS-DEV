@@ -506,10 +506,10 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-chart .dsh-lg i.zfl{background:rgba(138,127,114,.16);border:1px dashed rgba(58,56,51,.4);box-sizing:border-box}
 .dsh-chart .xl span{font-size:11.5px}.dsh-chart .xl span.nd{opacity:.55}
 
-.dsh-q{grid-template-columns:minmax(0,1.15fr) repeat(4,minmax(0,1fr))!important}
+.dsh-q{grid-template-columns:minmax(0,1.15fr) repeat(3,minmax(0,1fr)) minmax(0,1.3fr)!important}
 .dsh-donut .dw{position:relative;width:132px;height:132px;margin:8px auto 4px}.dsh-donut .dw svg{width:100%;height:100%}
 .dsh-donut .dw .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}.dsh-donut .dw .c b{font-size:14px;font-weight:700;color:var(--text)}.dsh-donut .dw .c span{font-size:11px;color:var(--text3)}
-.dsh-donut .lr{display:grid;grid-template-columns:12px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:6px;align-items:center;font-size:12.5px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.06)}.dsh-donut .lr:last-child{border:0}.dsh-donut .lr .o{grid-column:2 / span 2;text-align:left!important;font-size:11.5px;white-space:nowrap}
+.dsh-donut{padding-left:12px!important;padding-right:12px!important}.dsh-donut .lr{display:grid;grid-template-columns:10px auto minmax(0,1fr) auto;column-gap:5px;align-items:center;height:26px;font-size:12px;white-space:nowrap;border-bottom:1px solid rgba(0,0,0,.06)}.dsh-donut .lr:last-child{border:0}.dsh-donut .lr .o{text-align:right!important;font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis}.dsh-donut .lr .p{min-width:32px}
 .dsh-donut .lr i{width:10px;height:10px;border-radius:3px}.dsh-donut .lr .n{font-weight:700;color:var(--text2)}.dsh-donut .lr .p{text-align:right;font-weight:700}.dsh-donut .lr .e{text-align:right;color:var(--text2)}.dsh-donut .lr .o{text-align:right;color:var(--text3)}
 .dsh-donut .lg2{margin-top:6px}.dsh-donut .tm{margin-top:12px}
 .dsh-kpick{position:relative;margin-left:10px;font-size:13px;font-weight:600}
@@ -517,7 +517,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-kpick .pan .g{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase;padding:6px 8px 2px}
 .dsh-kpick .pan button{display:block;width:100%;text-align:left;border:0;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--text2);padding:6px 8px;border-radius:7px;cursor:pointer}
 .dsh-kpick .pan button:hover{background:rgba(29,28,26,.06)}.dsh-kpick .pan button.on{background:#fff;color:var(--text);font-weight:700}
-.dsh-tcs{display:grid;grid-template-columns:minmax(0,1.15fr) repeat(4,minmax(0,1fr));gap:10px}
+.dsh-tcs{display:grid;grid-template-columns:minmax(0,1.15fr) repeat(3,minmax(0,1fr)) minmax(0,1.3fr);gap:10px}
 .dsh-tc{background:#EFECE5;border-radius:12px;padding:14px 16px 12px;min-width:0;height:262px;display:flex;flex-direction:column;overflow:hidden}
 .dsh-tc.dsh-ko{color:#fff;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 52%,#C23B66 100%)}
 .dsh-tc .h{display:flex;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--text2);text-transform:uppercase}.dsh-tc.dsh-ko .h{color:#FFE1D6}
@@ -8754,7 +8754,7 @@ function dshDonutTile(parts,psum,S){
   var r=54,c=2*Math.PI*r,off=0,seg='';
   parts.forEach(function(v,i){var f=psum>0?v/psum:0;if(f<=0)return;seg+='<circle cx="70" cy="70" r="'+r+'" fill="none" stroke="'+DSH_AC[i]+'" stroke-width="22" stroke-dasharray="'+(f*c).toFixed(2)+' '+c.toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 70 70)"/>';off+=f*c;});
   var oa=[S.oem,S.ups,S.wka];
-  var leg=DSH_AREAS.map(function(k,i){var v=parts[i];return '<div class="lr"><i style="background:'+DSH_AC[i]+'"></i><span class="n">'+k+'</span><span class="p">'+(psum>0?Math.round(v/psum*100):0)+' %</span><span class="o">'+dshNum(oa[i])+' Opt. · '+dshEur(v)+'</span></div>';}).join('');
+  var leg=DSH_AREAS.map(function(k,i){var v=parts[i];return '<div class="lr"><i style="background:'+DSH_AC[i]+'"></i><span class="n">'+k+'</span><span class="o">'+dshNum(oa[i])+' Opt. · '+dshEur(v)+'</span><span class="p">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div>';}).join('');
   return '<div class="dsh-qt dsh-donut"><div class="l">Aufteilung</div><div class="dw"><svg viewBox="0 0 140 140" role="img" aria-label="Aufteilung der Margenerhöhung auf OEM, UPS und WKA"><circle cx="70" cy="70" r="'+r+'" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="22"/>'+seg+'</svg><div class="c"><b>'+dshEur(psum)+'</b><span>Marge</span></div></div><div class="lg2">'+leg+'</div></div>';
 }
 // ── Plan: Tagesziele je Mitarbeiter aus der Zielvereinbarung, verteilt nach Wochenarbeitszeit ──
