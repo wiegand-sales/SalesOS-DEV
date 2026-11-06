@@ -8891,7 +8891,10 @@ function renderDashboard(){
   // ── 3 · Mitarbeiter (wie bisher) ──
   h+=dshEmpSection(R,all,S,Z,REF,under);
   h+='</div>';
+  // Scrollposition beim Neuzeichnen behalten (Filter, Kennzahl, Team), sonst springt die Seite nach oben
+  var oc=ma.querySelector('.content'),st=oc?oc.scrollTop:0;
   ma.innerHTML=h;
+  var nc=ma.querySelector('.content');if(nc&&st)nc.scrollTop=st;
 }
 function dshEmpSection(R,all,S,Z,REF,under){
   // ── 3 · Mitarbeiter ──
