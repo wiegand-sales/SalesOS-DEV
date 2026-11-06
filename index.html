@@ -11237,12 +11237,12 @@ function esBuildHtml(emp,asPopup,html){
           return tbl;
         }
         html+=buildKpiTable([
-          {lbl:'Opt. Gesamt / Std.',f:'optH',unit:'',step:0.1},
-          {lbl:'CR OEM',f:'crOem',unit:'%'},
-          {lbl:'CR TW',f:'tw',unit:'%'},
-          {lbl:'CR MY',f:'my',unit:'%'},
-          {lbl:'CR SY/MY',f:'syMy',unit:'%'},
-          {lbl:'Anteil OEM',f:'oemAnteil',unit:'%'}
+          {lbl:'Opt. Gesamt / Std. (Min.)',f:'optH',unit:'',step:0.1},
+          {lbl:'CR OEM (Min.) (%)',f:'crOem',unit:'%'},
+          {lbl:'CR TW (Max.) (%)',f:'tw',unit:'%'},
+          {lbl:'CR MY (Min.) (%)',f:'my',unit:'%'},
+          {lbl:'CR SY/MY (Min.) (%)',f:'syMy',unit:'%'},
+          {lbl:'Anteil OEM (Min.) (%)',f:'oemAnteil',unit:'%'}
         ],{optH:2.00,crOem:45,tw:20,sy:30,my:10,syMy:40,oemAnteil:60},{optH:2.50,crOem:50,tw:20,sy:40,my:20,syMy:60,oemAnteil:80},{optH:3.50,crOem:55,tw:15,sy:40,my:20,syMy:60,oemAnteil:80});
 
         html+='</div>'; cut('kpi');
@@ -11263,7 +11263,7 @@ function esBuildHtml(emp,asPopup,html){
           var TD='padding:8px;text-align:center;border-bottom:1px solid #ebe9e3;font-size:12.5px;color:var(--text2)';
           var INP='width:64px;padding:6px;border:1px solid #d8d5cd;border-radius:6px;font-size:13.5px;font-weight:700;color:var(--text);text-align:center;background:var(--s-white)';
           function inp(id,v,step){return '<input type="number" id="'+id+'" value="'+(v!=null?v:'')+'" placeholder="–" step="'+(step||1)+'" min="0" style="'+INP+'">';}
-          var rows=[{f:'optH',lbl:'Opt. Gesamt / Std.'},{f:'crOem',lbl:'CR OEM'},{f:'syMy',lbl:'CR SY/MY'}];
+          var rows=[{f:'optH',lbl:'Opt. Gesamt / Std. (Min.)'},{f:'crOem',lbl:'CR OEM (Min.) (%)'},{f:'syMy',lbl:'CR SY/MY (Min.) (%)'}];
           var months=[{k:'monat1',l:'Monat 1'},{k:'monat2',l:'Monat 2'},{k:'monat3plus',l:'Ab Monat 3'}];
           html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Leeres Feld = in diesem Monat keine Prüfung, der Bonus wird voll ausgezahlt.</p>';
           var t='<div class="std-wrap" style="margin-bottom:16px"><table class="std-table inputs" style="width:100%;border-collapse:collapse;table-layout:fixed">';
@@ -11298,18 +11298,18 @@ function esBuildHtml(emp,asPopup,html){
         cut('prov');
         html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet.</p>';
         html+=buildKpiTable([
-          {lbl:'Aktivitäten/Tag',f:'aktivitaeten',unit:''},
-          {lbl:'NE - Nicht Erreicht',f:'notReached',unit:'%'},
-          {lbl:'NM - Nicht Möglich',f:'notPossible',unit:'%'},
-          {lbl:'NEF - Nicht Erfolgreich',f:'notSuccessful',unit:'%'},
-          {lbl:'CR TW',f:'tw',vlc:true},
-          {lbl:'CR YES',f:'crYes',unit:'%'},
-          {lbl:'CR SY',f:'sy',unit:'%'},
-          {lbl:'CR MY',f:'my',vlc:true},
-          {lbl:'Anteil OEM',f:'oemAnteil',vlc:true},
-          {lbl:'Opt. Gesamt / Tag',f:'optGesamt',unit:''},
-          {lbl:'Conv. OEM / Tag',f:'convOEM',unit:''},
-          {lbl:'Marge Ziel',f:'margeZiel',unit:'€',step:10}
+          {lbl:'Aktivitäten/Tag (Min.)',f:'aktivitaeten',unit:''},
+          {lbl:'NE - Nicht Erreicht (Max.) (%)',f:'notReached',unit:'%'},
+          {lbl:'NM - Nicht Möglich (Max.) (%)',f:'notPossible',unit:'%'},
+          {lbl:'NEF - Nicht Erfolgreich (Max.) (%)',f:'notSuccessful',unit:'%'},
+          {lbl:'CR TW (Max.) (%)',f:'tw',vlc:true},
+          {lbl:'CR YES (Min.) (%)',f:'crYes',unit:'%'},
+          {lbl:'CR SY (Min.) (%)',f:'sy',unit:'%'},
+          {lbl:'CR MY (Min.) (%)',f:'my',vlc:true},
+          {lbl:'Anteil OEM (Min.) (%)',f:'oemAnteil',vlc:true},
+          {lbl:'Opt. Gesamt / Tag (Min.)',f:'optGesamt',unit:''},
+          {lbl:'Conv. OEM / Tag (Min.)',f:'convOEM',unit:''},
+          {lbl:'Marge Ziel (Min.) (€)',f:'margeZiel',unit:'€',step:10}
         ],{crYes:15,sy:30,notReached:25,notPossible:15,notSuccessful:15,aktivitaeten:12,convOEM:2,optGesamt:12,margeZiel:1000},
           {crYes:15,sy:40,notReached:20,notPossible:15,notSuccessful:15,aktivitaeten:14,convOEM:3,optGesamt:14,margeZiel:1500},
           {crYes:15,sy:40,notReached:15,notPossible:15,notSuccessful:15,aktivitaeten:16,convOEM:4,optGesamt:16,margeZiel:2000});
