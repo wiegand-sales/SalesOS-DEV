@@ -500,7 +500,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-chart .zf.fut{background:transparent;border-color:rgba(58,56,51,.25)}
 .dsh-chart .ist{position:absolute;left:22%;right:22%;bottom:0;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;z-index:1}
 .dsh-chart .ist i{display:block;width:100%}
-.dsh-chart .ist.cur{box-shadow:0 0 0 2px #F08566}
+.dsh-chart .ist.cur{box-shadow:0 0 0 2px #F08566}.dsh-chart .ist.lo{box-shadow:0 -3px 0 0 #F08566}
 .dsh-chart .pc{position:absolute;left:-4px;right:-4px;text-align:center;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;z-index:2}
 .dsh-chart .pc.lo{color:#B5513A}.dsh-chart .pc.run{color:var(--text3);font-weight:600}
 .dsh-chart .dsh-lg i.zfl{background:rgba(138,127,114,.16);border:1px dashed rgba(58,56,51,.4);box-sizing:border-box}
@@ -8552,7 +8552,9 @@ var CATEGORY_META={
 // ── DASHBOARD (Vertriebskennzahlen) ──
 // Banner oben wie auf allen Seiten; darunter Margenerhöhung, OEM · UPS · WKA und Mitarbeiter.
 // Alle CR aus Rohzahlen: erst summieren, dann teilen (chartSumsForRange). Der Zeitraum gilt für die ganze Seite.
-var dshPeriod='month',dshOpen=null,dshEmpTeam='all';
+var dshPeriod='days',dshOpen=null,dshEmpTeam='all';
+// Ansicht wie in der Performance-Tabelle: Tage (laufender Monat), Wochen (alle KW des Jahres), Monate (laufendes Jahr)
+function dshRangeKey(p){return p==='days'?'month':'year';}
 var DSH_TEAMS=['SE','SR','OB','VLC'],DSH_AREAS=['OEM','UPS','WKA'],DSH_AC=['#5C564F','#A89C8E','#D3C8B6'];
 function dshOpenState(){
   if(!dshOpen){try{dshOpen=JSON.parse(localStorage.getItem('dsh_groups2')||'null');}catch(e){dshOpen=null;}
@@ -8683,7 +8685,10 @@ function dshDayFrac(list){var pl=0,el=0;list.forEach(function(e){pl+=workHoursFo
 function dshSlots(list,p){
   var t=today(),y=+t.slice(0,4),sl=[],WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
   function dl(d){return d.slice(8,10)+'.'+d.slice(5,7)+'.';}
-  if(p==='year'){var MS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  if(p==='days')p='month';
+  if(p==='months')p='year';
+  if(p==='weeks'){buildYearWeeksForChart(y).forEach(function(w){sl.push({from:w.from,to:w.to,l:'KW '+w.kw});});}
+  else if(p==='year'){var MS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
     for(var i=1;i<=12;i++){var f=y+'-'+('0'+i).slice(-2)+'-01';sl.push({from:f,to:dshYmd(new Date(Date.UTC(y,i,0))),l:MS[i-1]});}}
   else if(p==='day'){var d=t,a=[];while(a.length<10){var fe=bayernFeiertage(+d.slice(0,4));if(dshIsWork(d)&&!fe[d])a.unshift(d);d=addDaysUTC(d,-1);}a.forEach(function(x){sl.push({from:x,to:x,l:dl(x)});});}
   else if(p==='week'){
@@ -8714,10 +8719,10 @@ function dshSlots(list,p){
 // Diagramm: Ziel je Abschnitt als heller Rahmen, Ist davor (OEM/UPS/WKA), Zielerreichung in % darüber
 function dshFmtK(v){return v>=1e6?(v/1e6).toLocaleString('de-DE',{maximumFractionDigits:1})+' Mio':v>=1000?Math.round(v/1000)+'k':Math.round(v)+'';}
 function dshChart(list,p){
-  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,U=p==='year'?'Monat':p==='week'?'Woche':'Tag',UU=p==='year'?'Monaten':p==='week'?'Wochen':'Tagen';
+  var SL=dshSlots(list,p),s=SL.s,n=s.length,cur=SL.cur,U=p==='months'?'Monat':p==='weeks'?'Woche':'Tag',UU=p==='months'?'Monaten':p==='weeks'?'Wochen':'Tagen';
   var anyPlan=s.some(function(x){return x.plan>0;});
   var mx=Math.max.apply(null,s.map(function(x){return Math.max(x.plan||0,x.v?x.tot:0);}).concat([1]))*1.2;
-  var done=0,under=0,sumI=0,sumP=0,gap=n>15?6:n>10?10:14;
+  var done=0,under=0,sumI=0,sumP=0,gap=n>40?3:n>15?6:n>10?10:14,step=n>40?4:n>15?2:1,showPc=n<=31;
   var cols='';
   s.forEach(function(x,i){
     var z=x.plan||0,fut=!x.v,run=!!x.running;
@@ -8726,8 +8731,8 @@ function dshChart(list,p){
     var c='<div class="col" title="'+x.l+(x.v?': '+dshEur(x.tot):'')+(z>0?' · Ziel '+dshEur(z):'')+(run?' (läuft)':'')+(x.nodata?' · keine Daten':'')+'">';
     if(x.nodata)fut=true;
     if(z>0)c+='<div class="zf'+(fut?' fut':'')+'" style="height:'+(z/mx*100).toFixed(2)+'%"></div>';
-    if(x.v&&x.tot>0)c+='<div class="ist'+(run?' cur':'')+'" style="height:'+(x.tot/mx*100).toFixed(2)+'%">'+x.v.map(function(v,k){return '<i style="height:'+(v/x.tot*100).toFixed(2)+'%;background:'+DSH_AC[k]+'"></i>';}).join('')+'</div>';
-    if(x.v&&z>0){var r=Math.round(x.tot/(run?(x.planNow||z):z)*100),lo=!run&&x.tot<z;
+    if(x.v&&x.tot>0)c+='<div class="ist'+(run?' cur':'')+(!showPc&&!run&&z>0&&x.tot<z?' lo':'')+'" style="height:'+(x.tot/mx*100).toFixed(2)+'%">'+x.v.map(function(v,k){return '<i style="height:'+(v/x.tot*100).toFixed(2)+'%;background:'+DSH_AC[k]+'"></i>';}).join('')+'</div>';
+    if(x.v&&z>0&&showPc){var r=Math.round(x.tot/(run?(x.planNow||z):z)*100),lo=!run&&x.tot<z;
       c+='<div class="pc'+(lo?' lo':'')+(run?' run':'')+'" style="bottom:calc('+(Math.max(z,x.tot)/mx*100).toFixed(2)+'% + 4px)">'+(run?'läuft':r+' %')+'</div>';}
     cols+=c+'</div>';
   });
@@ -8735,7 +8740,7 @@ function dshChart(list,p){
   var dlt=sumI-sumP;
   var info=anyPlan?(done?'<b'+(under?' class="dsh-lo"':'')+'>'+under+' von '+done+' '+UU+'</b> unter Ziel · ':'')+'aufgelaufen <b class="'+(dlt<0?'dsh-lo':'')+'">'+(dlt>0?'+':'')+dshEur(dlt)+'</b> gegen Plan':'Für diesen Zeitraum ist kein Ziel hinterlegt';
   var leg=DSH_AREAS.map(function(a,i){return '<span><i style="background:'+DSH_AC[i]+'"></i>'+a+'</span>';}).join('')+(anyPlan?'<span><i class="zfl"></i>Ziel je '+U+'</span>':'');
-  var lab=s.map(function(x,i){var lo=x.v&&!x.running&&x.plan>0&&x.tot<x.plan;return '<span class="'+(i===cur?'cur':lo?'lo':x.nodata?'nd':'')+'"'+(x.nodata?' title="keine Daten"':'')+'>'+(n>15&&i%2&&i!==cur?'':x.l)+'</span>';}).join('');
+  var lab=s.map(function(x,i){var lo=x.v&&!x.running&&x.plan>0&&x.tot<x.plan;return '<span class="'+(i===cur?'cur':lo?'lo':x.nodata?'nd':'')+'"'+(x.nodata?' title="keine Daten"':'')+'>'+(i%step&&i!==cur?'':x.l)+'</span>';}).join('');
   return '<div class="dsh-chart"><div class="hd"><span class="inf">'+info+'</span><span class="dsh-lg">'+leg+'</span></div>'
     +'<div class="area">'+grid+'<div class="cols" style="gap:'+gap+'px">'+cols+'</div></div><div class="xl" style="gap:'+gap+'px">'+lab+'</div></div>';
 }
@@ -8743,14 +8748,14 @@ function dshPrevLabel(R){return R.prevLbl.split(' ')[0];}
 function renderDashboard(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   _dshPlanCache={};
-  var R=dshRange(dshPeriod),all=dshAll(),S=chartSumsForRange(all,R.from,R.to),P=chartSumsForRange(all,R.prevFrom,R.prevTo),T={};
+  var R=dshRange(dshRangeKey(dshPeriod)),all=dshAll(),S=chartSumsForRange(all,R.from,R.to),P=chartSumsForRange(all,R.prevFrom,R.prevTo),T={};
   var prevHas=(P.margeGes||0)>0||(P.oem+P.ups+P.wka)>0;
   DSH_TEAMS.forEach(function(t){var l=dshTeam(t);T[t]={list:l,s:chartSumsForRange(l,R.from,R.to)};});
   var REF={},Z={};DSH_AREAS.concat(['MPO']).forEach(function(k){Z[k]=dshTarget(k);REF[k]=Z[k]!=null?Z[k]:(k==='MPO'?dshMpo(S,'ALL'):dshCr(S,k));});
   function refLbl(k,pre){return Z[k]!=null?'Ziel '+(pre||'')+(k==='MPO'?dshEur1(Z[k]):Math.round(Z[k])+' %'):'Ø Team '+(k==='MPO'?dshEur1(REF[k]):dshPct(REF[k]));}
   function under(k,v){return v!==null&&v!==undefined&&REF[k]!=null&&v<REF[k]-(Z[k]!=null?0:(k==='MPO'?1:2));}
   var h='<div class="content">'+buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
-  var per=[['day','Heute'],['week','Woche'],['month','Monat'],['year','Jahr']];
+  var per=[['days','Tage'],['weeks','Wochen'],['months','Monate']];
   var pseg='<div class="dsh-seg" role="group" aria-label="Zeitraum">'+per.map(function(p){return '<button type="button" class="'+(dshPeriod===p[0]?'on':'')+'" aria-pressed="'+(dshPeriod===p[0])+'" onclick="dshSetPeriod(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div>';
   // ── 1 · Margenerhöhung: Diagramm, vier Kacheln, drei Bereichskarten ──
   var parts=[S.margeOEM,S.margeUps,S.margeWka],psum=parts[0]+parts[1]+parts[2],tot=S.margeGes,ziel=dshPlanRange(all,R.from,R.end),pct=ziel>0?Math.round(tot/ziel*100):null;
