@@ -4991,6 +4991,50 @@ function recomputeTeamTargets(){
 }
 function renderMain(){recomputeTeamTargets();if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
 
+// ── Browser-Zurück/Vor innerhalb des Boards ──
+// Jede neue Ansicht (Bereich, Mitarbeiter, Reiter, Einstellungen-Unterseite) wird als Verlaufseintrag gemerkt.
+// „Zurück“ im Browser springt so in die vorherige Maske des Boards statt aus dem Board heraus.
+var _navRestoring=false,_navLastKey=null;
+function navState(){return {view:view,wiegandView:typeof wiegandView!=='undefined'?wiegandView:null,selectedEmp:typeof selectedEmp!=='undefined'?selectedEmp:null,activeTab:typeof activeTab!=='undefined'?activeTab:null,settingsView:typeof settingsView!=='undefined'?settingsView:null,coachFilterView:typeof coachFilterView!=='undefined'?coachFilterView:null};}
+function navKeyOf(st){
+  // nur die fuer die jeweilige Ansicht relevanten Teile vergleichen
+  var k={view:st.view};
+  if(st.view==='team')k.w=st.wiegandView;
+  if(st.view==='emp'){k.e=st.selectedEmp;k.t=st.activeTab;}
+  if(st.view==='settings')k.s=st.settingsView;
+  if(st.view==='coaching')k.c=st.coachFilterView;
+  return JSON.stringify(k);
+}
+function navRecord(){
+  if(_navRestoring||!window.history||!history.pushState)return;
+  if(typeof currentUserRole!=='undefined'&&!currentUserRole)return;
+  var st=navState(),k=navKeyOf(st);
+  if(k===_navLastKey)return;
+  try{if(_navLastKey===null)history.replaceState({sos:st},'');else history.pushState({sos:st},'');}catch(e){}
+  _navLastKey=k;
+}
+window.addEventListener('popstate',function(ev){
+  var st=ev.state&&ev.state.sos;if(!st)return;
+  document.querySelectorAll('.modal-ov:not(.hidden)').forEach(function(m){m.classList.add('hidden');});
+  _navRestoring=true;
+  try{
+    view=st.view;
+    if(st.wiegandView!=null&&typeof wiegandView!=='undefined')wiegandView=st.wiegandView;
+    if(st.selectedEmp!=null)selectedEmp=st.selectedEmp;
+    if(st.activeTab!=null)activeTab=st.activeTab;
+    if(st.settingsView!=null)settingsView=st.settingsView;
+    if(st.coachFilterView!=null)coachFilterView=st.coachFilterView;
+    if(typeof bannerViewMode!=='undefined'){
+      if(view==='team'&&wiegandView==='ziel')bannerViewMode='ziel';
+      else if(view==='team'&&wiegandView==='overview')bannerViewMode='performance';
+      else if(view==='dashboard'||view==='provisionTeam')bannerViewMode='overview';
+      if(typeof resetBannerRotation==='function')resetBannerRotation();
+    }
+    renderSidebar();renderMain();
+  }finally{_navRestoring=false;_navLastKey=navKeyOf(st);}
+});
+(function(){var _rm=renderMain;renderMain=function(){var r=_rm.apply(this,arguments);try{navRecord();}catch(e){}return r;};})();
+
 // ── TEAM VIEW ──
 
 // ── COACHING HELPERS ──
