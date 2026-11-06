@@ -537,7 +537,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-tr{margin-left:auto;display:flex;gap:10px;align-items:center;font-weight:400}
 .dsh-tr .dsh-kpick{margin-left:0}.dsh-tr .dsh-kpick .pan{left:auto;right:0}
 .dsh-tv{background:#EFECE5;border-radius:12px;padding:14px 16px 10px;margin-bottom:12px}
-.dsh-tv .tv-area{position:relative;height:300px;margin-left:50px;border-bottom:1px solid #D8D2C6}
+.dsh-tv .tv-area{position:relative;height:330px;margin-left:50px;border-bottom:1px solid #D8D2C6}
 .dsh-tv .big{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .dsh-tv .gl{position:absolute;left:-50px;right:0;border-top:1px solid #E4E0D6}.dsh-tv .gl span{position:absolute;left:0;top:-8px;font-size:11px;color:var(--text3)}
 .dsh-tv .zl{position:absolute;left:0;right:0;border-top:1.5px dashed #3a3833;opacity:.7}
@@ -8828,7 +8828,7 @@ function dshTeamBox(all,T){
   function bad(v,ref){if(v===null||v===undefined)return false;var r=z!=null?z:ref;if(r==null)return false;var tol=z!=null?0:(kd.u==='%'?2:Math.abs(r)*0.03);return lte?v>r+tol:v<r-tol;}
   if(!ser[dshTF]||!ser[dshTF].some(function(v){return v!==null;}))dshTF='SE';
   // ── großes Diagramm, ein Team im Fokus ──
-  var W=1000,H=300,TOP=96,BOT=34,X=function(i){return 14+i*(W-28)/((n-1)||1);},Y=function(v){return TOP+(1-(v-mn)/((mx-mn)||1))*(H-TOP-BOT);};
+  var W=1000,H=330,TOP=128,BOT=30,X=function(i){return 14+i*(W-28)/((n-1)||1);},Y=function(v){return TOP+(1-(v-mn)/((mx-mn)||1))*(H-TOP-BOT);};
   var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" class="big" aria-label="'+esc(kd.l)+' je Team im Verlauf">';
   if(z!=null){var yz=Y(z);svg+=lte?'<rect x="0" y="0" width="'+W+'" height="'+yz+'" fill="rgba(240,133,102,.07)"/>':'<rect x="0" y="'+yz+'" width="'+W+'" height="'+(H-yz)+'" fill="rgba(240,133,102,.07)"/>';}
   function line(arr,st){var p=[];arr.forEach(function(v,i){if(v!==null)p.push(X(i).toFixed(1)+','+Y(v).toFixed(1));});return p.length>1?'<polyline points="'+p.join(' ')+'" fill="none" '+st+' vector-effect="non-scaling-stroke"/>':'';}
