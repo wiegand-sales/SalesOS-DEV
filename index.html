@@ -4705,8 +4705,13 @@ function empTargets(emp){
       }
     }
   }
+  // Diese Kennzahlen lassen sich in den Stammdaten nicht pflegen (nur ueber die Provisionsvereinbarung).
+  // Alte Einzelwerte aus employee_kpi_targets (z.B. Standardwerte beim Anlegen) duerfen sie deshalb nicht
+  // ueberschreiben: Gibt es eine Provisionsvereinbarung, gilt deren Wert; leer = in diesem Monat keine Pruefung.
+  var PROV_ONLY={crOEM:1,crTW:1,crSuperYes:1,crMegaYes:1,optPerH:1,crSyMy:1,anteilOEM:1};
   function pval(key,provKey,fallback){
-    if(t[key]!=null)return t[key]; // manueller Mitarbeiter-Override hat immer Vorrang
+    if(PROV_ONLY[key]&&provKpi)return provKpi[provKey]!=null&&provKpi[provKey]!==''?provKpi[provKey]:null;
+    if(t[key]!=null)return t[key]; // manueller Mitarbeiter-Override (in den Stammdaten pflegbar) hat Vorrang
     if(provKpi&&provKpi[provKey]!=null)return provKpi[provKey];
     return (g[key]&&g[key].val!=null)?g[key].val:fallback;
   }
