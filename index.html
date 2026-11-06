@@ -575,6 +575,24 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-tv .sl .s{font-size:12.5px;color:var(--text3);overflow:hidden;text-overflow:ellipsis}.dsh-tv .sl .s b{color:var(--text)}.dsh-tv .sl .s b.dsh-lo{color:#B5513A}
 .dsh-tv .sl .bt{margin-left:auto;display:flex;gap:6px}
 .dsh-tv .hs{top:46px}.dsh-tv .xh{top:46px}
+
+.dsh-tv .sl.co{}
+.dsh-tv .sl .lgx{margin-left:auto;display:flex;gap:14px;font-size:12px;color:var(--text2)}.dsh-tv .sl .lgx span{display:inline-flex;align-items:center;gap:6px}.dsh-tv .sl .lgx i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dsh-tv .sl .lgx i.pli{border:1.5px dashed #8A7F72;background:transparent;box-sizing:border-box}
+.dsh-tv .co-area{position:relative;height:250px;margin:14px 0 0 50px;border-bottom:1px solid #D8D2C6}
+.dsh-tv .co-area .cols{position:absolute;inset:0;display:flex;z-index:1}
+.dsh-tv .co-area .col{flex:1;position:relative;cursor:crosshair}
+.dsh-tv .co-area .br{position:absolute;left:12%;right:12%;bottom:0;background:#B8AC9B;border-radius:4px 4px 0 0}.dsh-tv .co-area .br.cur{box-shadow:0 0 0 2px #F08566}
+.dsh-tv .co-area .pl{position:absolute;left:12%;right:12%;border:1.5px dashed #8A7F72;border-bottom:0;border-radius:4px 4px 0 0;box-sizing:border-box}
+.dsh-tv .co-area .gl{position:absolute;left:-50px;right:0;border-top:1px solid #E4E0D6}.dsh-tv .co-area .gl span{position:absolute;left:0;top:-8px;font-size:11px;color:var(--text3)}
+.dsh-tv .co-area .zl2{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:2;pointer-events:none}
+.dsh-tv .co-area .zd{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#3a3833;border:2px solid #EFECE5;box-sizing:content-box;z-index:3;pointer-events:none}
+.dsh-tv .co-area .z100{position:absolute;left:0;right:0;border-top:1.5px dashed #3a3833;opacity:.5;z-index:2;pointer-events:none}.dsh-tv .co-area .z100 span{position:absolute;right:0;top:-17px;font-size:11px;font-weight:700;color:var(--text2)}
+.dsh-tv .co-x{display:flex;position:static;height:auto}.dsh-tv .co-x span{position:static;transform:none;flex:1;text-align:center}
+.dsh-tcs.co .dsh-tc{height:236px!important}
+.dsh-tc .bx{margin-top:auto;padding-top:10px;border-top:1px solid rgba(0,0,0,.07)}.dsh-tc.dsh-ko .bx{border-color:rgba(255,255,255,.22)}
+.dsh-tc .kv{display:flex;justify-content:space-between;font-size:12px;color:var(--text3);height:24px;align-items:center}.dsh-tc .kv b{color:var(--text);font-weight:700}.dsh-tc .kv b.dsh-lo{color:#B5513A}
+.dsh-tc.dsh-ko .kv{color:#FFE1D6}.dsh-tc.dsh-ko .kv b{color:#fff}.dsh-tc .dl b{color:var(--text)}.dsh-tc.dsh-ko .dl b{color:#fff}
 @media (max-width:1100px){.dsh-q{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
 </style>
@@ -8921,6 +8939,77 @@ function dshAlignInfo(){
   ib.style.width=lt.width+'px';ib.style.right=(ar.right-lt.right)+'px';
 }
 window.addEventListener('resize',function(){if(view==='dashboard')dshAlignInfo();});
+// ── Box „Coaching und Wirkung“: Sessions (bzw. QA-Bewertungen) je Abschnitt, Zielerreichung als Linie, fünf Kacheln ──
+var dshCP='week',dshCK='ses';
+function dshSetCP(p){dshCP=p;renderDashboard();}
+function dshSetCK(k){dshCK=k;renderDashboard();}
+function dshCoachCount(list,from,to,k){
+  var n=0,plan=0,t=today();
+  list.forEach(function(e){
+    if(k==='qa'){(callRatings[e.id]||[]).forEach(function(r){if(r.date>=from&&r.date<=to)n++;});return;}
+    (protocols[e.id]||[]).forEach(function(p){if(!p.date||p.date<from||p.date>to)return;if(p.status==='geplant'){if(p.date>=t)plan++;}else n++;});
+  });
+  return {n:n,plan:plan};
+}
+function dshCoachTile(list){
+  var od=0,ds=[],qa=0;
+  list.forEach(function(e){var d=tageSeitLetzterSession(e.id);if(d===null||d>30)od++;if(d!==null)ds.push(d);});
+  try{qa=wizardQaFaelligList(list,60).length;}catch(e){qa=0;}
+  return {od:od,avg:ds.length?Math.round(ds.reduce(function(a,b){return a+b;},0)/ds.length):null,qa:qa,n:list.length};
+}
+function dshCoachTip(ev,i){
+  var D=window._dshCO;if(!D)return;var tt=document.getElementById('dshCoTt');if(!tt)return;
+  var x=D.s[i];
+  tt.innerHTML='<div class="tt-t">'+esc(x.l)+'</div><div class="tt-r f"><i style="background:#B8AC9B"></i>'+(D.k==='qa'?'QA-Bewertungen':'Sessions')+'<b>'+x.n+'</b></div>'+(D.k==='ses'&&x.plan?'<div class="tt-r"><i style="background:transparent;border-style:dashed"></i>noch geplant<b>'+x.plan+'</b></div>':'')+'<div class="tt-r"><i style="background:#3a3833"></i>Zielerreichung<b>'+(x.ze!=null?Math.round(x.ze)+' %':'–')+'</b></div>';
+  tt.style.display='block';
+  var area=tt.parentNode.getBoundingClientRect(),cx=(i+0.5)/D.s.length*area.width,w=tt.offsetWidth;
+  tt.style.left=(cx+w+16>area.width?cx-w-12:cx+12)+'px';tt.style.top='60px';
+}
+function dshCoachTipHide(){var tt=document.getElementById('dshCoTt');if(tt)tt.style.display='none';}
+function dshCoachBox(all,T){
+  var TS=dshTSlots(dshCP),sl=TS.s,n=sl.length,t0=today(),cur=-1,k=dshCK;
+  sl.forEach(function(x,i){if(x.f<=t0&&x.t>=t0)cur=i;});if(cur<0)cur=n-1;
+  sl.forEach(function(x){var c=dshCoachCount(all,x.f,x.t,k);x.n=x.f>t0?0:c.n;x.plan=c.plan;x.fut=x.f>t0;x.ze=x.fut?null:dshTVal('ze',all,x.f,x.t);});
+  var mxN=Math.max.apply(null,sl.map(function(x){return x.n+x.plan;}).concat([4]))*1.2;
+  var zs=sl.map(function(x){return x.ze;}).filter(function(v){return v!==null;}),zmn=zs.length?Math.min.apply(null,zs.concat([100])):80,zmx=zs.length?Math.max.apply(null,zs.concat([100])):110,zp=(zmx-zmn)*0.15||5;zmn-=zp;zmx+=zp;
+  window._dshCO={s:sl,k:k};
+  var GAP=n>15?6:n>10?10:14;
+  var ch='<div class="co-area"><div class="cols" style="gap:'+GAP+'px">';
+  sl.forEach(function(x,i){
+    ch+='<div class="col" onmousemove="dshCoachTip(event,'+i+')" onmouseleave="dshCoachTipHide()">'
+      +(x.plan&&k==='ses'?'<div class="pl" style="bottom:'+(x.n/mxN*100).toFixed(2)+'%;height:'+(x.plan/mxN*100).toFixed(2)+'%"></div>':'')
+      +(x.n?'<div class="br'+(i===cur?' cur':'')+'" style="height:'+(x.n/mxN*100).toFixed(2)+'%"></div>':'')+'</div>';
+  });
+  ch+='</div>';
+  for(var g=2;g<mxN;g+=(mxN>40?10:mxN>16?4:2))ch+='<div class="gl" style="bottom:'+(g/mxN*100).toFixed(1)+'%"><span>'+g+'</span></div>';
+  // Zielerreichung als Linie (eigene Skala, rechts beschriftet)
+  var pts=[],dots='';sl.forEach(function(x,i){if(x.ze===null)return;var xx=(i+0.5)/n*100,yy=100-(x.ze-zmn)/(zmx-zmn)*100;pts.push(xx.toFixed(2)+','+yy.toFixed(2));dots+='<i class="zd" style="left:'+xx.toFixed(2)+'%;top:'+yy.toFixed(2)+'%"></i>';});
+  ch+='<svg viewBox="0 0 100 100" preserveAspectRatio="none" class="zl2" aria-hidden="true">'+(pts.length>1?'<polyline points="'+pts.join(' ')+'" fill="none" stroke="#3a3833" stroke-width="2.5" vector-effect="non-scaling-stroke"/>':'')+'</svg>'+dots;
+  var y100=100-(100-zmn)/(zmx-zmn)*100;
+  ch+='<div class="z100" style="top:'+y100.toFixed(1)+'%"><span>100 %</span></div><div class="tt" id="dshCoTt"></div></div>';
+  ch+='<div class="tv-x co-x" style="gap:'+GAP+'px">'+sl.map(function(x,i){return '<span class="'+(i===cur?'cur':x.fut?'fut':'')+'">'+(n>15&&i%2&&i!==cur?'':x.l)+'</span>';}).join('')+'</div>';
+  // Statuszeile
+  var c0=sl[cur],tAll=dshCoachTile(all);
+  var unit=k==='qa'?'QA-Bewertungen':'Sessions';
+  var sline='<div class="sl"><span class="s">'+unit+' '+TS.cur+'</span><span class="v">'+c0.n+'</span><span class="s">'+(k==='ses'?'noch <b>'+c0.plan+'</b> geplant · ':'')+'<b'+(tAll.od?' class="dsh-lo"':'')+'>'+tAll.od+'</b> Mitarbeiter länger als 30 Tage ohne Coaching · Zielerreichung <b>'+(c0.ze!=null?Math.round(c0.ze)+' %':'–')+'</b></span>'
+    +'<span class="lgx"><span><i style="background:#B8AC9B"></i>'+unit+'</span>'+(k==='ses'?'<span><i class="pli"></i>geplant</span>':'')+'<span><i style="height:3px;background:#3a3833"></i>Zielerreichung</span></span></div>';
+  // Kacheln
+  var cs=sl[cur],TEAMS=['SE','SR','OB','VLC'];
+  function kv(l,v,lo){return '<div class="kv"><span>'+l+'</span><b class="'+(lo?'dsh-lo':'')+'">'+v+'</b></div>';}
+  var gz=c0.ze,tiles='<div class="dsh-tcs co">';
+  tiles+='<div class="dsh-tc dsh-ko"><div class="h">Gesamt<span>'+TS.cur+'</span></div><div class="v">'+cs.n+'</div><span class="dl">'+unit+(k==='ses'?' · noch <b>'+cs.plan+'</b> geplant':'')+'</span>'
+    +'<div class="bx">'+kv('Zielerreichung',c0.ze!=null?Math.round(c0.ze)+' %':'–')+kv('überfällig &gt; 30 Tage',tAll.od+' von '+tAll.n)+kv('Ø Tage seit Coaching',tAll.avg!=null?tAll.avg:'–')+kv('QA fällig',tAll.qa)+'</div></div>';
+  TEAMS.forEach(function(t){
+    var L=T[t].list,c=dshCoachCount(L,cs.f,cs.t,k),ti=dshCoachTile(L),ze=dshTVal('ze',L,cs.f,cs.t<t0?cs.t:t0);
+    tiles+='<div class="dsh-tc"><div class="h">'+t+'<span>'+L.length+' MA</span></div><div class="v">'+c.n+'</div><span class="dl">'+unit+'</span>'
+      +'<div class="bx">'+kv('Zielerreichung',ze!=null?Math.round(ze)+' %':'–',ze!=null&&ze<100)+kv('überfällig &gt; 30 Tage',ti.od+' von '+ti.n,ti.od>0)+kv('Ø Tage seit Coaching',ti.avg!=null?ti.avg:'–',ti.avg!=null&&ti.avg>14)+kv('QA fällig',ti.qa,ti.qa>1)+'</div></div>';
+  });
+  tiles+='</div>';
+  var per='<div class="dsh-seg" role="group" aria-label="Zeitraum">'+[['day','Tag'],['week','Woche'],['month','Monat']].map(function(p){return '<button type="button" class="'+(dshCP===p[0]?'on':'')+'" aria-pressed="'+(dshCP===p[0])+'" onclick="dshSetCP(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div>';
+  var kseg='<div class="dsh-seg" role="group" aria-label="Kennzahl">'+[['ses','Sessions'],['qa','QA-Bewertungen']].map(function(p){return '<button type="button" class="'+(dshCK===p[0]?'on':'')+'" aria-pressed="'+(dshCK===p[0])+'" onclick="dshSetCK(\''+p[0]+'\')">'+p[1]+'</button>';}).join('')+'</div>';
+  return '<div class="card"><div class="card-title">Coaching und Wirkung<span class="dsh-tr">'+per+kseg+'</span></div><div class="dsh-tv"><div style="position:relative;height:46px;margin-left:50px">'+sline+'</div>'+ch+'</div>'+tiles
+    +'<div class="dsh-why"><b>Warum:</b> zeigt, ob die schwachen Teams genug Coaching bekommen – und ob die Zielerreichung danach steigt.</div></div>';
+}
 // ── Plan: Tagesziele je Mitarbeiter aus der Zielvereinbarung, verteilt nach Wochenarbeitszeit ──
 // Monatsziel je Mitarbeiter = Einsatztage x Opt./Tag x Marge/Opt.; verteilt auf seine Arbeitstage
 // (Kalender aus der Zielvereinbarung, sonst Mo–Fr ohne Feiertage) im Verhältnis seiner Arbeitsstunden.
@@ -9052,6 +9141,8 @@ function renderDashboard(){
   h+=main;
   // ── 2 · Team-Steckbriefe: eine Kennzahl, Gesamt + SE/SR/OB/VLC ──
   h+=dshTeamBox(all,T);
+  // ── 3 · Coaching und Wirkung ──
+  h+=dshCoachBox(all,T);
   // ── 3 · Mitarbeiter (wie bisher) ──
   // Mitarbeiter-Abschnitt vorerst ausgeblendet (dshEmpSection bleibt erhalten)
   h+='</div>';
