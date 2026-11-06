@@ -4454,8 +4454,7 @@ function zielvereinbarungHtml(){
     +'<span id="ziel-status" style="font-size:12px;color:var(--teal)"></span>'
     +'</div>'
     +'<div style="font-size:11px;color:var(--text3);margin-top:10px">Monat anklicken, um die Mitarbeiter-Wochenansicht auf-/zuzuklappen. "Ziel NL Marge/Mon." ist der zu Jahresbeginn kalkulierte Referenzwert und wird beim Eintragen sofort gespeichert.</div>'
-    +'</div>'
-    +kpiZieleHtml();
+    +'</div>';
 }
 var _savingZielvereinbarung=false;
 function saveZielvereinbarung(){
@@ -4972,7 +4971,25 @@ function toggleCoachingNav(){
   }
 }
 function selectCoachingTeam(){wiegandView='team';view='team';coachingNavOpen=true;renderSidebar();renderMain();}
-function renderMain(){if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
+
+// ── Team-Ziele: Durchschnitt der aktuell gueltigen Einzelziele (Stammdaten & Provisionsvereinbarung) ──
+// Ersetzt die frueheren „Allgemeinen KPIs“. Mitarbeiter ohne eigenes Ziel (leeres Feld) zaehlen nicht mit.
+var TEAM_TARGET_KEYS=['crOEM','crTeilweise','crSuperYes','crMegaYes','optPerH','crSyMy','crYes','anteilOEM'];
+function teamTargetList(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach&&e.role!=='SC'&&e.role!=='SDM';});}
+function teamTargetFor(list,key){
+  var vals=[],dirs={};
+  (list||[]).forEach(function(e){if(!e||!e.startDate)return;var t=empTargets(e)[key];if(t&&t.val!=null&&t.val!==''&&!isNaN(+t.val)){vals.push(+t.val);dirs[t.dir||'gte']=1;}});
+  if(!vals.length)return null;
+  var avg=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+  return {val:key==='optPerH'?Math.round(avg*10)/10:Math.round(avg),dir:Object.keys(dirs)[0]||'gte'};
+}
+function recomputeTeamTargets(){
+  if(typeof KPI_TARGETS==='undefined'||!employees)return;
+  var list=teamTargetList();
+  TEAM_TARGET_KEYS.forEach(function(k){var t=teamTargetFor(list,k);if(t){KPI_TARGETS[k]=KPI_TARGETS[k]||{};KPI_TARGETS[k].val=t.val;KPI_TARGETS[k].dir=t.dir;}});
+  if(KPI_TARGETS.crOEM)CR_GOOD=KPI_TARGETS.crOEM.val;
+}
+function renderMain(){recomputeTeamTargets();if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
 
 // ── TEAM VIEW ──
 
@@ -8775,8 +8792,9 @@ function dshKVal(k,list,s,from,to){
     case 'mG':return dshMpo(s,'ALL');case 'mO':return dshMpo(s,'OEM');case 'mU':return dshMpo(s,'UPS');case 'mW':return dshMpo(s,'WKA');
   }return null;
 }
-function dshKTarget(k,e){
+function dshKTarget(k,e,list){
   if(k==='ze')return 100;
+  if(list){var MAP={oph:'optPerH',crO:'crOEM',tw:'crTeilweise',sm:'crSyMy',my:'crMegaYes'},tt=MAP[k]?teamTargetFor(list,MAP[k]):null;return tt?tt.val:null;}
   var tg=e?empTargets(e):null,pick=function(key){var t=tg&&tg[key]?tg[key]:KPI_TARGETS[key];return t&&t.val!=null?+t.val:null;};
   if(k==='oph')return pick('optPerH');if(k==='crO')return pick('crOEM');if(k==='tw')return pick('crTeilweise');if(k==='sm')return pick('crSyMy');if(k==='my')return pick('crMegaYes');
   return null;
@@ -8895,14 +8913,17 @@ function dshTeamBox(all,T){
   var lists={G:all};TEAMS.forEach(function(t){lists[t]=T[t].list;});
   var ser={};Object.keys(lists).forEach(function(t){ser[t]=sl.map(function(x){return dshTVal(k,lists[t],x.f,x.t);});});
   var z=dshKTarget(k,null),lte=!!kd.lte;
-  var allv=[];Object.keys(ser).forEach(function(t){ser[t].forEach(function(v){if(v!==null)allv.push(v);});});if(z!=null)allv.push(z);
+  // Team-Ziel je Team = Durchschnitt der Einzelziele seiner Mitarbeiter, Gesamt = alle
+  var ZT={G:z};TEAMS.forEach(function(t){var v=dshKTarget(k,null,lists[t]);ZT[t]=v!=null?v:z;});
+  var allv=[];Object.keys(ser).forEach(function(t){ser[t].forEach(function(v){if(v!==null)allv.push(v);});});Object.keys(ZT).forEach(function(t){if(ZT[t]!=null)allv.push(ZT[t]);});
   var mn=allv.length?Math.min.apply(null,allv):0,mx=allv.length?Math.max.apply(null,allv):1,pad=(mx-mn)*0.14||1;mn-=pad;mx+=pad;
-  function bad(v,ref){if(v===null||v===undefined)return false;var r=z!=null?z:ref;if(r==null)return false;var tol=z!=null?0:(kd.u==='%'?2:Math.abs(r)*0.03);return lte?v>r+tol:v<r-tol;}
+  function bad(v,ref,zz){if(v===null||v===undefined)return false;var Z0=zz!==undefined?zz:z;var r=Z0!=null?Z0:ref;if(r==null)return false;var tol=Z0!=null?0:(kd.u==='%'?2:Math.abs(r)*0.03);return lte?v>r+tol:v<r-tol;}
   if(!ser[dshTF]||!ser[dshTF].some(function(v){return v!==null;}))dshTF='SE';
+  var zf=ZT[dshTF];
   // ── großes Diagramm, ein Team im Fokus ──
   var W=1000,H=330,TOP=70,BOT=30,X=function(i){return 14+i*(W-28)/((n-1)||1);},Y=function(v){return TOP+(1-(v-mn)/((mx-mn)||1))*(H-TOP-BOT);};
   var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" class="big" aria-label="'+esc(kd.l)+' je Team im Verlauf">';
-  if(z!=null){var yz=Y(z);svg+=lte?'<rect x="0" y="0" width="'+W+'" height="'+yz+'" fill="rgba(240,133,102,.07)"/>':'<rect x="0" y="'+yz+'" width="'+W+'" height="'+(H-yz)+'" fill="rgba(240,133,102,.07)"/>';}
+  if(zf!=null){var yz=Y(zf);svg+=lte?'<rect x="0" y="0" width="'+W+'" height="'+yz+'" fill="rgba(240,133,102,.07)"/>':'<rect x="0" y="'+yz+'" width="'+W+'" height="'+(H-yz)+'" fill="rgba(240,133,102,.07)"/>';}
   function line(arr,st){var p=[];arr.forEach(function(v,i){if(v!==null)p.push(X(i).toFixed(1)+','+Y(v).toFixed(1));});return p.length>1?'<polyline points="'+p.join(' ')+'" fill="none" '+st+' vector-effect="non-scaling-stroke"/>':'';}
   TEAMS.forEach(function(t){if(t!==dshTF)svg+=line(ser[t],'stroke="#B8AC9B" stroke-opacity=".5" stroke-width="1.5"');});
   svg+=line(ser.G,'stroke="#3a3833" stroke-opacity=".6" stroke-width="2" stroke-dasharray="2 4"');
@@ -8910,7 +8931,7 @@ function dshTeamBox(all,T){
   var ch='<div class="tv-area">';
   var rg=mx-mn,st=[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000].filter(function(x){return rg/x<=5;})[0]||100000;
   for(var g=Math.ceil(mn/st)*st;g<=mx;g+=st)ch+='<div class="gl" style="top:'+(Y(g)/H*100).toFixed(1)+'%"><span>'+dshKFmt(k,g)+'</span></div>';
-  if(z!=null)ch+='<div class="zl" style="top:'+(Y(z)/H*100).toFixed(1)+'%"></div>';
+  if(zf!=null)ch+='<div class="zl" style="top:'+(Y(zf)/H*100).toFixed(1)+'%"></div>';
   ch+=svg;
   var fd2=ser[dshTF],bi=-1,wi=-1;fd2.forEach(function(v,i){if(v===null)return;if(bi<0||(lte?v<fd2[bi]:v>fd2[bi]))bi=i;if(wi<0||(lte?v>fd2[wi]:v<fd2[wi]))wi=i;});
   window._dshTV={l:sl.map(function(x){return x.l;}),ser:ser,k:k,z:z,lte:lte,f:dshTF,TC:TCOL,X:sl.map(function(x,i){return X(i)/W*100;}),Y:function(v){return Y(v)/H*100;}};
@@ -8921,7 +8942,7 @@ function dshTeamBox(all,T){
     ch+='<div class="mk lo" style="left:'+(X(wi)/W*100).toFixed(2)+'%;top:calc('+(Y(fd2[wi])/H*100).toFixed(2)+'% + 12px)">Tiefpunkt '+dshKFmt(k,fd2[wi])+'</div>';}
   var cv=fd2[cur],pv=cur>0?fd2[cur-1]:null,vals=fd2.filter(function(v){return v!==null;}),avg=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:null;
   var dlt=(cv!=null&&pv!=null)?cv-pv:null,dgood=dlt!=null&&(lte?dlt<=0:dlt>=0);
-  ch+='<div class="sl"><span class="tm"><i style="background:'+TCOL[dshTF]+'"></i>'+dshTF+'</span><span class="v'+(bad(cv,ser.G[cur])?' dsh-lo':'')+'">'+dshKFmt(k,cv)+'</span>'+'<span class="s">'+(dlt!=null?'<b class="'+(dgood?'':'dsh-lo')+'">'+(dlt>0?'▲ ':dlt<0?'▼ ':'')+(kd.u==='%'?Math.round(Math.abs(dlt))+' Pkt.':dshKFmt(k,Math.abs(dlt)))+'</b> ggü. '+TS.cmp+' · ':'')+'Ø Zeitraum <b>'+dshKFmt(k,avg)+'</b>'+(z!=null?' · '+(lte?'max. ':'Ziel ')+'<b>'+dshKFmt(k,z)+'</b>':' · Gesamt <b>'+dshKFmt(k,ser.G[cur])+'</b>')+'</span>'+'<span class="bt">'+TEAMS.map(function(t){var has=ser[t].some(function(v){return v!==null;});return '<button type="button" class="tg'+(t===dshTF?' on':'')+'"'+(has?' onclick="dshSetTF(\''+t+'\')"':' disabled')+'><i style="background:'+TCOL[t]+'"></i>'+t+'</button>';}).join('')+'</span></div>';
+  ch+='<div class="sl"><span class="tm"><i style="background:'+TCOL[dshTF]+'"></i>'+dshTF+'</span><span class="v'+(bad(cv,ser.G[cur])?' dsh-lo':'')+'">'+dshKFmt(k,cv)+'</span>'+'<span class="s">'+(dlt!=null?'<b class="'+(dgood?'':'dsh-lo')+'">'+(dlt>0?'▲ ':dlt<0?'▼ ':'')+(kd.u==='%'?Math.round(Math.abs(dlt))+' Pkt.':dshKFmt(k,Math.abs(dlt)))+'</b> ggü. '+TS.cmp+' · ':'')+'Ø Zeitraum <b>'+dshKFmt(k,avg)+'</b>'+(zf!=null?' · '+(lte?'max. ':'Ziel ')+dshTF+' <b>'+dshKFmt(k,zf)+'</b>':' · Gesamt <b>'+dshKFmt(k,ser.G[cur])+'</b>')+'</span>'+'<span class="bt">'+TEAMS.map(function(t){var has=ser[t].some(function(v){return v!==null;});return '<button type="button" class="tg'+(t===dshTF?' on':'')+'"'+(has?' onclick="dshSetTF(\''+t+'\')"':' disabled')+'><i style="background:'+TCOL[t]+'"></i>'+t+'</button>';}).join('')+'</span></div>';
   ch+='</div><div class="tv-x">'+sl.map(function(x,i){var l=x.l;if(n>15&&i%2&&i!==cur)l='';return '<span class="'+(i===cur?'cur':(x.f>t0?'fut':''))+'" style="left:'+(X(i)/W*100).toFixed(2)+'%">'+l+'</span>';}).join('')+'</div>';
   // ── Kacheln: Gesamt + Teams, Wert der laufenden Periode, Mini-Diagramm mit Gesamt und Ziel ──
   var cs=sl[cur],UN=dshTP==='day'?'Tagen':dshTP==='week'?'Wochen':'Monaten',tiles='<div class="dsh-tcs">';
@@ -8931,7 +8952,7 @@ function dshTeamBox(all,T){
   TEAMS.forEach(function(t){
     var L=lists[t],v=ser[t][cur],pv2=cur>0?ser[t][cur-1]:null,head='<div class="h">'+t+'<span>'+L.length+' MA</span></div>';
     if(v===null||v===undefined){tiles+='<div class="dsh-tc na">'+head+'<div class="v">–</div><span class="dl">'+(t==='VLC'&&/U|W/.test(k.slice(-1))?'nur OEM':'keine Daten im Zeitraum')+'</span><div class="bcx"></div><div class="bxs"><span>&nbsp;</span></div><div class="ex"><span>&nbsp;</span></div></div>';return;}
-    var lo=bad(v,gvc);
+    var lo=bad(v,gvc,ZT[t]);
     var em=L.map(function(e){return {e:e,v:dshTVal(k,[e],cs.f,cs.t),z:k==='ze'?100:dshKTarget(k,e)};}).filter(function(x){return x.v!==null;});
     var ds='<div class="ds"></div>',ex='<div class="ex"><span>&nbsp;</span></div>';
     if(em.length){
@@ -8942,7 +8963,7 @@ function dshTeamBox(all,T){
       ex='<div class="ex"><span>Bester <b>'+fn(so[0].e.name)+' '+dshKFmt(k,so[0].v)+'</b></span>'+(so.length>1?'<span>Schwächster <b>'+fn(so[so.length-1].e.name)+' '+dshKFmt(k,so[so.length-1].v)+'</b></span>':'')+'</div>';
     }
     tiles+='<div class="dsh-tc'+(t===dshTF?' foc':'')+'" onclick="dshSetTF(\''+t+'\')" style="cursor:pointer" title="'+t+' im Diagramm hervorheben">'+head+'<div class="v'+(lo?' dsh-lo':'')+'">'+dshKFmt(k,v)+'</div>'+dshKDelta(k,v,pv2).replace('ggü. Vorperiode','ggü. '+TS.cmp)
-      +dshBars(ser[t],ser.G,z,lte,cur,mn,mx,false,sl.map(function(x){return x.l;}))+dshBarsFoot(ser[t],z,lte,cur,sl.map(function(x){return x.l;}),UN,false)+ex+'</div>';
+      +dshBars(ser[t],ser.G,ZT[t],lte,cur,mn,mx,false,sl.map(function(x){return x.l;}))+dshBarsFoot(ser[t],ZT[t],lte,cur,sl.map(function(x){return x.l;}),UN,false)+ex+'</div>';
   });
   tiles+='</div>';
   // ── Kopf: Titel, Zeitraum und Kennzahl nebeneinander rechts ──
@@ -11299,7 +11320,7 @@ function esBuildHtml(emp,asPopup,html){
         cut('prov');
         html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Diese Werte fließen nicht in die Provisionsberechnung ein, werden aber ebenfalls je Beschäftigungsmonat gestaffelt in Alerts und der Teamübersicht verwendet. Leeres Feld = kein Ziel, der Wert wird nicht geprüft.</p>';
         html+=buildKpiTable([
-          {lbl:'Aktivitäten/Tag (Min.)',f:'aktivitaeten',unit:''},
+          {lbl:'Aktivitäten / Std. (Min.)',f:'aktivitaeten',unit:'',step:0.1},
           {lbl:'NE - Nicht Erreicht (Max.) (%)',f:'notReached',unit:'%'},
           {lbl:'NM - Nicht Möglich (Max.) (%)',f:'notPossible',unit:'%'},
           {lbl:'NEF - Nicht Erfolgreich (Max.) (%)',f:'notSuccessful',unit:'%'},
@@ -11442,12 +11463,12 @@ function saveNewEmpFull(){
       {rk:'oem_aktivitaeten',val:100,dir:'gte'},{rk:'convOEM',val:24,dir:'gte'},{rk:'optGesamt',val:28,dir:'gte'},{rk:'optPerH',val:3.0,dir:'gte'},{rk:'margeGesamt',val:1500.00,dir:'gte'}
     ];
     var ne={id:e.id,name:e.name,role:e.role,phase:e.phase,color:e.color_index,startDate:e.start_date,team:e.team,contract:e.contract,hours:e.hours,active:e.active,targets:{}};
-    STANDARD_TARGETS.forEach(function(t){ne.targets[t.rk]=t.val;ne.targets[t.rk+'Dir']=t.dir;});
+    STANDARD_TARGETS=[]; // Ziele kommen aus Stammdaten & Provisionsvereinbarung, keine versteckten Standard-Einzelwerte mehr
     employees.push(ne);
     protocols[ne.id]=[];performance[ne.id]=[];
     if(typeof solidroadData!=='undefined')solidroadData[ne.id]={simulations:[]};
     if(typeof tasks!=='undefined')tasks[ne.id]=[];
-    sb.from('employee_kpi_targets').insert(STANDARD_TARGETS.map(function(t){return {employee_id:e.id,metric_key:t.rk,val:t.val,dir:t.dir};})).then(function(r2){
+    (STANDARD_TARGETS.length?sb.from('employee_kpi_targets').insert(STANDARD_TARGETS.map(function(t){return {employee_id:e.id,metric_key:t.rk,val:t.val,dir:t.dir};})):Promise.resolve({})).then(function(r2){
       if(r2.error)console.warn('Standard-KPI-Ziele konnten nicht angelegt werden:',r2.error);
     });
     // Alle übrigen Stammdaten & die Provisionsvereinbarung mit den bestehenden Speicherfunktionen aus dem Popup übernehmen
@@ -11909,13 +11930,13 @@ function saveNewEmp(){
       {rk:'margeGesamt',val:1500.00,dir:'gte'}
     ];
     var ne={id:e.id,name:e.name,role:e.role,phase:e.phase,color:e.color_index,startDate:e.start_date,team:e.team,contract:e.contract,hours:e.hours,active:e.active,targets:{}};
-    STANDARD_TARGETS.forEach(function(t){ne.targets[t.rk]=t.val;ne.targets[t.rk+'Dir']=t.dir;});
+    STANDARD_TARGETS=[]; // Ziele kommen aus Stammdaten & Provisionsvereinbarung, keine versteckten Standard-Einzelwerte mehr
     employees.push(ne);
     protocols[ne.id]=[];
     performance[ne.id]=[];
     if(typeof solidroadData!=='undefined')solidroadData[ne.id]={simulations:[]};
     if(typeof tasks!=='undefined')tasks[ne.id]=[];
-    sb.from('employee_kpi_targets').insert(STANDARD_TARGETS.map(function(t){return {employee_id:e.id,metric_key:t.rk,val:t.val,dir:t.dir};})).then(function(res2){
+    (STANDARD_TARGETS.length?sb.from('employee_kpi_targets').insert(STANDARD_TARGETS.map(function(t){return {employee_id:e.id,metric_key:t.rk,val:t.val,dir:t.dir};})):Promise.resolve({})).then(function(res2){
       if(res2.error)console.warn('Standard-KPI-Ziele konnten nicht angelegt werden:',res2.error);
     });
     closeModal('addEmpModal');
@@ -12851,7 +12872,7 @@ function histFieldInfo(field){
     provision_divOEM:'Divisor OEM',provision_divUpsell:'Divisor Upsells',provision_divWka:'Divisor WKA',provision_reduktionProKpi:'Reduzierung je KPI',
     provision_mindestprovision:'Mindestprovision',provision_mindestleistungOptH:'Mindestleistung Opt./Std.',
     provision_vlc_serviceRate:'Service Rate (VLC)',provision_vlc_bonusProOpt:'Bonus/Opt. (VLC)',provision_vlc_extraPayPct:'Extra Pay % (VLC)',provision_vlc_extraPayAbH:'Extra Pay ab/Std. (VLC)'};
-  var SUB={optH:'Opt. Gesamt / Std.',crOem:'CR OEM',tw:'CR TW',sy:'CR SY',my:'CR MY',syMy:'CR SY/MY',oemAnteil:'Anteil OEM',crYes:'CR YES',notReached:'NE - Nicht Erreicht',notPossible:'NM - Nicht Möglich',notSuccessful:'NEF - Nicht Erfolgreich',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM / Tag',optGesamt:'Opt. Gesamt / Tag',margeZiel:'Marge Ziel'};
+  var SUB={optH:'Opt. Gesamt / Std.',crOem:'CR OEM',tw:'CR TW',sy:'CR SY',my:'CR MY',syMy:'CR SY/MY',oemAnteil:'Anteil OEM',crYes:'CR YES',notReached:'NE - Nicht Erreicht',notPossible:'NM - Nicht Möglich',notSuccessful:'NEF - Nicht Erfolgreich',aktivitaeten:'Aktivitäten / Std.',convOEM:'Conv. OEM / Tag',optGesamt:'Opt. Gesamt / Tag',margeZiel:'Marge Ziel'};
   var MON={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
   var PCT={crOem:1,tw:1,sy:1,my:1,syMy:1,oemAnteil:1,crYes:1,notReached:1,notPossible:1,notSuccessful:1};
   var EUR={provision_grundgehalt:1,provision_basisProOpt:2,provision_vlc_serviceRate:1,provision_vlc_bonusProOpt:2,provision_vlc_extraPayAbH:2};
@@ -13018,7 +13039,7 @@ function saveProvisionSettings(empId){
     var ovNorm=(ov==null||ov==='')?null:ov, nvNorm=(nv==null||nv==='')?null:nv;
     if(String(ovNorm)!==String(nvNorm))pvHistRows.push({employee_id:empId,field:'provision_'+k,old_value:ovNorm!=null?String(ovNorm):null,new_value:nvNorm!=null?String(nvNorm):null,changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorNamePv});
   });
-  var MONAT_SUBFIELD_LABELS={optH:'Opt. Gesamt / Std.',crOem:'CR OEM',tw:'CR TW',sy:'CR SY',my:'CR MY',syMy:'CR SY/MY',oemAnteil:'Anteil OEM',crYes:'CR YES',notReached:'NE - Nicht Erreicht',notPossible:'NM - Nicht Möglich',notSuccessful:'NEF - Nicht Erfolgreich',aktivitaeten:'Aktivitäten/Tag',convOEM:'Conv. OEM / Tag',optGesamt:'Opt. Gesamt / Tag',margeZiel:'Marge Ziel'};
+  var MONAT_SUBFIELD_LABELS={optH:'Opt. Gesamt / Std.',crOem:'CR OEM',tw:'CR TW',sy:'CR SY',my:'CR MY',syMy:'CR SY/MY',oemAnteil:'Anteil OEM',crYes:'CR YES',notReached:'NE - Nicht Erreicht',notPossible:'NM - Nicht Möglich',notSuccessful:'NEF - Nicht Erfolgreich',aktivitaeten:'Aktivitäten / Std.',convOEM:'Conv. OEM / Tag',optGesamt:'Opt. Gesamt / Tag',margeZiel:'Marge Ziel'};
   var MONAT_LABELS={monat1:'Monat 1',monat2:'Monat 2',monat3plus:'Ab Monat 3'};
   ['monat1','monat2','monat3plus'].forEach(function(mk){
     var oldM=oldSettings[mk]||{}, newM=settings[mk]||{};
