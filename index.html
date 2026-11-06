@@ -455,11 +455,12 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <button class="rl-btn rl-acc" onclick="openAddEmpModal()" aria-label="Mitarbeiter hinzufügen"><i class="ti ti-plus"></i><span class="rl-tip">Mitarbeiter hinzufügen</span></button>
     <button class="rl-btn" id="rail-search" onclick="sbOpenSearch()"><i class="ti ti-search"></i><span class="rl-tip">Mitarbeiter suchen</span></button>
     <div class="rl-sep"></div>
+    <button class="rl-btn" id="rail-dashboard" onclick="selectDashboard()"><i class="ti ti-layout-dashboard" style="color:#F08566"></i><span class="rl-tip">Dashboard</span></button>
     <button class="rl-btn" id="rail-overview" onclick="selectWiegandSub('overview')"><i class="ti ti-chart-bar"></i><span class="rl-tip">Performance</span></button>
-    <button class="rl-btn" id="rail-coaching" onclick="bannerViewMode='coaching';resetBannerRotation();setCoachFilterView('overview')"><i class="ti ti-message-circle"></i><span class="rl-tip">Coaching</span></button>
     <button class="rl-btn" id="rail-provision" onclick="selectProvisionTeam()"><i class="ti ti-coin-euro"></i><span class="rl-tip">Provision</span></button>
-    <button class="rl-btn" id="rail-activity" onclick="selectCoachingActivity()"><i class="ti ti-activity"></i><span class="rl-tip">Aktivitäten</span></button>
     <button class="rl-btn" id="rail-ziel" onclick="selectWiegandSub('ziel')"><i class="ti ti-target"></i><span class="rl-tip">Zielvereinbarung</span></button>
+    <button class="rl-btn" id="rail-coaching" onclick="bannerViewMode='coaching';resetBannerRotation();setCoachFilterView('overview')"><i class="ti ti-message-circle"></i><span class="rl-tip">Coaching</span></button>
+    <button class="rl-btn" id="rail-activity" onclick="selectCoachingActivity()"><i class="ti ti-activity"></i><span class="rl-tip">Aktivitäten</span></button>
     <button class="rl-btn" id="rail-settings" onclick="selectSettingsSub(settingsView||'users')" style="display:none"><i class="ti ti-settings"></i><span class="rl-tip">Einstellungen</span></button>
     <div style="flex:1"></div>
     <button class="rl-btn rl-soft" id="sbToggle" onclick="toggleSidebarPanel()" aria-label="Menü zuklappen"><i class="ti ti-chevron-left" id="sbToggleIcon"></i><span class="rl-tip" id="sbToggleTip">Menü zuklappen</span></button>
@@ -487,6 +488,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
   <div class="sb-nav">
     <div class="sb-item" id="nav-team" onclick="toggleWiegandNav()"><div class="sb-icon"><i class="ti ti-layout-grid"></i></div> SFP Wiegand <i class="ti ti-chevron-up" id="wiegandNavChevron" style="margin-left:auto;font-size:13px;color:var(--text3)"></i></div>
     <div id="wiegandSubNav" class="wiegand-subnav">
+      <div class="sb-item sb-navsub" id="nav-team-dashboard" onclick="selectDashboard()">Dashboard</div>
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Performance</div>
       <div class="sb-item sb-navsub" id="nav-team-coaching" onclick="bannerViewMode='coaching';resetBannerRotation();setCoachFilterView('overview')">Coaching</div>
       <div class="sb-item sb-navsub" id="nav-team-provision" onclick="selectProvisionTeam()">Provision</div>
@@ -4504,12 +4506,12 @@ function empTargets(emp){
 
 
 // ── Menueleiste: Symbolleiste + Panel ──
-var SB_AREAS={overview:'Performance',coaching:'Coaching',provision:'Provision',activity:'Aktivitäten',ziel:'Zielvereinbarung',settings:'Einstellungen'};
+var SB_AREAS={dashboard:'Dashboard',overview:'Performance',coaching:'Coaching',provision:'Provision',activity:'Aktivitäten',ziel:'Zielvereinbarung',settings:'Einstellungen'};
 var _railArea='overview';
 function updateRail(){
-  var area=view==='settings'?'settings':view==='activity'?'activity':view==='provisionTeam'?'provision':view==='coaching'?'coaching':(view==='team'&&wiegandView==='ziel')?'ziel':view==='team'?'overview':_railArea;
+  var area=view==='dashboard'?'dashboard':view==='settings'?'settings':view==='activity'?'activity':view==='provisionTeam'?'provision':view==='coaching'?'coaching':(view==='team'&&wiegandView==='ziel')?'ziel':view==='team'?'overview':_railArea;
   _railArea=area;
-  var MAPID={overview:'nav-team-overview',coaching:'nav-team-coaching',provision:'nav-team-provision',activity:'nav-coaching-activity',ziel:'nav-team-ziel',settings:'nav-settings'};
+  var MAPID={dashboard:'nav-team-dashboard',overview:'nav-team-overview',coaching:'nav-team-coaching',provision:'nav-team-provision',activity:'nav-coaching-activity',ziel:'nav-team-ziel',settings:'nav-settings'};
   Object.keys(SB_AREAS).forEach(function(k){
     var b=document.getElementById('rail-'+k);if(!b)return;
     b.classList.toggle('on',k===area&&view!=='emp');
@@ -4698,6 +4700,7 @@ function showView(v){
   if(v!=='coaching'&&v!=='team'&&v!=='activity')closeCoachingSubnav();
   renderSidebar();renderMain();
 }
+function selectDashboard(){view='dashboard';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function selectCoachingActivity(){view='activity';wiegandNavOpen=true;bannerViewMode='activity';resetBannerRotation();renderSidebar();renderMain();}
 function selectProvisionTeam(){view='provisionTeam';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function closeWiegandSubnav(){
@@ -4738,7 +4741,7 @@ function toggleCoachingNav(){
   }
 }
 function selectCoachingTeam(){wiegandView='team';view='team';coachingNavOpen=true;renderSidebar();renderMain();}
-function renderMain(){if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
+function renderMain(){if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else renderEmpDetail();}
 
 // ── TEAM VIEW ──
 
@@ -8420,6 +8423,16 @@ var CATEGORY_META={
   criteria:{label:'QA-KRITERIUM',col:'#F7A777',bg:'rgba(247,179,154,0.15)'},
   login:{label:'ZUGRIFF',col:'var(--text2)',bg:'var(--bg2)'}
 };
+// ── DASHBOARD (Vertriebskennzahlen) – Grundgerüst, Inhalte folgen ──
+function renderDashboard(){
+  var ma=document.getElementById('mainArea');if(!ma)return;
+  var h='<div class="content">';
+  h+=buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}));
+  h+='<div class="card"><div class="card-title">Dashboard</div><div class="card-sub">Vertriebskennzahlen im Überblick</div>'
+    +'<div style="font-size:13px;color:var(--text2);background:#EFECE5;border:1px solid #E4E0D6;border-radius:var(--r-md);padding:14px 16px">Hier entstehen die Kennzahlen des Dashboards.</div></div>';
+  h+='</div>';
+  ma.innerHTML=h;
+}
 function renderActivity(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   var coachList=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
