@@ -9137,7 +9137,7 @@ function renderDashboard(){
   tiles+='<div class="dsh-qt dsh-ko"><div class="l">Gesamt · '+R.lbl+'</div><div class="v big">'+dshEur(tot)+'</div><div class="kv"><span>CR <b>'+dshPct(crAllRef)+'</b></span><span>Ø je Auftrag <b>'+dshEur1(dshMpo(S,'ALL'))+'</b></span></div>'+tileTeams('ALL')+'</div>';
   tiles+=DSH_AREAS.map(function(k,i){var v=parts[i],c=dshCr(S,k),mp=dshMpo(S,k),lo=under(k,c)&&Z[k]!=null,lm=under('MPO',mp);
     return '<div class="dsh-qt"><div class="l"><i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k+'<span class="pc">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div><div class="v big">'+dshEur(v)+'</div><div class="kv"><span>CR <b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></span><span>Ø je Auftrag <b class="'+(lm?'dsh-lo':'')+'">'+dshEur1(mp)+'</b></span></div>'+tileTeams(k)+'</div>';}).join('')+dshDonutTile(parts,psum,S)+'</div>';
-  var main='<div class="card"><div class="card-title">Margenerhöhung'+pseg+'<span class="dsh-cr">Kacheln und Auswertungen: '+(dshPeriod==='days'?'heute':dshPeriod==='weeks'?'laufende Woche':dshPeriod==='months'?'laufender Monat':'Geschäftsjahr '+R.lbl+' bis heute')+'</span></div>'+dshChart(all,dshPeriod)+tiles+'</div>';
+  var main='<div class="card"><div class="card-title">Margenerhöhung<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">Kacheln: '+(dshPeriod==='days'?'heute':dshPeriod==='weeks'?'laufende Woche':dshPeriod==='months'?'laufender Monat':'Geschäftsjahr '+R.lbl+' bis heute')+'</span>'+pseg+'</span></div>'+dshChart(all,dshPeriod)+tiles+'</div>';
   h+=main;
   // ── 2 · Team-Steckbriefe: eine Kennzahl, Gesamt + SE/SR/OB/VLC ──
   h+=dshTeamBox(all,T);
