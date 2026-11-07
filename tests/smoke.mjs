@@ -117,6 +117,7 @@ const par = await page.evaluate(`(async function(){
 })()`);
 check('Laden: parallel vollständig (2500 Zeilen)', par[0] === 2500 && par[1] === 2500, par.join('/'));
 
+check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();
 console.log(results.join('\n'));
