@@ -10,8 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
+<!-- feste Versionen mit Pruefsumme: veraenderte Dateien vom CDN werden vom Browser abgelehnt -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <style>
 :root{
   /* Feste Flaechen-Palette (Ebenen 3-6): nur diese hellen Toene innerhalb von Boxen verwenden */
@@ -2834,7 +2835,7 @@ function renderCoachingAnsicht(){
         var col=good?'var(--teal-dark)':'var(--red)';
         h+='<div>'
           +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
-          +'<span style="font-size:13px;font-weight:600">'+x.name+'</span>'
+          +'<span style="font-size:13px;font-weight:600">'+esc(x.name)+'</span>'
           +'<span style="font-size:13px;font-weight:700;color:'+col+'">'+(x.avgDelta>=0?'+':'')+x.avgDelta.toFixed(1)+' Ø-Punkte</span>'
           +'</div>'
           +'<div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>'
