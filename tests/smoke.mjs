@@ -117,6 +117,26 @@ const par = await page.evaluate(`(async function(){
 })()`);
 check('Laden: parallel vollständig (2500 Zeilen)', par[0] === 2500 && par[1] === 2500, par.join('/'));
 
+// 9) Sitzung: Anmeldung gilt nur heute (max. 12 h), Abmeldung nach 4 h Inaktivität mit Vorwarnung
+const sess = await page.evaluate(`(async function(){
+  function S(h){return {user:{last_sign_in_at:new Date(Date.now()-h*3600000).toISOString()}};}
+  var y=new Date();y.setDate(y.getDate()-1);y.setHours(12,0,0,0);
+  var res={heute:_sessExpired(S(0.1)),gestern:_sessExpired({user:{last_sign_in_at:y.toISOString()}}),zwoelf:_sessExpired(S(12.5))};
+  var realGet=sb.auth.getSession,realOut=sb.auth.signOut,out=0;
+  sb.auth.getSession=function(){return Promise.resolve({data:{session:S(0.1)}});};
+  sb.auth.signOut=function(){out++;return new Promise(function(){});};
+  localStorage.setItem('sos_lastActivity',String(Date.now()-239*60000));_sessionWatch();await new Promise(r=>setTimeout(r,50));
+  res.warnung=!!document.getElementById('idleWarn');
+  localStorage.setItem('sos_lastActivity',String(Date.now()-241*60000));_sessionWatch();await new Promise(r=>setTimeout(r,50));
+  res.abgemeldet=out>0;
+  sb.auth.getSession=realGet;sb.auth.signOut=realOut;var w=document.getElementById('idleWarn');if(w)w.remove();localStorage.setItem('sos_lastActivity',String(Date.now()));
+  return res;})()`);
+check('Sitzung: heutige Anmeldung bleibt gültig', sess.heute === false);
+check('Sitzung: Anmeldung von gestern läuft ab', sess.gestern === true);
+check('Sitzung: nach 12 Stunden läuft sie ab', sess.zwoelf === true);
+check('Sitzung: Vorwarnung kurz vor 4 Stunden Inaktivität', sess.warnung === true);
+check('Sitzung: Abmeldung nach 4 Stunden Inaktivität', sess.abgemeldet === true);
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();
