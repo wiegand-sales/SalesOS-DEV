@@ -1886,10 +1886,50 @@ function initAppAfterLogin(){
   });
 }
 
+
+// ── Sitzungsdauer: Anmeldung gilt bis Tagesende (spätestens 12 Stunden), Abmeldung nach 4 Stunden Inaktivität ──
+var SESSION_MAX_H=12, IDLE_MAX_MIN=240, IDLE_WARN_MIN=2;
+function _sessExpired(session){
+  if(!session||!session.user)return false;
+  var t=session.user.last_sign_in_at?new Date(session.user.last_sign_in_at):null;if(!t||isNaN(t))return false;
+  var loginDay=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+  return loginDay!==today()||(Date.now()-t.getTime())>SESSION_MAX_H*3600000;
+}
+function forceLogout(reason){
+  try{sessionStorage.setItem('sos_logoutReason',reason);localStorage.removeItem('sos_lastActivity');}catch(e){}
+  sb.auth.signOut().then(function(){location.reload();},function(){location.reload();});
+}
+function _idleTouch(){var n=Date.now();try{var l=+localStorage.getItem('sos_lastActivity')||0;if(n-l>30000)localStorage.setItem('sos_lastActivity',String(n));}catch(e){}var w=document.getElementById('idleWarn');if(w)w.remove();}
+['mousemove','mousedown','keydown','scroll','touchstart','wheel'].forEach(function(ev){window.addEventListener(ev,_idleTouch,{passive:true,capture:true});});
+function _idleShowWarn(){
+  if(document.getElementById('idleWarn'))return;
+  var o=document.createElement('div');o.id='idleWarn';
+  o.style.cssText='position:fixed;inset:0;z-index:2000;background:rgba(29,28,26,.45);display:flex;align-items:center;justify-content:center';
+  o.innerHTML='<div style="background:#F7F5F0;border-radius:16px;padding:22px 24px;width:min(420px,90vw);box-shadow:0 20px 50px rgba(0,0,0,.25)"><div style="font-size:15px;font-weight:700;margin-bottom:6px">Noch da?</div><div style="font-size:13px;color:var(--text2);margin-bottom:16px">Du warst längere Zeit nicht aktiv und wirst in '+IDLE_WARN_MIN+' Minuten automatisch abgemeldet.</div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn" style="width:auto" onclick="logout()">Jetzt abmelden</button><button class="btn btn-primary" style="width:auto" onclick="_idleTouchForce()">Angemeldet bleiben</button></div></div>';
+  document.body.appendChild(o);
+}
+function _idleTouchForce(){try{localStorage.setItem('sos_lastActivity',String(Date.now()));}catch(e){}var w=document.getElementById('idleWarn');if(w)w.remove();}
+function _sessionWatch(){
+  sb.auth.getSession().then(function(res){
+    var s0=res.data&&res.data.session;if(!s0)return;
+    if(_sessExpired(s0)){forceLogout('day');return;}
+    var l=0;try{l=+localStorage.getItem('sos_lastActivity')||0;}catch(e){}
+    if(!l){_idleTouchForce();return;}
+    var idle=(Date.now()-l)/60000;
+    if(idle>=IDLE_MAX_MIN)forceLogout('idle');
+    else if(idle>=IDLE_MAX_MIN-IDLE_WARN_MIN)_idleShowWarn();
+  });
+}
+setInterval(_sessionWatch,30000);
+(function(){var why=null;try{why=sessionStorage.getItem('sos_logoutReason');sessionStorage.removeItem('sos_logoutReason');}catch(e){}
+  if(!why)return;window.addEventListener('load',function(){var tag=document.getElementById('loginHeroTag');if(tag)tag.textContent=why==='idle'?'Du wurdest nach 4 Stunden Inaktivität abgemeldet.':'Neuer Tag, neue Anmeldung.';});})();
 sb.auth.getSession().then(function(res){
-  if(res.data.session){ initAppAfterLogin(); }
+  var s0=res.data.session;
+  if(s0&&_sessExpired(s0)){forceLogout('day');return;}
+  if(s0){ _idleTouchForce(); initAppAfterLogin(); }
 });
 sb.auth.onAuthStateChange(function(event, session){
+  if(session&&_sessExpired(session)){forceLogout('day');return;}
   if(session){ initAppAfterLogin(); }
 });
 
