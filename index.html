@@ -8078,9 +8078,10 @@ function renderTab(){
         docs.forEach(function(d){
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border-radius:var(--r-md)">'
             +'<i class="ti ti-file-text" style="font-size:16px;color:var(--purple);flex-shrink:0"></i>'
-            +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+d.filename+'</div>'
-            +'<div style="font-size:11px;color:var(--text3)">'+fd(d.uploadedAt?d.uploadedAt.slice(0,10):'')+(d.description?' · '+d.description:'')+'</div></div>'
-            +'<button class="btn btn-sm" data-id="'+d.id+'" onclick="downloadEmpDocument(this.dataset.id)"><i class="ti ti-download"></i></button>'
+            +'<div style="flex:1;min-width:0;cursor:pointer" data-id="'+d.id+'" onclick="openEmpDocument(this.dataset.id)" title="Öffnen"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.filename)+'</div>'
+            +'<div style="font-size:11px;color:var(--text3)">'+fd(d.uploadedAt?d.uploadedAt.slice(0,10):'')+(d.description?' · '+esc(d.description):'')+'</div></div>'
+            +'<button class="btn btn-sm" data-id="'+d.id+'" onclick="openEmpDocument(this.dataset.id)" title="Öffnen"><i class="ti ti-eye"></i></button>'
+            +'<button class="btn btn-sm" data-id="'+d.id+'" onclick="downloadEmpDocument(this.dataset.id)" title="Herunterladen"><i class="ti ti-download"></i></button>'
             +'<button class="btn btn-sm" data-id="'+d.id+'" style="color:var(--red)" onclick="deleteEmpDocument(this.dataset.id)"><i class="ti ti-trash"></i></button>'
             +'</div>';
         });
@@ -12219,16 +12220,49 @@ function uploadEmpDocument(file){
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
-function downloadEmpDocument(docId){
-  var emp=employees.find(function(e){return e.id===selectedEmp;});
-  if(!emp)return;
-  var doc=(employeeDocuments[emp.id]||[]).find(function(d){return String(d.id)===String(docId);});
-  if(!doc)return;
-  sb.storage.from('employee-documents').createSignedUrl(doc.storagePath,60).then(function(res){
-    if(res.error){alert('Fehler beim Erstellen des Download-Links: '+res.error.message);return;}
-    window.open(res.data.signedUrl,'_blank');
+// Dokumente: Öffnen zeigt Bilder und PDFs direkt im Board, Herunterladen speichert die Datei
+var DOC_MIME={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',txt:'text/plain'};
+function _empDocFind(docId){
+  var emp=employees.find(function(e){return e.id===selectedEmp;});if(!emp)return null;
+  return (employeeDocuments[emp.id]||[]).find(function(d){return String(d.id)===String(docId);})||null;
+}
+function _empDocBlob(doc){
+  return sb.storage.from('employee-documents').download(doc.storagePath).then(function(res){
+    if(res.error)throw res.error;
+    var ext=(doc.filename.split('.').pop()||'').toLowerCase(),type=DOC_MIME[ext]||res.data.type||'application/octet-stream';
+    return new Blob([res.data],{type:type});
   });
 }
+function downloadEmpDocument(docId){
+  var doc=_empDocFind(docId);if(!doc)return;
+  _empDocBlob(doc).then(function(blob){
+    var url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=doc.filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},4000);
+  }).catch(function(err){alert('Fehler beim Herunterladen: '+(err&&err.message||err));});
+}
+function closeDocPreview(){var o=document.getElementById('docPrevOv');if(o){if(o._url)URL.revokeObjectURL(o._url);o.remove();}}
+function openEmpDocument(docId){
+  var doc=_empDocFind(docId);if(!doc)return;
+  var ext=(doc.filename.split('.').pop()||'').toLowerCase();
+  if(!DOC_MIME[ext]){downloadEmpDocument(docId);return;} // z.B. Word/Excel: kann der Browser nicht anzeigen
+  _empDocBlob(doc).then(function(blob){
+    closeDocPreview();
+    var url=URL.createObjectURL(blob),isImg=/^image\//.test(blob.type);
+    var o=document.createElement('div');o.id='docPrevOv';o._url=url;
+    o.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(29,28,26,.45);display:flex;align-items:center;justify-content:center;padding:24px';
+    o.onclick=function(e){if(e.target===o)closeDocPreview();};
+    o.innerHTML='<div style="background:#F7F5F0;border-radius:16px;width:min(1100px,94vw);height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden">'
+      +'<div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #E4E0D6"><i class="ti ti-file-text" style="font-size:18px;color:var(--text2)"></i><div style="flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(doc.filename)+'</div>'
+      +'<button class="btn" style="width:auto" onclick="downloadEmpDocument(\''+doc.id+'\')"><i class="ti ti-download"></i> Herunterladen</button>'
+      +'<button class="btn" style="width:auto" onclick="closeDocPreview()"><i class="ti ti-x"></i> Schließen</button></div>'
+      +'<div style="flex:1;min-height:0;background:#EEEDE9;display:flex;align-items:center;justify-content:center">'
+      +(isImg?'<img src="'+url+'" alt="'+esc(doc.filename)+'" style="max-width:100%;max-height:100%;object-fit:contain">':'<iframe src="'+url+'" title="'+esc(doc.filename)+'" style="width:100%;height:100%;border:0;background:#fff"></iframe>')
+      +'</div></div>';
+    document.body.appendChild(o);
+  }).catch(function(err){alert('Fehler beim Öffnen: '+(err&&err.message||err));});
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDocPreview();});
 var _deletingEmpDoc=false;
 function deleteEmpDocument(docId){
   if(_deletingEmpDoc)return;
