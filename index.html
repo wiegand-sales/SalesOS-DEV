@@ -3099,9 +3099,8 @@ function restoreBackupToSupabase(d){
       perfRows.push({employee_id:empId,date:p.date,oem_nicht_erreicht:p.notReached||0,oem_nicht_moeglich:p.notPossible||0,
         oem_nicht_erfolgreich:p.notSuccessful||0,oem_tw:p.convTW||0,oem_yes:p.convYes||0,oem_sy:p.convSY||0,
         oem_my:p.convMY||0,ups_yes:p.ups_yes||0,wka_gesamt_yes:p.wka_gesamt_yes||0,oem_margenerhoehung:p.margeOEM||0,ups_margenerhoehung:p.margeUpsell||0,
-        wka_margenerhoehung:p.margeWKA||0,opt_per_h:p.optPerH||0,oem_gesamt:p.convOEM||0,oem_aktivitaeten:p.oem_aktivitaeten||0,
-        gesamt_optimierungen:p.optGesamt||0,gesamt_margenerhoehung:p.margeGesamt||0,oem_cr:p.crOEM,oem_tw_cr:p.crTeilweise,
-        oem_yes_cr:p.crYes,oem_sy_cr:p.crSuperYes,oem_my_cr:p.crMegaYes});
+        wka_margenerhoehung:p.margeWKA||0,oem_gesamt:p.convOEM||0,oem_aktivitaeten:p.oem_aktivitaeten||0,
+        gesamt_optimierungen:p.optGesamt||0,gesamt_margenerhoehung:p.margeGesamt||0});
     });
   });
   if(perfRows.length){
@@ -3453,7 +3452,7 @@ function groupPerfRows(rows,mode){
     groups[key].items.push(r);
   });
   var sumFields=['oem_aktivitaeten','calls','notReached','notPossible','notSuccessful','convOEM','convTW','convYes','convSY','convMY','ups_yes','wka_gesamt_yes','optGesamt','margeGesamt','margin','margeOEM','margeUpsell','margeWKA','gesamtAktivitaeten','gesamtNichtErreicht','gesamtNichtMoeglich','gesamtNichtErfolgreich','upsNichtErfolgreich','wkaOemNichtErfolgreich','wkaUpsNichtErfolgreich','wkaOemBeendet','wkaUpsBeendet'];
-  var avgFields=['crOEM','crTeilweise','crSuperYes','crMegaYes','optPerH'];
+  var avgFields=[]; // Quoten werden immer aus Rohzahlen berechnet, keine gespeicherten Prozentwerte mehr
   return order.sort().reverse().map(function(key){
     var g=groups[key],agg={};
     sumFields.forEach(function(f){agg[f]=g.items.reduce(function(a,x){return a+(x[f]||0);},0);});
@@ -6366,7 +6365,8 @@ function renderTeam(){
         if(key==='crSuperYes'){var d=yes+sy+my;return d>0?(sy/d*100):null;}
         if(key==='crMegaYes'){var d=yes+sy+my;return d>0?(my/d*100):null;}
       }
-      return ep.length?ep.reduce(function(a,x){return a+x[key];},0)/ep.length:null;
+      if(key==='optPerH'){var og=ep.reduce(function(a,x){return a+(x.optGesamt||0);},0),hrs=totalWorkHoursForMonth(e,null,ep.map(function(x){return x.date;}));return hrs>0?og/hrs:null;}
+      return ep.length?ep.reduce(function(a,x){return a+(x[key]||0);},0)/ep.length:null;
     }
     var em=ep.reduce(function(a,x){return a+(x.margeGesamt||x.margin||0);},0);
     var sCount=(protocols[e.id]||[]).length;
@@ -11472,9 +11472,8 @@ var CSV_COLS=[
   ['Datum','datum'],['Mitarbeiter','mitarbeiter_name'],['Aktivitäten','oem_aktivitaeten'],
   ['Nicht Erreicht','oem_nicht_erreicht'],['Nicht Möglich','oem_nicht_moeglich'],['Nicht Erfolgreich','oem_nicht_erfolgreich'],
   ['Conv. OEM','oem_gesamt'],['Conv. TW','oem_tw'],['Conv. Yes','oem_yes'],['Conv. SY','oem_sy'],['Conv. MY','oem_my'],
-  ['Upsells','ups_yes'],['WKA','wka_gesamt_yes'],['Opt./Std.','opt_per_h'],['Opt. Gesamt','gesamt_optimierungen'],
-  ['Marge OEM','oem_margenerhoehung'],['Marge Upsells','ups_margenerhoehung'],['Marge WKA','wka_margenerhoehung'],['Marge Gesamt','gesamt_margenerhoehung'],
-  ['CR OEM %','oem_cr'],['CR TW %','oem_tw_cr'],['CR Yes %','oem_yes_cr'],['CR SY %','oem_sy_cr'],['CR MY %','oem_my_cr']
+  ['Upsells','ups_yes'],['WKA','wka_gesamt_yes'],['Opt. Gesamt','gesamt_optimierungen'],
+  ['Marge OEM','oem_margenerhoehung'],['Marge Upsells','ups_margenerhoehung'],['Marge WKA','wka_margenerhoehung'],['Marge Gesamt','gesamt_margenerhoehung']
 ];
 
 function countZeroMargeRecords(){
@@ -11523,6 +11522,24 @@ function downloadCSVVorlage(){
 
 // Lädt eine komplette Tabelle unabhängig von der Standard-1000-Zeilen-Grenze von Supabase.
 // orderCol optional (für stabile Reihenfolge über Seiten hinweg empfohlen, aber nicht zwingend).
+// Alle Zeilen laden: erst die Anzahl abfragen, dann alle Seiten gleichzeitig (statt nacheinander).
+// Eindeutige Sortierung (z.B. employee_id+date) ist Pflicht, damit sich parallele Seiten nicht ueberschneiden.
+function selectAllParallel(table,columns,orderCols){
+  var PAGE=1000;
+  function q(){var x=sb.from(table).select(columns||'*');(orderCols||[]).forEach(function(c){x=x.order(c,{ascending:true});});return x;}
+  return sb.from(table).select('employee_id',{count:'exact',head:true}).then(function(cr){
+    if(cr.error||cr.count==null)return selectAllPaginated(table); // Rueckfall auf den bisherigen Weg
+    var n=cr.count,pages=[];
+    for(var from=0;from<Math.max(n,1);from+=PAGE)pages.push(q().range(from,from+PAGE-1));
+    return Promise.all(pages).then(function(rs){
+      var err=rs.filter(function(x){return x.error;})[0];if(err)return err;
+      var all=[];rs.forEach(function(x){all=all.concat(x.data||[]);});
+      // Falls zwischen Zaehlen und Laden neue Zeilen dazukamen: Rest nachladen
+      if(all.length>=pages.length*PAGE)return q().range(all.length,all.length+PAGE*10-1).then(function(x){return {data:all.concat(x.data||[]),error:x.error||null};});
+      return {data:all,error:null};
+    });
+  });
+}
 function selectAllPaginated(table,orderCol,ascending,eqFilter){
   var PAGE=1000;
   var allRows=[];
@@ -11540,8 +11557,9 @@ function selectAllPaginated(table,orderCol,ascending,eqFilter){
   return fetchPage(0);
 }
 
+var PERF_COLS='employee_id,date,oem_nicht_erreicht,oem_nicht_moeglich,oem_nicht_erfolgreich,oem_tw,oem_yes,oem_sy,oem_my,ups_yes,wka_gesamt_yes,oem_margenerhoehung,ups_margenerhoehung,wka_margenerhoehung,oem_gesamt,oem_aktivitaeten,gesamt_optimierungen,gesamt_margenerhoehung,gesamt_aktivitaeten,gesamt_nicht_erreicht,gesamt_nicht_moeglich,gesamt_nicht_erfolgreich,ups_nicht_erfolgreich,wka_oem_nicht_erfolgreich,wka_ups_nicht_erfolgreich,wka_oem_beendet,wka_ups_beendet';
 function loadPerformanceFromSupabase(){
-  return selectAllPaginated('performance').then(function(res){
+  return selectAllParallel('performance',PERF_COLS,['employee_id','date']).then(function(res){
     if(res.error){console.warn('performance load failed:',res.error);return false;}
     var byEmp={};
     (res.data||[]).forEach(function(r){
@@ -11549,9 +11567,8 @@ function loadPerformanceFromSupabase(){
       byEmp[r.employee_id].push({
         date:r.date,notReached:r.oem_nicht_erreicht,notPossible:r.oem_nicht_moeglich,notSuccessful:r.oem_nicht_erfolgreich,
         convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka_gesamt_yes:r.wka_gesamt_yes,
-        margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,optPerH:r.opt_per_h,
+        margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,
         convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
-        crOEM:r.oem_cr,crTeilweise:r.oem_tw_cr,crYes:r.oem_yes_cr,crSuperYes:r.oem_sy_cr,crMegaYes:r.oem_my_cr,
         gesamtAktivitaeten:r.gesamt_aktivitaeten,gesamtNichtErreicht:r.gesamt_nicht_erreicht,
         gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich,
         upsNichtErfolgreich:r.ups_nicht_erfolgreich,wkaOemNichtErfolgreich:r.wka_oem_nicht_erfolgreich,
@@ -11878,11 +11895,10 @@ function importCSV(file){
           oem_nicht_moeglich:parseIntNum(row.oem_nicht_moeglich),oem_nicht_erfolgreich:parseIntNum(row.oem_nicht_erfolgreich),
           oem_gesamt:parseIntNum(row.oem_gesamt),oem_tw:parseIntNum(row.oem_tw),oem_yes:parseIntNum(row.oem_yes),
           oem_sy:parseIntNum(row.oem_sy),oem_my:parseIntNum(row.oem_my),ups_yes:parseIntNum(row.ups_yes),
-          wka_gesamt_yes:parseIntNum(row.wka_gesamt_yes),opt_per_h:parseNum(row.opt_per_h),gesamt_optimierungen:parseIntNum(row.gesamt_optimierungen),
+          wka_gesamt_yes:parseIntNum(row.wka_gesamt_yes),gesamt_optimierungen:parseIntNum(row.gesamt_optimierungen),
           oem_margenerhoehung:parseNum(row.oem_margenerhoehung),ups_margenerhoehung:parseNum(row.ups_margenerhoehung),
           wka_margenerhoehung:parseNum(row.wka_margenerhoehung),gesamt_margenerhoehung:gesamtMarge,
-          oem_cr:parsePercent(row.oem_cr),oem_tw_cr:parsePercent(row.oem_tw_cr),oem_yes_cr:parsePercent(row.oem_yes_cr),
-          oem_sy_cr:parsePercent(row.oem_sy_cr),oem_my_cr:parsePercent(row.oem_my_cr)
+
         });
       });
       if(!payload.length){
