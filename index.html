@@ -4258,7 +4258,7 @@ function fd(d){
   var wd=['So','Mo','Di','Mi','Do','Fr','Sa'][dt.getDay()];
   return wd+', '+p[2]+'.'+p[1]+'.'+p[0];
 }
-function today(){return new Date().toISOString().slice(0,10);}
+function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);} // lokales Datum (nicht UTC)
 // Fuer "Akt./Std." am heutigen Tag: statt der vollen Tagesstunden nur die seit Arbeitsbeginn (8:30)
 // tatsaechlich verstrichene Zeit nutzen. Nutzt den letzten Sync-Zeitpunkt als Referenz, falls der
 // Sync heute schon gelaufen ist (Daten sind ohnehin nur so aktuell wie der letzte Sync), sonst die
@@ -7139,7 +7139,7 @@ function renderTab(){
         html+='<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:'+rowBg+';border:1px solid '+rowBorder+';border-radius:var(--r-md);min-height:20px">';
         html+='<i class="ti '+ev.icon+'" style="font-size:15px;color:'+ev.col+';margin-top:1px;flex-shrink:0"></i>';
         html+='<div style="flex:1;min-width:0">';
-        html+='<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:11px;font-weight:600;color:var(--text3)">'+fd(ev.date)+'</span><span style="font-size:14px;font-weight:600;color:var(--text)">'+ev.title+'</span></div>';
+        html+='<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:11px;font-weight:600;color:var(--text3)">'+fd(ev.date)+'</span><span style="font-size:14px;font-weight:600;color:var(--text)">'+esc(ev.title)+'</span></div>';
         html+='<div style="font-size:12px;color:var(--text2);margin-top:2px">'+(ev.sub||'\u00A0')+'</div>';
         html+='</div></div></div>';
       });
@@ -7460,7 +7460,7 @@ function renderTab(){
         });
       });
       if(showEval.note){
-        html+='<div style="padding:10px 17px;border-top:1px solid var(--border);font-size:12px;color:var(--text2);background:var(--bg2)"><i class="ti ti-notes" style="margin-right:5px"></i>'+showEval.note+'</div>';
+        html+='<div style="padding:10px 17px;border-top:1px solid var(--border);font-size:12px;color:var(--text2);background:var(--bg2)"><i class="ti ti-notes" style="margin-right:5px"></i>'+esc(showEval.note)+'</div>';
       }
     } else {
       html+='<div style="text-align:center;color:var(--text3);padding:24px">Noch keine Bewertung vorhanden</div>';
@@ -9136,7 +9136,7 @@ function wizSave(){
   cfg.wizards=cfg.wizards.map(function(w){return w.id===d.id?wizClone(d):w;});
   wizPersist(cfg,'Wizard „'+d.name+'“ geändert');
   wizEdit.dirty=false;wizRerender();
-  if(typeof showToast==='function')showToast('Wizard gespeichert');
+  if(typeof atToast==='function')atToast('Wizard gespeichert');
 }
 function wizToggleActive(id,val){
   var cfg=wizConfig();
@@ -9409,7 +9409,7 @@ function deleteHistorieEval(empId,evalId){
   var idx=list.findIndex(function(r){return r.id===evalId;});
   if(idx<0)return;
   list.splice(idx,1);
-  sb.from('reviews').delete().eq('id',evalId).then(function(){renderTab();}).catch(function(){renderTab();});
+  sb.from('reviews').delete().eq('id',evalId).then(function(res){if(res&&res.error)alert('Löschen fehlgeschlagen: '+res.error.message);renderTab();}).catch(function(err){alert('Löschen fehlgeschlagen: '+(err&&err.message||err));renderTab();});
 }
 function openCommentModal(empId,editCommentId){
   // Kommentar im gemeinsamen Popup: eine Kachel zum Schreiben, darunter die letzten fünf Kommentare
@@ -11479,15 +11479,15 @@ var CSV_COLS=[
 function countZeroMargeRecords(){
   var statusEl=document.getElementById('zero-marge-status');
   if(statusEl){statusEl.style.color='var(--text2)';statusEl.textContent='Zähle…';}
-  sb.from('performance').select('id',{count:'exact',head:true}).eq('gesamt_margenerhoehung',0).then(function(res){
+  sb.from('performance').select('id',{count:'exact',head:true}).eq('gesamt_margenerhoehung',0).or('gesamt_aktivitaeten.is.null,gesamt_aktivitaeten.eq.0').then(function(res){
     if(res.error){if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Fehler: '+res.error.message;}return;}
     var n=res.count||0;
-    if(!n){if(statusEl){statusEl.style.color='var(--teal)';statusEl.textContent='✓ Keine Datensätze mit Gesamtmarge 0€ gefunden.';}return;}
+    if(!n){if(statusEl){statusEl.style.color='var(--teal)';statusEl.textContent='✓ Keine Datensätze mit Gesamtmarge 0 € ohne Aktivitäten gefunden.';}return;}
     if(statusEl){
       statusEl.style.color='var(--text)';
       statusEl.innerHTML='';
       var txt=document.createElement('div');
-      txt.textContent=n+' Datensatz(e) mit Gesamtmarge 0€ gefunden.';
+      txt.textContent=n+' Datensatz(e) mit Gesamtmarge 0 € und ohne Aktivitäten gefunden.';
       txt.style.marginBottom='6px';
       statusEl.appendChild(txt);
       var btn=document.createElement('button');
@@ -11500,10 +11500,10 @@ function countZeroMargeRecords(){
   }).catch(function(err){if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Unerwarteter Fehler: '+err.message;}});
 }
 function deleteZeroMargeRecords(expectedCount){
-  if(!confirm('Wirklich '+expectedCount+' Datensatz(e) mit Gesamtmarge 0€ endgültig löschen? Das kann nicht rückgängig gemacht werden.'))return;
+  if(!confirm('Wirklich '+expectedCount+' Datensatz(e) mit Gesamtmarge 0 € und ohne Aktivitäten endgültig löschen? Arbeitstage mit Aktivitäten, aber ohne Verkauf, bleiben erhalten. Das kann nicht rückgängig gemacht werden.'))return;
   var statusEl=document.getElementById('zero-marge-status');
   if(statusEl){statusEl.style.color='var(--text2)';statusEl.textContent='Lösche…';}
-  sb.from('performance').delete().eq('gesamt_margenerhoehung',0).then(function(res){
+  sb.from('performance').delete().eq('gesamt_margenerhoehung',0).or('gesamt_aktivitaeten.is.null,gesamt_aktivitaeten.eq.0').then(function(res){
     if(res.error){if(statusEl){statusEl.style.color='#b91c1c';statusEl.textContent='Fehler beim Löschen: '+res.error.message;}return;}
     if(statusEl){statusEl.style.color='var(--teal)';statusEl.textContent='✓ Datensätze gelöscht.';}
     loadPerformanceFromSupabase().then(function(){renderTab();});
@@ -11961,7 +11961,7 @@ function saveSRKey(){
   sb.from('admin_secrets').upsert([{key:'srApiKey',value:key},{key:'srOrgId',value:org}],{onConflict:'key'}).then(function(res){
     _savingSRKey=false;
     if(res.error){alert('Fehler beim Speichern (nur Admin darf das): '+res.error.message);return;}
-    closeModal('srModal');renderSettings();
+    closeModal('srModal');renderMain();
   });
 }
 
@@ -13205,9 +13205,9 @@ function deleteHistorieCallRating(empId,ratingId){
   if(idx<0)return;
   list.splice(idx,1);
   sb.from('call_rating_scores').delete().eq('call_rating_id',ratingId).then(function(){
-    sb.from('call_ratings').delete().eq('id',ratingId).then(function(){renderTab();}).catch(function(){renderTab();});
+    sb.from('call_ratings').delete().eq('id',ratingId).then(function(res){if(res&&res.error)alert('Löschen fehlgeschlagen: '+res.error.message);renderTab();}).catch(function(err){alert('Löschen fehlgeschlagen: '+(err&&err.message||err));renderTab();});
   }).catch(function(){
-    sb.from('call_ratings').delete().eq('id',ratingId).then(function(){renderTab();}).catch(function(){renderTab();});
+    sb.from('call_ratings').delete().eq('id',ratingId).then(function(res){if(res&&res.error)alert('Löschen fehlgeschlagen: '+res.error.message);renderTab();}).catch(function(err){alert('Löschen fehlgeschlagen: '+(err&&err.message||err));renderTab();});
   });
 }
 var _editingCallRatingId=null;
