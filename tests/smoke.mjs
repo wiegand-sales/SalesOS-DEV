@@ -62,7 +62,7 @@ async function step(code) { try { await page.evaluate(code); await page.waitForT
 for (const s of ["selectDashboard()", "dshSetPeriod('weeks')", "dshSetPeriod('years')", "dshSetTP('day')", "dshSetTP('month')", "dshSetCP('week')", "dshSetCK('qa')",
   "selectWiegandSub('overview')", "selectWiegandSub('ziel')", "selectProvisionTeam()", "selectEmp('e1')", "activeTab='coaching';renderMain()", "activeTab='qa';renderMain()",
   "openPerfPopup('e1')", "closeModal('perfPopModal')", "openEmpSetModal('e1')", "closeEmpSetModal()", "view='coaching';renderSidebar();renderMain()", "view='activity';renderMain()",
-  "selectSettingsSub('wizards')", "wizToggleOpen('daily')", "wizPreview('daily')", "closeLoginWizard()", "selectSettingsSub('general')", "selectSettingsSub('roles')", "selectSettingsSub('integrations')", "selectSettingsSub('data')"]) await step(s);
+  "selectSettingsSub('wizards')", "wizToggleOpen('daily')", "wizPreview('daily')", "closeLoginWizard()", "selectSettingsSub('general')", "selectSettingsSub('roles')", "selectSettingsSub('integrations')", "selectSettingsSub('data')", "selectKalender()"]) await step(s);
 
 // 2) Dashboard: alle Kacheln gleich hoch, Filter rechts auf Höhe der Überschrift
 await step("selectDashboard()");
@@ -136,6 +136,35 @@ check('Sitzung: Anmeldung von gestern läuft ab', sess.gestern === true);
 check('Sitzung: nach 12 Stunden läuft sie ab', sess.zwoelf === true);
 check('Sitzung: Vorwarnung kurz vor 4 Stunden Inaktivität', sess.warnung === true);
 check('Sitzung: Abmeldung nach 4 Stunden Inaktivität', sess.abgemeldet === true);
+
+
+// 10) Kalender: Ansichten, Regeln, Urlaubskonto, Genehmigen
+await step("selectKalender()");
+for (const v of ['woche', 'jahr', 'team', 'monat']) await step(`kalSetView('${v}')`);
+await step("kalSetPane('gen')"); await step("kalSetPane('plan')"); await step("kalSetLoc('VLC')"); await step("kalSetLoc('MUC')");
+const kal = await page.evaluate(`(function(){
+  var t=today(),d=function(n){return addDaysUTC(t,n);},y=t.slice(0,4);
+  employees[0].urlaub={};employees[0].urlaub[y]={anspruch:28,flex:5,uebertrag:0,vorher_genommen:10};
+  absences=[{id:'k1',employeeId:'e2',art:'urlaub',von:d(30),bis:d(30),halb:false,status:'genehmigt',eingereichtAm:d(-5)},
+    {id:'k2',employeeId:'e3',art:'urlaub',von:d(30),bis:d(30),halb:false,status:'genehmigt',eingereichtAm:d(-5)},
+    {id:'k3',employeeId:'e4',art:'urlaub',von:d(30),bis:d(30),halb:false,status:'offen',eingereichtAm:d(-5)},
+    {id:'k4',employeeId:'e1',art:'urlaub',von:d(3),bis:d(3),halb:false,status:'offen',eingereichtAm:t}];
+  renderKalender();
+  var kurz=kalEval({employeeId:'e1',art:'urlaub',von:d(3),bis:d(3),halb:false}).H.some(function(h){return /Flex Day/.test(h.h);});
+  var frei=kalEval({employeeId:'e5',art:'urlaub',von:d(30),bis:d(30),halb:false}).H.some(function(h){return /3 oder mehr andere frei/.test(h.h);});
+  var wd=d(1);while(!kalWorkday(employees[4],wd))wd=addDaysUTC(wd,1);var kr=kalEval({employeeId:'e5',art:'krank',von:wd,bis:wd,halb:false}).H.some(function(h){return /50 %/.test(h.h);});
+  var vor=kalKonto('e1').tk;
+  kalDecide('k4',true);var fx=absences.find(function(a){return a.id==='k4';});
+  var vlc=Object.values(valenciaFeiertage(+y)).indexOf('San José (Fallas)')>=0&&kalHol(y+'-12-08','VLC')!==''&&kalHol(y+'-12-08','MUC')==='';
+  return {kurz:kurz,frei:frei,kr:kr,vor:vor,flex:fx.status+'/'+fx.art,vlc:vlc,html:!!document.querySelector('.kal-mg')};})()`);
+check('Kalender: Monatsansicht wird gezeichnet', kal.html);
+check('Kalender: weniger als 15 Arbeitstage Vorlauf = Flex Day', kal.kurz);
+check('Kalender: Hinweis bei 3 anderen frei', kal.frei);
+check('Kalender: Krank mit 50-%-Hinweis', kal.kr);
+check('Kalender: „vor dem Kalender genommen“ zählt ins Konto', kal.vor === 10, kal.vor);
+check('Kalender: Genehmigen bei kurzem Vorlauf zählt als Flex Day', kal.flex === 'genehmigt/flex', kal.flex);
+check('Kalender: Feiertage Valencia nur für VLC', kal.vlc);
+await step("kalOpenForm('e1')"); await step("kalCloseForm()"); await step("KAL.open='e1';renderKalender()");
 
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
