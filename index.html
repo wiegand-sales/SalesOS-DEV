@@ -686,6 +686,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-tl .cell{cursor:pointer}.kal-tl .cell:hover{background:rgba(240,133,102,.08)}
 /* Urlaubskonto */
 .kal-acc .it{border-bottom:1px solid #E4E0D6}
+.kal-kc{display:flex;gap:28px;align-items:center}.kal-kc small{display:block;font-size:11px;color:var(--text3);margin-bottom:3px}.kal-kc b{font-size:16px;font-weight:500}
 .kal-acc .rw{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:14px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:11px 12px;border-radius:12px;cursor:pointer;font:inherit;color:inherit}
 .kal-acc .rw:hover{background:#EFECE5}.kal-acc .it.open .rw{background:#EFECE5;border-radius:12px 12px 0 0}
 .kal-acc .mid{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -13818,8 +13819,7 @@ function kalKonto(eid,year){var e=kalEmp(eid),y=String(year||today().slice(0,4))
   return k;}
 function kalFlags(eid){var k=kalKonto(eid),f=[],m=+today().slice(5,7);
   if(m>=9&&k.frei>=8)f.push('<span class="kal-tag warn" data-ktip="Noch '+kalNf(k.frei)+' Tage frei. Was bis 31.12. nicht genommen ist, wird übertragen und verfällt am 31.03.">viel Resturlaub</span>');
-  if(k.flex<=1)f.push('<span class="kal-tag warn">Flex '+kalNf(k.flex)+'/'+k.flexMax+'</span>');
-  if(!kalIsViewer()&&k.kr>=5)f.push('<span class="kal-tag">'+kalNf(k.kr)+' Krankheitstage</span>');
+  if(k.flex<=0)f.push('<span class="kal-tag warn">keine Flex Days mehr</span>');
   if(k.uebertrag&&today().slice(5)<='03-31')f.push('<span class="kal-tag" data-ktip="Übertrag aus dem Vorjahr, verfällt am 31.03.">Übertrag '+kalNf(k.uebertrag)+'</span>');
   return f;}
 
@@ -13962,19 +13962,22 @@ function kalMonthBars(k){var mx=Math.max(6,Math.max.apply(null,k.mon.map(functio
     g+='<g data-ktip="'+KAL_MON[i]+': '+kalNf(m.tk)+' genommen'+(m.pl?', '+kalNf(m.pl)+' geplant':'')+(m.be?', '+kalNf(m.be)+' beantragt':'')+'"><rect x="'+(x-gap/2)+'" y="0" width="'+(bw+gap)+'" height="'+H+'" fill="transparent"/>'+seg(m.tk,'#8A7F72')+seg(m.pl,'#CDBB9E')+seg(m.be,'url(#kalHatch)')+(t?'<text x="'+(x+bw/2)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" font-size="11" fill="#5C554C">'+kalNf(t)+'</text>':'')+'</g>';
     g+='<text x="'+(x+bw/2)+'" y="'+(H+16)+'" text-anchor="middle" font-size="11" fill="'+(i===cm?'#1d1c1a':'#7A7268')+'" font-weight="'+(i===cm?'700':'400')+'">'+MS[i]+'</text>';});
   return g+'</svg>';}
-function kalPersonCard(eid){var e=kalEmp(eid),k=kalKonto(eid),y=today().slice(0,4),c=kalCfg(e,y),ed=kalCanEdit();
-  var L=absences.filter(function(x){return x.employeeId===eid&&x.status!=='abgelehnt'&&x.status!=='storniert';}).sort(function(a,b){return a.von<b.von?1:-1;}).slice(0,5);
+function kalPersonCard(eid){var e=kalEmp(eid),k=kalKonto(eid),y=today().slice(0,4),c=kalCfg(e,y),ed=kalCanEdit(),t=today();
+  var all=absences.filter(function(x){return x.employeeId===eid&&x.status!=='abgelehnt'&&x.status!=='storniert';});
+  var fut=all.filter(function(x){return x.bis>=t;}).sort(function(a,b){return a.von<b.von?-1:1;}),past=all.filter(function(x){return x.bis<t;}).sort(function(a,b){return a.von<b.von?1:-1;});
+  fut=fut.slice(0,10);past=past.slice(0,10-fut.length);
   var anteil='';if(e.endDate&&e.endDate.slice(0,4)===y){var mEnd=+e.endDate.slice(5,7)-(kalP(e.endDate).getDate()<new Date(+y,+e.endDate.slice(5,7),0).getDate()?1:0);if(e.endDate<=y+'-06-30')anteil='Austritt '+fd(e.endDate)+': anteilig '+kalNf(Math.round(c.anspruch*mEnd/12*2)/2)+' Tage (BUrlG)';else anteil='Austritt '+fd(e.endDate)+' nach dem 30.06.: voller Anspruch';}
+  function ent(x){var a=kalShowArt(x);return '<div class="row"'+(ed&&!x.masked?' data-kedit="'+x.id+'"':'')+'><i class="kal-sw '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'"></i>'+KAL_ART[a]+(x.halb?' ½':'')+(x.status==='offen'?' · offen':'')+'<span class="r">'+kalRange(x)+' · '+kalNf(kalAmt(x))+' T</span></div>';}
   var left='<div class="k4"><div class="hi"><small>Frei</small><b>'+kalNf(k.frei)+'</b></div><div><small>Genommen</small><b>'+kalNf(k.tk)+'</b></div><div><small>Geplant</small><b>'+kalNf(k.pl)+'</b></div><div><small>Beantragt</small><b>'+kalNf(k.be)+'</b></div></div>'
-    +'<div class="meta"><span>Flex Days</span><span class="kal-fx">'+Array.apply(null,{length:k.flexMax}).map(function(_,i){return '<i class="'+(i<k.flex?'':'u')+'"></i>';}).join('')+'</span>'+(kalIsViewer()?'':'<span>Krank '+kalNf(k.kr)+'</span><span>Ausgleichstage '+kalNf(k.ag)+'</span>')+'</div>'
-    +'<h4>Urlaubstage '+y+' je Monat<span><i class="kal-sw" style="background:#8A7F72;width:10px;height:10px"></i> genommen <i class="kal-sw" style="background:#CDBB9E;width:10px;height:10px;margin-left:6px"></i> geplant <i class="kal-sw kal-f kal-op" style="width:10px;height:10px;margin-left:6px"></i> beantragt</span></h4>'+kalMonthBars(k);
-  var right='<h4 style="margin-top:0">Letzte Einträge</h4>'+(L.length?L.map(function(x){var a=kalShowArt(x);return '<div class="row"'+(ed&&!x.masked?' data-kedit="'+x.id+'"':'')+'><i class="kal-sw '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'"></i>'+KAL_ART[a]+(x.halb?' ½':'')+'<span class="r">'+kalRange(x)+' · '+kalNf(kalAmt(x))+' T'+(x.status==='offen'?' · offen':'')+'</span></div>';}).join(''):'<div class="kal-note">Noch keine Einträge.</div>')
+    +'<div class="meta"><span>Flex Days</span><span class="kal-fx">'+Array.apply(null,{length:k.flexMax}).map(function(_,i){return '<i class="'+(i<k.flex?'':'u')+'"></i>';}).join('')+'</span><span>'+kalNf(k.flex)+' von '+k.flexMax+' übrig</span>'+(kalIsViewer()?'':'<span>Krank '+kalNf(k.kr)+'</span><span>Ausgleichstage '+kalNf(k.ag)+'</span>')+'</div>'
     +(ed?'<h4>Einstellungen '+y+'</h4><div class="set"><span>Urlaubsanspruch</span><input type="number" step="0.5" id="kalSetAns" value="'+c.anspruch+'"><span>davon Flex Days</span><input type="number" step="0.5" id="kalSetFlex" value="'+c.flex+'"><span>Übertrag aus '+(+y-1)+' (verfällt 31.03.)</span><input type="number" step="0.5" id="kalSetUeb" value="'+c.uebertrag+'"><span>Vor dem Kalender genommen</span><input type="number" step="0.5" id="kalSetVor" value="'+c.vorher+'"></div>'+(anteil?'<div class="kal-note" style="margin-top:8px">'+anteil+'</div>':'')
       +'<div class="kal-acts" style="justify-content:flex-end;margin-top:12px"><button class="btn" onclick="kalOpenForm(\''+eid+'\')">Eintragen</button><button class="btn btn-primary" onclick="kalSaveCfg(\''+eid+'\')">Speichern</button></div>':'');
+  var right='<h4 style="margin-top:0">Geplant<span>'+fut.length+'</span></h4>'+(fut.length?fut.map(ent).join(''):'<div class="kal-note" style="padding:6px 0">Nichts geplant.</div>')
+    +'<h4>Letzte Einträge<span>'+past.length+'</span></h4>'+(past.length?past.map(ent).join(''):'<div class="kal-note" style="padding:6px 0">Noch keine Einträge.</div>');
   return '<div class="kal-pc"><div>'+left+'</div><div>'+right+'</div></div>';}
 function kalKontoList(){var L=kalEmps().slice().sort(function(a,b){return KAL.sort==='name'?a.name.localeCompare(b.name):kalKonto(b.id).frei-kalKonto(a.id).frei;});
   return '<div class="kal-acc">'+L.map(function(e){var k=kalKonto(e.id),T=k.ans+k.uebEff||1,f=kalFlags(e.id),op=KAL.open===e.id;
-    return '<div class="it'+(op?' open':'')+'"><button class="rw" onclick="kalToggleAcc(\''+e.id+'\')" aria-expanded="'+op+'"><span class="kal-av">'+kalIni(e.name)+'</span><div class="mid"><span>'+esc(e.name)+' <span class="kal-note">· '+esc(e.role||'')+'</span></span><div class="kal-kbar" data-ktip="Genommen '+kalNf(k.tk)+' · geplant '+kalNf(k.pl)+' · beantragt '+kalNf(k.be)+'"><i style="width:'+(k.tk/T*100)+'%;background:#8A7F72"></i><i style="width:'+(k.pl/T*100)+'%;background:#CDBB9E"></i><i style="width:'+(k.be/T*100)+'%;background:#E6D9C2"></i></div>'+(f.length?'<div class="kal-tags" style="margin:0">'+f.join('')+'</div>':'')+'</div><div class="rt"><b>'+kalNf(k.frei)+'</b><small>von '+kalNf(k.ans+k.uebEff)+' frei</small></div><i class="ti ti-chevron-right chev"></i></button>'+(op?'<div class="body">'+kalPersonCard(e.id)+'</div>':'')+'</div>';}).join('')+'</div>';}
+    return '<div class="it'+(op?' open':'')+'"><button class="rw" onclick="kalToggleAcc(\''+e.id+'\')" aria-expanded="'+op+'"><span class="kal-av">'+kalIni(e.name)+'</span><div class="mid"><span>'+esc(e.name)+' <span class="kal-note">· '+esc(e.role||'')+'</span></span><div class="kal-kbar" data-ktip="Genommen '+kalNf(k.tk)+' · geplant '+kalNf(k.pl)+' · beantragt '+kalNf(k.be)+'"><i style="width:'+(k.tk/T*100)+'%;background:#8A7F72"></i><i style="width:'+(k.pl/T*100)+'%;background:#CDBB9E"></i><i style="width:'+(k.be/T*100)+'%;background:#E6D9C2"></i></div>'+(f.length?'<div class="kal-tags" style="margin:0">'+f.join('')+'</div>':'')+'</div><div class="kal-kc"><div><small>Flex Days</small><span class="kal-fx">'+Array.apply(null,{length:k.flexMax}).map(function(_,i){return '<i class="'+(i<k.flex?'':'u')+'"></i>';}).join('')+'</span></div>'+(kalIsViewer()?'':'<div><small>Krank</small><b>'+kalNf(k.kr)+'</b></div>')+'<div class="rt"><b>'+kalNf(k.frei)+'</b><small>von '+kalNf(k.ans+k.uebEff)+' frei</small></div></div><i class="ti ti-chevron-right chev"></i></button>'+(op?'<div class="body">'+kalPersonCard(e.id)+'</div>':'')+'</div>';}).join('')+'</div>';}
 
 // ── Seite ──
 function renderKalender(){var ma=document.getElementById('mainArea');if(!ma)return;if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;
