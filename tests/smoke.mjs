@@ -169,6 +169,10 @@ const kalF = await page.evaluate(`(function(){
   view='kalender';KAL.view='monat';KAL.hide={};renderMain();KAL.cur=today();renderKalender();var vor=document.querySelectorAll('#mainArea .kal-mg .kal-ch.kal-f').length;
   kalFilt('flex');var nach=document.querySelectorAll('#mainArea .kal-mg .kal-ch.kal-f').length;kalFilt('*');
   return {coach:coach,vor:vor,nach:nach};})()`);
+const kalR = await page.evaluate(`(function(){var t=today();protocols['e1']=(protocols['e1']||[]).concat([{id:'rz1',date:kalRef(),uhrzeit:'10:00',endUhrzeit:'11:00',type:'Weekly',status:'geplant'}]);
+  KAL.view='team';KAL.cur=t;renderKalender();var team=document.querySelectorAll('#mainArea .kal-tl [data-krz]').length;
+  KAL.view='woche';KAL.cur=kalRef();renderKalender();var wk=document.querySelectorAll('#mainArea .kal-wv [data-sid="rz1"] [data-krz]').length;return {team:team,wk:wk};})()`);
+check('Kalender: Griffe zum Verlängern an Sessions', kalR.wk === 2, kalR.wk);
 check('Coaching: zeigt den neuen Kalender', kalF.coach);
 check('Kalender: Filter blendet Flex Days aus', kalF.vor > 0 && kalF.nach === 0, kalF.vor + '→' + kalF.nach);
 await step("kalOpenForm('e1')"); await step("kalCloseForm()"); await step("KAL.open='e1';renderKalender()");
