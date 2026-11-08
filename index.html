@@ -717,6 +717,27 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-body{background:#EFECE5;border-radius:0 0 12px 12px;padding:2px 12px 14px;margin-bottom:8px}
 .kal-sb{display:flex;height:16px;margin-top:2px;border-radius:5px;overflow:hidden;background:#E4E0D6}.kal-sb i{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-style:normal;font-weight:700;color:#fff;overflow:hidden}
 .kal-sb i.p{color:#1d1c1a}.kal-sb i.kal-bh{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.7) 0 3px,transparent 3px 6px)}
+/* Zielvereinbarung (Baum) */
+.zt-t{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.zt-t th{background:#EFECE5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#5f5d57;padding:10px 8px;text-align:right;white-space:nowrap}
+.zt-t th:first-child{text-align:left}.zt-t td{padding:0 8px;height:46px;border-bottom:1px solid #E4E0D6;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.zt-t td:first-child{text-align:left}
+.zt-t th.os,.zt-t td.os{background:#F3EEE6}
+.zt-t tr.m{cursor:pointer}.zt-t tr.m td{font-weight:600}.zt-t tr.m:hover td{background:#EFECE5}.zt-t tr.m.open td{background:#EFECE5}
+.zt-t tr.e{cursor:pointer}.zt-t tr.e td{background:#FBFAF7;height:50px}.zt-t tr.e:hover td,.zt-t tr.e.open td{background:#F4F1EB}
+.zt-t tr.k td{background:#fff;height:36px;font-size:12px;color:var(--text2)}.zt-t tr.kw{cursor:pointer}.zt-t tr.kw:hover td,.zt-t tr.kw.open td{background:#F7F5F0}
+.zt-t tr.dd td{height:30px;font-size:11.5px;background:#FDFCFA}.zt-t tr.y td{font-weight:700;border-top:2px solid #1d1c1a;border-bottom:0;background:rgba(29,28,26,.04);height:50px}
+.zt-l1{display:flex;align-items:center;gap:6px}.zt-l2{display:flex;align-items:center;gap:10px;padding-left:22px}.zt-l2 small{display:block;color:var(--text3);font-size:11.5px;font-weight:400}.zt-l3{padding-left:62px}.zt-l4{padding-left:86px;color:var(--text3)}
+.zt-chev{font-size:12px;color:var(--text3);transition:transform .15s}tr.open>td .zt-chev{transform:rotate(90deg)}
+.zt-num{width:70px!important;height:30px!important;text-align:right;padding:0 8px!important}.zt-num.nl{width:100px!important}.zt-num[disabled]{background:transparent!important;border-color:transparent!important}
+.zt-cnt{display:inline-block;min-width:26px;padding:2px 6px;border-radius:6px;text-align:center;font-size:12px;font-weight:600}.zt-cnt.u{background:#EFE7D8;color:#6E5A3A}.zt-cnt.k{background:#E9E4DD;color:#5F564C}.zt-cnt.z{color:#C4BCB0}
+.zt-pct{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11.5px;font-weight:700;background:rgba(29,28,26,.06)}.zt-pct.lo{background:#FBE3DA;color:#9A3F22}
+.zt-d{font-size:11.5px;font-weight:600}.zt-d.up{color:#2F6B4F}.zt-d.dn{color:#9A3F22}.zt-dim{color:#B5ADA2}
+.zt-red{box-shadow:inset 0 0 0 1.5px #CDBB9E;background:#F4EFE7;border-radius:6px;padding:2px 7px}.zt-osk{background:#F3EEE6;padding:2px 7px;border-radius:6px}
+.zt-lk{font-size:13px;color:var(--text2)}.zt-fs{margin-left:10px;display:inline-flex}.zt-new{display:inline-flex;padding:1px 7px;border-radius:7px;font-size:11px;background:#FBE3DA;color:#9A3F22;font-weight:600}
+.zt-oslink{cursor:pointer;border-bottom:1px dashed #A99C88}.zt-acc{font-size:12px;cursor:default;border-bottom:1px dashed #A99C88}
+.zt-osrow{text-align:left!important;white-space:normal!important;padding:10px 8px 12px 62px!important;height:auto!important}
+.zt-osb{background:#F7F5F0;border-radius:10px;padding:10px 12px;font-size:12.5px;display:inline-block}.zt-osb table{border-collapse:collapse;margin-top:6px}.zt-osb td,.zt-osb th{padding:4px 10px;text-align:right;border-bottom:1px solid #E4E0D6;height:auto!important;background:none!important}.zt-osb td:first-child{text-align:left;color:var(--text2)}.zt-osb th{font-size:11px;color:var(--text3);text-transform:none}
+.zt-prot{background:#EFECE5;border-radius:12px;padding:6px 14px;margin-bottom:14px;max-height:320px;overflow:auto}.zt-pr{display:grid;grid-template-columns:120px 150px 1fr;gap:12px;padding:8px 0;border-bottom:1px solid #E4E0D6;font-size:13px}.zt-pr:last-child{border-bottom:0}
 /* Formular */
 .kal-fs{background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px}
 .kal-fs .h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
@@ -1995,7 +2016,7 @@ function initAppAfterLogin(){
   }).then(function(){
     if(currentUserRole==='agent'){ showAgentLock(); return; }
     if(currentUserRole==='none'){ showNoAccessLock(); return; }
-    Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase(), loadAbsencesFromSupabase()]).then(function(){
+    Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase(), loadAbsencesFromSupabase(), loadZielLocksFromSupabase()]).then(function(){
       lsLoad();               // Rest der Daten (protocols, ...) bleibt vorerst lokal
       runAppInit();
       logAppOpen(); // Zugriff protokollieren (max. 1 Eintrag je 30 Min. und Nutzer)
@@ -4344,7 +4365,7 @@ function zielvereinbarungHtml(){
     +wochenzielKachelnHtml()
     +'<div class="card card-static">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
-    +'<div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung</div>'
+    +'<div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung'+(typeof ZT!=='undefined'?' <a href="#" class="kal-note" style="font-weight:400" onclick="ZT.alt=false;renderTeam();return false">neue Ansicht</a>':'')+'</div>'
     +'<div style="display:flex;align-items:center;gap:10px">'
     +'<button class="btn" style="height:34px" onclick="setZielYearView(-1)">◀</button>'
     +'<div style="font-size:14px;font-weight:700;min-width:60px;text-align:center">'+year+'</div>'
@@ -6838,7 +6859,7 @@ function renderTeam(){
     +'<th style="background:#EFECE5;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2)">Aktion</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
     +'</div>'
-    ):(wiegandView==='ziel'?zielvereinbarungHtml():(wiegandView==='performance'?buildOverviewTab(allVisible,'performance'):buildOverviewTab(allVisible))))
+    ):(wiegandView==='ziel'?(ZT.alt?zielvereinbarungHtml():zielTreeHtml()):(wiegandView==='performance'?buildOverviewTab(allVisible,'performance'):buildOverviewTab(allVisible))))
     +'</div>';
   var _newContentEl=ma.querySelector('.content');
   if(_newContentEl&&_prevScrollTop)_newContentEl.scrollTop=_prevScrollTop;
@@ -14235,6 +14256,135 @@ document.addEventListener('mouseup',function(){var r=KAL.rz;if(!r)return;KAL.rz=
 document.addEventListener('mouseover',function(ev){var tp=document.getElementById('kalTip');var t=ev.target&&ev.target.closest&&ev.target.closest('[data-ktip]');
   if(!t){if(tp)tp.style.display='none';return;}if(!tp){tp=document.createElement('div');tp.id='kalTip';tp.className='kal-tip';document.body.appendChild(tp);}tp.innerHTML=t.getAttribute('data-ktip');tp.style.display='block';});
 document.addEventListener('mousemove',function(ev){var tp=document.getElementById('kalTip');if(tp&&tp.style.display==='block'){var w=tp.offsetWidth,x=ev.clientX+14;if(x+w>innerWidth-8)x=ev.clientX-w-14;tp.style.left=x+'px';tp.style.top=(ev.clientY+16)+'px';}});
+
+// ── ZIELVEREINBARUNG (Entwurf D): Jahr → Monat → Mitarbeiter → KW → Tag in einer Tabelle ──
+// Einsatztage ab ZT_KAL_START aus dem Kalender (Arbeitszeit, Feiertage, Abwesenheiten außer Krank), davor wie gespeichert.
+// Ziel OS = Σ geplante Tage × Ø Opt. am Wochentag × Ø Marge/Opt. (letzte 3 Monate, neue Agents: Startwerte früherer Starter).
+// Festschreiben: Stand je Mitarbeiter in ziel_festschreibung, danach Änderungen nur durch Admins und mit Protokoll (ziel_protokoll).
+var ZT_KAL_START='2026-12';
+var zielLocks={};      // month -> {am,von,snapshot,...}
+var zielProtokoll=[];  // {month,employee_id,feld,alt,neu,grund,von,am}
+var ZT={open:{},prot:false,edit:{},alt:false,saved:{}};
+function loadZielLocksFromSupabase(){
+  return Promise.all([sb.from('ziel_festschreibung').select('*'),sb.from('ziel_protokoll').select('*')]).then(function(r){
+    zielLocks={};zielProtokoll=[];
+    if(r[0]&&!r[0].error)(r[0].data||[]).forEach(function(x){zielLocks[x.month]=x;});else console.warn('ziel_festschreibung (Tabelle angelegt?)',r[0]&&r[0].error);
+    if(r[1]&&!r[1].error)zielProtokoll=(r[1].data||[]).slice().sort(function(a,b){return (b.am||'').localeCompare(a.am||'');});
+    return true;}).catch(function(e){console.warn('ziel locks',e);return false;});
+}
+function ztKeep(mk){if(!ZT.saved[mk])ZT.saved[mk]=JSON.parse(JSON.stringify(zielStore[mk]||{}));}
+function ztIsAdmin(){return currentUserRole==='admin';}
+function ztCalMonth(mk){return mk>=ZT_KAL_START;}
+function ztEmps(mk){var R={SDM:0,SC:1,SE:2,SR:3,VLC:4};return employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;}).sort(function(a,b){var ra=R[a.role]!=null?R[a.role]:99,rb=R[b.role]!=null?R[b.role]:99;return ra!==rb?ra-rb:a.name.localeCompare(b.name);});}
+function ztDaysOfMonth(mk){var r=[],d=mk+'-01';while(d.slice(0,7)===mk){r.push(d);d=kalAdd(d,1);}return r;}
+function ztWeeks(mk){return getMonthWeeksZiel(mk);}
+// geplante Tage eines Mitarbeiters in einer KW (nur Tage im Monat)
+function ztPlanDays(e,mk,wm){var r=[],d=wm.from;for(var i=0;i<5;i++){var x=kalAdd(wm.from,i);if(x.slice(0,7)===mk&&kalWorkday(e,x)){var a=kalOn(e.id,x);if(!a||a.art==='krank'||(a.masked&&a.art!=='urlaub'))r.push(x);}}return r;}
+function ztAbsCount(e,mk){var u=0,k=0;ztDaysOfMonth(mk).forEach(function(d){if(!kalWorkday(e,d))return;var a=kalOn(e.id,d);if(!a||a.fixed)return;var f=a.halb?0.5:1;if(a.art==='krank'||(a.masked&&a.art==='abwesend'))k+=f;else if(a.art==='urlaub'||a.art==='flex')u+=f;});return {u:u,k:k};}
+function ztEmpMonth(e,mk){var W=ztWeeks(mk),r=(zielStore[mk]||{})[e.id]||{},cal=ztCalMonth(mk),lk=zielLocks[mk],snap=lk&&lk.snapshot&&lk.snapshot[e.id];
+  var weeks=W.map(function(wm,i){if(snap&&snap.weeks)return {n:+snap.weeks[i]||0,ds:null,red:false};if(cal){var ds=ztPlanDays(e,mk,wm),full=0;for(var j=0;j<5;j++){var x=kalAdd(wm.from,j);if(x.slice(0,7)===mk&&kalWorkday(e,x))full++;}return {n:ds.length,ds:ds,red:ds.length<full};}
+    return {n:(r.weeks&&r.weeks[i]!=null)?+r.weeks[i]:wm.defaultDays,ds:null,red:false};});
+  var tage=weeks.reduce(function(a,w){return a+w.n;},0),opt=r.optTag!=null?+r.optTag:0,mo=r.margeOpt!=null?+r.margeOpt:0;
+  return {weeks:weeks,tage:tage,opt:opt,mo:mo,zielOpt:tage*opt,ziel:tage*opt*mo};}
+// ── Ziel OS ──
+var _ztHist={};
+function ztHistory(e,mk){var k=e.id+mk;if(_ztHist[k])return _ztHist[k];var to=kalAdd(mk+'-01',-1),f=new Date(+mk.slice(0,4),+mk.slice(5,7)-4,1),from=kalI(f);
+  var rows=(performance[e.id]||[]).filter(function(x){return x.date&&x.date>=from&&x.date<=to;}),byDate={};rows.forEach(function(x){if(!byDate[x.date])byDate[x.date]={o:0,m:0};byDate[x.date].o+=x.optGesamt||0;byDate[x.date].m+=x.margeGesamt||x.margin||0;});
+  var wdS=[0,0,0,0,0,0,0],wdN=[0,0,0,0,0,0,0],so=0,sm=0,dates=Object.keys(byDate);dates.forEach(function(d){var w=kalP(d).getDay();wdS[w]+=byDate[d].o;wdN[w]++;so+=byDate[d].o;sm+=byDate[d].m;});
+  return (_ztHist[k]={n:dates.length,wd:wdS.map(function(s,i){return wdN[i]?s/wdN[i]:null;}),avg:dates.length?so/dates.length:0,mpo:so?sm/so:0});}
+var _ztStart={};
+function ztStartValues(bm){if(_ztStart[bm])return _ztStart[bm];var so=0,sm=0,nd=0;employees.forEach(function(e){if(!e.startDate)return;var byM={};(performance[e.id]||[]).forEach(function(x){if(!x.date)return;if(beschaeftigungsmonat(e,x.date.slice(0,7))!==bm)return;so+=x.optGesamt||0;sm+=x.margeGesamt||x.margin||0;byM[x.date]=1;});nd+=Object.keys(byM).length;});
+  return (_ztStart[bm]={avg:nd?so/nd:0,mpo:so?sm/so:0});}
+function ztOS(e,mk){var h=ztHistory(e,mk),bm=beschaeftigungsmonat(e,mk),src,avg,mpo,wd;
+  if(bm<=3||h.n<20){var s=ztStartValues(Math.min(bm,3));avg=s.avg;mpo=s.mpo;wd=null;src='Startwerte früherer Starter in Monat '+Math.min(bm,3);if(!avg){avg=h.avg;mpo=h.mpo;wd=h.wd;src='Ø der letzten 3 Monate (wenig Daten)';}}
+  else{avg=h.avg;mpo=h.mpo;wd=h.wd;src='Ø der letzten 3 Monate';}
+  var x=ztEmpMonth(e,mk),per=[0,0,0,0,0],W=ztWeeks(mk);
+  W.forEach(function(wm,i){var ds=x.weeks[i].ds;if(ds)ds.forEach(function(d){per[kalP(d).getDay()-1]++;});else{var n=x.weeks[i].n;for(var j=0;j<5&&n>0;j++){var dd=kalAdd(wm.from,j);if(dd.slice(0,7)===mk&&!kalWknd(dd)){per[kalP(dd).getDay()-1]++;n--;}}}});
+  var opw=[1,2,3,4,5].map(function(w){return wd&&wd[w]!=null?wd[w]:avg;}),opt=per.reduce(function(a,n,i){return a+n*opw[i];},0);
+  return {sum:opt*mpo,opt:opt,per:per,opw:opw,mpo:mpo,src:src};}
+// ── Werte je Monat ──
+function ztMonth(mk){var L=ztEmps(mk),z=0,os=0,t=0,zo=0,ist=0,u=0,k=0,ov=[],mv=[];L.forEach(function(e){var x=ztEmpMonth(e,mk);z+=x.ziel;t+=x.tage;zo+=x.zielOpt;if(x.opt)ov.push(x.opt);if(x.mo)mv.push(x.mo);var a=ztAbsCount(e,mk);u+=a.u;k+=a.k;ist+=istForEmpMonth(e.id,mk);os+=ztOS(e,mk).sum;});
+  var avg=function(a){return a.length?a.reduce(function(s,v){return s+v;},0)/a.length:0;};
+  return {n:L.length,u:u,k:k,t:t,opt:avg(ov),mo:avg(mv),zielOpt:zo,nl:zielNlTargets[mk]!=null?+zielNlTargets[mk]:0,ziel:z,os:os,ist:ist};}
+function ztEur(v){return '€ '+Math.round(v||0).toLocaleString('de-DE');}
+function ztPct(a,b){if(!b)return '';var p=Math.round(a/b*100);return '<span class="zt-pct'+(p<97?' lo':'')+'">'+p+' %</span>';}
+function ztDelta(a,b){if(!a||!b)return '';var p=Math.round((a-b)/b*100);return ' <span class="zt-d '+(p>=0?'up':'dn')+'">'+(p>=0?'+':'−')+Math.abs(p)+' %</span>';}
+function ztCnt(n,cls){return n?'<span class="zt-cnt '+cls+'">'+kalNf(n)+'</span>':'<span class="zt-cnt z">0</span>';}
+function ztTog(k){ZT.open[k]=!ZT.open[k];renderTeam();}
+function ztLockedEdit(mk){return !!zielLocks[mk]&&!ZT.edit[mk];}
+function ztCanEditMonth(mk){if(kalIsViewer())return false;if(zielLocks[mk])return ztIsAdmin()&&!!ZT.edit[mk];return true;}
+// ── Tabelle ──
+function zielTreeHtml(){var year=zielYearView,cur=today().slice(0,7),h='',Y={nl:0,z:0,ist:0,u:0,k:0,t:0},acc=[0,0];_ztHist={};_ztStart={};_kalOnIdx=null;
+  var head='<tr><th>Monat / Mitarbeiter</th><th>MA</th><th>Urlaub</th><th>Krank</th><th>Einsatztage</th><th>Opt./Tag</th><th>Marge/Opt.</th><th>Ziel Opt.</th><th>Ziel NL</th><th>Ziel Marge</th><th class="os">Ziel OS</th><th>Ist Marge</th><th>%</th></tr>';
+  for(var m=1;m<=12;m++){var mk=year+'-'+('0'+m).slice(-2),M=ztMonth(mk),lk=zielLocks[mk],op=ZT.open['m'+mk],next=!lk&&(mk===cur||mk===kalI(new Date(+cur.slice(0,4),+cur.slice(5,7),1)).slice(0,7));
+    Y.nl+=M.nl;Y.z+=M.ziel;Y.ist+=M.ist;Y.u+=M.u;Y.k+=M.k;Y.t+=M.t;
+    if(mk<cur&&M.ist&&M.os&&M.ziel){acc[1]++;if(Math.abs(M.os-M.ist)<Math.abs(M.ziel-M.ist))acc[0]++;}
+    var lkTip=lk?'festgeschrieben am '+fd((lk.festgeschrieben_am||'').slice(0,10))+(lk.festgeschrieben_von?' von '+lk.festgeschrieben_von:''):'';
+    h+='<tr class="m'+(op?' open':'')+'" onclick="if(!event.target.closest(\'input,button\'))ztTog(\'m'+mk+'\')"><td><span class="zt-l1"><i class="ti ti-chevron-right zt-chev"></i>'+MONTH_NAMES_ZIEL[m-1]+(lk?' <span class="zt-lk" data-ktip="'+esc(lkTip)+'"><i class="ti ti-lock"></i></span>':'')
+      +(next&&ztIsAdmin()?'<button class="btn btn-primary btn-sm zt-fs" onclick="ztFestschreiben(\''+mk+'\')">Festschreiben bis '+ztFsDeadline(mk)+'</button>':'')+(lk&&ztIsAdmin()?'<button class="btn btn-sm zt-fs" onclick="ZT.edit[\''+mk+'\']=!ZT.edit[\''+mk+'\'];ZT.open[\'m'+mk+'\']=true;renderTeam()">'+(ZT.edit[mk]?'Ändern beenden':'Ändern')+'</button>':'')+'</span></td>'
+      +'<td>'+M.n+'</td><td>'+ztCnt(M.u,'u')+'</td><td>'+ztCnt(M.k,'k')+'</td><td>'+kalNf(M.t)+'</td><td>'+(M.opt?Math.round(M.opt):'–')+'</td><td>'+(M.mo?'€ '+Math.round(M.mo):'–')+'</td><td>'+Math.round(M.zielOpt).toLocaleString('de-DE')+'</td>'
+      +'<td><input type="number" class="zt-num nl" value="'+Math.round(M.nl)+'" onchange="ztSetNl(\''+mk+'\',this.value)"'+(kalIsViewer()?' disabled':'')+'></td><td>'+ztEur(M.ziel)+(mk>=cur?ztDelta(M.ziel,M.nl).replace('class="zt-d','data-ktip="zum Ziel NL" class="zt-d'):'')+'</td><td class="os">'+(M.os?ztEur(M.os):'<span class="zt-dim">–</span>')+'</td><td>'+(M.ist?ztEur(M.ist):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(M.ist,M.ziel)+'</td></tr>';
+    if(op)h+=ztEmpRows(mk);}
+  h+='<tr class="y"><td>Jahresergebnis</td><td></td><td>'+kalNf(Y.u)+'</td><td>'+kalNf(Y.k)+'</td><td>'+kalNf(Y.t)+'</td><td></td><td></td><td></td><td>'+ztEur(Y.nl)+'</td><td>'+ztEur(Y.z)+'</td><td class="os">'+(acc[1]?'<span class="zt-acc" data-ktip="Monate, in denen Ziel OS näher am Ist lag als die Zielvereinbarung">OS genauer: '+acc[0]+' von '+acc[1]+'</span>':'')+'</td><td>'+ztEur(Y.ist)+'</td><td>'+ztPct(Y.ist,Y.z)+'</td></tr>';
+  var prot=ZT.prot?ztProtHtml():'';
+  return buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}))+wochenzielKachelnHtml()
+    +'<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung</div><span class="kal-note">Jahr → Monat → Mitarbeiter → KW → Tag · Klick klappt auf</span>'
+    +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><button class="btn" onclick="ZT.prot=!ZT.prot;renderTeam()"><i class="ti ti-history"></i> Protokoll</button><button class="btn" onclick="setZielYearView(-1)">◀</button><b style="min-width:52px;text-align:center">'+year+'</b><button class="btn" onclick="setZielYearView(1)">▶</button></span></div>'+prot
+    +'<div class="std-wrap" style="overflow-x:auto"><table class="zt-t"><thead>'+head+'</thead><tbody>'+h+'</tbody></table></div>'
+    +'<div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+(kalIsViewer()?'':'<button class="btn btn-primary" onclick="ztSave()"><i class="ti ti-check"></i> Zielvereinbarung speichern</button>')+'<span id="ziel-status" class="kal-note"></span>'
+    +'<span class="kal-legend" style="margin:0 0 0 auto"><span><span class="zt-red">umrandet</span> weniger Tage wegen Abwesenheit</span><span><span class="zt-osk">Ziel OS</span> Vorschlag, Klick zeigt die Rechnung</span><span>Einsatztage ab '+MONTH_NAMES_ZIEL[+ZT_KAL_START.slice(5)-1]+' '+ZT_KAL_START.slice(0,4)+' aus dem Kalender</span><a href="#" onclick="ZT.alt=true;renderTeam();return false" class="kal-note">alte Ansicht</a></span></div></div>';}
+function ztEmpRows(mk){var h='',W=ztWeeks(mk),ed=ztCanEditMonth(mk),cal=ztCalMonth(mk)&&!zielLocks[mk];
+  ztEmps(mk).forEach(function(e){var x=ztEmpMonth(e,mk),a=ztAbsCount(e,mk),os=ztOS(e,mk),ist=istForEmpMonth(e.id,mk),eo=ZT.open['e'+mk+e.id],bm=beschaeftigungsmonat(e,mk);
+    h+='<tr class="e'+(eo?' open':'')+'" onclick="if(!event.target.closest(\'input,.zt-oslink\'))ztTog(\'e'+mk+e.id+'\')"><td><span class="zt-l2"><i class="ti ti-chevron-right zt-chev"></i><span class="kal-av">'+kalIni(e.name)+'</span><span>'+esc(e.name)+(bm<=3?' <span class="zt-new">Monat '+bm+'</span>':'')+'<small>'+esc(e.role||'')+' · '+kalVzTz(e)+'</small></span></span></td><td></td><td>'+ztCnt(a.u,'u')+'</td><td>'+ztCnt(a.k,'k')+'</td><td>'+kalNf(x.tage)+'</td>'
+      +'<td><input type="number" class="zt-num" value="'+x.opt+'" onchange="ztSetField(\''+mk+'\',\''+e.id+'\',\'optTag\',this.value)"'+(ed?'':' disabled')+'></td><td><input type="number" class="zt-num" value="'+x.mo+'" onchange="ztSetField(\''+mk+'\',\''+e.id+'\',\'margeOpt\',this.value)"'+(ed?'':' disabled')+'></td>'
+      +'<td>'+Math.round(x.zielOpt).toLocaleString('de-DE')+'</td><td></td><td>'+ztEur(x.ziel)+'</td><td class="os"><span class="zt-oslink" onclick="event.stopPropagation();ztTog(\'o'+mk+e.id+'\')">'+ztEur(os.sum)+'</span>'+ztDelta(os.sum,x.ziel)+'</td><td>'+(ist?ztEur(ist):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(ist,x.ziel)+'</td></tr>';
+    if(ZT.open['o'+mk+e.id])h+='<tr class="k"><td colspan="13" class="zt-osrow">'+ztOsBox(e,mk,os,x)+'</td></tr>';
+    if(eo)W.forEach(function(wm,i){var w=x.weeks[i],ko=ZT.open['k'+mk+e.id+i],wo=Math.round(w.n*x.opt),wz=w.n*x.opt*x.mo,wi=istForEmpWeek(e.id,wm.from,wm.to);
+      var osW=0;if(w.ds)w.ds.forEach(function(d){osW+=os.opw[kalP(d).getDay()-1]*os.mpo;});
+      h+='<tr class="k kw'+(ko?' open':'')+'"'+(w.ds?' onclick="ztTog(\'k'+mk+e.id+i+'\')"':'')+'><td><span class="zt-l3">'+(w.ds?'<i class="ti ti-chevron-right zt-chev"></i>':'')+'KW '+wm.kw+' · '+kalF(wm.from>mk+'-01'?wm.from:mk+'-01')+'–'+kalF(wm.to.slice(0,7)===mk?wm.to:kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),0)))+'</span></td><td></td><td></td><td></td><td>'+(w.red?'<span class="zt-red">'+w.n+'</span>':w.n)+'</td><td></td><td></td><td>'+wo+' Opt.</td><td></td><td>'+ztEur(wz)+'</td><td class="os">'+(w.ds?ztEur(osW):'')+'</td><td>'+(wi?ztEur(wi):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(wi,wz)+'</td></tr>';
+      if(ko&&w.ds)h+=ztDayRows(e,mk,x,os,wm);});});
+  return h;}
+function ztDayRows(e,mk,x,os,wm){var h='',wsum=0,all=[];x.weeks.forEach(function(w){if(w.ds)w.ds.forEach(function(d){all.push(d);wsum+=os.opw[kalP(d).getDay()-1]||1;});});
+  for(var j=0;j<5;j++){var d=kalAdd(wm.from,j);if(d.slice(0,7)!==mk)continue;var lab='',o='',z='',ist=(performance[e.id]||[]).filter(function(r){return r.date===d;}).reduce(function(s,r){return s+(r.margeGesamt||r.margin||0);},0);
+    if(!kalWorkday(e,d)){var hn=kalHolE(e,d);lab='<span class="zt-dim">'+(hn?esc(hn):kalFixDay(d)?'frei für alle':'frei lt. Arbeitszeit')+'</span>';}
+    else{var a=kalOn(e.id,d);if(a&&a.art!=='krank'&&!(a.masked&&a.art==='abwesend')){lab='<span class="zt-red">'+KAL_ART[kalShowArt(a)]+'</span>';}else{var f=(os.opw[kalP(d).getDay()-1]||1)/(wsum||1);o=Math.round(x.zielOpt*f)+' Opt.';z=ztEur(x.ziel*f);lab=a?'<span class="zt-dim">krank</span>':'1';}}
+    h+='<tr class="k dd"><td><span class="zt-l4">'+KAL_WD[kalP(d).getDay()]+', '+kalF(d)+'</span></td><td></td><td></td><td></td><td>'+lab+'</td><td></td><td></td><td>'+o+'</td><td></td><td>'+z+'</td><td class="os"></td><td>'+(ist?ztEur(ist):'')+'</td><td></td></tr>';}
+  return h;}
+function ztOsBox(e,mk,os,x){var D=['Mo','Di','Mi','Do','Fr'];
+  return '<div class="zt-osb"><div><b>So rechnet Ziel OS</b> <span class="zt-dim">· '+esc(os.src)+'</span></div><table><tr><th></th>'+D.map(function(d){return '<th>'+d+'</th>';}).join('')+'<th>Summe</th></tr>'
+    +'<tr><td>geplante Tage</td>'+os.per.map(function(n){return '<td>'+n+'</td>';}).join('')+'<td>'+os.per.reduce(function(a,b){return a+b;},0)+'</td></tr>'
+    +'<tr><td>Ø Opt. am Wochentag</td>'+os.opw.map(function(v){return '<td>'+kalNf(Math.round(v*10)/10)+'</td>';}).join('')+'<td></td></tr>'
+    +'<tr><td>Opt.</td>'+os.per.map(function(n,i){return '<td>'+Math.round(n*os.opw[i])+'</td>';}).join('')+'<td><b>'+Math.round(os.opt)+'</b></td></tr></table>'
+    +'<div style="margin-top:6px">'+Math.round(os.opt)+' Opt. × Ø Marge/Opt. € '+kalNf(Math.round(os.mpo*10)/10)+' = <b>'+ztEur(os.sum)+'</b> · Zielvereinbarung: '+ztEur(x.ziel)+'</div></div>';}
+function ztProtHtml(){var y=zielYearView,L=zielProtokoll.filter(function(p){return (p.month||'').slice(0,4)===y;});
+  return '<div class="zt-prot"><div class="zt-pr"><b>Datum</b><b>Person</b><b>Änderung</b></div>'+(L.length?L.slice(0,200).map(function(p){var e=p.employee_id?kalEmp(p.employee_id):null,mn=MONTH_NAMES_ZIEL[+p.month.slice(5,7)-1];
+    return '<div class="zt-pr"><span>'+(p.am?new Date(p.am).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')+'</span><span>'+esc(p.von||'')+'</span><span>'+mn+(e?' · '+esc(e.name):'')+' · '+esc(p.feld)+(p.alt!=null||p.neu!=null?': <b>'+esc(p.alt==null?'–':p.alt)+' → '+esc(p.neu==null?'–':p.neu)+'</b>':'')+(p.grund?' · '+esc(p.grund):'')+'</span></div>';}).join(''):'<div class="kal-note" style="padding:8px 0">Noch keine Einträge.</div>')+'</div>';}
+function ztFsDeadline(mk){var d=mk+'-01',n=0;while(true){if(!kalWknd(d)&&!bayernFeiertage(+d.slice(0,4))[d]){n++;if(n===3)break;}d=kalAdd(d,1);}return kalF(d);}
+// ── Schreiben ──
+function ztLog(mk,eid,feld,alt,neu,grund){var row={month:mk,employee_id:eid||null,feld:feld,alt:alt==null?null:String(alt),neu:neu==null?null:String(neu),grund:grund||null,von:kalActor()};row.am=new Date().toISOString();zielProtokoll.unshift(row);
+  var ins=Object.assign({},row);delete ins.am;sb.from('ziel_protokoll').insert(ins).then(function(res){if(res&&res.error)console.warn('Protokoll',res.error);});}
+function ztSetNl(mk,v){var n=parseFloat(v);if(isNaN(n))n=0;var old=zielNlTargets[mk]!=null?zielNlTargets[mk]:0;if(n===old)return;ztLog(mk,null,'Ziel NL',Math.round(old),Math.round(n));updateZielNlTarget(mk,n);}
+function ztSetField(mk,eid,f,v){if(!ztCanEditMonth(mk))return;ztKeep(mk);if(!zielStore[mk])zielStore[mk]={};if(!zielStore[mk][eid])zielStore[mk][eid]={};var n=parseFloat(v);if(isNaN(n))n=0;zielStore[mk][eid][f]=n;ZT.dirty=ZT.dirty||{};ZT.dirty[mk]=1;renderTeam();}
+function ztRowsFor(mk,useCal){var W=ztWeeks(mk),rec=zielStore[mk]||{};return ztEmps(mk).map(function(e){var r=rec[e.id]||{},x=ztEmpMonth(e,mk),wk=W.map(function(wm,i){return (useCal&&x.weeks[i])?x.weeks[i].n:((r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays);});while(wk.length<5)wk.push(0);
+  return {employee_id:e.id,month:mk,week1:wk[0],week2:wk[1],week3:wk[2],week4:wk[3],week5:wk[4],opt_per_tag:r.optTag!=null?r.optTag:0,marge_per_opt:r.margeOpt!=null?r.margeOpt:0,arbeitstage:r.arbeitstage||[]};});}
+function ztSave(){var st=document.getElementById('ziel-status'),D=Object.keys(ZT.dirty||{});if(!D.length){if(st)st.textContent='Nichts geändert.';return;}
+  var grund=null;if(D.some(function(mk){return zielLocks[mk];})){grund=prompt('Grund für die Änderung am festgeschriebenen Monat (steht im Protokoll):','');if(grund===null)return;}
+  if(st)st.textContent='Speichere …';
+  var all=[];D.forEach(function(mk){var old=ZT.saved[mk]||{},cur=zielStore[mk]||{};Object.keys(cur).forEach(function(eid){['optTag','margeOpt'].forEach(function(f){var a=old[eid]&&old[eid][f]!=null?+old[eid][f]:null,b=cur[eid][f]!=null?+cur[eid][f]:null;
+      if(a!==b&&zielLocks[mk])ztLog(mk,eid,f==='optTag'?'Opt./Tag':'Marge/Opt.',a,b,grund);});});
+    all=all.concat(ztRowsFor(mk,!!zielLocks[mk]||false));});
+  sb.from('zielvereinbarung').upsert(all,{onConflict:'employee_id,month'}).then(function(res){if(res&&res.error){if(st)st.textContent='Fehler: '+res.error.message;alert('Speichern fehlgeschlagen: '+res.error.message);return;}
+    D.forEach(function(mk){delete ZT.saved[mk];});ZT.dirty={};if(st)st.textContent='Gespeichert · '+new Date().toLocaleTimeString('de-DE');logActivity('ziel','updated','Zielvereinbarung gespeichert',null,D.join(', '));});}
+function ztFestschreiben(mk){if(!ztIsAdmin())return;if(ZT.dirty&&ZT.dirty[mk]){alert('Bitte zuerst speichern.');return;}
+  var L=ztEmps(mk),M=ztMonth(mk),snap={};L.forEach(function(e){var x=ztEmpMonth(e,mk),os=ztOS(e,mk);snap[e.id]={weeks:x.weeks.map(function(w){return w.n;}),optTag:x.opt,margeOpt:x.mo,ziel:Math.round(x.ziel),zielOS:Math.round(os.sum)};});
+  if(!confirm(MONTH_NAMES_ZIEL[+mk.slice(5)-1]+' festschreiben?\n\nZiel Marge '+ztEur(M.ziel)+' · Ziel NL '+ztEur(M.nl)+'\nDie Einsatztage aus dem Kalender werden übernommen. Danach können nur Admins ändern, jede Änderung wird protokolliert.'))return;
+  var rows=ztRowsFor(mk,true);var oldRec=zielStore[mk]||{};
+  rows.forEach(function(r){var o=oldRec[r.employee_id];var ow=o&&o.weeks?o.weeks.slice(0,5).join('/'):null,nw=[r.week1,r.week2,r.week3,r.week4,r.week5].join('/');if(ow&&ow!==nw)ztLog(mk,r.employee_id,'Einsatztage je KW (vorher gespeichert)',ow,nw,'beim Festschreiben aus dem Kalender übernommen');});
+  sb.from('zielvereinbarung').upsert(rows,{onConflict:'employee_id,month'}).then(function(res){if(res&&res.error){alert('Festschreiben abgebrochen, nichts gesperrt: '+res.error.message);return;}
+    rows.forEach(function(r){if(!zielStore[mk])zielStore[mk]={};if(!zielStore[mk][r.employee_id])zielStore[mk][r.employee_id]={};zielStore[mk][r.employee_id].weeks=[r.week1,r.week2,r.week3,r.week4,r.week5];});
+    var lk={month:mk,festgeschrieben_von:kalActor(),ziel_nl:M.nl,ziel_marge:Math.round(M.ziel),ziel_os:Math.round(M.os),snapshot:snap};
+    sb.from('ziel_festschreibung').upsert(lk,{onConflict:'month'}).then(function(r2){if(r2&&r2.error){alert('Sperre konnte nicht gespeichert werden: '+r2.error.message+'\nDie Werte sind gespeichert, der Monat ist aber nicht gesperrt.');return;}
+      lk.festgeschrieben_am=new Date().toISOString();zielLocks[mk]=lk;ztLog(mk,null,'Monat festgeschrieben',null,'Ziel Marge '+Math.round(M.ziel)+' · Ziel OS '+Math.round(M.os));logActivity('ziel','locked','Zielvereinbarung festgeschrieben',null,mk);renderTeam();});});}
 </script>
 </body>
 </html>
