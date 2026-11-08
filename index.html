@@ -644,8 +644,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-wv .hd b{display:block;font-size:14px;color:var(--text)}.kal-wv .hd.td b{color:#9A3F22}.kal-wv .hd small{display:block;font-size:10.5px}
 .kal-wv .ad{border-left:1px solid #E4E0D6;border-bottom:1px solid #E4E0D6;padding:5px;display:flex;flex-direction:column;gap:3px;min-height:40px;background:#F7F5F0}
 .kal-wv .lab{font-size:10.5px;color:var(--text3);padding:8px 6px;border-bottom:1px solid #E4E0D6;background:#F7F5F0}
-.kal-wv .times{position:relative;height:560px}.kal-wv .times span{position:absolute;right:8px;font-size:11px;color:var(--text3)}
-.kal-wv .col{position:relative;height:560px;border-left:1px solid #E4E0D6;background-image:repeating-linear-gradient(to bottom,transparent 0 55px,#ECE8E0 55px 56px)}
+.kal-wv .times{position:relative;height:672px}.kal-wv .times span{position:absolute;right:8px;font-size:11px;color:var(--text3)}
+.kal-wv .col{position:relative;height:672px;border-left:1px solid #E4E0D6;background-image:repeating-linear-gradient(to bottom,transparent 0 55px,#ECE8E0 55px 56px)}
 .kal-wv .col.hl{background-color:#F3F0EA}
 .kal-wv .ev{position:absolute;left:4px;right:4px;border-radius:7px;padding:3px 8px;font-size:11.5px;overflow:hidden;line-height:1.35;min-height:22px}
 .kal-wv .ev div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2963,19 +2963,8 @@ function renderCoachingAnsicht(){
 
   // ══ Petrol-Infobox: Zeitraum, QA fällig, Überfällige Coachings, Sessions gesamt, je Coach eine Spalte ══
 
-  // ══ ZEILE 2: Kalender volle Breite ══
-  h+='<div class="card" style="margin-bottom:22px">';
-  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">';
-  h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
-  h+='<div style="display:flex;gap:6px">'
-    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='week'?'background:#F08566;color:#fff;border-color:#F08566':'')+'" onclick="setCoachCalViewMode(\'week\')">Woche</button>'
-    +'<button style="height:34px;font-size:12px;font-weight:500;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;'+(coachCalViewMode==='month'?'background:#F08566;color:#fff;border-color:#F08566':'')+'" onclick="setCoachCalViewMode(\'month\')">Monat</button>'
-    +'</div>';
-  h+=buildCalNavControls();
-  h+='</div>';
-  h+='<div style="display:flex;gap:10px"><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;border:1px solid #F08566;background:#fff;display:inline-block"></span>Heute</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);display:inline-block"></span>Geplant</span><span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#EFECE5;border:1px solid #E4E0D6;display:inline-block"></span>Vergangen</span></div>';
-  h+='</div>';
-  h+=(coachCalViewMode==='week'?buildWeekKal():buildKal())+'</div>';
+  // ══ ZEILE 2: Kalender volle Breite (gleicher Kalender wie im Menü Kalender) ══
+  h+=kalCoachCard();
 
   // ══ Coach-Wirksamkeit (nur Overview, ab 2 Coaches sinnvoll) ══
   if(coachFilterView==='overview'&&coachList.length>=2){
@@ -13730,7 +13719,7 @@ try{puInit();}catch(e){console.warn('puInit',e);}
 // Daten: Tabelle absences (siehe sql/20_kalender_abwesenheiten.sql), Urlaubskonto in employees.urlaub (je Jahr),
 // Sessions aus protocols. Betrachter lesen über absences_team() (Krank/Ausgleich nur als „abwesend“).
 var absences=[]; // {id,employeeId,art,von,bis,halb,status,verschobenVon,notiz,eingereichtAm,eingereichtVon,entschiedenVon,entschiedenAm}
-var KAL={view:'monat',cur:null,loc:'MUC',pane:null,low:'req',sort:'rest',open:null,drag:null,snap:null,ut:null};
+var KAL={hide:{},fOpen:false,cview:'woche',view:'monat',cur:null,loc:'MUC',pane:null,low:'req',sort:'rest',open:null,drag:null,snap:null,ut:null};
 var KAL_MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 var KAL_WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
 var KAL_ART={urlaub:'Urlaub',flex:'Flex Day',ausgleich:'Ausgleichstag',krank:'Krank',abwesend:'Abwesend'};
@@ -13789,7 +13778,7 @@ function kalWorkday(e,s){return !kalWknd(s)&&!kalHolE(e,s)&&!kalFixDay(s)&&workH
 function kalWdBetween(e,a,b){var n=0,d=kalAdd(a,1);while(d<b){if(kalWorkday(e,d))n++;d=kalAdd(d,1);}return n;}
 
 // ── Mitarbeiter je Standort ──
-function kalEmps(loc){return teamTargetList().filter(function(e){return (loc||KAL.loc)==='VLC'?kalIsVlc(e):!kalIsVlc(e);}).sort(function(a,b){return a.name.localeCompare(b.name);});}
+function kalEmps(loc){return teamTargetList().filter(function(e){return loc==='ALL'?true:(loc||KAL.loc)==='VLC'?kalIsVlc(e):!kalIsVlc(e);}).sort(function(a,b){return a.name.localeCompare(b.name);});}
 function kalEmp(id){return employees.find(function(e){return e.id===id;});}
 
 // ── Einträge ──
@@ -13862,12 +13851,35 @@ function kalHintTags(x){var t=[],e=kalEmp(x.employeeId);if(!e)return '';var loc=
   var k=kalKonto(x.employeeId,x.von.slice(0,4));if(k.frei<0)t.push('<span class="kal-tag warn">Konto im Minus</span>');
   if(!t.length)t.push('<span class="kal-tag">keine Hinweise</span>');return t.join('');}
 
+// ── Kontext (Kalender-Menü oder Coaching) und Filter nach Kategorien ──
+function kalCtx(){return view==='coaching'?'coach':'kal';}
+function kalSesCat(p){var t=p.type||p.typ||'';if(/^weekly$/i.test(t))return 'Weekly';return typeof findCoachingCategoryForType==='function'?findCoachingCategoryForType(t):'Coaching';}
+function kalFilterCats(){var a=kalIsViewer()?[['urlaub','Urlaub'],['flex','Flex Day'],['abwesend','Abwesend']]:[['urlaub','Urlaub'],['flex','Flex Day'],['ausgleich','Ausgleichstag'],['krank','Krank']];
+  var c=[['Weekly','Weekly']].concat(Object.keys(COACHING_CATEGORIES).map(function(x){return [x,x];}));return {abs:a,ses:c};}
+function kalShowAbs(x){return !KAL.hide[kalShowArt(x)];}
+function kalOnV(eid,d){var x=kalOn(eid,d);return x&&kalShowAbs(x)?x:null;}
+function kalFilt(key){if(key==='*')KAL.hide={};else if(KAL.hide[key])delete KAL.hide[key];else KAL.hide[key]=1;kalRerender();}
+function kalFiltOnly(grp){var f=kalFilterCats();KAL.hide={};(grp==='abs'?f.ses:f.abs).forEach(function(o){KAL.hide[o[0]]=1;});kalRerender();}
+function kalFilterBtn(){var f=kalFilterCats(),n=Object.keys(KAL.hide).length;
+  function box(o){var on=!KAL.hide[o[0]];return '<label style="display:flex;align-items:center;gap:8px;margin:0;padding:5px 6px;border-radius:7px;cursor:pointer;font-weight:400;font-size:13px"><input type="checkbox" style="width:auto;margin:0" '+(on?'checked':'')+' onchange="kalFilt(\''+o[0]+'\')">'+esc(o[1])+'</label>';}
+  return '<div style="position:relative" id="kalFiltWrap"><button class="btn'+(n?' kal-tgl on':'')+'" onclick="KAL.fOpen=!KAL.fOpen;kalRerender()"><i class="ti ti-filter"></i> Filter'+(n?'<b>'+n+' aus</b>':'')+'</button>'
+    +(KAL.fOpen?'<div style="position:absolute;top:40px;right:0;z-index:50;background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px;width:250px;box-shadow:0 8px 24px rgba(0,0,0,.12)">'
+      +'<div style="display:flex;align-items:center;margin:0 6px 4px"><b style="font-size:11px;letter-spacing:.06em;color:var(--text2)">ABWESENHEITEN</b><a style="margin-left:auto;font-size:11.5px;cursor:pointer;color:var(--text2)" onclick="kalFiltOnly(\'abs\')">nur diese</a></div>'+f.abs.map(box).join('')
+      +'<div style="display:flex;align-items:center;margin:10px 6px 4px"><b style="font-size:11px;letter-spacing:.06em;color:var(--text2)">SESSIONS</b><a style="margin-left:auto;font-size:11.5px;cursor:pointer;color:var(--text2)" onclick="kalFiltOnly(\'ses\')">nur diese</a></div>'+f.ses.map(box).join('')
+      +'<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-sm" onclick="kalFilt(\'*\')">Alle anzeigen</button></div></div>':'')+'</div>';}
+document.addEventListener('mousedown',function(ev){if(!KAL.fOpen)return;var w=document.getElementById('kalFiltWrap');if(w&&!w.contains(ev.target)){KAL.fOpen=false;kalRerender();}});
+
 // ── Sessions aus protocols ──
-function kalSess(d,eid){var out=[];kalEmps().forEach(function(e){if(eid&&e.id!==eid)return;(protocols[e.id]||[]).forEach(function(p){if(p.date===d&&!kalOn(e.id,d))out.push({e:e,p:p});});});
+function kalSessEmps(){return kalCtx()==='coach'?employees.filter(function(e){return e.active!==false;}):kalEmps();}
+function kalSess(d,eid,raw){var out=[],grp={},cf=kalCtx()==='coach'&&typeof coachFilterView!=='undefined'&&coachFilterView&&coachFilterView!=='overview'?coachFilterView:null;
+  kalSessEmps().forEach(function(e){if(eid&&e.id!==eid)return;(protocols[e.id]||[]).forEach(function(p){if(p.date!==d||kalOn(e.id,d))return;if(cf&&p.coachId!==cf)return;if(!raw&&KAL.hide[kalSesCat(p)])return;
+    if(p.groupId&&!eid){if(grp[p.groupId]){grp[p.groupId].n++;return;}var o={e:e,p:p,n:1};grp[p.groupId]=o;out.push(o);return;}out.push({e:e,p:p,n:1});});});
   return out.sort(function(a,b){return (a.p.uhrzeit||'').localeCompare(b.p.uhrzeit||'');});}
 function kalSesPast(p){return p.status!=='geplant'||p.date<today();}
 function kalCoachName(id){var c=employees.find(function(e){return e.id===id;});return c?kalFirst(c.name):'';}
-function kalSesTip(o){return esc((o.p.uhrzeit?o.p.uhrzeit+' ':'')+(o.p.type||'Session'))+'<br>'+esc(o.e.name)+(o.p.coachId?' mit '+esc(kalCoachName(o.p.coachId)):'')+(o.p.status==='geplant'?'<br>geplant':'');}
+function kalSesWho(o){return o.p.groupId&&o.n>1?'Gruppencoaching ('+o.n+')':o.e.name;}
+function kalSesAttrs(o){return ' data-eid="'+esc(o.e.id)+'" data-sid="'+esc(o.p.id)+'" data-typ="'+esc(o.p.type||'')+'" data-focus="'+esc(o.p.focus||'')+'" data-datum="'+esc(o.p.date)+'" data-uhrzeit="'+esc(o.p.uhrzeit||'')+'"';}
+function kalSesTip(o){return esc((o.p.uhrzeit?o.p.uhrzeit+(o.p.endUhrzeit?'–'+o.p.endUhrzeit:'')+' ':'')+(o.p.type||'Session'))+'<br>'+esc(kalSesWho(o))+(o.p.focus?' · '+esc(o.p.focus):'')+(o.p.coachId?' mit '+esc(kalCoachName(o.p.coachId)):'')+(o.p.status==='geplant'?'<br>geplant':'');}
 
 // ── Zu planen: Performance-Gespräche (5/11/23 Monate) und Weekly je Agent ohne Session in dieser Woche ──
 function kalTasks(){var out=[],t=today(),mo=kalMon(kalRef()),fr=kalAdd(mo,4);
@@ -13885,7 +13897,7 @@ function kalOpenReqs(){return absences.filter(function(x){var e=kalEmp(x.employe
 function kalBanner(){var t=today(),L=kalEmps(),wds=[],d=t;while(wds.length<10){if(!kalWknd(d)&&!kalHol(d,KAL.loc))wds.push(d);d=kalAdd(d,1);}
   var abw=wds.map(function(x){return L.filter(function(e){return kalOn(e.id,x);}).length;});
   var mo=kalMon(kalRef()),wk=[0,1,2,3,4].map(function(i){return kalAdd(mo,i);}),nmo=kalAdd(mo,7),nwk=[0,1,2,3,4].map(function(i){return kalAdd(nmo,i);});
-  var sesW=wk.map(function(x){return kalSess(x).length;}),sesN=sesW.reduce(function(a,b){return a+b;},0);
+  var sesW=wk.map(function(x){return kalSess(x,null,true).length;}),sesN=sesW.reduce(function(a,b){return a+b;},0);
   var openR=kalOpenReqs(),weeks=[],wl=[];for(var i=0;i<8;i++){var ws=kalAdd(mo,7*i),cnt=0;L.forEach(function(e){for(var j=0;j<5;j++){var xx=kalOn(e.id,kalAdd(ws,j));if(xx&&(xx.art==='urlaub'||xx.art==='flex'))cnt+=xx.halb?0.5:1;}});weeks.push(cnt);wl.push('KW '+kalKw(ws));}
   var abwN=new Set();L.forEach(function(e){nwk.forEach(function(x){if(kalOn(e.id,x))abwN.add(e.id);});});
   var K=L.map(function(e){return kalKonto(e.id);}),sum=function(f){return K.reduce(function(a,k){return a+k[f];},0);};
@@ -13906,22 +13918,24 @@ function kalBanner(){var t=today(),L=kalEmps(),wds=[],d=t;while(wds.length<10){i
 // ── Ansichten ──
 function kalAbsChip(e,x,d){var a=kalShowArt(x),dr=kalCanEdit()&&!x.fixed&&!x.masked;
   return '<div class="kal-ch '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+esc(kalFirst(e.name))+' · '+KAL_ART[a]+(x.halb?' ½':'')+'</div>';}
-function kalSesChip(o){return '<div class="kal-ch kal-ses'+(kalSesPast(o.p)?' past':'')+'" '+(kalCanEdit()?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+' data-ktip="'+esc(kalSesTip(o))+'">'+(o.p.uhrzeit?o.p.uhrzeit+' ':'')+esc(kalFirst(o.e.name))+'</div>';}
+function kalSesChip(o){return '<div class="kal-ch kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(o.p.uhrzeit?o.p.uhrzeit+' ':'')+esc(o.p.groupId&&o.n>1?'Gruppe ('+o.n+')':kalFirst(o.e.name))+'</div>';}
 function kalFreeTag(d){if(kalFixDay(d))return '';var o=kalFree(d,KAL.loc,null);return o.length>=3?'<span class="kal-tag warn" data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'">'+o.length+' frei</span>':'';}
 function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4].map(function(i){return kalAdd(m,i);}),t=today();
   var h='<div class="kal-wv"><div class="hd" style="border-left:0"></div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(d===t?' td':'')+'">'+KAL_WD[kalP(d).getDay()].toUpperCase()+'<b>'+kalF(d)+'</b>'+(hn?'<small>'+esc(hn)+'</small>':'')+'</div>';}).join('');
-  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps().forEach(function(e){var x=kalOn(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});return '<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
-  var tm='<div class="times">';for(var hh=8;hh<18;hh++)tm+='<span style="top:'+((hh-8)*56+4)+'px">'+('0'+hh).slice(-2)+':00</span>';h+=tm+'</div>';
+  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps(kalCtx()==='coach'?'ALL':null).forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});return '<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
+  var tm='<div class="times">';for(var hh=8;hh<20;hh++)tm+='<span style="top:'+((hh-8)*56+4)+'px">'+('0'+hh).slice(-2)+':00</span>';h+=tm+'</div>';
   D.forEach(function(d){var c='<div class="col'+(kalHol(d,KAL.loc)?' hl':'')+'" data-kslot="'+d+'" data-kopen="'+d+'">';
-    kalSess(d).forEach(function(o){if(!o.p.uhrzeit)return;var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;var top=Math.max(0,(st-480)/60*56),hgt=Math.max(22,(en-st)/60*56-3);
-      c+='<div class="ev kal-ses'+(kalSesPast(o.p)?' past':'')+'" style="top:'+top.toFixed(0)+'px;height:'+hgt.toFixed(0)+'px" '+(kalCanEdit()?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+' data-ktip="'+esc(kalSesTip(o))+'"><div><b>'+o.p.uhrzeit+'</b> '+esc(o.e.name)+'</div><div>'+esc(o.p.type||'Session')+(o.p.coachId?' · '+esc(kalCoachName(o.p.coachId)):'')+'</div></div>';});
+    var day=kalSess(d).filter(function(o){return o.p.uhrzeit;}),cols=[];day.forEach(function(o){var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;if(en<=st)en=st+45;o._s=st;o._e=en;var ci=0;while(cols[ci]&&cols[ci]>st)ci++;cols[ci]=en;o._col=Math.min(ci,2);});
+    day.forEach(function(o){var n=0;day.forEach(function(q){if(q._s<o._e&&q._e>o._s)n=Math.max(n,q._col+1);});o._n=Math.max(1,Math.min(3,n,cols.length));if(o._col>=o._n)o._col=o._n-1;});
+    day.forEach(function(o){if(!o.p.uhrzeit)return;var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;var top=Math.max(0,(st-480)/60*56),hgt=Math.max(22,(en-st)/60*56-3);
+      c+='<div class="ev kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" style="top:'+top.toFixed(0)+'px;height:'+hgt.toFixed(0)+'px;left:calc('+(o._col*100/o._n)+'% + 4px);right:auto;width:calc('+(100/o._n)+'% - 8px)" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'"><div><b>'+o.p.uhrzeit+'</b> '+esc(kalSesWho(o))+'</div><div>'+esc(o.p.type||'Session')+(o.p.coachId?' · '+esc(kalCoachName(o.p.coachId)):'')+'</div></div>';});
     h+=c+'</div>';});
   return h+'</div>';}
 function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),first=kalI(new Date(y,mo,1)),last=kalI(new Date(y,mo+1,0)),t=today();var d=kalMon(first);
   var h='<div class="kal-mg">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(w){return '<div class="wh">'+w+'</div>';}).join('');
   while(d<=last||kalP(d).getDay()!==1){var hn=kalHol(d,KAL.loc),out=kalP(d).getMonth()!==mo;
     if(kalWknd(d)){h+='<div class="c we'+(out?' out':'')+'"><div class="dn">'+kalP(d).getDate()+'</div></div>';d=kalAdd(d,1);continue;}
-    var ch=[];kalEmps().forEach(function(e){var x=kalOn(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
+    var ch=[];kalEmps(kalCtx()==='coach'?'ALL':null).forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
     var fix=kalFixDay(d)?'<div class="kal-ch '+(d.slice(-2)==='24'?'kal-u':'kal-a')+'">alle · '+(d.slice(-2)==='24'?'Urlaubstag':'Ausgleichstag')+'</div>':'';
     h+='<div class="c'+(hn?' hl':'')+(out?' out':'')+'" data-kday="'+d+'" data-kopen="'+d+'"><div class="dn">'+(d===t?'<span class="tday">'+kalP(d).getDate()+'</span>':kalP(d).getDate())+kalFreeTag(d)+'</div>'+(hn?'<div class="hn">'+esc(hn)+'</div>':'')+fix+ch.slice(0,5).join('')+(ch.length>5?'<div class="kal-more">+'+(ch.length-5)+' weitere</div>':'')+'</div>';d=kalAdd(d,1);}
   return h+'</div>';}
@@ -13929,15 +13943,15 @@ function kalVYear(){var y=+KAL.cur.slice(0,4),t=today(),h='<div class="kal-yv">'
   for(var m=0;m<12;m++){var f=new Date(y,m,1),n=new Date(y,m+1,0).getDate(),g=['M','D','M','D','F','S','S'].map(function(w){return '<i>'+w+'</i>';}).join(''),tot=0;
     for(var k=0;k<(f.getDay()+6)%7;k++)g+='<b class="e"></b>';
     for(var dd=1;dd<=n;dd++){var d=kalI(new Date(y,m,dd));if(kalWknd(d)){g+='<b class="we">'+dd+'</b>';continue;}var hn=kalHol(d,KAL.loc);if(hn){g+='<b class="hd" data-ktip="'+esc(hn)+'">'+dd+'</b>';continue;}
-      var ab=L.map(function(e){return {e:e,x:kalOn(e.id,d)};}).filter(function(o){return o.x&&!o.x.fixed;});tot+=ab.length;var lv=Math.min(3,ab.length);
+      var ab=L.map(function(e){return {e:e,x:kalOnV(e.id,d)};}).filter(function(o){return o.x&&!o.x.fixed;});tot+=ab.length;var lv=Math.min(3,ab.length);
       g+='<b class="'+(lv?'l'+lv:'')+(d===t?' td':'')+'"'+(ab.length?' data-ktip="'+esc(kalF(d)+' · '+ab.map(function(o){return kalFirst(o.e.name)+' ('+KAL_ART[kalShowArt(o.x)]+')';}).join(', '))+'"':'')+'>'+dd+'</b>';}
     h+='<div class="kal-ym'+(m===+t.slice(5,7)-1&&String(y)===t.slice(0,4)?' cur':'')+'" data-kmonth="'+kalI(f)+'"><h4>'+KAL_MON[m]+'<span>'+tot+' Abw.-Tage</span></h4><div class="g">'+g+'</div></div>';}
   return h+'</div>';}
 function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=new Date(y,mo+1,0).getDate(),D=[],t=today();for(var i=1;i<=n;i++)D.push(kalI(new Date(y,mo,i)));
   var h='<div class="kal-tlw"><div class="kal-tl" style="grid-template-columns:210px repeat('+n+',minmax(28px,1fr))"><div class="hd nm">Mitarbeiter</div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(kalWknd(d)||hn?' we':'')+(d===t?' td':'')+'"'+(hn?' data-ktip="'+esc(hn)+'"':'')+'><b>'+kalP(d).getDate()+'</b>'+KAL_WD[kalP(d).getDay()]+'</div>';}).join('');
   kalEmps().forEach(function(e){h+='<div class="nm"><span class="kal-av">'+kalIni(e.name)+'</span>'+esc(e.name)+'<small>'+esc(e.role||'')+'</small></div>';
-    D.forEach(function(d,ix){var hn=kalHol(d,KAL.loc),x=kalOn(e.id,d),inner='';
-      if(x){var a=kalShowArt(x),pv=ix>0&&kalOn(e.id,D[ix-1])===x,nx=ix<n-1&&kalOn(e.id,D[ix+1])===x,dr=kalCanEdit()&&!x.fixed&&!x.masked;
+    D.forEach(function(d,ix){var hn=kalHol(d,KAL.loc),x=kalOnV(e.id,d),inner='';
+      if(x){var a=kalShowArt(x),pv=ix>0&&kalOnV(e.id,D[ix-1])===x,nx=ix<n-1&&kalOnV(e.id,D[ix+1])===x,dr=kalCanEdit()&&!x.fixed&&!x.masked;
         inner='<span class="blk '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+(x.halb?' h':'')+(!pv?' s':'')+(!nx?' e':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+(!pv?(x.halb?'½':KAL_ART[a].slice(0,1)):'')+'</span>';}
       var ss=kalSess(d,e.id);if(ss.length)inner+='<span class="dot kal-ses'+(ss.every(function(o){return kalSesPast(o.p);})?' past':'')+'" data-ktip="'+esc(ss.map(function(o){return (o.p.uhrzeit||'')+' '+(o.p.type||'Session');}).join(' · '))+'"></span>';
       h+='<div class="cell'+(kalWknd(d)||hn?' we':'')+(d===t?' td':'')+'" data-kday="'+d+'" data-kemp="'+e.id+'"'+(!kalWknd(d)?' data-kopen="'+d+'"':'')+'>'+inner+'</div>';});});
@@ -13956,9 +13970,16 @@ function kalBar(){var v=[['woche','Woche'],['monat','Monat'],['jahr','Jahr'],['t
     +'<button class="btn" onclick="kalToday()"><i class="ti ti-calendar"></i> Heute</button><button class="kal-nav" aria-label="Zurück" onclick="kalStep(-1)">‹</button><button class="kal-nav" aria-label="Weiter" onclick="kalStep(1)">›</button><span class="rng">'+kalRangeLabel()+'</span>'
     +'<div class="r"><button class="btn kal-tgl'+(KAL.pane==='gen'?' on':'')+'" onclick="kalSetPane(\'gen\')"><i class="ti ti-checklist"></i> Genehmigen<b>'+R+'</b></button><button class="btn kal-tgl'+(KAL.pane==='plan'?' on':'')+'" onclick="kalSetPane(\'plan\')"><i class="ti ti-list-check"></i> Planen<b>'+T+'</b></button>'
     +'<div class="dsh-seg" role="group" aria-label="Standort">'+['MUC','VLC'].map(function(l){return '<button type="button" class="'+(KAL.loc===l?'on':'')+'" onclick="kalSetLoc(\''+l+'\')">'+(l==='MUC'?'Olching (MUC)':'Valencia (VLC)')+'</button>';}).join('')+'</div>'
-    +(kalCanEdit()?'<button class="btn btn-primary" onclick="kalOpenForm()"><i class="ti ti-plus"></i> Abwesenheit eintragen</button>':'')+'</div>';}
+    +kalFilterBtn()+(kalCanEdit()?'<button class="btn btn-primary" onclick="kalOpenForm()"><i class="ti ti-plus"></i> Abwesenheit eintragen</button>':'')+'</div>';}
+function kalCoachBar(){var v=[['woche','Woche'],['monat','Monat']];
+  return '<div class="dsh-seg" role="group" aria-label="Ansicht">'+v.map(function(o){return '<button type="button" class="'+(KAL.view===o[0]?'on':'')+'" onclick="kalSetView(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</div>'
+    +'<button class="btn" onclick="kalToday()"><i class="ti ti-calendar"></i> Heute</button><button class="kal-nav" aria-label="Zurück" onclick="kalStep(-1)">‹</button><button class="kal-nav" aria-label="Weiter" onclick="kalStep(1)">›</button><span class="rng">'+kalRangeLabel()+'</span>'
+    +'<div class="r">'+kalFilterBtn()+(kalCanEdit()?'<button class="btn btn-primary" onclick="openSessionModal(0)"><i class="ti ti-plus"></i> Session planen</button>':'')+'</div>';}
+// Kalender im Menü Coaching: gleiche Ansicht wie im Menü Kalender, nur Woche/Monat, alle Standorte, Coach-Filter der Seite
+function kalCoachCard(){if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;var sv=KAL.view;KAL.view=KAL.cview==='monat'?'monat':'woche';
+  var h='<div class="card" style="margin-bottom:22px"><div class="kal-bar">'+kalCoachBar()+'</div>'+(KAL.view==='woche'?kalVWeek():kalVMonth())+kalLegend()+'</div>';KAL.view=sv;return h;}
 function kalLegend(){return '<div class="kal-legend"><span><i class="kal-sw kal-u"></i>Urlaub</span><span><i class="kal-sw kal-f"></i>Flex Day</span>'+(kalIsViewer()?'<span><i class="kal-sw kal-x"></i>Abwesend</span>':'<span><i class="kal-sw kal-a"></i>Ausgleichstag</span><span><i class="kal-sw kal-k"></i>Krank</span>')+'<span><i class="kal-sw kal-u kal-op"></i>beantragt</span><span><i class="kal-sw kal-hol"></i>Feiertag / Wochenende</span><span><i class="kal-sw kal-ses"></i>Session geplant</span><span><i class="kal-sw kal-ses past"></i>Session vergangen</span>'
-  +(KAL.view==='jahr'?'<span class="kal-note">Je dunkler, desto mehr fehlen. Koralle-Rand ab 3. Klick öffnet den Monat.</span>':kalCanEdit()?'<span class="kal-note">Einträge und Sessions lassen sich ziehen, Klick auf einen Eintrag bearbeitet ihn.</span>':'')+'</div>';}
+  +(kalCtx()==='coach'?'<span class="kal-note">Klick auf eine Session öffnet sie, Klick auf eine freie Zeit plant eine neue.</span>':KAL.view==='jahr'?'<span class="kal-note">Je dunkler, desto mehr fehlen. Koralle-Rand ab 3. Klick öffnet den Monat.</span>':kalCanEdit()?'<span class="kal-note">Einträge und Sessions lassen sich ziehen, Klick auf einen Eintrag bearbeitet ihn.</span>':'')+'</div>';}
 function kalReqTable(){var L=kalOpenReqs();if(!L.length)return '<div class="kal-note" style="padding:10px 2px">Keine offenen Anträge.</div>';
   return '<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:22%">Mitarbeiter</th><th style="width:14%">Zeitraum</th><th style="width:11%">Art</th><th class="r" style="width:6%">Tage</th><th>Hinweise</th><th style="width:200px"></th></tr></thead><tbody>'+L.map(function(x){var e=kalEmp(x.employeeId),a=kalShowArt(x);
     return '<tr><td><div style="display:flex;align-items:center;gap:10px"><span class="kal-av">'+kalIni(e.name)+'</span><div>'+esc(e.name)+'<div class="kal-note">eingereicht '+kalF(x.eingereichtAm)+(x.eingereichtVon?' · '+esc(x.eingereichtVon):'')+'</div></div></div></td><td>'+kalRange(x)+'</td><td><span class="kal-tag"><i class="kal-sw '+KAL_CLS[a]+' kal-op"></i>'+KAL_ART[a]+'</span></td><td class="r">'+kalNf(kalAmt(x))+'</td><td><div class="kal-tags" style="margin:0">'+kalHintTags(x)+'</div></td><td class="r">'+(kalCanEdit()?'<div class="kal-acts" style="justify-content:flex-end"><button class="btn btn-sm" onclick="kalDecide(\''+x.id+'\',false)">Ablehnen</button><button class="btn btn-sm btn-primary" onclick="kalDecide(\''+x.id+'\',true)">Genehmigen</button></div>':'')+'</td></tr>';}).join('')+'</tbody></table></div>';}
@@ -14001,36 +14022,37 @@ function kalKontoList(){var L=kalEmps().slice().sort(function(a,b){return KAL.so
       +(op?'<div class="kal-body">'+kalPersonCard(e.id)+'</div>':'')+'</div>';}).join('');
   return '<div class="kal-acc2">'+h+'</div>';}
 // ── Seite ──
+function kalRerender(){if(view==='coaching')renderCoachingAnsicht();else if(view==='kalender')renderKalender();}
 function renderKalender(){var ma=document.getElementById('mainArea');if(!ma)return;if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;
   var vw=KAL.view==='woche'?kalVWeek():KAL.view==='jahr'?kalVYear():KAL.view==='team'?kalVTeam():kalVMonth();
   var h='<div class="content">'+kalBanner();
   h+='<div class="card"><div class="kal-bar">'+kalBar()+'</div><div class="kal-cw'+(KAL.pane?'':' nopane')+'"><div style="min-width:0">'+vw+'</div><aside class="kal-pane">'+kalPane()+'</aside></div>'+kalLegend()+'</div>';
-  h+='<div class="card"><div class="card-title">'+(KAL.low==='req'?'Offene Anträge':'Zu planen')+'<span class="kal-note" style="font-weight:400;margin-left:6px">'+(KAL.low==='req'?'alle Hinweise auf einen Blick':'Zeile in den Kalender ziehen oder „Einplanen“')+'</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.low==='req'?'on':'')+'" onclick="KAL.low=\'req\';renderKalender()">Anträge · '+kalOpenReqs().length+'</button><button type="button" class="'+(KAL.low==='plan'?'on':'')+'" onclick="KAL.low=\'plan\';renderKalender()">Planen · '+kalTasks().length+'</button></span></span></div>'+(KAL.low==='req'?kalReqTable():kalTaskTable())+'</div>';
-  h+='<div class="card"><div class="card-title">Urlaubskonto '+today().slice(0,4)+'<span class="kal-note" style="font-weight:400;margin-left:6px">Klick auf einen Mitarbeiter öffnet die Details</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.sort==='rest'?'on':'')+'" onclick="KAL.sort=\'rest\';renderKalender()">Resturlaub</button><button type="button" class="'+(KAL.sort==='name'?'on':'')+'" onclick="KAL.sort=\'name\';renderKalender()">Name</button></span></span></div>'+kalKontoList()+'</div>';
+  h+='<div class="card"><div class="card-title">'+(KAL.low==='req'?'Offene Anträge':'Zu planen')+'<span class="kal-note" style="font-weight:400;margin-left:6px">'+(KAL.low==='req'?'alle Hinweise auf einen Blick':'Zeile in den Kalender ziehen oder „Einplanen“')+'</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.low==='req'?'on':'')+'" onclick="KAL.low=\'req\';kalRerender()">Anträge · '+kalOpenReqs().length+'</button><button type="button" class="'+(KAL.low==='plan'?'on':'')+'" onclick="KAL.low=\'plan\';kalRerender()">Planen · '+kalTasks().length+'</button></span></span></div>'+(KAL.low==='req'?kalReqTable():kalTaskTable())+'</div>';
+  h+='<div class="card"><div class="card-title">Urlaubskonto '+today().slice(0,4)+'<span class="kal-note" style="font-weight:400;margin-left:6px">Klick auf einen Mitarbeiter öffnet die Details</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.sort==='rest'?'on':'')+'" onclick="KAL.sort=\'rest\';kalRerender()">Resturlaub</button><button type="button" class="'+(KAL.sort==='name'?'on':'')+'" onclick="KAL.sort=\'name\';kalRerender()">Name</button></span></span></div>'+kalKontoList()+'</div>';
   h+='</div>';
   var oc=ma.querySelector('.content'),st=oc?oc.scrollTop:0;ma.innerHTML=h;var nc=ma.querySelector('.content');if(nc&&st)nc.scrollTop=st;
   if(document.getElementById('kalFormModal')&&!document.getElementById('kalFormModal').classList.contains('hidden'))kalDrawForm();}
 function selectKalender(){view='kalender';renderSidebar();renderMain();}
-function kalSetView(v){KAL.view=v;renderKalender();}
-function kalSetPane(p){KAL.pane=KAL.pane===p?null:p;renderKalender();}
-function kalSetLoc(l){KAL.loc=l;KAL.open=null;renderKalender();}
-function kalToday(){KAL.cur=kalRef();renderKalender();}
-function kalStep(n){var d=kalP(KAL.cur);if(KAL.view==='woche')KAL.cur=kalAdd(KAL.cur,7*n);else if(KAL.view==='jahr')KAL.cur=kalI(new Date(d.getFullYear()+n,0,1));else KAL.cur=kalI(new Date(d.getFullYear(),d.getMonth()+n,1));renderKalender();}
-function kalGoto(d){KAL.cur=d;KAL.view='monat';renderKalender();}
-function kalToggleAcc(id){KAL.open=KAL.open===id?null:id;renderKalender();}
+function kalSetView(v){if(kalCtx()==='coach')KAL.cview=v;else KAL.view=v;kalRerender();}
+function kalSetPane(p){KAL.pane=KAL.pane===p?null:p;kalRerender();}
+function kalSetLoc(l){KAL.loc=l;KAL.open=null;kalRerender();}
+function kalToday(){KAL.cur=kalRef();kalRerender();}
+function kalStep(n){var d=kalP(KAL.cur),vw=kalCtx()==='coach'?(KAL.cview==='monat'?'monat':'woche'):KAL.view;if(vw==='woche')KAL.cur=kalAdd(KAL.cur,7*n);else if(vw==='jahr')KAL.cur=kalI(new Date(d.getFullYear()+n,0,1));else KAL.cur=kalI(new Date(d.getFullYear(),d.getMonth()+n,1));kalRerender();}
+function kalGoto(d){KAL.cur=d;KAL.view='monat';kalRerender();}
+function kalToggleAcc(id){KAL.open=KAL.open===id?null:id;kalRerender();}
 
 // ── Speichern ──
 function kalRowFrom(x){return {employee_id:x.employeeId,art:x.art,von:x.von,bis:x.bis,halb:!!x.halb,status:x.status,verschoben_von:x.verschobenVon||null,notiz:x.notiz||null,eingereicht_von:x.eingereichtVon||null,entschieden_von:x.entschiedenVon||null,entschieden_am:x.entschiedenAm||null};}
 function kalDecide(id,ok){if(!kalCanEdit())return;var x=absences.find(function(a){return String(a.id)===String(id);});if(!x)return;
   var art=x.art;if(ok&&art==='urlaub'&&!x.verschobenVon&&kalVorlauf(x)<15)art='flex';
   var upd={status:ok?'genehmigt':'abgelehnt',art:art,entschieden_von:kalActor(),entschieden_am:new Date().toISOString()};
-  x.status=upd.status;x.art=art;x.entschiedenVon=upd.entschieden_von;x.entschiedenAm=upd.entschieden_am;renderKalender();
+  x.status=upd.status;x.art=art;x.entschiedenVon=upd.entschieden_von;x.entschiedenAm=upd.entschieden_am;kalRerender();
   var e=kalEmp(x.employeeId);logActivity('kalender',ok?'approved':'rejected',(ok?'Antrag genehmigt: ':'Antrag abgelehnt: ')+KAL_ART[art],x.employeeId,(e?e.name:'')+' · '+kalRange(x));
   sb.from('absences').update(upd).eq('id',x.id).then(function(res){if(res&&res.error)alert('Speichern fehlgeschlagen: '+res.error.message);});}
 function kalSaveCfg(eid){var e=kalEmp(eid);if(!e||!kalCanEdit())return;var y=today().slice(0,4);
   function num(id){var v=document.getElementById(id);v=v?String(v.value).replace(',','.'):'';return v===''?null:+v;}
   var u=JSON.parse(JSON.stringify(e.urlaub||{}));u[y]={anspruch:num('kalSetAns'),flex:num('kalSetFlex'),uebertrag:num('kalSetUeb'),vorher_genommen:num('kalSetVor')};
-  Object.keys(u[y]).forEach(function(k){if(u[y][k]==null)delete u[y][k];});e.urlaub=u;renderKalender();
+  Object.keys(u[y]).forEach(function(k){if(u[y][k]==null)delete u[y][k];});e.urlaub=u;kalRerender();
   logActivity('kalender','updated','Urlaubskonto geändert',eid,e.name+' · '+y);
   sb.from('employees').update({urlaub:u}).eq('id',eid).then(function(res){if(res&&res.error)alert(/urlaub/i.test(res.error.message||'')?'Die Spalte „urlaub“ fehlt noch. Bitte 20_kalender_abwesenheiten.sql ausführen.':'Speichern fehlgeschlagen: '+res.error.message);});}
 
@@ -14065,51 +14087,54 @@ function kalSaveForm(){if(!KF)return;var ev=kalEval(KF);if(!ev.n)return;var art=
   if(KF.id){var i=absences.findIndex(function(a){return String(a.id)===String(KF.id);});if(i>=0){x.eingereichtAm=absences[i].eingereichtAm;x.eingereichtVon=absences[i].eingereichtVon;row.eingereicht_von=x.eingereichtVon||null;absences[i]=x;}
     sb.from('absences').update(row).eq('id',KF.id).then(function(res){if(res&&res.error)alert('Speichern fehlgeschlagen: '+res.error.message);});}
   else{x.id='t'+Date.now();absences.push(x);
-    sb.from('absences').insert(row).select().single().then(function(res){if(res&&res.error){alert(/absences/i.test(res.error.message||'')?'Die Tabelle „absences“ fehlt noch. Bitte 20_kalender_abwesenheiten.sql ausführen.':'Speichern fehlgeschlagen: '+res.error.message);absences=absences.filter(function(a){return a!==x;});renderKalender();return;}
+    sb.from('absences').insert(row).select().single().then(function(res){if(res&&res.error){alert(/absences/i.test(res.error.message||'')?'Die Tabelle „absences“ fehlt noch. Bitte 20_kalender_abwesenheiten.sql ausführen.':'Speichern fehlgeschlagen: '+res.error.message);absences=absences.filter(function(a){return a!==x;});kalRerender();return;}
       if(res&&res.data&&res.data.id)x.id=res.data.id;});}
   logActivity('kalender',KF.id?'updated':'created',(KF.id?'Abwesenheit geändert: ':'Abwesenheit eingetragen: ')+KAL_ART[art],x.employeeId,(e?e.name:'')+' · '+kalRange(x));
-  renderKalender();}
+  kalRerender();}
 function kalDelete(){if(!KF||!KF.id)return;if(!confirm('Diesen Eintrag löschen? Das lässt sich nicht rückgängig machen.'))return;var id=KF.id,x=absences.find(function(a){return String(a.id)===String(id);}),e=x&&kalEmp(x.employeeId);
-  absences=absences.filter(function(a){return String(a.id)!==String(id);});kalCloseForm();renderKalender();
+  absences=absences.filter(function(a){return String(a.id)!==String(id);});kalCloseForm();kalRerender();
   if(x)logActivity('kalender','deleted','Abwesenheit gelöscht: '+KAL_ART[x.art],x.employeeId,(e?e.name:'')+' · '+kalRange(x));
   sb.from('absences').delete().eq('id',id).then(function(res){if(res&&res.error)alert('Löschen fehlgeschlagen: '+res.error.message);});}
 
 // ── Drag & Drop, Rückgängig ──
 function kalToast(t,undoFn){var u=document.getElementById('kalUndo');if(!u){u=document.createElement('div');u.className='kal-undo';u.id='kalUndo';u.innerHTML='<span id="kalUndoT"></span><button type="button">Rückgängig</button>';document.body.appendChild(u);}
   document.getElementById('kalUndoT').innerHTML=t;u.querySelector('button').onclick=function(){u.classList.remove('on');if(undoFn)undoFn();};u.classList.add('on');clearTimeout(KAL.ut);KAL.ut=setTimeout(function(){u.classList.remove('on');},7000);}
-function kalSlotTime(col,ev){var r=col.getBoundingClientRect(),mins=Math.round(((ev.clientY-r.top-12)/56*60)/15)*15;mins=Math.max(0,Math.min(mins,9*60+15));return ('0'+(8+Math.floor(mins/60))).slice(-2)+':'+('0'+mins%60).slice(-2);}
+function kalSlotTime(col,ev){var r=col.getBoundingClientRect(),mins=Math.round(((ev.clientY-r.top-12)/56*60)/15)*15;mins=Math.max(0,Math.min(mins,11*60+15));return ('0'+(8+Math.floor(mins/60))).slice(-2)+':'+('0'+mins%60).slice(-2);}
 function kalAddMin(t,n){var m=timeStrToMin(t)+n;return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+m%60).slice(-2);}
 function kalMoveAbs(id,from,to){var x=absences.find(function(a){return String(a.id)===String(id);});if(!x)return;var dd=kalDiff(from,to);if(!dd)return;
   var old={von:x.von,bis:x.bis,verschobenVon:x.verschobenVon},was=kalRange(x);x.von=kalAdd(x.von,dd);x.bis=kalAdd(x.bis,dd);if(x.status==='genehmigt'&&!x.verschobenVon)x.verschobenVon=was.replace(' – ','–');
-  renderKalender();var e=kalEmp(x.employeeId);
+  kalRerender();var e=kalEmp(x.employeeId);
   sb.from('absences').update({von:x.von,bis:x.bis,verschoben_von:x.verschobenVon||null}).eq('id',x.id).then(function(res){if(res&&res.error)alert('Verschieben fehlgeschlagen: '+res.error.message);});
   logActivity('kalender','moved','Abwesenheit verschoben: '+KAL_ART[x.art],x.employeeId,(e?e.name:'')+' · '+was+' → '+kalRange(x));
-  kalToast('<b>'+esc(e?e.name:'')+'</b>: '+KAL_ART[x.art]+' von '+was+' auf '+kalRange(x)+' verschoben.',function(){x.von=old.von;x.bis=old.bis;x.verschobenVon=old.verschobenVon;renderKalender();sb.from('absences').update({von:x.von,bis:x.bis,verschoben_von:x.verschobenVon||null}).eq('id',x.id).then(function(){});});}
+  kalToast('<b>'+esc(e?e.name:'')+'</b>: '+KAL_ART[x.art]+' von '+was+' auf '+kalRange(x)+' verschoben.',function(){x.von=old.von;x.bis=old.bis;x.verschobenVon=old.verschobenVon;kalRerender();sb.from('absences').update({von:x.von,bis:x.bis,verschoben_von:x.verschobenVon||null}).eq('id',x.id).then(function(){});});}
 function kalMoveSes(eid,sid,day,tm){var p=(protocols[eid]||[]).find(function(q){return String(q.id)===String(sid);});if(!p)return;var old={date:p.date,uhrzeit:p.uhrzeit,endUhrzeit:p.endUhrzeit};
   var dur=(p.uhrzeit&&p.endUhrzeit)?timeStrToMin(p.endUhrzeit)-timeStrToMin(p.uhrzeit):null;p.date=day;if(tm){p.uhrzeit=tm;if(dur)p.endUhrzeit=kalAddMin(tm,dur);}
-  renderKalender();sb.from('protocols').update({date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',sid).then(function(res){if(res&&res.error)alert('Verschieben fehlgeschlagen: '+res.error.message);});
-  var e=kalEmp(eid);kalToast((p.type||'Session')+' mit '+esc(e?e.name:'')+' auf '+kalF(day)+(p.uhrzeit?' '+p.uhrzeit:'')+' verschoben.',function(){p.date=old.date;p.uhrzeit=old.uhrzeit;p.endUhrzeit=old.endUhrzeit;renderKalender();sb.from('protocols').update({date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',sid).then(function(){});});}
+  kalRerender();sb.from('protocols').update({date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',sid).then(function(res){if(res&&res.error)alert('Verschieben fehlgeschlagen: '+res.error.message);});
+  var e=kalEmp(eid);kalToast((p.type||'Session')+' mit '+esc(e?e.name:'')+' auf '+kalF(day)+(p.uhrzeit?' '+p.uhrzeit:'')+' verschoben.',function(){p.date=old.date;p.uhrzeit=old.uhrzeit;p.endUhrzeit=old.endUhrzeit;kalRerender();sb.from('protocols').update({date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',sid).then(function(){});});}
 function kalPlanSession(task,day,tm){var e=task.e,uz=tm||'10:00',row={employee_id:e.id,date:day,uhrzeit:uz,end_uhrzeit:kalAddMin(uz,task.art==='Weekly'?30:60),art:task.art,rating:null,note:'',focus:'',status:'geplant',coach_id:currentCoach?currentCoach.id:null,focus_metric:null,group_id:null};
   var p={id:'t'+Date.now(),date:day,uhrzeit:row.uhrzeit,endUhrzeit:row.end_uhrzeit,type:task.art,status:'geplant',rating:null,note:'',notes:'',focus:'',topics:[],coachId:row.coach_id};
-  if(!protocols[e.id])protocols[e.id]=[];protocols[e.id].unshift(p);renderKalender();
-  sb.from('protocols').insert(row).select().single().then(function(res){if(res&&res.error){alert('Planen fehlgeschlagen: '+res.error.message);protocols[e.id]=protocols[e.id].filter(function(q){return q!==p;});renderKalender();return;}if(res&&res.data&&res.data.id)p.id=res.data.id;});
+  if(!protocols[e.id])protocols[e.id]=[];protocols[e.id].unshift(p);kalRerender();
+  sb.from('protocols').insert(row).select().single().then(function(res){if(res&&res.error){alert('Planen fehlgeschlagen: '+res.error.message);protocols[e.id]=protocols[e.id].filter(function(q){return q!==p;});kalRerender();return;}if(res&&res.data&&res.data.id)p.id=res.data.id;});
   logActivity('session','created','Session geplant: '+task.art,e.id,e.name+' · '+fd(day)+' · '+uz);
-  kalToast('Geplant: '+esc(task.l)+', '+kalF(day)+' '+uz+(tm?'':' (Uhrzeit in der Wochenansicht anpassen)')+'.',function(){protocols[e.id]=protocols[e.id].filter(function(q){return q!==p;});renderKalender();if(!String(p.id).startsWith('t'))sb.from('protocols').delete().eq('id',p.id).then(function(){});});}
-function kalPlanTask(id){var t=kalTasks().find(function(x){return x.id===id;});if(!t)return;KAL.pane='plan';KAL.view='woche';KAL.cur=t.due<today()?today():t.due;renderKalender();var c=document.querySelector('#mainArea .content');if(c)c.scrollTo({top:0,behavior:'smooth'});}
-document.addEventListener('dragstart',function(ev){var t=ev.target&&ev.target.closest&&ev.target.closest('[draggable=true]');if(!t||view!=='kalender')return;var tp=document.getElementById('kalTip');if(tp)tp.style.display='none';
+  kalToast('Geplant: '+esc(task.l)+', '+kalF(day)+' '+uz+(tm?'':' (Uhrzeit in der Wochenansicht anpassen)')+'.',function(){protocols[e.id]=protocols[e.id].filter(function(q){return q!==p;});kalRerender();if(!String(p.id).startsWith('t'))sb.from('protocols').delete().eq('id',p.id).then(function(){});});}
+function kalPlanTask(id){var t=kalTasks().find(function(x){return x.id===id;});if(!t)return;KAL.pane='plan';KAL.view='woche';KAL.cur=t.due<today()?today():t.due;kalRerender();var c=document.querySelector('#mainArea .content');if(c)c.scrollTo({top:0,behavior:'smooth'});}
+document.addEventListener('dragstart',function(ev){var t=ev.target&&ev.target.closest&&ev.target.closest('[draggable=true]');if(!t||(view!=='kalender'&&view!=='coaching'))return;var tp=document.getElementById('kalTip');if(tp)tp.style.display='none';
   KAL.drag=t.dataset.kabs?{k:'abs',id:t.dataset.kabs,from:t.dataset.kfrom}:t.dataset.kses?{k:'ses',id:t.dataset.kses,emp:t.dataset.kemp}:t.dataset.ktask?{k:'task',id:t.dataset.ktask}:null;
   if(KAL.drag){ev.dataTransfer.effectAllowed='move';try{ev.dataTransfer.setData('text/plain','kal');}catch(e){}}});
-document.addEventListener('dragover',function(ev){if(!KAL.drag||view!=='kalender')return;var z=ev.target.closest('[data-kslot],[data-kday]');document.querySelectorAll('.kal-over').forEach(function(x){if(x!==z)x.classList.remove('kal-over');});if(!z)return;
+document.addEventListener('dragover',function(ev){if(!KAL.drag||(view!=='kalender'&&view!=='coaching'))return;var z=ev.target.closest('[data-kslot],[data-kday]');document.querySelectorAll('.kal-over').forEach(function(x){if(x!==z)x.classList.remove('kal-over');});if(!z)return;
   if(KAL.drag.k==='abs'&&z.dataset.kslot)return;ev.preventDefault();z.classList.add('kal-over');var g=document.querySelector('.kal-ghost');
   if(z.dataset.kslot&&KAL.drag.k!=='abs'){var tm=kalSlotTime(z,ev);if(!g){g=document.createElement('div');g.className='kal-ghost';}g.textContent=tm;g.style.top=((timeStrToMin(tm)-480)/60*56)+'px';if(g.parentNode!==z)z.appendChild(g);}else if(g)g.remove();});
 document.addEventListener('dragend',function(){KAL.drag=null;document.querySelectorAll('.kal-over').forEach(function(x){x.classList.remove('kal-over');});var g=document.querySelector('.kal-ghost');if(g)g.remove();});
-document.addEventListener('drop',function(ev){if(!KAL.drag||view!=='kalender')return;var z=ev.target.closest('[data-kslot],[data-kday]');if(!z)return;ev.preventDefault();var day=z.dataset.kslot||z.dataset.kday,tm=z.dataset.kslot?kalSlotTime(z,ev):null,d=KAL.drag;KAL.drag=null;
+document.addEventListener('drop',function(ev){if(!KAL.drag||(view!=='kalender'&&view!=='coaching'))return;var z=ev.target.closest('[data-kslot],[data-kday]');if(!z)return;ev.preventDefault();var day=z.dataset.kslot||z.dataset.kday,tm=z.dataset.kslot?kalSlotTime(z,ev):null,d=KAL.drag;KAL.drag=null;
   if(d.k==='abs')kalMoveAbs(d.id,d.from,day);else if(d.k==='ses')kalMoveSes(d.emp,d.id,day,tm);else{var t=kalTasks().find(function(x){return x.id===d.id;});if(t)kalPlanSession(t,day,tm);}});
-document.addEventListener('click',function(ev){if(view!=='kalender'||!ev.target.closest)return;if(!ev.target.closest('#mainArea'))return;
-  var mo=ev.target.closest('[data-kmonth]');if(mo){KAL.cur=mo.dataset.kmonth;KAL.view='monat';renderKalender();return;}
+document.addEventListener('click',function(ev){if((view!=='kalender'&&view!=='coaching')||!ev.target.closest)return;if(!ev.target.closest('#mainArea'))return;if(view==='coaching'&&!ev.target.closest('.kal-bar,.kal-wv,.kal-mg'))return;
+  var so=ev.target.closest('.kal-sopen');if(so){if(typeof openPlannedSessionFromChip==='function')openPlannedSessionFromChip(so);return;}
+  var mo=ev.target.closest('[data-kmonth]');if(mo){KAL.cur=mo.dataset.kmonth;KAL.view='monat';kalRerender();return;}
   var ed=ev.target.closest('[data-kedit]');if(ed){if(kalCanEdit())kalOpenForm(null,null,ed.dataset.kedit);return;}
   if(ev.target.closest('[draggable=true],.kal-tag,button,input,select,a'))return;
-  var o=ev.target.closest('[data-kopen]');if(o&&kalCanEdit())kalOpenForm(o.dataset.kemp||null,o.dataset.kopen);});
+  var o=ev.target.closest('[data-kopen]');if(!o||!kalCanEdit())return;
+  if(kalCtx()==='coach'){if(o.dataset.kslot){var tm=kalSlotTime(o,ev);kalKlickMitZeit(o.dataset.kopen,+tm.slice(0,2));}else kalKlick(o.dataset.kopen);return;}
+  kalOpenForm(o.dataset.kemp||null,o.dataset.kopen);});
 // schwarzes Hover-Feld wie im Performance-Diagramm
 document.addEventListener('mouseover',function(ev){var tp=document.getElementById('kalTip');var t=ev.target&&ev.target.closest&&ev.target.closest('[data-ktip]');
   if(!t){if(tp)tp.style.display='none';return;}if(!tp){tp=document.createElement('div');tp.id='kalTip';tp.className='kal-tip';document.body.appendChild(tp);}tp.innerHTML=t.getAttribute('data-ktip');tp.style.display='block';});
