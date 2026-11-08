@@ -722,6 +722,9 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-fs .h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
 .kal-hint{padding:9px 12px;border-radius:10px;background:#F7F5F0;font-size:13px;line-height:1.45;margin-bottom:6px}
 .kal-hint.warn{background:#FBE3DA;color:#6E2C17}.kal-hint.err{background:#1d1c1a;color:#fff}
+.kal-rz{position:absolute;z-index:4}.kal-rz.t,.kal-rz.b{left:0;right:0;height:7px;cursor:ns-resize}.kal-rz.t{top:0}.kal-rz.b{bottom:0}
+.kal-rz.l,.kal-rz.r{top:0;bottom:0;width:7px;cursor:ew-resize}.kal-rz.l{left:0}.kal-rz.r{right:0}
+.kal-sopen:hover .kal-rz.t,.kal-sopen:hover .kal-rz.b{background:rgba(240,133,102,.35)}.kal-ch:hover .kal-rz,.blk:hover .kal-rz{background:rgba(29,28,26,.18)}
 .kal-undo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d1c1a;color:#fff;border-radius:12px;padding:11px 12px 11px 18px;display:none;align-items:center;gap:16px;z-index:300;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .kal-undo.on{display:flex}.kal-undo button{background:#fff;color:#1d1c1a;border:0;border-radius:8px;height:30px;padding:0 12px;font-weight:700;cursor:pointer;font-family:inherit}
 .kal-tip{position:fixed;z-index:400;background:#1d1c1a;color:#fff;padding:8px 11px;border-radius:9px;font-size:12.5px;pointer-events:none;max-width:280px;display:none;line-height:1.5}
@@ -13917,8 +13920,9 @@ function kalBanner(){var t=today(),L=kalEmps(),wds=[],d=t;while(wds.length<10){i
   return h+'</div></div>';}
 
 // ── Ansichten ──
+function kalAbsRz(x,d){if(!(kalCanEdit()&&!x.fixed&&!x.masked))return '';var ds=kalDays(x);return (ds[0]===d?'<span class="kal-rz l" data-krz="von"></span>':'')+(ds[ds.length-1]===d?'<span class="kal-rz r" data-krz="bis"></span>':'');}
 function kalAbsChip(e,x,d){var a=kalShowArt(x),dr=kalCanEdit()&&!x.fixed&&!x.masked;
-  return '<div class="kal-ch '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+esc(kalFirst(e.name))+' · '+KAL_ART[a]+(x.halb?' ½':'')+'</div>';}
+  return '<div class="kal-ch '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'" style="position:relative" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+kalAbsRz(x,d)+esc(kalFirst(e.name))+' · '+KAL_ART[a]+(x.halb?' ½':'')+'</div>';}
 function kalSesChip(o){return '<div class="kal-ch kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(o.p.uhrzeit?o.p.uhrzeit+' ':'')+esc(o.p.groupId&&o.n>1?'Gruppe ('+o.n+')':kalFirst(o.e.name))+'</div>';}
 function kalFreeTag(d){if(kalFixDay(d))return '';var o=kalFree(d,KAL.loc,null);return o.length>=3?'<span class="kal-tag warn" data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'">'+o.length+' frei</span>':'';}
 function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){return kalAdd(m,i);}),t=today();
@@ -13929,7 +13933,7 @@ function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){retu
     var day=kalSess(d).filter(function(o){return o.p.uhrzeit;}),cols=[];day.forEach(function(o){var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;if(en<=st)en=st+45;o._s=st;o._e=en;var ci=0;while(cols[ci]&&cols[ci]>st)ci++;cols[ci]=en;o._col=Math.min(ci,2);});
     day.forEach(function(o){var n=0;day.forEach(function(q){if(q._s<o._e&&q._e>o._s)n=Math.max(n,q._col+1);});o._n=Math.max(1,Math.min(3,n,cols.length));if(o._col>=o._n)o._col=o._n-1;});
     day.forEach(function(o){if(!o.p.uhrzeit)return;var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;var top=Math.max(0,(st-480)/60*56),hgt=Math.max(22,(en-st)/60*56-3);
-      c+='<div class="ev kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" style="top:'+top.toFixed(0)+'px;height:'+hgt.toFixed(0)+'px;left:calc('+(o._col*100/o._n)+'% + 4px);right:auto;width:calc('+(100/o._n)+'% - 8px)" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'"><div><b>'+o.p.uhrzeit+'</b> '+esc(kalSesWho(o))+'</div><div>'+esc(o.p.type||'Session')+(o.p.coachId?' · '+esc(kalCoachName(o.p.coachId)):'')+'</div></div>';});
+      c+='<div class="ev kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" style="top:'+top.toFixed(0)+'px;height:'+hgt.toFixed(0)+'px;left:calc('+(o._col*100/o._n)+'% + 4px);right:auto;width:calc('+(100/o._n)+'% - 8px)" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(kalCanEdit()&&!o.p.groupId?'<span class="kal-rz t" data-krz="s"></span><span class="kal-rz b" data-krz="e"></span>':'')+'<div><b class="kal-tm">'+o.p.uhrzeit+'</b> '+esc(kalSesWho(o))+'</div><div>'+esc(o.p.type||'Session')+(o.p.coachId?' · '+esc(kalCoachName(o.p.coachId)):'')+'</div></div>';});
     h+=c+'</div>';});
   return h+'</div>';}
 function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),first=kalI(new Date(y,mo,1)),last=kalI(new Date(y,mo+1,0)),t=today();var d=kalMon(first);
@@ -13953,7 +13957,7 @@ function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=n
   kalEmps().forEach(function(e){h+='<div class="nm"><span class="kal-av">'+kalIni(e.name)+'</span>'+esc(e.name)+'<small>'+esc(e.role||'')+'</small></div>';
     D.forEach(function(d,ix){var hn=kalHol(d,KAL.loc),x=kalOnV(e.id,d),inner='';
       if(x){var a=kalShowArt(x),pv=ix>0&&kalOnV(e.id,D[ix-1])===x,nx=ix<n-1&&kalOnV(e.id,D[ix+1])===x,dr=kalCanEdit()&&!x.fixed&&!x.masked;
-        inner='<span class="blk '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+(x.halb?' h':'')+(!pv?' s':'')+(!nx?' e':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+(!pv?(x.halb?'½':KAL_ART[a].slice(0,1)):'')+'</span>';}
+        inner='<span class="blk '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+(x.halb?' h':'')+(!pv?' s':'')+(!nx?' e':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+(dr&&!pv?'<span class="kal-rz l" data-krz="von"></span>':'')+(dr&&!nx?'<span class="kal-rz r" data-krz="bis"></span>':'')+(!pv?(x.halb?'½':KAL_ART[a].slice(0,1)):'')+'</span>';}
       var ss=kalSess(d,e.id);if(ss.length)inner+='<span class="dot kal-ses'+(ss.every(function(o){return kalSesPast(o.p);})?' past':'')+'" data-ktip="'+esc(ss.map(function(o){return (o.p.uhrzeit||'')+' '+(o.p.type||'Session');}).join(' · '))+'"></span>';
       h+='<div class="cell'+(kalWknd(d)||hn?' we':'')+(d===t?' td':'')+'" data-kday="'+d+'" data-kemp="'+e.id+'"'+(!kalWknd(d)?' data-kopen="'+d+'"':'')+'>'+inner+'</div>';});});
   h+='<div class="ft nm">Frei (ohne Krank)</div>'+D.map(function(d){if(kalWknd(d)||kalHol(d,KAL.loc)||kalFixDay(d))return '<div class="ft we">·</div>';var o=kalFree(d,KAL.loc,null);return '<div class="ft'+(o.length>=3?' w3':'')+'"'+(o.length?' data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'"':'')+'>'+(o.length||'')+'</div>';}).join('');
@@ -14128,7 +14132,7 @@ document.addEventListener('dragover',function(ev){if(!KAL.drag||(view!=='kalende
 document.addEventListener('dragend',function(){KAL.drag=null;document.querySelectorAll('.kal-over').forEach(function(x){x.classList.remove('kal-over');});var g=document.querySelector('.kal-ghost');if(g)g.remove();});
 document.addEventListener('drop',function(ev){if(!KAL.drag||(view!=='kalender'&&view!=='coaching'))return;var z=ev.target.closest('[data-kslot],[data-kday]');if(!z)return;ev.preventDefault();var day=z.dataset.kslot||z.dataset.kday,tm=z.dataset.kslot?kalSlotTime(z,ev):null,d=KAL.drag;KAL.drag=null;
   if(d.k==='abs')kalMoveAbs(d.id,d.from,day);else if(d.k==='ses')kalMoveSes(d.emp,d.id,day,tm);else{var t=kalTasks().find(function(x){return x.id===d.id;});if(t)kalPlanSession(t,day,tm);}});
-document.addEventListener('click',function(ev){if((view!=='kalender'&&view!=='coaching')||!ev.target.closest)return;if(!ev.target.closest('#mainArea'))return;if(view==='coaching'&&!ev.target.closest('.kal-bar,.kal-wv,.kal-mg'))return;
+document.addEventListener('click',function(ev){if(KAL.rzDone){KAL.rzDone=false;ev.stopPropagation();return;}if((view!=='kalender'&&view!=='coaching')||!ev.target.closest)return;if(!ev.target.closest('#mainArea'))return;if(view==='coaching'&&!ev.target.closest('.kal-bar,.kal-wv,.kal-mg'))return;
   var so=ev.target.closest('.kal-sopen');if(so){if(typeof openPlannedSessionFromChip==='function')openPlannedSessionFromChip(so);return;}
   var mo=ev.target.closest('[data-kmonth]');if(mo){KAL.cur=mo.dataset.kmonth;KAL.view='monat';kalRerender();return;}
   var ed=ev.target.closest('[data-kedit]');if(ed){if(kalCanEdit())kalOpenForm(null,null,ed.dataset.kedit);return;}
@@ -14136,6 +14140,28 @@ document.addEventListener('click',function(ev){if((view!=='kalender'&&view!=='co
   var o=ev.target.closest('[data-kopen]');if(!o||!kalCanEdit())return;
   if(kalCtx()==='coach'){if(o.dataset.kslot){var tm=kalSlotTime(o,ev);kalKlickMitZeit(o.dataset.kopen,+tm.slice(0,2));}else kalKlick(o.dataset.kopen);return;}
   kalOpenForm(o.dataset.kemp||null,o.dataset.kopen);});
+// ── Länge ändern wie in Outlook: Session oben/unten (Uhrzeit), Abwesenheit links/rechts (Datum) ──
+function kalMinStr(m){return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+m%60).slice(-2);}
+document.addEventListener('mousedown',function(ev){var g=ev.target&&ev.target.closest&&ev.target.closest('[data-krz]');if(!g||(view!=='kalender'&&view!=='coaching')||!kalCanEdit())return;
+  ev.preventDefault();ev.stopPropagation();var tp=document.getElementById('kalTip');if(tp)tp.style.display='none';var edge=g.dataset.krz,host=g.parentElement;
+  if(edge==='s'||edge==='e'){var p=(protocols[host.dataset.eid]||[]).find(function(q){return String(q.id)===String(host.dataset.sid);});if(!p)return;
+    var st=timeStrToMin(p.uhrzeit),en=p.endUhrzeit?timeStrToMin(p.endUhrzeit):st+45;KAL.rz={k:'ses',edge:edge,host:host,col:host.parentElement,p:p,eid:host.dataset.eid,st:st,en:en,old:{u:p.uhrzeit,e:p.endUhrzeit}};}
+  else{var id=host.dataset.kabs||host.dataset.kedit,x=absences.find(function(a){return String(a.id)===String(id);});if(!x)return;KAL.rz={k:'abs',edge:edge,x:x,day:null,old:{von:x.von,bis:x.bis,halb:x.halb}};}
+  document.body.style.cursor=(edge==='s'||edge==='e')?'ns-resize':'ew-resize';},true);
+document.addEventListener('mousemove',function(ev){var r=KAL.rz;if(!r)return;ev.preventDefault();
+  if(r.k==='ses'){var b=r.col.getBoundingClientRect(),m=480+Math.round(((ev.clientY-b.top)/56*60)/15)*15;m=Math.max(480,Math.min(m,20*60));
+    if(r.edge==='s')r.st=Math.min(m,r.en-15);else r.en=Math.max(m,r.st+15);
+    r.host.style.top=((r.st-480)/60*56).toFixed(0)+'px';r.host.style.height=Math.max(22,(r.en-r.st)/60*56-3).toFixed(0)+'px';var tm=r.host.querySelector('.kal-tm');if(tm)tm.textContent=kalMinStr(r.st)+'–'+kalMinStr(r.en);}
+  else{var el=document.elementFromPoint(ev.clientX,ev.clientY),c=el&&el.closest&&el.closest('[data-kday]');document.querySelectorAll('.kal-over').forEach(function(z){if(z!==c)z.classList.remove('kal-over');});
+    if(c){var d=c.dataset.kday;if((r.edge==='von'&&d<=r.x.bis)||(r.edge==='bis'&&d>=r.x.von)){r.day=d;c.classList.add('kal-over');}}}});
+document.addEventListener('mouseup',function(){var r=KAL.rz;if(!r)return;KAL.rz=null;document.body.style.cursor='';document.querySelectorAll('.kal-over').forEach(function(z){z.classList.remove('kal-over');});KAL.rzDone=true;setTimeout(function(){KAL.rzDone=false;},300);
+  if(r.k==='ses'){var p=r.p,nu=kalMinStr(r.st),ne=kalMinStr(r.en);if(nu===r.old.u&&ne===r.old.e){kalRerender();return;}p.uhrzeit=nu;p.endUhrzeit=ne;kalRerender();
+    sb.from('protocols').update({uhrzeit:nu,end_uhrzeit:ne}).eq('id',p.id).then(function(res){if(res&&res.error)alert('Speichern fehlgeschlagen: '+res.error.message);});var e=kalEmp(r.eid);
+    kalToast((p.type||'Session')+(e?' mit '+esc(e.name):'')+': jetzt '+nu+'–'+ne+'.',function(){p.uhrzeit=r.old.u;p.endUhrzeit=r.old.e;kalRerender();sb.from('protocols').update({uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',p.id).then(function(){});});return;}
+  var x=r.x;if(!r.day||(r.edge==='von'?r.day===x.von:r.day===x.bis)){kalRerender();return;}var was=kalRange(x);if(r.edge==='von')x.von=r.day;else x.bis=r.day;if(x.von!==x.bis)x.halb=false;
+  kalRerender();var e2=kalEmp(x.employeeId);sb.from('absences').update({von:x.von,bis:x.bis,halb:x.halb}).eq('id',x.id).then(function(res){if(res&&res.error)alert('Speichern fehlgeschlagen: '+res.error.message);});
+  logActivity('kalender','updated','Abwesenheit geändert: '+KAL_ART[x.art],x.employeeId,(e2?e2.name:'')+' · '+was+' → '+kalRange(x));
+  kalToast('<b>'+esc(e2?e2.name:'')+'</b>: '+KAL_ART[x.art]+' jetzt '+kalRange(x)+' ('+kalNf(kalAmt(x))+' T).',function(){x.von=r.old.von;x.bis=r.old.bis;x.halb=r.old.halb;kalRerender();sb.from('absences').update({von:x.von,bis:x.bis,halb:x.halb}).eq('id',x.id).then(function(){});});});
 // schwarzes Hover-Feld wie im Performance-Diagramm
 document.addEventListener('mouseover',function(ev){var tp=document.getElementById('kalTip');var t=ev.target&&ev.target.closest&&ev.target.closest('[data-ktip]');
   if(!t){if(tp)tp.style.display='none';return;}if(!tp){tp=document.createElement('div');tp.id='kalTip';tp.className='kal-tip';document.body.appendChild(tp);}tp.innerHTML=t.getAttribute('data-ktip');tp.style.display='block';});
