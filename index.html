@@ -639,7 +639,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:12px;align-items:center}
 .kal-legend span{display:inline-flex;align-items:center;gap:7px}
 /* Woche */
-.kal-wv{display:grid;grid-template-columns:56px repeat(5,minmax(0,1fr));border:1px solid #E4E0D6;border-radius:12px;overflow:hidden;background:#fff}
+.kal-wv{display:grid;grid-template-columns:56px repeat(5,minmax(0,1fr)) .42fr .42fr;border:1px solid #E4E0D6;border-radius:12px;overflow:hidden;background:#fff}
 .kal-wv .hd{background:#EFECE5;text-align:center;padding:8px 4px;font-size:11px;color:var(--text3);border-left:1px solid #E4E0D6}
 .kal-wv .hd b{display:block;font-size:14px;color:var(--text)}.kal-wv .hd.td b{color:#9A3F22}.kal-wv .hd small{display:block;font-size:10.5px}
 .kal-wv .ad{border-left:1px solid #E4E0D6;border-bottom:1px solid #E4E0D6;padding:5px;display:flex;flex-direction:column;gap:3px;min-height:40px;background:#F7F5F0}
@@ -647,6 +647,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-wv .times{position:relative;height:672px}.kal-wv .times span{position:absolute;right:8px;font-size:11px;color:var(--text3)}
 .kal-wv .col{position:relative;height:672px;border-left:1px solid #E4E0D6;background-image:repeating-linear-gradient(to bottom,transparent 0 55px,#ECE8E0 55px 56px)}
 .kal-wv .col.hl{background-color:#F3F0EA}
+.kal-wv .col.we,.kal-wv .ad.we{background-color:#EFECE5;background-image:repeating-linear-gradient(135deg,#E2DDD3 0 2px,transparent 2px 7px)}.kal-wv .hd.we{background:#E8E4DC}
 .kal-wv .ev{position:absolute;left:4px;right:4px;border-radius:7px;padding:3px 8px;font-size:11.5px;overflow:hidden;line-height:1.35;min-height:22px}
 .kal-wv .ev div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kal-over{outline:2px solid #F08566!important;outline-offset:-2px}
@@ -13920,11 +13921,11 @@ function kalAbsChip(e,x,d){var a=kalShowArt(x),dr=kalCanEdit()&&!x.fixed&&!x.mas
   return '<div class="kal-ch '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+esc(kalFirst(e.name))+' · '+KAL_ART[a]+(x.halb?' ½':'')+'</div>';}
 function kalSesChip(o){return '<div class="kal-ch kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(o.p.uhrzeit?o.p.uhrzeit+' ':'')+esc(o.p.groupId&&o.n>1?'Gruppe ('+o.n+')':kalFirst(o.e.name))+'</div>';}
 function kalFreeTag(d){if(kalFixDay(d))return '';var o=kalFree(d,KAL.loc,null);return o.length>=3?'<span class="kal-tag warn" data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'">'+o.length+' frei</span>':'';}
-function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4].map(function(i){return kalAdd(m,i);}),t=today();
-  var h='<div class="kal-wv"><div class="hd" style="border-left:0"></div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(d===t?' td':'')+'">'+KAL_WD[kalP(d).getDay()].toUpperCase()+'<b>'+kalF(d)+'</b>'+(hn?'<small>'+esc(hn)+'</small>':'')+'</div>';}).join('');
-  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps(kalCtx()==='coach'?'ALL':null).forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});return '<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
+function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){return kalAdd(m,i);}),t=today();
+  var h='<div class="kal-wv"><div class="hd" style="border-left:0"></div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(d===t?' td':'')+(kalWknd(d)?' we':'')+'">'+KAL_WD[kalP(d).getDay()].toUpperCase()+'<b>'+kalF(d)+'</b>'+(hn?'<small>'+esc(hn)+'</small>':'')+'</div>';}).join('');
+  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps(kalCtx()==='coach'?'ALL':null).forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});return kalWknd(d)?'<div class="ad we">'+o.slice(1).join('')+'</div>':'<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
   var tm='<div class="times">';for(var hh=8;hh<20;hh++)tm+='<span style="top:'+((hh-8)*56+4)+'px">'+('0'+hh).slice(-2)+':00</span>';h+=tm+'</div>';
-  D.forEach(function(d){var c='<div class="col'+(kalHol(d,KAL.loc)?' hl':'')+'" data-kslot="'+d+'" data-kopen="'+d+'">';
+  D.forEach(function(d){var c=kalWknd(d)?'<div class="col we">':'<div class="col'+(kalHol(d,KAL.loc)?' hl':'')+'" data-kslot="'+d+'" data-kopen="'+d+'">';
     var day=kalSess(d).filter(function(o){return o.p.uhrzeit;}),cols=[];day.forEach(function(o){var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;if(en<=st)en=st+45;o._s=st;o._e=en;var ci=0;while(cols[ci]&&cols[ci]>st)ci++;cols[ci]=en;o._col=Math.min(ci,2);});
     day.forEach(function(o){var n=0;day.forEach(function(q){if(q._s<o._e&&q._e>o._s)n=Math.max(n,q._col+1);});o._n=Math.max(1,Math.min(3,n,cols.length));if(o._col>=o._n)o._col=o._n-1;});
     day.forEach(function(o){if(!o.p.uhrzeit)return;var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;var top=Math.max(0,(st-480)/60*56),hgt=Math.max(22,(en-st)/60*56-3);
@@ -13963,7 +13964,7 @@ function kalPane(){if(!KAL.pane)return '';var R=kalOpenReqs(),T=kalTasks(),t=tod
   var due=T.filter(function(x){return x.due<=kalAdd(t,7);}),later=T.filter(function(x){return x.due>kalAdd(t,7);});
   function card(x){return '<div class="kal-card drag'+(x.due<t?' due':'')+'" '+(kalCanEdit()?'draggable="true" data-ktask="'+x.id+'"':'')+'><span class="grip" aria-hidden="true">⋮⋮</span><div><div class="t">'+esc(x.l)+'</div><div class="s">fällig '+kalF(x.due)+' · '+esc(x.src)+'</div></div></div>';}
   return '<div class="ph"><i class="ti ti-list-check"></i> Planen<span>'+T.length+'</span></div><div class="kal-note">Auf einen Tag oder eine Uhrzeit ziehen = Session geplant.</div>'+(due.length?'<div class="gp">Bald fällig<span>'+due.length+'</span></div>'+due.map(card).join(''):'')+(later.length?'<div class="gp">Später<span>'+later.length+'</span></div>'+later.map(card).join(''):'')+(T.length?'':'<div class="kal-note" style="margin-top:10px">Alles eingeplant.</div>');}
-function kalRangeLabel(){var c=KAL.cur;if(KAL.view==='woche'){var m=kalMon(c),f=kalAdd(m,4);return kalP(m).getDate()+'. '+KAL_MON[kalP(m).getMonth()].slice(0,3)+' – '+kalP(f).getDate()+'. '+KAL_MON[kalP(f).getMonth()].slice(0,3)+' '+f.slice(0,4)+' (KW '+kalKw(m)+')';}
+function kalRangeLabel(){var c=KAL.cur;if(KAL.view==='woche'){var m=kalMon(c),f=kalAdd(m,6);return kalP(m).getDate()+'. '+KAL_MON[kalP(m).getMonth()].slice(0,3)+' – '+kalP(f).getDate()+'. '+KAL_MON[kalP(f).getMonth()].slice(0,3)+' '+f.slice(0,4)+' (KW '+kalKw(m)+')';}
   if(KAL.view==='jahr')return c.slice(0,4);return KAL_MON[kalP(c).getMonth()]+' '+c.slice(0,4);}
 function kalBar(){var v=[['woche','Woche'],['monat','Monat'],['jahr','Jahr'],['team','Team']],R=kalOpenReqs().length,T=kalTasks().length;
   return '<div class="dsh-seg" role="group" aria-label="Ansicht">'+v.map(function(o){return '<button type="button" class="'+(KAL.view===o[0]?'on':'')+'" onclick="kalSetView(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</div>'
