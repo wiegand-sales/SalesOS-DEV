@@ -611,7 +611,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
-.kal-u{background:#CDBB9E}.kal-f{background:#E6D9C2}.kal-a{background:#9C8F7E;color:#fff}.kal-k{background:#5F564C;color:#fff}.kal-x{background:#B9B1A5}
+.kal-u{background:#CDBB9E}.kal-f{background:#E6D9C2}.kal-a{background:#9C8F7E;color:#fff}.kal-k{background:#5F564C;color:#fff}.kal-fs2{background:#DCD3C4;box-shadow:inset 0 0 0 1.5px #A99C88}.kal-x{background:#B9B1A5}
 .kal-op{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.75) 0 4px,transparent 4px 8px);outline:1.5px dashed rgba(31,28,24,.45);outline-offset:-1.5px}
 .kal-ses{background:#FBE3DA;border:1.5px solid #F08566}.kal-ses.past{background:#EFECE5;border-color:#D8D2C6}
 .kal-hol{background-image:repeating-linear-gradient(135deg,#E2DDD3 0 2px,transparent 2px 7px)}
@@ -13727,8 +13727,8 @@ var absences=[]; // {id,employeeId,art,von,bis,halb,status,verschobenVon,notiz,e
 var KAL={hide:{},fOpen:false,cview:'woche',view:'monat',cur:null,loc:'MUC',pane:null,low:'req',sort:'rest',open:null,drag:null,snap:null,ut:null};
 var KAL_MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 var KAL_WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
-var KAL_ART={urlaub:'Urlaub',flex:'Flex Day',ausgleich:'Ausgleichstag',krank:'Krank',abwesend:'Abwesend'};
-var KAL_CLS={urlaub:'kal-u',flex:'kal-f',ausgleich:'kal-a',krank:'kal-k',abwesend:'kal-x'};
+var KAL_ART={urlaub:'Urlaub',flex:'Flex Day',ausgleich:'Ausgleichstag',freistellung:'Freistellung',krank:'Krank',abwesend:'Abwesend'};
+var KAL_CLS={urlaub:'kal-u',flex:'kal-f',ausgleich:'kal-a',freistellung:'kal-fs2',krank:'kal-k',abwesend:'kal-x'};
 
 function kalMapRow(r){return {id:r.id||('t'+Math.random().toString(36).slice(2)),employeeId:r.employee_id,art:r.art,von:r.von,bis:r.bis,halb:!!r.halb,halbTeil:r.halb_teil||null,status:r.status||'genehmigt',
   verschobenVon:r.verschoben_von||null,notiz:r.notiz||'',eingereichtAm:(r.eingereicht_am||'').slice(0,10)||today(),eingereichtVon:r.eingereicht_von||'',entschiedenVon:r.entschieden_von||'',entschiedenAm:r.entschieden_am||null,masked:!!r.masked};}
@@ -13825,6 +13825,7 @@ function kalKonto(eid,year){var e=kalEmp(eid),y=String(year||today().slice(0,4))
   kalAll().forEach(function(x){if(x.employeeId!==eid||x.status==='abgelehnt'||x.status==='storniert'||x.masked)return;var f=x.halb?0.5:1;
     kalDays(x).forEach(function(d){if(d.slice(0,4)!==y)return;var m=+d.slice(5,7)-1;
       if(x.art==='krank'){if(x.status==='genehmigt')k.kr+=f;return;}
+      if(x.art==='freistellung'){if(x.status==='genehmigt')k.fs=(k.fs||0)+f;return;}
       if(x.art==='ausgleich'){if(x.status==='genehmigt'&&!x.fixed)k.ag+=f;return;}
       if(x.status==='offen'){k.be+=f;k.mon[m].be+=f;return;}
       if(d<=t){k.tk+=f;k.mon[m].tk+=f;}else{k.pl+=f;k.mon[m].pl+=f;}
@@ -13857,6 +13858,7 @@ function kalEval(r){var e=kalEmp(r.employeeId),H=[];if(!e)return {n:0,H:[{t:'err
     var hd=Object.keys(hit);if(hd.length){var nm={};hd.forEach(function(d){hit[d].forEach(function(o){nm[o.e.name+(o.x.status==='offen'?' (beantragt)':'')]=1;});});
       H.push({t:'warn',h:'Am '+hd.map(kalF).join(', ')+' haben '+(tb?'im Team '+esc(kalTeamOf(e)):'in '+loc)+' schon <b>'+G+' oder mehr andere frei</b>: '+esc(Object.keys(nm).join(', '))+'. Eintragen geht trotzdem.'});}
     var rest=k.frei-(r.id?0:n);H.push({t:rest<0?'err':'info',h:'Urlaubskonto danach: <b>'+kalNf(rest)+' von '+(k.ans+k.uebEff)+'</b> Tagen frei, offene Anträge mitgerechnet.'});}
+  if(r.art==='freistellung')H.push({t:'info',h:'Freistellung (z. B. Gerichtstermin, Sonderurlaub): kostet keinen Urlaub. Kollegen und Betrachter sehen nur „abwesend“.'});
   if(r.art==='krank')H.push({t:'info',h:'Zählt als Arbeitstag mit 50 % der vereinbarten Stunden (z. B. 8 Std. → 4 Std.). Kollegen und Betrachter sehen nur „abwesend“.'});
   if(r.art==='ausgleich')H.push({t:'info',h:'Ausgleichstag: kostet keinen Urlaub und ändert das Ziel nicht. '+esc(kalFirst(e.name))+' hatte dieses Jahr '+kalNf(k.ag)+' Ausgleichstag'+(k.ag===1?'':'e')+'.'});
   return {n:n,H:H};}
@@ -13871,7 +13873,7 @@ function kalHintTags(x){var t=[],e=kalEmp(x.employeeId);if(!e)return '';var loc=
 // ── Kontext (Kalender-Menü oder Coaching) und Filter nach Kategorien ──
 function kalCtx(){return view==='coaching'?'coach':'kal';}
 function kalSesCat(p){var t=p.type||p.typ||'';if(/^weekly$/i.test(t))return 'Weekly';return typeof findCoachingCategoryForType==='function'?findCoachingCategoryForType(t):'Coaching';}
-function kalFilterCats(){var a=kalIsViewer()?[['urlaub','Urlaub'],['flex','Flex Day'],['abwesend','Abwesend']]:[['urlaub','Urlaub'],['flex','Flex Day'],['ausgleich','Ausgleichstag'],['krank','Krank']];
+function kalFilterCats(){var a=kalIsViewer()?[['urlaub','Urlaub'],['flex','Flex Day'],['abwesend','Abwesend']]:[['urlaub','Urlaub'],['flex','Flex Day'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']];
   var c=[['Weekly','Weekly']].concat(Object.keys(COACHING_CATEGORIES).map(function(x){return [x,x];}));return {abs:a,ses:c};}
 function kalShowAbs(x){return !KAL.hide[kalShowArt(x)];}
 function kalOnV(eid,d){var x=kalOn(eid,d);return x&&kalShowAbs(x)?x:null;}
@@ -14019,7 +14021,7 @@ function kalCoachBar(){var v=[['woche','Woche'],['monat','Monat']];
 // Kalender im Menü Coaching: gleiche Ansicht wie im Menü Kalender, nur Woche/Monat, alle Standorte, Coach-Filter der Seite
 function kalCoachCard(){if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;var sv=KAL.view;KAL.view=KAL.cview==='monat'?'monat':'woche';
   var h='<div class="card" style="margin-bottom:22px"><div class="kal-bar">'+kalCoachBar()+'</div>'+(KAL.view==='woche'?kalVWeek():kalVMonth())+kalLegend()+'</div>';KAL.view=sv;return h;}
-function kalLegend(){return '<div class="kal-legend"><span><i class="kal-sw kal-u"></i>Urlaub</span><span><i class="kal-sw kal-f"></i>Flex Day</span>'+(kalIsViewer()?'<span><i class="kal-sw kal-x"></i>Abwesend</span>':'<span><i class="kal-sw kal-a"></i>Ausgleichstag</span><span><i class="kal-sw kal-k"></i>Krank</span>')+'<span><i class="kal-sw kal-u kal-op"></i>beantragt</span><span><i class="kal-sw kal-hol"></i>Feiertag / Wochenende</span><span><i class="kal-sw kal-ses"></i>Session geplant</span><span><i class="kal-sw kal-ses past"></i>Session vergangen</span>'
+function kalLegend(){return '<div class="kal-legend"><span><i class="kal-sw kal-u"></i>Urlaub</span><span><i class="kal-sw kal-f"></i>Flex Day</span>'+(kalIsViewer()?'<span><i class="kal-sw kal-x"></i>Abwesend</span>':'<span><i class="kal-sw kal-a"></i>Ausgleichstag</span><span><i class="kal-sw kal-fs2"></i>Freistellung</span><span><i class="kal-sw kal-k"></i>Krank</span>')+'<span><i class="kal-sw kal-u kal-op"></i>beantragt</span><span><i class="kal-sw kal-hol"></i>Feiertag / Wochenende</span><span><i class="kal-sw kal-ses"></i>Session geplant</span><span><i class="kal-sw kal-ses past"></i>Session vergangen</span>'
   +(kalCtx()==='coach'?'<span class="kal-note">Klick auf eine Session öffnet sie, Klick auf eine freie Zeit plant eine neue.</span>':KAL.view==='jahr'?'<span class="kal-note">Je dunkler, desto mehr fehlen. Koralle-Rand ab 3. Klick öffnet den Monat.</span>':kalCanEdit()?'<span class="kal-note">Einträge und Sessions lassen sich ziehen, Klick auf einen Eintrag bearbeitet ihn.</span>':'')+'</div>';}
 function kalReqTable(){var L=kalOpenReqs();if(!L.length)return '<div class="kal-note" style="padding:10px 2px">Keine offenen Anträge.</div>';
   return '<div class="std-wrap"><table class="std-table"><thead><tr><th style="width:22%">Mitarbeiter</th><th style="width:14%">Zeitraum</th><th style="width:11%">Art</th><th class="r" style="width:6%">Tage</th><th>Hinweise</th><th style="width:200px"></th></tr></thead><tbody>'+L.map(function(x){var e=kalEmp(x.employeeId),a=kalShowArt(x);
@@ -14142,7 +14144,7 @@ function kalCloseForm(){var m=document.getElementById('kalFormModal');if(m)m.cla
 function kalDrawForm(){var b=document.getElementById('kalFormBody');if(!b||!KF)return;var L=kalEmps(KF.employeeId&&kalIsVlc(kalEmp(KF.employeeId))?'VLC':KAL.loc);if(L.every(function(e){return e.id!==KF.employeeId;})&&kalEmp(KF.employeeId))L=L.concat([kalEmp(KF.employeeId)]);
   var ev=kalEval(KF);
   var h='<div class="kal-fs"><div class="h">1 · Wer</div><select onchange="KF.employeeId=this.value;kalDrawForm()">'+L.map(function(e){return '<option value="'+e.id+'"'+(e.id===KF.employeeId?' selected':'')+'>'+esc(e.name)+'</option>';}).join('')+'</select></div>';
-  h+='<div class="kal-fs"><div class="h">2 · Was</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="dsh-seg">'+[['urlaub','Urlaub'],['ausgleich','Ausgleichstag'],['krank','Krank']].map(function(o){return '<button type="button" class="'+(KF.art===o[0]?'on':'')+'" onclick="KF.art=\''+o[0]+'\';kalDrawForm()">'+o[1]+'</button>';}).join('')+'</div><label style="display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer"><input type="checkbox" style="width:auto;margin:0" '+(KF.halb?'checked':'')+' onchange="KF.halb=this.checked;if(KF.halb)KF.bis=KF.von;kalDrawForm()"> halber Tag</label>'+(KF.halb?'<div class="dsh-seg sm"><button type="button" class="'+(KF.halbTeil!=='nm'?'on':'')+'" onclick="KF.halbTeil=\'vm\';kalDrawForm()">Vormittag</button><button type="button" class="'+(KF.halbTeil==='nm'?'on':'')+'" onclick="KF.halbTeil=\'nm\';kalDrawForm()">Nachmittag</button></div>':'')+'</div>'
+  h+='<div class="kal-fs"><div class="h">2 · Was</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="dsh-seg">'+[['urlaub','Urlaub'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']].map(function(o){return '<button type="button" class="'+(KF.art===o[0]?'on':'')+'" onclick="KF.art=\''+o[0]+'\';kalDrawForm()">'+o[1]+'</button>';}).join('')+'</div><label style="display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer"><input type="checkbox" style="width:auto;margin:0" '+(KF.halb?'checked':'')+' onchange="KF.halb=this.checked;if(KF.halb)KF.bis=KF.von;kalDrawForm()"> halber Tag</label>'+(KF.halb?'<div class="dsh-seg sm"><button type="button" class="'+(KF.halbTeil!=='nm'?'on':'')+'" onclick="KF.halbTeil=\'vm\';kalDrawForm()">Vormittag</button><button type="button" class="'+(KF.halbTeil==='nm'?'on':'')+'" onclick="KF.halbTeil=\'nm\';kalDrawForm()">Nachmittag</button></div>':'')+'</div>'
     +(KF.art==='urlaub'?'<div class="kal-note" style="margin-top:8px">Flex Day wird nicht ausgewählt: Bei weniger als 15 Arbeitstagen Vorlauf zählt Urlaub automatisch als Flex Day.</div><label style="display:inline-flex;align-items:center;gap:6px;margin:8px 0 0;cursor:pointer;font-weight:400"><input type="checkbox" style="width:auto;margin:0" '+(KF.normal?'checked':'')+' onchange="KF.normal=this.checked;kalDrawForm()"> trotzdem als normalen Urlaub zählen</label>':'')+'</div>';
   h+='<div class="kal-fs"><div class="h">3 · Wann</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input type="date" value="'+KF.von+'" style="width:170px" onchange="KF.von=this.value;if(KF.bis<KF.von||KF.halb)KF.bis=KF.von;kalDrawForm()"><span>bis</span><input type="date" value="'+KF.bis+'" style="width:170px" '+(KF.halb?'disabled':'')+' onchange="KF.bis=this.value;kalDrawForm()"></div>'
     +(KF.art!=='krank'?'<div style="display:flex;gap:10px;align-items:center;margin-top:10px"><span class="kal-note">Status</span><div class="dsh-seg sm"><button type="button" class="'+(KF.status==='genehmigt'?'on':'')+'" onclick="KF.status=\'genehmigt\';kalDrawForm()">Genehmigt</button><button type="button" class="'+(KF.status==='offen'?'on':'')+'" onclick="KF.status=\'offen\';kalDrawForm()">Antrag (offen)</button></div></div>':'')
