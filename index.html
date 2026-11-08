@@ -735,8 +735,12 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .zt-red{box-shadow:inset 0 0 0 1.5px #CDBB9E;background:#F4EFE7;border-radius:6px;padding:2px 7px}.zt-osk{background:#F3EEE6;padding:2px 7px;border-radius:6px}
 .zt-lk{font-size:13px;color:var(--text2)}.zt-fs{margin-left:10px;display:inline-flex}.zt-new{display:inline-flex;padding:1px 7px;border-radius:7px;font-size:11px;background:#FBE3DA;color:#9A3F22;font-weight:600}
 .zt-oslink{cursor:pointer;border-bottom:1px dashed #A99C88}.zt-acc{font-size:12px;cursor:default;border-bottom:1px dashed #A99C88}
-.zt-osrow{text-align:left!important;white-space:normal!important;padding:10px 8px 12px 62px!important;height:auto!important}
-.zt-osb{background:#F7F5F0;border-radius:10px;padding:10px 12px;font-size:12.5px;display:inline-block}.zt-osb table{border-collapse:collapse;margin-top:6px}.zt-osb td,.zt-osb th{padding:4px 10px;text-align:right;border-bottom:1px solid #E4E0D6;height:auto!important;background:none!important}.zt-osb td:first-child{text-align:left;color:var(--text2)}.zt-osb th{font-size:11px;color:var(--text3);text-transform:none}
+.zt-osrow{text-align:left!important;white-space:normal!important;padding:10px 12px 12px 62px!important;height:auto!important}
+.zt-osgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1fr);gap:14px}
+@media(max-width:1200px){.zt-osgrid{grid-template-columns:1fr}}
+.zt-osb{background:#F7F5F0;border-radius:10px;padding:12px 14px;font-size:12.5px;min-width:0}.zt-osh{font-weight:700;font-size:13px}
+.zt-osf{margin-top:8px}.zt-hb{display:grid;grid-template-columns:92px minmax(0,1fr) 84px;gap:8px;align-items:center;margin:5px 0;font-size:12px}
+.zt-hb div{height:10px;background:#E4E0D6;border-radius:5px;overflow:hidden}.zt-hb i{display:block;height:100%;border-radius:5px}.zt-hb b{text-align:right;font-weight:600}.zt-osb table{border-collapse:collapse;margin-top:6px}.zt-osb td,.zt-osb th{padding:4px 10px;text-align:right;border-bottom:1px solid #E4E0D6;height:auto!important;background:none!important}.zt-osb td:first-child{text-align:left;color:var(--text2)}.zt-osb th{font-size:11px;color:var(--text3);text-transform:none}
 .zt-prot{background:#EFECE5;border-radius:12px;padding:6px 14px;margin-bottom:14px;max-height:320px;overflow:auto}.zt-pr{display:grid;grid-template-columns:120px 150px 1fr;gap:12px;padding:8px 0;border-bottom:1px solid #E4E0D6;font-size:13px}.zt-pr:last-child{border-bottom:0}
 /* Formular */
 .kal-fs{background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px}
@@ -14351,11 +14355,23 @@ function ztDayRows(e,mk,x,os,wm){var h='',wsum=0,all=[];x.weeks.forEach(function
     h+='<tr class="k dd"><td><span class="zt-l4">'+KAL_WD[kalP(d).getDay()]+', '+kalF(d)+'</span></td><td></td><td></td><td></td><td>'+lab+'</td><td></td><td></td><td>'+o+'</td><td></td><td>'+z+'</td><td class="os"></td><td>'+(ist?ztEur(ist):'')+'</td><td></td></tr>';}
   return h;}
 function ztOsBox(e,mk,os,x){var D=['Mo','Di','Mi','Do','Fr'];
-  return '<div class="zt-osb"><div><b>So rechnet Ziel OS</b> <span class="zt-dim">· '+esc(os.src)+'</span></div><table><tr><th></th>'+D.map(function(d){return '<th>'+d+'</th>';}).join('')+'<th>Summe</th></tr>'
+  var tbl='<table><tr><th></th>'+D.map(function(d){return '<th>'+d+'</th>';}).join('')+'<th>Summe</th></tr>'
     +'<tr><td>geplante Tage</td>'+os.per.map(function(n){return '<td>'+n+'</td>';}).join('')+'<td>'+os.per.reduce(function(a,b){return a+b;},0)+'</td></tr>'
-    +'<tr><td>Ø Opt. am Wochentag</td>'+os.opw.map(function(v){return '<td>'+kalNf(Math.round(v*10)/10)+'</td>';}).join('')+'<td></td></tr>'
+    +'<tr><td>Ø Opt. am Tag</td>'+os.opw.map(function(v){return '<td>'+kalNf(Math.round(v*10)/10)+'</td>';}).join('')+'<td></td></tr>'
     +'<tr><td>Opt.</td>'+os.per.map(function(n,i){return '<td>'+Math.round(n*os.opw[i])+'</td>';}).join('')+'<td><b>'+Math.round(os.opt)+'</b></td></tr></table>'
-    +'<div style="margin-top:6px">'+Math.round(os.opt)+' Opt. × Ø Marge/Opt. € '+kalNf(Math.round(os.mpo*10)/10)+' = <b>'+ztEur(os.sum)+'</b> · Zielvereinbarung: '+ztEur(x.ziel)+'</div></div>';}
+    +'<div class="zt-osf">'+Math.round(os.opt)+' Opt. × Ø € '+kalNf(Math.round(os.mpo*10)/10)+' Marge/Opt. = <b>'+ztEur(os.sum)+'</b></div>';
+  // Diagramm 1: Ø Opt. je Wochentag (Säule) und geplante Tage (Zahl darunter)
+  var mx=Math.max.apply(null,os.opw.concat([1])),W=260,H=96,bw=30,gap=(W-5*bw)/5,svg='<svg viewBox="0 -14 '+W+' '+(H+48)+'" style="width:100%;max-width:300px;height:auto;display:block">';
+  os.opw.forEach(function(v,i){var hh=v/mx*(H-6),xx=i*(bw+gap)+gap/2;svg+='<rect x="'+xx+'" y="'+(H-hh)+'" width="'+bw+'" height="'+hh+'" rx="4" fill="'+(os.per[i]?'#CDBB9E':'#E4E0D6')+'"/><text x="'+(xx+bw/2)+'" y="'+(H-hh-4)+'" text-anchor="middle" font-size="11" fill="#5C554C">'+kalNf(Math.round(v*10)/10)+'</text>'
+    +'<text x="'+(xx+bw/2)+'" y="'+(H+14)+'" text-anchor="middle" font-size="11" fill="#1d1c1a" font-weight="600">'+D[i]+'</text><text x="'+(xx+bw/2)+'" y="'+(H+27)+'" text-anchor="middle" font-size="10" fill="#7A7268">'+os.per[i]+' T</text>';});
+  svg+='</svg>';
+  // Diagramm 2: Ist der letzten 3 Monate gegen Ziel OS und Zielvereinbarung
+  var ms=[3,2,1].map(function(k){var d=new Date(+mk.slice(0,4),+mk.slice(5,7)-1-k,1),m=kalI(d).slice(0,7);return {l:MONTH_NAMES_ZIEL[d.getMonth()].slice(0,3)+' Ist',v:istForEmpMonth(e.id,m),c:'#8A7F72'};});
+  ms.push({l:'Ziel OS',v:os.sum,c:'#C9A77E',b:1});ms.push({l:'Zielvereinb.',v:x.ziel,c:'#F08566',b:1});
+  var mv=Math.max.apply(null,ms.map(function(o){return o.v;}).concat([1])),bars=ms.map(function(o){return '<div class="zt-hb"><span>'+o.l+'</span><div><i style="width:'+(o.v/mv*100)+'%;background:'+o.c+'"></i></div><b'+(o.b?'':' style="font-weight:400"')+'>'+ztEur(o.v)+'</b></div>';}).join('');
+  return '<div class="zt-osgrid"><div class="zt-osb"><div class="zt-osh">So rechnet Ziel OS</div><div class="zt-dim" style="margin-bottom:4px">'+esc(os.src)+'</div>'+tbl+'</div>'
+    +'<div class="zt-osb"><div class="zt-osh">Ø Optimierungen je Wochentag</div><div class="zt-dim" style="margin-bottom:6px">Säule = Ø Opt., darunter die geplanten Tage im Monat</div>'+svg+'</div>'
+    +'<div class="zt-osb"><div class="zt-osh">Einordnung</div><div class="zt-dim" style="margin-bottom:8px">Marge der letzten 3 Monate gegen die Ziele</div>'+bars+'</div></div>';}
 function ztProtHtml(){var y=zielYearView,L=zielProtokoll.filter(function(p){return (p.month||'').slice(0,4)===y;});
   return '<div class="zt-prot"><div class="zt-pr"><b>Datum</b><b>Person</b><b>Änderung</b></div>'+(L.length?L.slice(0,200).map(function(p){var e=p.employee_id?kalEmp(p.employee_id):null,mn=MONTH_NAMES_ZIEL[+p.month.slice(5,7)-1];
     return '<div class="zt-pr"><span>'+(p.am?new Date(p.am).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')+'</span><span>'+esc(p.von||'')+'</span><span>'+mn+(e?' · '+esc(e.name):'')+' · '+esc(p.feld)+(p.alt!=null||p.neu!=null?': <b>'+esc(p.alt==null?'–':p.alt)+' → '+esc(p.neu==null?'–':p.neu)+'</b>':'')+(p.grund?' · '+esc(p.grund):'')+'</span></div>';}).join(''):'<div class="kal-note" style="padding:8px 0">Noch keine Einträge.</div>')+'</div>';}
