@@ -11743,7 +11743,7 @@ function loadProtocolsFromSupabase(){
         id:r.id,date:r.date,uhrzeit:r.uhrzeit?r.uhrzeit.slice(0,5):'',endUhrzeit:r.end_uhrzeit?r.end_uhrzeit.slice(0,5):'',type:r.art,rating:r.rating,
         note:r.note,notes:r.note,focus:r.focus,status:r.status,
         start:r.start_note||'',stop:r.stop_note||'',cont:r.continue_note||'',
-        topics:r.focus?[r.focus]:[],coachId:r.coach_id||null,focusMetric:r.focus_metric||null
+        topics:r.focus?[r.focus]:[],coachId:r.coach_id||null,focusMetric:r.focus_metric||null,groupId:r.group_id||null
       });
     });
     Object.keys(byEmp).forEach(function(k){byEmp[k].sort(function(a,b){return b.date.localeCompare(a.date);});});
@@ -13881,7 +13881,9 @@ function kalSess(d,eid,raw){var out=[],grp={},cf=kalCtx()==='coach'&&typeof coac
   return out.sort(function(a,b){return (a.p.uhrzeit||'').localeCompare(b.p.uhrzeit||'');});}
 function kalSesPast(p){return p.status!=='geplant'||p.date<today();}
 function kalCoachName(id){var c=employees.find(function(e){return e.id===id;});return c?kalFirst(c.name):'';}
-function kalSesWho(o){return o.p.groupId&&o.n>1?'Gruppencoaching ('+o.n+')':o.e.name;}
+function kalGroupProtos(p){if(!p.groupId)return [p];var r=[];Object.keys(protocols).forEach(function(k){(protocols[k]||[]).forEach(function(q){if(q.groupId===p.groupId)r.push(q);});});return r;}
+function kalSesUpdate(p,upd){var q=p.groupId?sb.from('protocols').update(upd).eq('group_id',p.groupId):sb.from('protocols').update(upd).eq('id',p.id);return q.then(function(res){if(res&&res.error)alert('Speichern fehlgeschlagen: '+res.error.message);});}
+function kalSesWho(o){return o.p.groupId?'Gruppencoaching ('+o.n+')':o.e.name;}
 function kalSesAttrs(o){return ' data-eid="'+esc(o.e.id)+'" data-sid="'+esc(o.p.id)+'" data-typ="'+esc(o.p.type||'')+'" data-focus="'+esc(o.p.focus||'')+'" data-datum="'+esc(o.p.date)+'" data-uhrzeit="'+esc(o.p.uhrzeit||'')+'"';}
 function kalSesTip(o){return esc((o.p.uhrzeit?o.p.uhrzeit+(o.p.endUhrzeit?'–'+o.p.endUhrzeit:'')+' ':'')+(o.p.type||'Session'))+'<br>'+esc(kalSesWho(o))+(o.p.focus?' · '+esc(o.p.focus):'')+(o.p.coachId?' mit '+esc(kalCoachName(o.p.coachId)):'')+(o.p.status==='geplant'?'<br>geplant':'');}
 
@@ -13923,7 +13925,7 @@ function kalBanner(){var t=today(),L=kalEmps(),wds=[],d=t;while(wds.length<10){i
 function kalAbsRz(x,d){if(!(kalCanEdit()&&!x.fixed&&!x.masked))return '';var ds=kalDays(x);return (ds[0]===d?'<span class="kal-rz l" data-krz="von"></span>':'')+(ds[ds.length-1]===d?'<span class="kal-rz r" data-krz="bis"></span>':'');}
 function kalAbsChip(e,x,d){var a=kalShowArt(x),dr=kalCanEdit()&&!x.fixed&&!x.masked;
   return '<div class="kal-ch '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'" style="position:relative" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+kalAbsRz(x,d)+esc(kalFirst(e.name))+' · '+KAL_ART[a]+(x.halb?' ½':'')+'</div>';}
-function kalSesChip(o){return '<div class="kal-ch kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(o.p.uhrzeit?o.p.uhrzeit+' ':'')+esc(o.p.groupId&&o.n>1?'Gruppe ('+o.n+')':kalFirst(o.e.name))+'</div>';}
+function kalSesChip(o){return '<div class="kal-ch kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" '+(kalCanEdit()?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(o.p.uhrzeit?o.p.uhrzeit+' ':'')+esc(o.p.groupId?'Gruppencoaching ('+o.n+')':kalFirst(o.e.name))+'</div>';}
 function kalFreeTag(d){if(kalFixDay(d))return '';var o=kalFree(d,KAL.loc,null);return o.length>=3?'<span class="kal-tag warn" data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'">'+o.length+' frei</span>':'';}
 function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){return kalAdd(m,i);}),t=today();
   var h='<div class="kal-wv"><div class="hd" style="border-left:0"></div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(d===t?' td':'')+(kalWknd(d)?' we':'')+'">'+KAL_WD[kalP(d).getDay()].toUpperCase()+'<b>'+kalF(d)+'</b>'+(hn?'<small>'+esc(hn)+'</small>':'')+'</div>';}).join('');
@@ -13933,7 +13935,7 @@ function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){retu
     var day=kalSess(d).filter(function(o){return o.p.uhrzeit;}),cols=[];day.forEach(function(o){var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;if(en<=st)en=st+45;o._s=st;o._e=en;var ci=0;while(cols[ci]&&cols[ci]>st)ci++;cols[ci]=en;o._col=Math.min(ci,2);});
     day.forEach(function(o){var n=0;day.forEach(function(q){if(q._s<o._e&&q._e>o._s)n=Math.max(n,q._col+1);});o._n=Math.max(1,Math.min(3,n,cols.length));if(o._col>=o._n)o._col=o._n-1;});
     day.forEach(function(o){if(!o.p.uhrzeit)return;var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;var top=Math.max(0,(st-480)/60*56),hgt=Math.max(22,(en-st)/60*56-3);
-      c+='<div class="ev kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" style="top:'+top.toFixed(0)+'px;height:'+hgt.toFixed(0)+'px;left:calc('+(o._col*100/o._n)+'% + 4px);right:auto;width:calc('+(100/o._n)+'% - 8px)" '+(kalCanEdit()&&!o.p.groupId?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(kalCanEdit()&&!o.p.groupId?'<span class="kal-rz t" data-krz="s"></span><span class="kal-rz b" data-krz="e"></span>':'')+'<div><b class="kal-tm">'+o.p.uhrzeit+'</b> '+esc(kalSesWho(o))+'</div><div>'+esc(o.p.type||'Session')+(o.p.coachId?' · '+esc(kalCoachName(o.p.coachId)):'')+'</div></div>';});
+      c+='<div class="ev kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" style="top:'+top.toFixed(0)+'px;height:'+hgt.toFixed(0)+'px;left:calc('+(o._col*100/o._n)+'% + 4px);right:auto;width:calc('+(100/o._n)+'% - 8px)" '+(kalCanEdit()?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(kalCanEdit()?'<span class="kal-rz t" data-krz="s"></span><span class="kal-rz b" data-krz="e"></span>':'')+'<div><b class="kal-tm">'+o.p.uhrzeit+'</b> '+esc(kalSesWho(o))+'</div><div>'+esc(o.p.type||'Session')+(o.p.coachId?' · '+esc(kalCoachName(o.p.coachId)):'')+'</div></div>';});
     h+=c+'</div>';});
   return h+'</div>';}
 function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),first=kalI(new Date(y,mo,1)),last=kalI(new Date(y,mo+1,0)),t=today();var d=kalMon(first);
@@ -14112,10 +14114,10 @@ function kalMoveAbs(id,from,to){var x=absences.find(function(a){return String(a.
   sb.from('absences').update({von:x.von,bis:x.bis,verschoben_von:x.verschobenVon||null}).eq('id',x.id).then(function(res){if(res&&res.error)alert('Verschieben fehlgeschlagen: '+res.error.message);});
   logActivity('kalender','moved','Abwesenheit verschoben: '+KAL_ART[x.art],x.employeeId,(e?e.name:'')+' · '+was+' → '+kalRange(x));
   kalToast('<b>'+esc(e?e.name:'')+'</b>: '+KAL_ART[x.art]+' von '+was+' auf '+kalRange(x)+' verschoben.',function(){x.von=old.von;x.bis=old.bis;x.verschobenVon=old.verschobenVon;kalRerender();sb.from('absences').update({von:x.von,bis:x.bis,verschoben_von:x.verschobenVon||null}).eq('id',x.id).then(function(){});});}
-function kalMoveSes(eid,sid,day,tm){var p=(protocols[eid]||[]).find(function(q){return String(q.id)===String(sid);});if(!p)return;var old={date:p.date,uhrzeit:p.uhrzeit,endUhrzeit:p.endUhrzeit};
-  var dur=(p.uhrzeit&&p.endUhrzeit)?timeStrToMin(p.endUhrzeit)-timeStrToMin(p.uhrzeit):null;p.date=day;if(tm){p.uhrzeit=tm;if(dur)p.endUhrzeit=kalAddMin(tm,dur);}
-  kalRerender();sb.from('protocols').update({date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',sid).then(function(res){if(res&&res.error)alert('Verschieben fehlgeschlagen: '+res.error.message);});
-  var e=kalEmp(eid);kalToast((p.type||'Session')+' mit '+esc(e?e.name:'')+' auf '+kalF(day)+(p.uhrzeit?' '+p.uhrzeit:'')+' verschoben.',function(){p.date=old.date;p.uhrzeit=old.uhrzeit;p.endUhrzeit=old.endUhrzeit;kalRerender();sb.from('protocols').update({date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',sid).then(function(){});});}
+function kalMoveSes(eid,sid,day,tm){var p=(protocols[eid]||[]).find(function(q){return String(q.id)===String(sid);});if(!p)return;var all=kalGroupProtos(p),old=all.map(function(q){return {q:q,date:q.date,uhrzeit:q.uhrzeit,endUhrzeit:q.endUhrzeit};});
+  var dur=(p.uhrzeit&&p.endUhrzeit)?timeStrToMin(p.endUhrzeit)-timeStrToMin(p.uhrzeit):null;all.forEach(function(q){q.date=day;if(tm){q.uhrzeit=tm;if(dur)q.endUhrzeit=kalAddMin(tm,dur);}});
+  kalRerender();kalSesUpdate(p,{date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null});
+  var e=kalEmp(eid);kalToast((p.groupId?'Gruppencoaching ('+all.length+')':(p.type||'Session')+' mit '+esc(e?e.name:''))+' auf '+kalF(day)+(p.uhrzeit?' '+p.uhrzeit:'')+' verschoben.',function(){old.forEach(function(o){o.q.date=o.date;o.q.uhrzeit=o.uhrzeit;o.q.endUhrzeit=o.endUhrzeit;});kalRerender();kalSesUpdate(p,{date:p.date,uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null});});}
 function kalPlanSession(task,day,tm){var e=task.e,uz=tm||'10:00',row={employee_id:e.id,date:day,uhrzeit:uz,end_uhrzeit:kalAddMin(uz,task.art==='Weekly'?30:60),art:task.art,rating:null,note:'',focus:'',status:'geplant',coach_id:currentCoach?currentCoach.id:null,focus_metric:null,group_id:null};
   var p={id:'t'+Date.now(),date:day,uhrzeit:row.uhrzeit,endUhrzeit:row.end_uhrzeit,type:task.art,status:'geplant',rating:null,note:'',notes:'',focus:'',topics:[],coachId:row.coach_id};
   if(!protocols[e.id])protocols[e.id]=[];protocols[e.id].unshift(p);kalRerender();
@@ -14155,9 +14157,9 @@ document.addEventListener('mousemove',function(ev){var r=KAL.rz;if(!r)return;ev.
   else{var el=document.elementFromPoint(ev.clientX,ev.clientY),c=el&&el.closest&&el.closest('[data-kday]');document.querySelectorAll('.kal-over').forEach(function(z){if(z!==c)z.classList.remove('kal-over');});
     if(c){var d=c.dataset.kday;if((r.edge==='von'&&d<=r.x.bis)||(r.edge==='bis'&&d>=r.x.von)){r.day=d;c.classList.add('kal-over');}}}});
 document.addEventListener('mouseup',function(){var r=KAL.rz;if(!r)return;KAL.rz=null;document.body.style.cursor='';document.querySelectorAll('.kal-over').forEach(function(z){z.classList.remove('kal-over');});KAL.rzDone=true;setTimeout(function(){KAL.rzDone=false;},300);
-  if(r.k==='ses'){var p=r.p,nu=kalMinStr(r.st),ne=kalMinStr(r.en);if(nu===r.old.u&&ne===r.old.e){kalRerender();return;}p.uhrzeit=nu;p.endUhrzeit=ne;kalRerender();
-    sb.from('protocols').update({uhrzeit:nu,end_uhrzeit:ne}).eq('id',p.id).then(function(res){if(res&&res.error)alert('Speichern fehlgeschlagen: '+res.error.message);});var e=kalEmp(r.eid);
-    kalToast((p.type||'Session')+(e?' mit '+esc(e.name):'')+': jetzt '+nu+'–'+ne+'.',function(){p.uhrzeit=r.old.u;p.endUhrzeit=r.old.e;kalRerender();sb.from('protocols').update({uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null}).eq('id',p.id).then(function(){});});return;}
+  if(r.k==='ses'){var p=r.p,nu=kalMinStr(r.st),ne=kalMinStr(r.en),all=kalGroupProtos(p);if(nu===r.old.u&&ne===r.old.e){kalRerender();return;}all.forEach(function(q){q.uhrzeit=nu;q.endUhrzeit=ne;});kalRerender();
+    kalSesUpdate(p,{uhrzeit:nu,end_uhrzeit:ne});var e=kalEmp(r.eid);
+    kalToast((p.groupId?'Gruppencoaching ('+all.length+')':(p.type||'Session')+(e?' mit '+esc(e.name):''))+': jetzt '+nu+'–'+ne+'.',function(){all.forEach(function(q){q.uhrzeit=r.old.u;q.endUhrzeit=r.old.e;});kalRerender();kalSesUpdate(p,{uhrzeit:p.uhrzeit||null,end_uhrzeit:p.endUhrzeit||null});});return;}
   var x=r.x;if(!r.day||(r.edge==='von'?r.day===x.von:r.day===x.bis)){kalRerender();return;}var was=kalRange(x);if(r.edge==='von')x.von=r.day;else x.bis=r.day;if(x.von!==x.bis)x.halb=false;
   kalRerender();var e2=kalEmp(x.employeeId);sb.from('absences').update({von:x.von,bis:x.bis,halb:x.halb}).eq('id',x.id).then(function(res){if(res&&res.error)alert('Speichern fehlgeschlagen: '+res.error.message);});
   logActivity('kalender','updated','Abwesenheit geändert: '+KAL_ART[x.art],x.employeeId,(e2?e2.name:'')+' · '+was+' → '+kalRange(x));
