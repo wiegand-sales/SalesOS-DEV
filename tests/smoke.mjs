@@ -173,6 +173,12 @@ const kalR = await page.evaluate(`(function(){var t=today();protocols['e1']=(pro
   KAL.view='team';KAL.cur=t;renderKalender();var team=document.querySelectorAll('#mainArea .kal-tl [data-krz]').length;
   KAL.view='woche';KAL.cur=kalRef();renderKalender();var wk=document.querySelectorAll('#mainArea .kal-wv [data-sid="rz1"] [data-krz]').length;return {team:team,wk:wk};})()`);
 check('Kalender: Griffe zum Verlängern an Sessions', kalR.wk === 2, kalR.wk);
+const kalG = await page.evaluate(`(function(){var d=kalRef();['e1','e2','e3'].forEach(function(id){protocols[id]=(protocols[id]||[]).concat([{id:'g_'+id,date:d,uhrzeit:'14:00',endUhrzeit:'15:00',type:'Product Training',status:'geplant',groupId:'GX'}]);});
+  view='kalender';var ent=kalSess(d).filter(function(o){return o.p.groupId==='GX';});kalMoveSes('e1','g_e1',d,'16:00');
+  var moved=['e1','e2','e3'].every(function(id){return protocols[id].find(function(p){return p.id==='g_'+id;}).uhrzeit==='16:00';});
+  return {n:ent.length,cnt:ent[0]?ent[0].n:0,moved:moved};})()`);
+check('Kalender: Gruppencoaching ist ein Termin', kalG.n === 1 && kalG.cnt === 3, kalG.n + '/' + kalG.cnt);
+check('Kalender: Gruppencoaching verschiebt alle Teilnehmer', kalG.moved);
 check('Coaching: zeigt den neuen Kalender', kalF.coach);
 check('Kalender: Filter blendet Flex Days aus', kalF.vor > 0 && kalF.nach === 0, kalF.vor + '→' + kalF.nach);
 await step("kalOpenForm('e1')"); await step("kalCloseForm()"); await step("KAL.open='e1';renderKalender()");
