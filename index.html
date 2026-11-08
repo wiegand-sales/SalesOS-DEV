@@ -722,6 +722,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .zt-t th{background:#EFECE5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#5f5d57;padding:10px 8px;text-align:right;white-space:nowrap}
 .zt-t th:first-child{text-align:left}.zt-t td{padding:0 8px;height:46px;border-bottom:1px solid #E4E0D6;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.zt-t td:first-child{text-align:left}
 .zt-t th.os,.zt-t td.os{background:#F3EEE6}
+.zt-t th.eq{width:122px;min-width:122px;max-width:122px}
+.zt-t td .zt-d{display:block;line-height:1.15;font-size:11px}
 .zt-t tr.m{cursor:pointer}.zt-t tr.m td{font-weight:600}.zt-t tr.m:hover td{background:#EFECE5}.zt-t tr.m.open td{background:#EFECE5}
 .zt-t tr.e{cursor:pointer}.zt-t tr.e td{background:#FBFAF7;height:50px}.zt-t tr.e:hover td,.zt-t tr.e.open td{background:#F4F1EB}
 .zt-t tr.k td{background:#fff;height:36px;font-size:12px;color:var(--text2)}.zt-t tr.kw{cursor:pointer}.zt-t tr.kw:hover td,.zt-t tr.kw.open td{background:#F7F5F0}
@@ -734,7 +736,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .zt-d{font-size:11.5px;font-weight:600}.zt-d.up{color:#2F6B4F}.zt-d.dn{color:#9A3F22}.zt-dim{color:#B5ADA2}
 .zt-red{box-shadow:inset 0 0 0 1.5px #CDBB9E;background:#F4EFE7;border-radius:6px;padding:2px 7px}.zt-osk{background:#F3EEE6;padding:2px 7px;border-radius:6px}
 .zt-lk{font-size:13px;color:var(--text2)}.zt-fs{margin-left:10px;display:inline-flex}.zt-new{display:inline-flex;padding:1px 7px;border-radius:7px;font-size:11px;background:#FBE3DA;color:#9A3F22;font-weight:600}
-.zt-oslink{cursor:pointer;border-bottom:1px dashed #A99C88}.zt-acc{font-size:12px;cursor:default;border-bottom:1px dashed #A99C88}
+.zt-oslink{cursor:pointer;border-bottom:1px dashed #A99C88}.zt-acc{font-size:11.5px;cursor:default;border-bottom:1px dashed #A99C88;white-space:normal;display:inline-block;line-height:1.25}
 .zt-osrow{text-align:left!important;white-space:normal!important;padding:10px 12px 12px 62px!important;height:auto!important}
 .zt-osgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1fr);gap:14px}
 @media(max-width:1200px){.zt-osgrid{grid-template-columns:1fr}}
@@ -14319,7 +14321,7 @@ function ztLockedEdit(mk){return !!zielLocks[mk]&&!ZT.edit[mk];}
 function ztCanEditMonth(mk){if(kalIsViewer())return false;if(zielLocks[mk])return ztIsAdmin()&&!!ZT.edit[mk];return true;}
 // ── Tabelle ──
 function zielTreeHtml(){var year=zielYearView,cur=today().slice(0,7),h='',Y={nl:0,z:0,ist:0,u:0,k:0,t:0},acc=[0,0];_ztHist={};_ztStart={};_kalOnIdx=null;
-  var head='<tr><th>Monat / Mitarbeiter</th><th>MA</th><th>Urlaub</th><th>Krank</th><th>Einsatztage</th><th>Opt./Tag</th><th>Marge/Opt.</th><th>Ziel Opt.</th><th>Ziel NL</th><th>Ziel Marge</th><th class="os">Ziel OS</th><th>Ist Marge</th><th>%</th></tr>';
+  var head='<tr><th>Monat / Mitarbeiter</th><th>MA</th><th>Urlaub</th><th>Krank</th><th>Einsatztage</th><th>Opt./Tag</th><th>Marge/Opt.</th><th>Ziel Opt.</th><th class="eq">Ziel NL</th><th class="eq">Ziel Marge</th><th class="eq os">Ziel OS</th><th class="eq">Ist Marge</th><th data-ktip="Ist Marge im Verhältnis zur Zielvereinbarung (Ziel Marge)">% Ziel</th><th data-ktip="Ist Marge im Verhältnis zum Ziel NL">% NL</th></tr>';
   for(var m=1;m<=12;m++){var mk=year+'-'+('0'+m).slice(-2),M=ztMonth(mk),lk=zielLocks[mk],op=ZT.open['m'+mk],next=!lk&&(mk===cur||mk===kalI(new Date(+cur.slice(0,4),+cur.slice(5,7),1)).slice(0,7));
     Y.nl+=M.nl;Y.z+=M.ziel;Y.ist+=M.ist;Y.u+=M.u;Y.k+=M.k;Y.t+=M.t;
     if(mk<cur&&M.ist&&M.os&&M.ziel){acc[1]++;if(Math.abs(M.os-M.ist)<Math.abs(M.ziel-M.ist))acc[0]++;}
@@ -14327,9 +14329,9 @@ function zielTreeHtml(){var year=zielYearView,cur=today().slice(0,7),h='',Y={nl:
     h+='<tr class="m'+(op?' open':'')+'" onclick="if(!event.target.closest(\'input,button\'))ztTog(\'m'+mk+'\')"><td><span class="zt-l1"><i class="ti ti-chevron-right zt-chev"></i>'+MONTH_NAMES_ZIEL[m-1]+(lk?' <span class="zt-lk" data-ktip="'+esc(lkTip)+'"><i class="ti ti-lock"></i></span>':'')
       +(next&&ztIsAdmin()?'<button class="btn btn-primary btn-sm zt-fs" onclick="ztFestschreiben(\''+mk+'\')">Festschreiben bis '+ztFsDeadline(mk)+'</button>':'')+(lk&&ztIsAdmin()?'<button class="btn btn-sm zt-fs" onclick="ZT.edit[\''+mk+'\']=!ZT.edit[\''+mk+'\'];ZT.open[\'m'+mk+'\']=true;renderTeam()">'+(ZT.edit[mk]?'Ändern beenden':'Ändern')+'</button>':'')+'</span></td>'
       +'<td>'+M.n+'</td><td>'+ztCnt(M.u,'u')+'</td><td>'+ztCnt(M.k,'k')+'</td><td>'+kalNf(M.t)+'</td><td>'+(M.opt?Math.round(M.opt):'–')+'</td><td>'+(M.mo?'€ '+Math.round(M.mo):'–')+'</td><td>'+Math.round(M.zielOpt).toLocaleString('de-DE')+'</td>'
-      +'<td><input type="number" class="zt-num nl" value="'+Math.round(M.nl)+'" onchange="ztSetNl(\''+mk+'\',this.value)"'+(kalIsViewer()?' disabled':'')+'></td><td>'+ztEur(M.ziel)+(mk>=cur?ztDelta(M.ziel,M.nl).replace('class="zt-d','data-ktip="zum Ziel NL" class="zt-d'):'')+'</td><td class="os">'+(M.os?ztEur(M.os):'<span class="zt-dim">–</span>')+'</td><td>'+(M.ist?ztEur(M.ist):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(M.ist,M.ziel)+'</td></tr>';
+      +'<td><input type="number" class="zt-num nl" value="'+Math.round(M.nl)+'" onchange="ztSetNl(\''+mk+'\',this.value)"'+(kalIsViewer()?' disabled':'')+'></td><td>'+ztEur(M.ziel)+(mk>=cur?ztDelta(M.ziel,M.nl).replace('class="zt-d','data-ktip="zum Ziel NL" class="zt-d'):'')+'</td><td class="os">'+(M.os?ztEur(M.os):'<span class="zt-dim">–</span>')+'</td><td>'+(M.ist?ztEur(M.ist):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(M.ist,M.ziel)+'</td><td>'+ztPct(M.ist,M.nl)+'</td></tr>';
     if(op)h+=ztEmpRows(mk);}
-  h+='<tr class="y"><td>Jahresergebnis</td><td></td><td>'+kalNf(Y.u)+'</td><td>'+kalNf(Y.k)+'</td><td>'+kalNf(Y.t)+'</td><td></td><td></td><td></td><td>'+ztEur(Y.nl)+'</td><td>'+ztEur(Y.z)+'</td><td class="os">'+(acc[1]?'<span class="zt-acc" data-ktip="Monate, in denen Ziel OS näher am Ist lag als die Zielvereinbarung">OS genauer: '+acc[0]+' von '+acc[1]+'</span>':'')+'</td><td>'+ztEur(Y.ist)+'</td><td>'+ztPct(Y.ist,Y.z)+'</td></tr>';
+  h+='<tr class="y"><td>Jahresergebnis</td><td></td><td>'+kalNf(Y.u)+'</td><td>'+kalNf(Y.k)+'</td><td>'+kalNf(Y.t)+'</td><td></td><td></td><td></td><td>'+ztEur(Y.nl)+'</td><td>'+ztEur(Y.z)+'</td><td class="os">'+(acc[1]?'<span class="zt-acc" data-ktip="Monate, in denen Ziel OS näher am Ist lag als die Zielvereinbarung">OS genauer: '+acc[0]+' von '+acc[1]+'</span>':'')+'</td><td>'+ztEur(Y.ist)+'</td><td>'+ztPct(Y.ist,Y.z)+'</td><td>'+ztPct(Y.ist,Y.nl)+'</td></tr>';
   var prot=ZT.prot?ztProtHtml():'';
   return buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}))+wochenzielKachelnHtml()
     +'<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung</div><span class="kal-note">Jahr → Monat → Mitarbeiter → KW → Tag · Klick klappt auf</span>'
@@ -14341,18 +14343,18 @@ function ztEmpRows(mk){var h='',W=ztWeeks(mk),ed=ztCanEditMonth(mk),cal=ztCalMon
   ztEmps(mk).forEach(function(e){var x=ztEmpMonth(e,mk),a=ztAbsCount(e,mk),os=ztOS(e,mk),ist=istForEmpMonth(e.id,mk),eo=ZT.open['e'+mk+e.id],bm=beschaeftigungsmonat(e,mk);
     h+='<tr class="e'+(eo?' open':'')+'" onclick="if(!event.target.closest(\'input,.zt-oslink\'))ztTog(\'e'+mk+e.id+'\')"><td><span class="zt-l2"><i class="ti ti-chevron-right zt-chev"></i><span class="kal-av">'+kalIni(e.name)+'</span><span>'+esc(e.name)+(bm<=3?' <span class="zt-new">Monat '+bm+'</span>':'')+'<small>'+esc(e.role||'')+' · '+kalVzTz(e)+'</small></span></span></td><td></td><td>'+ztCnt(a.u,'u')+'</td><td>'+ztCnt(a.k,'k')+'</td><td>'+kalNf(x.tage)+'</td>'
       +'<td><input type="number" class="zt-num" value="'+x.opt+'" onchange="ztSetField(\''+mk+'\',\''+e.id+'\',\'optTag\',this.value)"'+(ed?'':' disabled')+'></td><td><input type="number" class="zt-num" value="'+x.mo+'" onchange="ztSetField(\''+mk+'\',\''+e.id+'\',\'margeOpt\',this.value)"'+(ed?'':' disabled')+'></td>'
-      +'<td>'+Math.round(x.zielOpt).toLocaleString('de-DE')+'</td><td></td><td>'+ztEur(x.ziel)+'</td><td class="os"><span class="zt-oslink" onclick="event.stopPropagation();ztTog(\'o'+mk+e.id+'\')">'+ztEur(os.sum)+'</span>'+ztDelta(os.sum,x.ziel)+'</td><td>'+(ist?ztEur(ist):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(ist,x.ziel)+'</td></tr>';
-    if(ZT.open['o'+mk+e.id])h+='<tr class="k"><td colspan="13" class="zt-osrow">'+ztOsBox(e,mk,os,x)+'</td></tr>';
+      +'<td>'+Math.round(x.zielOpt).toLocaleString('de-DE')+'</td><td></td><td>'+ztEur(x.ziel)+'</td><td class="os"><span class="zt-oslink" onclick="event.stopPropagation();ztTog(\'o'+mk+e.id+'\')">'+ztEur(os.sum)+'</span>'+ztDelta(os.sum,x.ziel)+'</td><td>'+(ist?ztEur(ist):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(ist,x.ziel)+'</td><td></td></tr>';
+    if(ZT.open['o'+mk+e.id])h+='<tr class="k"><td colspan="14" class="zt-osrow">'+ztOsBox(e,mk,os,x)+'</td></tr>';
     if(eo)W.forEach(function(wm,i){var w=x.weeks[i],ko=ZT.open['k'+mk+e.id+i],wo=Math.round(w.n*x.opt),wz=w.n*x.opt*x.mo,wi=istForEmpWeek(e.id,wm.from,wm.to);
       var osW=0;if(w.ds)w.ds.forEach(function(d){osW+=os.opw[kalP(d).getDay()-1]*os.mpo;});
-      h+='<tr class="k kw'+(ko?' open':'')+'"'+(w.ds?' onclick="ztTog(\'k'+mk+e.id+i+'\')"':'')+'><td><span class="zt-l3">'+(w.ds?'<i class="ti ti-chevron-right zt-chev"></i>':'')+'KW '+wm.kw+' · '+kalF(wm.from>mk+'-01'?wm.from:mk+'-01')+'–'+kalF(wm.to.slice(0,7)===mk?wm.to:kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),0)))+'</span></td><td></td><td></td><td></td><td>'+(w.red?'<span class="zt-red">'+w.n+'</span>':w.n)+'</td><td></td><td></td><td>'+wo+' Opt.</td><td></td><td>'+ztEur(wz)+'</td><td class="os">'+(w.ds?ztEur(osW):'')+'</td><td>'+(wi?ztEur(wi):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(wi,wz)+'</td></tr>';
+      h+='<tr class="k kw'+(ko?' open':'')+'"'+(w.ds?' onclick="ztTog(\'k'+mk+e.id+i+'\')"':'')+'><td><span class="zt-l3">'+(w.ds?'<i class="ti ti-chevron-right zt-chev"></i>':'')+'KW '+wm.kw+' · '+kalF(wm.from>mk+'-01'?wm.from:mk+'-01')+'–'+kalF(wm.to.slice(0,7)===mk?wm.to:kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),0)))+'</span></td><td></td><td></td><td></td><td>'+(w.red?'<span class="zt-red">'+w.n+'</span>':w.n)+'</td><td></td><td></td><td>'+wo+' Opt.</td><td></td><td>'+ztEur(wz)+'</td><td class="os">'+(w.ds?ztEur(osW):'')+'</td><td>'+(wi?ztEur(wi):'<span class="zt-dim">–</span>')+'</td><td>'+ztPct(wi,wz)+'</td><td></td></tr>';
       if(ko&&w.ds)h+=ztDayRows(e,mk,x,os,wm);});});
   return h;}
 function ztDayRows(e,mk,x,os,wm){var h='',wsum=0,all=[];x.weeks.forEach(function(w){if(w.ds)w.ds.forEach(function(d){all.push(d);wsum+=os.opw[kalP(d).getDay()-1]||1;});});
   for(var j=0;j<5;j++){var d=kalAdd(wm.from,j);if(d.slice(0,7)!==mk)continue;var lab='',o='',z='',ist=(performance[e.id]||[]).filter(function(r){return r.date===d;}).reduce(function(s,r){return s+(r.margeGesamt||r.margin||0);},0);
     if(!kalWorkday(e,d)){var hn=kalHolE(e,d);lab='<span class="zt-dim">'+(hn?esc(hn):kalFixDay(d)?'frei für alle':'frei lt. Arbeitszeit')+'</span>';}
     else{var a=kalOn(e.id,d);if(a&&a.art!=='krank'&&!(a.masked&&a.art==='abwesend')){lab='<span class="zt-red">'+KAL_ART[kalShowArt(a)]+'</span>';}else{var f=(os.opw[kalP(d).getDay()-1]||1)/(wsum||1);o=Math.round(x.zielOpt*f)+' Opt.';z=ztEur(x.ziel*f);lab=a?'<span class="zt-dim">krank</span>':'1';}}
-    h+='<tr class="k dd"><td><span class="zt-l4">'+KAL_WD[kalP(d).getDay()]+', '+kalF(d)+'</span></td><td></td><td></td><td></td><td>'+lab+'</td><td></td><td></td><td>'+o+'</td><td></td><td>'+z+'</td><td class="os"></td><td>'+(ist?ztEur(ist):'')+'</td><td></td></tr>';}
+    h+='<tr class="k dd"><td><span class="zt-l4">'+KAL_WD[kalP(d).getDay()]+', '+kalF(d)+'</span></td><td></td><td></td><td></td><td>'+lab+'</td><td></td><td></td><td>'+o+'</td><td></td><td>'+z+'</td><td class="os"></td><td>'+(ist?ztEur(ist):'')+'</td><td></td><td></td></tr>';}
   return h;}
 function ztOsBox(e,mk,os,x){var D=['Mo','Di','Mi','Do','Fr'];
   var tbl='<table><tr><th></th>'+D.map(function(d){return '<th>'+d+'</th>';}).join('')+'<th>Summe</th></tr>'
