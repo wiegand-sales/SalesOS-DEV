@@ -164,6 +164,13 @@ check('Kalender: Krank mit 50-%-Hinweis', kal.kr);
 check('Kalender: „vor dem Kalender genommen“ zählt ins Konto', kal.vor === 10, kal.vor);
 check('Kalender: Genehmigen bei kurzem Vorlauf zählt als Flex Day', kal.flex === 'genehmigt/flex', kal.flex);
 check('Kalender: Feiertage Valencia nur für VLC', kal.vlc);
+const kalF = await page.evaluate(`(function(){
+  view='coaching';renderMain();var coach=!!document.querySelector('#mainArea .kal-wv,#mainArea .kal-mg');
+  view='kalender';KAL.view='monat';KAL.hide={};renderMain();KAL.cur=today();renderKalender();var vor=document.querySelectorAll('#mainArea .kal-mg .kal-ch.kal-f').length;
+  kalFilt('flex');var nach=document.querySelectorAll('#mainArea .kal-mg .kal-ch.kal-f').length;kalFilt('*');
+  return {coach:coach,vor:vor,nach:nach};})()`);
+check('Coaching: zeigt den neuen Kalender', kalF.coach);
+check('Kalender: Filter blendet Flex Days aus', kalF.vor > 0 && kalF.nach === 0, kalF.vor + '→' + kalF.nach);
 await step("kalOpenForm('e1')"); await step("kalCloseForm()"); await step("KAL.open='e1';renderKalender()");
 
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
