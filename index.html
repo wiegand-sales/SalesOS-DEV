@@ -738,8 +738,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .zt-red{box-shadow:inset 0 0 0 1.5px #CDBB9E;background:#F4EFE7;border-radius:6px;padding:2px 7px}.zt-osk{background:#F3EEE6;padding:2px 7px;border-radius:6px}
 .zt-lk{font-size:13px;color:var(--text2)}.zt-fs{margin-left:10px;display:inline-flex}.zt-new{display:inline-flex;padding:1px 7px;border-radius:7px;font-size:11px;background:#FBE3DA;color:#9A3F22;font-weight:600}
 .zt-oslink{cursor:pointer;border-bottom:1px dashed #A99C88}.zt-acc{font-size:11.5px;cursor:default;border-bottom:1px dashed #A99C88;white-space:normal;display:inline-block;line-height:1.25}
-.zt-osrow{text-align:left!important;white-space:normal!important;padding:10px 12px 12px 62px!important;height:auto!important}
-.zt-osgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1fr);gap:14px}
+.zt-osrow{text-align:left!important;white-space:normal!important;padding:14px!important;height:auto!important}
+.zt-osgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 @media(max-width:1200px){.zt-osgrid{grid-template-columns:1fr}}
 .zt-osb{background:#F7F5F0;border-radius:10px;padding:12px 14px;font-size:12.5px;min-width:0}.zt-osh{font-weight:700;font-size:13px}
 .zt-osf{margin-top:8px}.zt-hb{display:grid;grid-template-columns:92px minmax(0,1fr) 84px;gap:8px;align-items:center;margin:5px 0;font-size:12px}
@@ -14364,7 +14364,7 @@ function ztOsBox(e,mk,os,x){var D=['Mo','Di','Mi','Do','Fr'];
     +'<tr><td>Opt.</td>'+os.per.map(function(n,i){return '<td>'+Math.round(n*os.opw[i])+'</td>';}).join('')+'<td><b>'+Math.round(os.opt)+'</b></td></tr></table>'
     +'<div class="zt-osf">'+Math.round(os.opt)+' Opt. × Ø € '+kalNf(Math.round(os.mpo*10)/10)+' Marge/Opt. = <b>'+ztEur(os.sum)+'</b></div>';
   // Diagramm 1: Ø Opt. je Wochentag (Säule) und geplante Tage (Zahl darunter)
-  var mx=Math.max.apply(null,os.opw.concat([1])),W=260,H=96,bw=30,gap=(W-5*bw)/5,svg='<svg viewBox="0 -14 '+W+' '+(H+48)+'" style="width:100%;max-width:300px;height:auto;display:block">';
+  var mx=Math.max.apply(null,os.opw.concat([1])),W=260,H=96,bw=30,gap=(W-5*bw)/5,svg='<svg viewBox="0 -14 '+W+' '+(H+48)+'" style="width:100%;max-width:340px;height:auto;display:block;margin:0 auto">';
   os.opw.forEach(function(v,i){var hh=v/mx*(H-6),xx=i*(bw+gap)+gap/2;svg+='<rect x="'+xx+'" y="'+(H-hh)+'" width="'+bw+'" height="'+hh+'" rx="4" fill="'+(os.per[i]?'#CDBB9E':'#E4E0D6')+'"/><text x="'+(xx+bw/2)+'" y="'+(H-hh-4)+'" text-anchor="middle" font-size="11" fill="#5C554C">'+kalNf(Math.round(v*10)/10)+'</text>'
     +'<text x="'+(xx+bw/2)+'" y="'+(H+14)+'" text-anchor="middle" font-size="11" fill="#1d1c1a" font-weight="600">'+D[i]+'</text><text x="'+(xx+bw/2)+'" y="'+(H+27)+'" text-anchor="middle" font-size="10" fill="#7A7268">'+os.per[i]+' T</text>';});
   svg+='</svg>';
