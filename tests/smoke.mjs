@@ -207,6 +207,8 @@ const zt = await page.evaluate(`(function(){var mk=today().slice(0,7);var nx=kal
 check('Zielvereinbarung: Einsatztage aus dem Kalender', zt.tage === zt.wd, zt.tage + '/' + zt.wd);
 check('Zielvereinbarung: Ziel = Tage × Opt./Tag × Marge/Opt.', zt.ziel);
 check('Zielvereinbarung: Tabelle Jahr/Monat/Mitarbeiter', zt.html && zt.os);
+const zw = await page.evaluate(`(function(){ZT.zv='w';var h=zielTreeHtml();ZT.zv='m';return {ok:/KW \\d+/.test(h)&&/Jahr \\d{4}/.test(h),leer:/01\\.11\\.–30\\.10\\./.test(h)};})()`);
+check('Zielvereinbarung: Wochenansicht', zw.ok && !zw.leer);
 check('Coaching: zeigt den neuen Kalender', kalF.coach);
 check('Kalender: Filter blendet Flex Days aus', kalF.vor > 0 && kalF.nach === 0, kalF.vor + '→' + kalF.nach);
 await step("kalOpenForm('e1')"); await step("kalCloseForm()"); await step("KAL.open='e1';renderKalender()");
