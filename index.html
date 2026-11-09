@@ -739,6 +739,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .zt-lk{font-size:13px;color:var(--text2)}.zt-fs{margin-left:10px;display:inline-flex}.zt-new{display:inline-flex;padding:1px 7px;border-radius:7px;font-size:11px;background:#FBE3DA;color:#9A3F22;font-weight:600}
 .zt-oslink{cursor:pointer;border-bottom:1px dashed #A99C88}.zt-acc{font-size:11.5px;cursor:default;border-bottom:1px dashed #A99C88;white-space:normal;display:inline-block;line-height:1.25}
 .zt-osrow{text-align:left!important;white-space:normal!important;padding:14px!important;height:auto!important}
+.zt-acct th.os,.zt-acct td.os{background:#F3EEE6}
 .zt-osgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 @media(max-width:1200px){.zt-osgrid{grid-template-columns:1fr}}
 .zt-osb{background:#F7F5F0;border-radius:10px;padding:12px 14px;font-size:12.5px;min-width:0}.zt-osh{font-weight:700;font-size:13px}
@@ -4029,6 +4030,7 @@ function wochenzielKachelnHtml(){
       visible.forEach(function(e){
         var r=rec[e.id]||{};
         var days=(r.weeks&&r.weeks[wi]!=null)?r.weeks[wi]:wm.defaultDays;
+        if(typeof ztEmpMonth==='function'){var zx=ztEmpMonth(e,mk);if(zx.weeks[wi])days=zx.weeks[wi].n;}
         var optTag=r.optTag!=null?r.optTag:0;
         var margeOpt=r.margeOpt!=null?r.margeOpt:0;
         target+=days*optTag*margeOpt;
@@ -14339,7 +14341,15 @@ function zielTreeHtml(){var year=zielYearView,cur=today().slice(0,7),h='',Y={nl:
     +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><button class="btn" onclick="ZT.prot=!ZT.prot;renderTeam()"><i class="ti ti-history"></i> Protokoll</button><button class="btn" onclick="setZielYearView(-1)">◀</button><b style="min-width:52px;text-align:center">'+year+'</b><button class="btn" onclick="setZielYearView(1)">▶</button></span></div>'+prot
     +'<div class="std-wrap" style="overflow-x:auto"><table class="zt-t"><colgroup><col class="zt-c1">'+new Array(14).join('<col>')+'</colgroup><thead>'+head+'</thead><tbody>'+h+'</tbody></table></div>'
     +'<div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+(kalIsViewer()?'':'<button class="btn btn-primary" onclick="ztSave()"><i class="ti ti-check"></i> Zielvereinbarung speichern</button>')+'<span id="ziel-status" class="kal-note"></span>'
-    +'<span class="kal-legend" style="margin:0 0 0 auto"><span><span class="zt-red">umrandet</span> weniger Tage wegen Abwesenheit</span><span><span class="zt-osk">Ziel OS</span> Vorschlag, Klick zeigt die Rechnung</span><span>Einsatztage ab '+MONTH_NAMES_ZIEL[+ZT_KAL_START.slice(5)-1]+' '+ZT_KAL_START.slice(0,4)+' aus dem Kalender</span><a href="#" onclick="ZT.alt=true;renderTeam();return false" class="kal-note">alte Ansicht</a></span></div></div>';}
+    +'<span class="kal-legend" style="margin:0 0 0 auto"><span><span class="zt-red">umrandet</span> weniger Tage wegen Abwesenheit</span><span><span class="zt-osk">Ziel OS</span> Vorschlag, Klick zeigt die Rechnung</span><span>Einsatztage ab '+MONTH_NAMES_ZIEL[+ZT_KAL_START.slice(5)-1]+' '+ZT_KAL_START.slice(0,4)+' aus dem Kalender</span><a href="#" onclick="ZT.alt=true;renderTeam();return false" class="kal-note">alte Ansicht</a></span></div></div>'+ztAccHtml(year,cur);}
+function ztAccHtml(year,cur){var rows='',n=0,win=0;for(var m=1;m<=12;m++){var mk=year+'-'+('0'+m).slice(-2);if(mk>cur)break;var M=ztMonth(mk);if(!M.ziel&&!M.os)continue;if(mk!==cur&&!M.ist)continue;
+    var run=mk===cur,dp=M.ziel&&M.ist?(M.ziel-M.ist)/M.ist*100:null,dq=M.os&&M.ist?(M.os-M.ist)/M.ist*100:null,g='';
+    if(!run&&dp!=null&&dq!=null){n++;if(Math.abs(dq)<Math.abs(dp)){win++;g='Ziel OS';}else g='Zielvereinbarung';}
+    var f=function(v){return v==null||run?'–':(v>0?'+':'')+kalNf(Math.round(v*10)/10)+' %';};
+    rows+='<tr><td>'+MONTH_NAMES_ZIEL[m-1]+(run?' (bis heute)':'')+'</td><td class="r">'+(run?'<span class="zt-dim">läuft</span>':ztEur(M.ist))+'</td><td class="r">'+ztEur(M.ziel)+'</td><td class="r">'+f(dp)+'</td><td class="r os">'+ztEur(M.os)+'</td><td class="r os">'+f(dq)+'</td><td><b>'+(g||'–')+'</b></td></tr>';}
+  if(!rows)return '';
+  return '<div class="card card-static"><div class="card-title">Wer lag genauer?</div><div class="card-sub">Abweichung vom Ist · Ziel OS läuft in den ersten 3 Monaten nur zum Vergleich mit, danach entscheidest du, ob es übernommen wird'+(n?' · bisher: Ziel OS genauer in '+win+' von '+n+' Monaten':'')+'</div>'
+    +'<div class="std-wrap"><table class="std-table zt-acct"><thead><tr><th>Monat</th><th class="r">Ist</th><th class="r">Zielvereinbarung</th><th class="r">Abweichung</th><th class="r os">Ziel OS</th><th class="r os">Abweichung</th><th>Genauer</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';}
 function ztEmpRows(mk){var h='',W=ztWeeks(mk),ed=ztCanEditMonth(mk),cal=ztCalMonth(mk)&&!zielLocks[mk];
   ztEmps(mk).forEach(function(e){var x=ztEmpMonth(e,mk),a=ztAbsCount(e,mk),os=ztOS(e,mk),ist=istForEmpMonth(e.id,mk),eo=ZT.open['e'+mk+e.id],bm=beschaeftigungsmonat(e,mk);
     h+='<tr class="e'+(eo?' open':'')+'" onclick="if(!event.target.closest(\'input,.zt-oslink\'))ztTog(\'e'+mk+e.id+'\')"><td><span class="zt-l2"><i class="ti ti-chevron-right zt-chev"></i><span class="kal-av">'+kalIni(e.name)+'</span><span>'+esc(e.name)+(bm<=3?' <span class="zt-new">Monat '+bm+'</span>':'')+'<small>'+esc(e.role||'')+' · '+kalVzTz(e)+'</small></span></span></td><td></td><td>'+ztCnt(a.u,'u')+'</td><td>'+ztCnt(a.k,'k')+'</td><td>'+kalNf(x.tage)+'</td>'
