@@ -718,11 +718,12 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-sb{display:flex;height:16px;margin-top:2px;border-radius:5px;overflow:hidden;background:#E4E0D6}.kal-sb i{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-style:normal;font-weight:700;color:#fff;overflow:hidden}
 .kal-sb i.p{color:#1d1c1a}.kal-sb i.kal-bh{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.7) 0 3px,transparent 3px 6px)}
 /* Zielvereinbarung (Baum) */
-.zt-t{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.zt-t{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;table-layout:fixed;min-width:1380px}.zt-t col.zt-c1{width:270px}
+.zt-t th,.zt-t td{overflow:hidden;text-overflow:ellipsis}.zt-t td:first-child,.zt-t td.zt-osrow{overflow:visible}
+.zt-l2>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .zt-t th{background:#EFECE5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#5f5d57;padding:10px 8px;text-align:right;white-space:nowrap}
 .zt-t th:first-child{text-align:left}.zt-t td{padding:0 8px;height:46px;border-bottom:1px solid #E4E0D6;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.zt-t td:first-child{text-align:left}
 .zt-t th.os,.zt-t td.os{background:#F3EEE6}
-.zt-t th.eq{width:122px;min-width:122px;max-width:122px}
 .zt-t td .zt-d{display:block;line-height:1.15;font-size:11px}
 .zt-t tr.m{cursor:pointer}.zt-t tr.m td{font-weight:600}.zt-t tr.m:hover td{background:#EFECE5}.zt-t tr.m.open td{background:#EFECE5}
 .zt-t tr.e{cursor:pointer}.zt-t tr.e td{background:#FBFAF7;height:50px}.zt-t tr.e:hover td,.zt-t tr.e.open td{background:#F4F1EB}
@@ -730,7 +731,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .zt-t tr.dd td{height:30px;font-size:11.5px;background:#FDFCFA}.zt-t tr.y td{font-weight:700;border-top:2px solid #1d1c1a;border-bottom:0;background:rgba(29,28,26,.04);height:50px}
 .zt-l1{display:flex;align-items:center;gap:6px}.zt-l2{display:flex;align-items:center;gap:10px;padding-left:22px}.zt-l2 small{display:block;color:var(--text3);font-size:11.5px;font-weight:400}.zt-l3{padding-left:62px}.zt-l4{padding-left:86px;color:var(--text3)}
 .zt-chev{font-size:12px;color:var(--text3);transition:transform .15s}tr.open>td .zt-chev{transform:rotate(90deg)}
-.zt-num{width:70px!important;height:30px!important;text-align:right;padding:0 8px!important}.zt-num.nl{width:100px!important}.zt-num[disabled]{background:transparent!important;border-color:transparent!important}
+.zt-num{width:100%!important;max-width:86px;height:30px!important;text-align:right;padding:0 8px!important}.zt-num.nl{max-width:100px}.zt-t td .zt-num{padding:0 5px!important;font-size:12.5px;-moz-appearance:textfield;appearance:textfield}.zt-t td .zt-num::-webkit-inner-spin-button,.zt-t td .zt-num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.zt-t td:has(.zt-num){padding:0 6px}.zt-num[disabled]{background:transparent!important;border-color:transparent!important}
 .zt-cnt{display:inline-block;min-width:26px;padding:2px 6px;border-radius:6px;text-align:center;font-size:12px;font-weight:600}.zt-cnt.u{background:#EFE7D8;color:#6E5A3A}.zt-cnt.k{background:#E9E4DD;color:#5F564C}.zt-cnt.z{color:#C4BCB0}
 .zt-pct{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11.5px;font-weight:700;background:rgba(29,28,26,.06)}.zt-pct.lo{background:#FBE3DA;color:#9A3F22}
 .zt-d{font-size:11.5px;font-weight:600}.zt-d.up{color:#2F6B4F}.zt-d.dn{color:#9A3F22}.zt-dim{color:#B5ADA2}
@@ -14336,7 +14337,7 @@ function zielTreeHtml(){var year=zielYearView,cur=today().slice(0,7),h='',Y={nl:
   return buildGlobalBannerHtml(employees.filter(function(e){return !e.isPureCoach;}))+wochenzielKachelnHtml()
     +'<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-target"></i> Zielvereinbarung</div><span class="kal-note">Jahr → Monat → Mitarbeiter → KW → Tag · Klick klappt auf</span>'
     +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><button class="btn" onclick="ZT.prot=!ZT.prot;renderTeam()"><i class="ti ti-history"></i> Protokoll</button><button class="btn" onclick="setZielYearView(-1)">◀</button><b style="min-width:52px;text-align:center">'+year+'</b><button class="btn" onclick="setZielYearView(1)">▶</button></span></div>'+prot
-    +'<div class="std-wrap" style="overflow-x:auto"><table class="zt-t"><thead>'+head+'</thead><tbody>'+h+'</tbody></table></div>'
+    +'<div class="std-wrap" style="overflow-x:auto"><table class="zt-t"><colgroup><col class="zt-c1">'+new Array(14).join('<col>')+'</colgroup><thead>'+head+'</thead><tbody>'+h+'</tbody></table></div>'
     +'<div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+(kalIsViewer()?'':'<button class="btn btn-primary" onclick="ztSave()"><i class="ti ti-check"></i> Zielvereinbarung speichern</button>')+'<span id="ziel-status" class="kal-note"></span>'
     +'<span class="kal-legend" style="margin:0 0 0 auto"><span><span class="zt-red">umrandet</span> weniger Tage wegen Abwesenheit</span><span><span class="zt-osk">Ziel OS</span> Vorschlag, Klick zeigt die Rechnung</span><span>Einsatztage ab '+MONTH_NAMES_ZIEL[+ZT_KAL_START.slice(5)-1]+' '+ZT_KAL_START.slice(0,4)+' aus dem Kalender</span><a href="#" onclick="ZT.alt=true;renderTeam();return false" class="kal-note">alte Ansicht</a></span></div></div>';}
 function ztEmpRows(mk){var h='',W=ztWeeks(mk),ed=ztCanEditMonth(mk),cal=ztCalMonth(mk)&&!zielLocks[mk];
