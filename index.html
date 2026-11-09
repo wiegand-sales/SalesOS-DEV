@@ -855,10 +855,11 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <button class="rl-btn" id="rail-dashboard" onclick="selectDashboard()"><i class="ti ti-layout-dashboard" style="color:#F08566"></i><span class="rl-tip">Dashboard</span></button>
     <button class="rl-btn" id="rail-overview" onclick="selectWiegandSub('overview')"><i class="ti ti-chart-bar"></i><span class="rl-tip">Performance</span></button>
     <button class="rl-btn" id="rail-ziel" onclick="selectWiegandSub('ziel')"><i class="ti ti-target"></i><span class="rl-tip">Zielvereinbarung</span></button>
+    <button class="rl-btn" id="rail-provision" onclick="selectProvisionTeam()"><i class="ti ti-coin-euro"></i><span class="rl-tip">Provision</span></button>
     <div class="rl-sep"></div>
     <button class="rl-btn" id="rail-kalender" onclick="selectKalender()"><i class="ti ti-calendar"></i><span class="rl-tip">Kalender</span></button>
     <button class="rl-btn" id="rail-coaching" onclick="bannerViewMode='coaching';resetBannerRotation();setCoachFilterView('overview')"><i class="ti ti-message-circle"></i><span class="rl-tip">Coaching</span></button>
-    <button class="rl-btn" id="rail-provision" onclick="selectProvisionTeam()"><i class="ti ti-coin-euro"></i><span class="rl-tip">Provision</span></button>
+    <div class="rl-sep" id="rail-sep-admin"></div>
     <button class="rl-btn" id="rail-activity" onclick="selectCoachingActivity()"><i class="ti ti-activity"></i><span class="rl-tip">Aktivitäten</span></button>
     <button class="rl-btn" id="rail-settings" onclick="selectSettingsSub(settingsView||'users')" style="display:none"><i class="ti ti-settings"></i><span class="rl-tip">Einstellungen</span></button>
     <div style="flex:1"></div>
@@ -14577,6 +14578,9 @@ function abDay(d){if(!kalCanEdit())return;var e=kalEmp(AB.emp);var x=absences.fi
 // in die Popup-Leiste einhängen (nach „Task“, vor „Einstellungen“)
 (function(){if(typeof PU==='undefined')return;if(!PU.some(function(p){return p.k==='ab';})){var i=PU.findIndex(function(p){return p.k==='es';});PU.splice(i<0?PU.length:i,0,{k:'ab',n:'Abwesenheit',i:'ti-calendar',ids:['absPopModal']});}
   PU_OPEN.absPopModal='openAbsPopup';abEnsureModal();try{puInit();}catch(err){console.warn('puInit Abwesenheit',err);}})();
+
+// Strich vor „Verwaltung“ nur zeigen, wenn Aktivitäten oder Einstellungen sichtbar sind
+(function(){if(typeof updateRail!=='function'||updateRail._sep)return;var o=updateRail;window.updateRail=function(){var r=o.apply(this,arguments);try{var a=document.getElementById('rail-activity'),b=document.getElementById('rail-settings'),sp=document.getElementById('rail-sep-admin');if(sp){var vis=function(x){return x&&x.style.display!=='none';};sp.style.display=(vis(a)||vis(b))?'':'none';}}catch(e){}return r;};window.updateRail._sep=true;})();
 </script>
 </body>
 </html>
