@@ -15026,7 +15026,7 @@ function vzDev(e){var EV=vzEvals(e.id),L0=EV[0],L1=EV[1],T=vzTeam().filter(funct
     [['Lernfeld',VZ_DIM[lo][1],mv[lo]+(tv[lo]!=null?' · Team '+f1(tv[lo]):'')+(pv&&mv[lo]!==pv[lo]?' · '+(mv[lo]-pv[lo]>0?'+':'−')+Math.abs(mv[lo]-pv[lo])+' seit '+kalF(L1.date):''),''],['Skill',f1(vzAvg(L0,'skill')),dlt('skill'),'Team '+f1(tavg('skill'))],['Will',f1(vzAvg(L0,'will')),dlt('will'),'Team '+f1(tavg('will'))],['Result',f1(vzAvg(L0,'result')),dlt('result'),'Team '+f1(tavg('result'))]],why);}
 var VZ_AT={neuesCoachingModal:['ncSecNew',vzCoaching],qaBewertungModal:['qaSecBew',vzCall],cevModal:['cevSec1',vzDev]};
 function vzEnsure(id,eid){var cfg=VZ_AT[id];if(!cfg)return;var m=document.getElementById(id);if(!m)return;var e=kalEmp(eid||selectedEmp);var a=document.getElementById(cfg[0]);if(!e||!a||!a.parentElement)return;
-  var old=a.parentElement.querySelector(':scope > .pu-viz'),d=document.createElement('div');try{d.innerHTML=cfg[1](e);}catch(er){console.warn('Grafik',er);return;}var nb=d.firstElementChild;if(old)old.parentElement.replaceChild(nb,old);else a.parentElement.insertBefore(nb,a);}
+  var old=a.parentElement.querySelector(':scope > .pu-viz'),d=document.createElement('div');try{d.innerHTML=cfg[1](e);}catch(er){console.warn('Grafik',er);return;}var nb=d.firstElementChild;if(old)old.parentElement.removeChild(old);a.parentElement.insertBefore(nb,a.nextSibling);}
 (function(){if(typeof puDecorate!=='function'||puDecorate._viz)return;var o=puDecorate;window.puDecorate=function(id){var r=o.apply(this,arguments);try{vzEnsure(id);setTimeout(function(){vzEnsure(id);},90);}catch(e){}return r;};window.puDecorate._viz=true;window.puDecorate._ban=true;window.puDecorate._au=true;})();
 </script>
 </body>
