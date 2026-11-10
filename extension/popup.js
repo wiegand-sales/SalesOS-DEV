@@ -1,7 +1,7 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-  var P = '#206A72', AQ = '#7ED2DB', AMB = '#D94109', RED = '#BD2D29';
+  var P = '#5C564F', AQ = '#A89C8E', AMB = '#D3C8B6', RED = '#BD2D29', CO = '#F08566', GRN = '#2f6b52';
   var ICONS = {
     heute: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
     verlauf: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
@@ -33,7 +33,7 @@
   function card(inner, cls) { return '<div class="card' + (cls ? ' ' + cls : '') + '">' + inner + '</div>'; }
   function ring(p, col) {
     var r = 15, c = 2 * Math.PI * r, off = c * (1 - Math.max(0.02, Math.min(1, p || 0)));
-    return '<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="' + r + '" fill="none" stroke="#e7eae6" stroke-width="4"/><circle cx="17" cy="17" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 17 17)"/></svg>';
+    return '<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="' + r + '" fill="none" stroke="#EFECE5" stroke-width="4"/><circle cx="17" cy="17" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 17 17)"/></svg>';
   }
   function hoursRange(m) { var p = m.dayPlan || { startMin: 510, endMin: 1020 }; var a = Math.floor(p.startMin / 60), b = Math.max(a, Math.ceil(p.endMin / 60) - 1); return [a, b]; }
   function axis(a, b) { return '<div class="axis"><span>' + a + '</span><span>' + Math.round((a + b + 1) / 2) + '</span><span>' + (b + 1) + ' Uhr</span></div>'; }
@@ -44,7 +44,7 @@
     hrs.forEach(function (x) {
       var v = x.known ? x[field] : null;
       out += '<div class="hb" style="height:' + (H + 14) + 'px" title="' + x.h + ' Uhr: ' + (v != null ? v : 'kein Wert') + '">'
-        + (v != null ? '<b>' + n0(v) + '</b><i style="height:' + Math.max(3, Math.round(v / mx * H)) + 'px;background:' + (x.h === nowH ? colNow : col) + '"></i>' : '<i style="height:3px;background:#e3e6e2"></i>') + '</div>';
+        + (v != null ? '<b>' + n0(v) + '</b><i style="height:' + Math.max(3, Math.round(v / mx * H)) + 'px;background:' + (x.h === nowH ? colNow : col) + '"></i>' : '<i style="height:3px;background:#E4E0D6"></i>') + '</div>';
     });
     if (sollPerH) out += '<div class="sollLine" style="bottom:' + Math.round(sollPerH / mx * H) + 'px"></div>';
     return out + '</div>';
@@ -70,12 +70,12 @@
     var mg = hrs.map(function (x) { return x.known ? x.marge : null; });
     var pa = hrs.map(function (x) { return x.known && x.opt > 0 && x.marge != null ? x.marge / x.opt : null; });
     var grid = [0.5, H / 2, H - 0.5].map(function (y) { return '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="rgba(0,0,0,0.06)"/>'; }).join('');
-    var svg = '<svg width="100%" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Marge je Stunde">' + grid + line(mg, P) + line(pa, '#2a9aa3', true) + '</svg>';
-    var c1 = card('<div class="cHead">' + lab('Marge') + '<span class="xs muted">Ø ' + eur(d.avgMarge) + ' <span style="font-size:15px;color:#1a1a18">' + eur(d.marge) + '</span></span></div>' + svg
-      + '<div class="axis"><span>' + r[0] + '</span><span class="leg"><i style="border-color:' + P + '"></i>Marge</span><span class="leg"><i style="border-color:#2a9aa3;border-top-style:dashed"></i>pro Auftrag</span><span>' + (r[1] + 1) + ' Uhr</span></div>', 'sb');
+    var svg = '<svg width="100%" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Marge je Stunde">' + grid + line(mg, CO) + line(pa, '#8A7F72', true) + '</svg>';
+    var c1 = card('<div class="cHead">' + lab('Marge') + '<span class="xs muted">Ø ' + eur(d.avgMarge) + ' <span class="now">' + eur(d.marge) + '</span></span></div>' + svg
+      + '<div class="axis"><span>' + r[0] + '</span><span class="leg"><i style="border-color:' + CO + '"></i>Marge</span><span class="leg"><i style="border-color:#8A7F72;border-top-style:dashed"></i>pro Auftrag</span><span>' + (r[1] + 1) + ' Uhr</span></div>', 'sb');
     var parts = [['OEM', d.oem, P], ['UPS', d.ups, AQ], ['WKA', d.wka, AMB]], tot = d.opt || 0, R = 34, C = 2 * Math.PI * R, off = 0, arcs = '';
     if (tot > 0) parts.forEach(function (p) { if (!p[1].n) return; var L = C * p[1].n / tot; arcs += '<circle cx="46" cy="46" r="' + R + '" fill="none" stroke="' + p[2] + '" stroke-width="12" stroke-dasharray="' + Math.max(0, L - 2).toFixed(1) + ' ' + (C - L + 2).toFixed(1) + '" stroke-dashoffset="' + (-off).toFixed(1) + '" transform="rotate(-90 46 46)"/>'; off += L; });
-    else arcs = '<circle cx="46" cy="46" r="' + R + '" fill="none" stroke="#e3e6e2" stroke-width="12"/>';
+    else arcs = '<circle cx="46" cy="46" r="' + R + '" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="12"/>';
     var legend = parts.map(function (p) { return '<div class="lg"><span class="d" style="background:' + p[2] + '"></span><span class="muted">' + p[0] + '</span><span style="text-align:right">' + n0(p[1].n) + '</span><span class="xxs faint" style="text-align:right">Ø ' + eur(p[1].avg) + '</span></div>'; }).join('');
     var c2 = card(lab('Optimierungen') + '<div class="donutWrap"><div class="donut"><svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="Aufteilung der Optimierungen">' + arcs + '</svg><div><b>' + n0(tot) + '</b><span class="xxs faint">Opt.</span></div></div><div style="flex:1;display:flex;flex-direction:column;gap:7px">' + legend + '</div></div>', 'sb');
     return h + '<div class="tiles">' + c1 + c2 + '</div>';
@@ -92,9 +92,9 @@
     var r = hoursRange(m), hrs = SOS.hourly(extra.snapshots, r[0], r[1]);
     var p = m.dayPlan || {}, sollH = p.optTag > 0 && p.planned > 0 ? p.optTag / p.planned : null;
     var anyKnown = hrs.some(function (x) { return x.known; });
-    var c1 = card('<div class="cHead">' + lab('Optimierungen') + '<span class="xxs faint">' + (sollH ? '- - Soll' : '') + '</span></div>' + barsHtml(hrs, 'opt', 44, 'rgba(32,106,114,0.28)', P, sollH) + axis(r[0], r[1]), 'sb');
+    var c1 = card('<div class="cHead">' + lab('Optimierungen') + '<span class="xxs faint">' + (sollH ? '- - Soll' : '') + '</span></div>' + barsHtml(hrs, 'opt', 44, '#D3C8B6', CO, sollH) + axis(r[0], r[1]), 'sb');
     var aktSum = m.todayDetail ? m.todayDetail.akt : null;
-    var c2 = card('<div class="cHead">' + lab('Aktivitäten') + '<span class="xxs faint">' + n0(aktSum) + ' heute</span></div>' + barsHtml(hrs, 'akt', 58, 'rgba(126,210,219,0.55)', AQ, null) + axis(r[0], r[1]), 'sb');
+    var c2 = card('<div class="cHead">' + lab('Aktivitäten') + '<span class="xxs faint">' + n0(aktSum) + ' heute</span></div>' + barsHtml(hrs, 'akt', 58, '#E2DDD3', CO, null) + axis(r[0], r[1]), 'sb');
     return h + '<div class="tiles">' + c1 + c2 + '</div>' + (anyKnown ? '' : '<span class="xxs faint">Der Verlauf füllt sich, solange Chrome geöffnet ist.</span>');
   }
 
@@ -108,7 +108,7 @@
   }
   function vKennzahlen(m) {
     var p = m.prov, ok = p.checks.filter(function (c) { return c.ok; }).length, f = focusOf(p);
-    var segs = '<div class="segs">' + p.checks.map(function (c) { return '<span style="background:' + (c.ok ? AQ : 'rgba(255,255,255,0.22)') + '"></span>'; }).join('') + '</div>';
+    var segs = '<div class="segs">' + p.checks.map(function (c) { return '<span style="background:' + (c.ok ? '#fff' : 'rgba(255,255,255,0.3)') + '"></span>'; }).join('') + '</div>';
     var h;
     if (f) {
       var gap = Math.abs(f.ziel - f.ist), gapT = f.fmt === 'pct' ? 'noch ' + Math.max(1, Math.ceil(gap)) + ' Pkt. bis zum Ziel' : 'noch ' + dec(gap) + ' bis zum Ziel';
@@ -124,7 +124,7 @@
 
   function vProvision(m) {
     var p = m.prov, monat = MONATE[+m.monthKey.slice(5, 7) - 1];
-    var bar = '<div class="split">' + (p.regulaer > 0 ? '<div style="flex:' + Math.max(p.provision, 0.01) + ' 1 0;background:' + AQ + '"></div><div style="flex:' + Math.max(p.abzug, 0.01) + ' 1 0;background:rgba(255,138,128,0.45)"></div>' : '<div style="flex:1;background:rgba(255,255,255,0.22)"></div>') + '</div>';
+    var bar = '<div class="split">' + (p.regulaer > 0 ? '<div style="flex:' + Math.max(p.provision, 0.01) + ' 1 0;background:#fff"></div><div style="flex:' + Math.max(p.abzug, 0.01) + ' 1 0;background:rgba(255,255,255,0.35)"></div>' : '<div style="flex:1;background:rgba(255,255,255,0.22)"></div>') + '</div>';
     var h = banner(monat, badge('vorläufig', true), p.abzug > 0.5 ? '−' + eur(p.abzug) : '0 €', side('Provision', eur(p.provision)), bar, p.abzug > 0.5 ? 'red' : '');
     var ab = p.mindestleistungGreift ? 'Abzug (Mindestleistung)' : 'Abzug (' + p.verfehlt + ' × 20 %)';
     var c1 = card(lab('Berechnung') + '<div class="pl"><span>Basis (' + n0(p.qualOpt) + ' × ' + p.basisProOpt.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €)</span><b>' + eur(p.basis) + '</b></div>'
@@ -142,14 +142,14 @@
     var h;
     if (imp && imp.delta != null) {
       var good = imp.lte ? imp.delta <= 0 : imp.delta >= 0, d = Math.round(imp.delta * 10) / 10;
-      var bar = '<div class="split"><div style="flex:' + Math.max(1, Math.min(imp.before, imp.after)) + ' 1 0;background:rgba(255,255,255,0.35)"></div><div style="flex:' + Math.max(1, Math.abs(imp.after - imp.before)) + ' 1 0;background:' + (good ? AQ : '#ff8a80') + '"></div><div style="flex:' + Math.max(1, 100 - Math.max(imp.before, imp.after)) + ' 1 0;background:rgba(255,255,255,0.12)"></div></div>';
+      var bar = '<div class="split"><div style="flex:' + Math.max(1, Math.min(imp.before, imp.after)) + ' 1 0;background:rgba(255,255,255,0.35)"></div><div style="flex:' + Math.max(1, Math.abs(imp.after - imp.before)) + ' 1 0;background:' + (good ? '#fff' : 'rgba(255,255,255,0.6)') + '"></div><div style="flex:' + Math.max(1, 100 - Math.max(imp.before, imp.after)) + ' 1 0;background:rgba(255,255,255,0.12)"></div></div>';
       h = banner('Wirkung · ' + imp.label, badge('seit ' + dm(imp.date), good), (d > 0 ? '+' : '') + d.toLocaleString('de-DE'), side('vorher → jetzt', dec(imp.before) + ' → ' + dec(imp.after) + ' %'), bar);
     } else h = banner('Wirkung', '', '–', '<span class="bNote">' + (co.ok ? 'noch keine Session mit Ziel-KPI' : 'Coaching-Daten noch nicht freigegeben') + '</span>', '');
     var done = co.sessions.filter(function (s) { return s.status !== 'geplant' && s.date <= t; });
     var next = co.sessions.filter(function (s) { return s.status === 'geplant' && s.date >= t; }).sort(function (a, b) { return a.date.localeCompare(b.date); })[0];
     var last = done[0];
     var c1 = last ? card('<div class="cHead">' + lab('Dein Fokus') + '<span class="xxs faint">' + esc(last.coach_name || '') + ' · ' + dm(last.date) + '</span></div>'
-      + [['Start', P, last.start_note], ['Stop', RED, last.stop_note], ['Continue', AMB, last.continue_note]].map(function (x) { return '<div class="ssc"><span style="color:' + x[1] + '">' + x[0] + '</span><span>' + esc(x[2] || '–') + '</span></div>'; }).join(''), 'sb')
+      + [['Start', GRN, last.start_note], ['Stop', RED, last.stop_note], ['Continue', '#B5513A', last.continue_note]].map(function (x) { return '<div class="ssc"><span style="color:' + x[1] + '">' + x[0] + '</span><span>' + esc(x[2] || '–') + '</span></div>'; }).join(''), 'sb')
       : card(lab('Dein Fokus') + '<div class="empty">Noch keine abgeschlossene Session.</div>');
     var c2 = next ? card('<div class="cHead">' + lab('Nächste Session') + '<span class="xxs faint">' + esc(next.art || '') + '</span></div>'
       + '<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:20px;font-weight:500">' + dm(next.date) + '</span><span class="xs muted">' + esc((next.uhrzeit || '').slice(0, 5)) + (next.coach_name ? ' · ' + esc(next.coach_name) : '') + '</span></div>'
@@ -172,7 +172,7 @@
 
   function vHinweise(m) {
     var hs = extra.hints && extra.hints.date === m.today ? extra.hints.items : [], imp = hs.filter(function (x) { return x.imp; }).length;
-    var bar = '<div class="split">' + (hs.length ? '<div style="flex:' + imp + ' 1 0;background:#ff8a80"></div><div style="flex:' + (hs.length - imp) + ' 1 0;background:' + AQ + '"></div>' : '<div style="flex:1;background:rgba(255,255,255,0.22)"></div>') + '</div>';
+    var bar = '<div class="split">' + (hs.length ? '<div style="flex:' + imp + ' 1 0;background:#fff"></div><div style="flex:' + (hs.length - imp) + ' 1 0;background:rgba(255,255,255,0.5)"></div>' : '<div style="flex:1;background:rgba(255,255,255,0.22)"></div>') + '</div>';
     var h = banner('Hinweise heute', imp ? badge(imp + ' wichtig', false) : '', String(hs.length), side('zuletzt', hs[0] ? hs[0].t + ' Uhr' : '–'), bar);
     var set = Object.assign({ prognose: true, record: true, idle: false }, extra.hintSettings || {});
     var sw = [['prognose', 'Prognose fällt unter das Ziel'], ['record', 'Neuer Rekord'], ['idle', 'Eine Stunde ohne Optimierung']].map(function (x) {
@@ -196,7 +196,7 @@
   function renderSub(m) {
     var sub = $('sub');
     if (m && m.preview && m.choices) {
-      sub.innerHTML = '<select id="previewSel" title="Testmodus: Vorschau als" style="max-width:130px;height:22px;font-size:11px;border:1px solid #f0d9a8;background:#fff6e5;border-radius:6px">'
+      sub.innerHTML = '<select id="previewSel" class="prevSel" title="Testmodus: Vorschau als">'
         + m.choices.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === m.emp.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select>';
       $('previewSel').addEventListener('change', function () { $('view').innerHTML = '<div class="empty">Lade …</div>'; SOS.storageSet({ previewEmpId: this.value }).then(refresh); });
     } else sub.textContent = m && m.state === 'ok' ? stand(m) : '';
@@ -229,7 +229,7 @@
   }
   function renderLogin() {
     $('title').textContent = 'Sales OS'; $('sub').textContent = SOS.config.env === 'DEV' ? 'Testsystem' : '';
-    $('view').innerHTML = '<form id="login"><p class="empty" style="margin:0 0 6px">Melde dich mit deinem Sales-OS-Zugang an. Du siehst danach nur deine eigenen Zahlen.</p>'
+    $('view').innerHTML = '<form id="login"><div class="loginHead"><b>Anmelden</b><span class="empty" style="padding:0">Mit deinem Sales-OS-Zugang. Du siehst danach nur deine eigenen Zahlen.</span></div>'
       + '<label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" required><label for="pw">Passwort</label><input id="pw" type="password" autocomplete="current-password" required>'
       + '<button type="submit" class="primary" id="loginBtn">Anmelden</button><p class="error" id="loginErr" hidden></p></form>';
     $('login').addEventListener('submit', function (e) {

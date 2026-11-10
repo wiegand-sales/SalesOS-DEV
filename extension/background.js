@@ -2,11 +2,11 @@ importScripts('config.js', 'data.js');
 
 // Farbe der Zahl am Icon: im Plan / knapp dahinter / deutlich unter Plan / keine aktuellen Daten
 function badgeFor(model) {
-  if (!model || model.state !== 'ok') return { text: model && model.state === 'login' ? '' : '!', color: '#56676a' };
-  if (model.stale) return { text: '!', color: '#56676a' };
+  if (!model || model.state !== 'ok') return { text: model && model.state === 'login' ? '' : '!', color: '#8A7F72' };
+  if (model.stale) return { text: '!', color: '#8A7F72' };
   var text = String(Math.round(model.optToday || 0));
   var r = model.paceRatio;
-  var color = r === null ? '#136c72' : r >= 1 ? '#136c72' : r >= 0.85 ? '#b07a1f' : '#a8501c';
+  var color = r === null ? '#5C564F' : r >= 1 ? '#5C564F' : r >= 0.85 ? '#D94109' : '#BD2D29';
   return { text: text, color: color };
 }
 
