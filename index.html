@@ -14751,8 +14751,8 @@ function aufgActLabel(o){return o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Zi
 function aufgDone(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!kalCanEdit())return;
   if(o.kind==='task'&&o.taskId){atToggle(o.taskId);return;}
   if(/^antrag:/.test(key)){kalDecide(key.slice(7),true);setTimeout(atRender,60);return;}
-  if(/^ses:/.test(key)){var typ=o.task&&o.task.art||'Weekly';closeModal('addTaskModal');openNeuesCoachingModal(o.emp);setTimeout(function(){aufgPrefillSession(typ);},80);return;}
-  if(/^qa:/.test(key)){closeModal('addTaskModal');if(typeof openQaBewertungModal==='function')openQaBewertungModal(o.emp);return;}
+  if(/^ses:/.test(key)){var typ=o.task&&o.task.art||'Weekly';closeModal('addTaskModal');window._puOpenNew=true;openNeuesCoachingModal(o.emp);setTimeout(function(){puColOpen('ncSecNew');aufgPrefillSession(typ);},80);return;}
+  if(/^qa:/.test(key)){closeModal('addTaskModal');window._puOpenNew=true;if(typeof openQaBewertungModal==='function')openQaBewertungModal(o.emp);return;}
   closeModal('addTaskModal');if(o.go)o.go();}
 function aufgPrefillSession(typ){var cat=document.getElementById('sess-category'),ty=document.getElementById('sess-type'),dt=document.getElementById('sess-date');if(dt)dt.value=today();if(!cat||!ty)return;
   for(var i=0;i<cat.options.length;i++){cat.selectedIndex=i;populateCoachingTypeSelect('sess-category','sess-type',null);var hit=[].slice.call(ty.options).find(function(op){return op.value===typ||op.textContent===typ;});if(hit){ty.value=hit.value;try{ty.dispatchEvent(new Event('change'));}catch(e){}return;}}}
@@ -14779,6 +14779,39 @@ function atBanner(){var el=document.getElementById('atBan');if(!el)return;var e=
 function aufgPuBadge(){try{var n=aufgAll().filter(function(o){return String(o.emp)===String(selectedEmp);}).length;document.querySelectorAll('.pu-top .rl-btn[aria-label="Task"]').forEach(function(b){b.classList.toggle('au-badge',n>0);b.setAttribute('data-n',n>9?'9+':String(n));});}catch(e){}}
 (function(){if(typeof puDecorate!=='function'||puDecorate._au)return;var o=puDecorate;window.puDecorate=function(){var r=o.apply(this,arguments);aufgPuBadge();return r;};window.puDecorate._au=true;})();
 document.addEventListener('click',function(){if(!AU.hl)return;var m=document.getElementById('addTaskModal');if(m&&m.classList.contains('hidden'))AU.hl=null;},true);
+
+// ── Mitarbeiterkarte: Banner in allen Bereichen, „Neu …“-Formulare zum Aufklappen ──
+function puBanHtml(lbl,BK){return '<div class="pu-ban" style="border-radius:14px;padding:16px 18px;margin-bottom:14px;min-height:148px;box-sizing:border-box;color:#fff;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)"><div style="font-size:11px;font-weight:600;letter-spacing:.09em;margin-bottom:10px">'+esc(lbl)+'</div><div style="display:grid;grid-template-columns:repeat('+BK.length+',minmax(0,1fr))">'
+  +BK.map(function(x,i){return '<div style="padding:0 12px;'+(i?'border-left:1px solid rgba(255,255,255,.25);':'padding-left:0;')+'min-width:0"><div style="font-size:10.5px;font-weight:600;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x[0])+'</div><div style="font-size:'+(String(x[1]).length>6?'24':'32')+'px;font-weight:300;line-height:1.15;white-space:nowrap">'+esc(String(x[1]))+'</div><div style="font-size:12.5px;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x[2]||'')+'</div></div>';}).join('')+'</div></div>';}
+function puSesStats(e){var P=(protocols[e.id]||[]).filter(function(p){return p.date;}),t=today(),mk=t.slice(0,7),done=P.filter(function(p){return p.status!=='geplant'&&p.date<=t;}).sort(function(a,b){return a.date<b.date?1:-1;}),plan=P.filter(function(p){return p.status==='geplant'&&p.date>=t;}).sort(function(a,b){return a.date<b.date?-1:1;});
+  var w0=kalMon(t),wk=0;for(var i=1;i<=4;i++){var a=kalAdd(w0,-7*i),b=kalAdd(a,6);if(done.some(function(p){return p.date>=a&&p.date<=b&&(p.type||'')==='Weekly';}))wk++;}
+  return {mon:done.filter(function(p){return p.date.slice(0,7)===mk;}).length,last:done[0],next:plan[0],nplan:plan.length,wk:wk};}
+function puBanFor(k,e){var y=today().slice(0,4),mk=today().slice(0,7),mn=MONTH_NAMES_ZIEL[+mk.slice(5)-1],open=0;try{open=aufgAll().filter(function(o){return String(o.emp)===String(e.id);}).length;}catch(er){}
+  if(k==='se'){var s=puSesStats(e);return puBanHtml(e.name.toUpperCase()+' · COACHING',[['SESSIONS',s.mon,mn],['LETZTE',s.last?kalF(s.last.date):'–',s.last?(s.last.type||'Session'):'noch keine'],['GEPLANT',s.nplan,s.next?'nächste '+kalF(s.next.date):'keine geplant'],['WEEKLYS',s.wk+'/4','letzte 4 Wochen'],['AUFGABEN',open,'offen']]);}
+  if(k==='ca'){var R=(callRatings[e.id]||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),q=typeof qaCallsDue==='function'?qaCallsDue(e.id):{cnt:0,target:5},sc=R.filter(function(r){return r.score!=null;}),avg=sc.length?Math.round(sc.reduce(function(a,r){return a+(+r.score||0);},0)/sc.length):null;
+    return puBanHtml(e.name.toUpperCase()+' · CALLS',[['BEWERTET',q.cnt+'/'+q.target,'Calls in 60 Tagen'],['Ø SCORE',avg==null?'–':avg+(avg<=100?' %':''),sc.length+' Bewertungen'],['LETZTE',R[0]&&R[0].date?kalF(R[0].date):'–',R[0]?'Bewertung':'noch keine'],['GESAMT',R.length,'Bewertungen'],['AUFGABEN',open,'offen']]);}
+  var bm=beschaeftigungsmonat(e,mk),ist=istForEmpMonth(e.id,mk),o=0;(performance[e.id]||[]).forEach(function(r){if(r.date&&r.date.slice(0,7)===mk)o+=r.optGesamt||0;});var k2=kalKonto(e.id,y),s2=puSesStats(e);
+  return puBanHtml(e.name.toUpperCase()+(e.role?' · '+e.role:''),[['IM UNTERNEHMEN','Monat '+bm,e.startDate?'seit '+kalF(e.startDate)+e.startDate.slice(2,4):''],['MARGE',ztEur(ist),mn],['OPT.',Math.round(o).toLocaleString('de-DE'),mn],['SESSIONS',s2.mon,mn],['AUFGABEN',open,'offen']]);}
+var PU_BAN_AT={neuesCoachingModal:['se','ncSecNew'],sessionPlanenModal:['se','spSecNew'],qaBewertungModal:['ca','qaSecBew'],coachingInfoModal:['ov','ciSecTop']};
+function puBanEnsure(id){var m=document.getElementById(id);if(!m)return;var e=kalEmp(selectedEmp);if(!e)return;var cfg=PU_BAN_AT[id],anchor=null,host=null;
+  if(cfg){anchor=document.getElementById(cfg[1]);host=anchor&&anchor.parentElement;}
+  else{host=[].slice.call(m.querySelectorAll('div')).find(function(x){var cs=getComputedStyle(x);return cs.overflowY==='auto'&&x.closest('.modal-ov')===m;});anchor=host&&host.firstElementChild;}
+  if(!host)return;if([].slice.call(host.querySelectorAll('div')).some(function(x){return /linear-gradient/.test(x.getAttribute('style')||'')&&!x.classList.contains('pu-ban');}))return;
+  var old=host.querySelector(':scope > .pu-ban');var html=puBanFor(cfg?cfg[0]:'gen',e);var d=document.createElement('div');d.innerHTML=html;var nb=d.firstElementChild;
+  if(old)host.replaceChild(nb,old);else host.insertBefore(nb,anchor||host.firstChild);}
+// „Neu …“ zum Aufklappen
+var PU_COL=['ncSecNew','spSecNew','qaSecBew'];
+function puCollapse(id){var el=document.getElementById(id);if(!el||el.dataset.puCol)return;var hd=el.firstElementChild;if(!hd)return;el.dataset.puCol='1';
+  var body=document.createElement('div');body.className='pu-colb';while(hd.nextSibling)body.appendChild(hd.nextSibling);el.appendChild(body);
+  var pl=document.createElement('span');pl.className='at-pl';pl.innerHTML='<i class="ti ti-plus"></i>';hd.insertBefore(pl,hd.firstChild);hd.classList.add('pu-colh');hd.style.marginBottom='0';hd.style.cursor='pointer';
+  var hint=document.createElement('span');hint.className='kal-note pu-colhint';hint.style.cssText='margin-left:auto;font-weight:400';hd.appendChild(hint);
+  hd.addEventListener('click',function(ev){if(ev.target.closest('input,select,button,a'))return;puColSet(id,body.style.display==='none');});puColSet(id,false);}
+function puColSet(id,open){var el=document.getElementById(id);if(!el)return;var b=el.querySelector(':scope > .pu-colb'),h=el.querySelector('.pu-colhint'),hd=el.firstElementChild;if(!b)return;b.style.display=open?'':'none';if(hd)hd.style.marginBottom=open?'10px':'0';if(h)h.textContent=open?'zuklappen':'zum Aufklappen klicken';}
+function puColOpen(id){puCollapse(id);puColSet(id,true);}
+(function(){if(typeof puDecorate!=='function'||puDecorate._ban)return;var o=puDecorate;window.puDecorate=function(id){var r=o.apply(this,arguments);try{PU_COL.forEach(puCollapse);
+  if(id==='neuesCoachingModal'){puColSet('ncSecNew',!!(typeof _editingSessionId!=='undefined'&&_editingSessionId)||!!window._puOpenNew);window._puOpenNew=false;}
+  if(id==='sessionPlanenModal')puColSet('spSecNew',!!window._puOpenNew);if(id==='qaBewertungModal')puColSet('qaSecBew',!!window._puOpenNew);
+  puBanEnsure(id);setTimeout(function(){try{puBanEnsure(id);}catch(e){}},80);}catch(e){console.warn('Banner',e);}return r;};window.puDecorate._ban=true;window.puDecorate._au=true;})();
 </script>
 </body>
 </html>
