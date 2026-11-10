@@ -14,26 +14,28 @@ button, input, select { font-family: inherit; }
 body { width: 354px; height: 520px; overflow: hidden; font-family: 'Urbanist', 'Segoe UI', Roboto, Arial, sans-serif; color: var(--text); background: var(--page); font-size: 13px; line-height: 1.4; }
 [hidden] { display: none !important; }
 .shell { display: flex; height: 520px; }
-/* Symbolleiste wie im Board (.sb-rail): Zahlen | Planen, unten Hinweise und Kuerzel */
-.rail { width: 68px; flex-shrink: 0; background: var(--white); border-right: 1px solid var(--edge); display: flex; flex-direction: column; align-items: center; padding: 12px 0; }
-.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--grad); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(194,59,102,.25); flex-shrink: 0; }
-#tabs { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-height: 0; }
-.tab { position: relative; width: 56px; height: 46px; border: none; border-radius: 11px; background: transparent; color: var(--text2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; padding: 0; transition: background .15s, color .15s; flex-shrink: 0; }
-.tab .tlab { font-size: 9.5px; font-weight: 600; line-height: 1; }
+/* Symbolleiste wie im Board (.sb-rail): schwebende Karte, nur Symbole, beginnt auf Hoehe des Banners */
+.rail { width: 56px; flex-shrink: 0; margin: 48px 0 14px 10px; background: var(--white); border: 1px solid var(--edge); border-radius: 16px; box-shadow: 0 14px 34px rgba(40,32,15,.10); display: flex; flex-direction: column; align-items: center; padding: 10px 0; position: relative; z-index: 5; }
+.logo { width: 38px; height: 38px; border-radius: 11px; background: var(--coral); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; flex-shrink: 0; }
+#tabs { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-height: 0; }
+.tab { position: relative; width: 38px; height: 38px; border: none; border-radius: 11px; background: transparent; color: var(--text2); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background .15s, color .15s; flex-shrink: 0; }
+.tab .tlab { position: absolute; left: 48px; top: 50%; margin-top: -14px; height: 28px; line-height: 18px; padding: 5px 10px; border-radius: 8px; background: #1d1c1a; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s; z-index: 20; }
+.tab:hover .tlab, .tab:focus-visible .tlab { opacity: 1; }
 .tab:hover { background: var(--hover); color: var(--text); }
 .tab.on { background: #fff; color: var(--text); box-shadow: 0 0 0 1px var(--edge), 0 2px 6px rgba(40,32,15,.06); }
-.tab.on::before { content: ""; position: absolute; left: -6px; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--coral); }
+.tab.on::before { content: ""; position: absolute; left: -9px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--coral); }
 .tab:focus-visible, .sw:focus-visible, .primary:focus-visible, .secondary:focus-visible, .x:focus-visible, .seg button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
-.tab .dot { position: absolute; top: 5px; right: 12px; width: 7px; height: 7px; border-radius: 4px; background: var(--coral); box-shadow: 0 0 0 2px var(--white); }
-.tab.meBtn { height: 42px; margin-top: 4px; }
+.tab .dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 4px; background: var(--coral); box-shadow: 0 0 0 2px var(--white); }
+.tab.meBtn { margin-top: 4px; }
+.tab.meBtn.on { background: transparent; box-shadow: none; }
 .tab.meBtn.on::before { display: none; }
 .av { width: 34px; height: 34px; border-radius: 10px; background: var(--sub); box-shadow: 0 0 0 1px var(--edge); color: #1d1c1a; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .tab.meBtn.on .av { background: #fff; box-shadow: 0 0 0 2px var(--coral); }
 .av.big { width: 40px; height: 40px; font-size: 14px; }
-.sep { width: 30px; height: 1px; background: var(--edge); margin: 4px 0; flex-shrink: 0; }
+.sep { width: 26px; height: 1px; background: var(--edge); margin: 4px 0; flex-shrink: 0; }
 .spacer { flex: 1; }
 .rail.locked #tabs { visibility: hidden; }
-.content { flex: 1; min-width: 0; padding: 14px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.content { flex: 1; min-width: 0; padding: 14px 14px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
 .topline { display: flex; justify-content: space-between; align-items: center; height: 24px; flex-shrink: 0; }
 .title { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
 .stand { font-size: 11.5px; color: var(--text3); }
