@@ -783,6 +783,14 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .au-t{min-width:0!important;table-layout:fixed}.au-t th,.au-t td{text-align:left!important}.au-t td{background:#F7F5F0}.au-t tr:hover td{background:#EFECE5}.au-t td small{display:block;color:var(--text3);font-size:11.5px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.au-t td b{font-weight:600}
 .au-lt td small{display:block;color:var(--text3);font-size:11.5px}.au-due{font-weight:600;color:#5c554c}.au-due.od{color:#9A3F22;font-weight:700}.au-cm{max-width:480px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#5c554c}
 .au-sec2{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b6b67;margin:0 2px 6px;display:flex}.au-sec2 span{margin-left:auto;font-weight:500}
+.ov-panel{background:#EFECE5;border-radius:12px;padding:10px 12px 6px}.ov-ph{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--text3);padding:2px 2px 8px;border-bottom:1px solid #E4E0D6;margin-bottom:4px}.ov-ph b{font-size:18px;color:var(--text);font-weight:500}.ov-ph span b{font-size:11.5px;color:var(--text);font-weight:700}
+.ov-lg{margin-left:auto;display:inline-flex;align-items:center;gap:6px}.ov-lg i{display:inline-block;width:9px;height:9px;border-radius:2px}.ov-lg i.ci{border-radius:50%;background:#F08566}.ov-lg i.ci.pl{background:#fff;border:1.5px dashed #F08566;width:7px;height:7px}
+.ov-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.ov-tiles.s1{grid-template-columns:1fr}.ov-tiles.s2{grid-template-columns:repeat(2,1fr)}.ov-tiles.s3{grid-template-columns:repeat(3,1fr)}
+.ov-t{background:#EFECE5;border-radius:12px;padding:10px 12px;min-width:0;display:flex;flex-direction:column;gap:4px;min-height:118px}.ov-t.hi{background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);color:#fff}
+.ov-th{display:flex;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.ov-th em{margin-left:auto;font-style:normal;font-weight:600;letter-spacing:0;text-transform:none;opacity:.75}.ov-tv{font-size:24px;font-weight:300}.ov-tv small{font-size:11.5px;font-weight:500;opacity:.8}
+.ov-sub{font-size:11.5px;opacity:.8;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ov-t .btn{align-self:flex-start;margin-top:4px}.ov-wbtn{background:#fff!important;color:#C2522F!important;border-color:#fff!important}
+.ov-t.hi .ov-it{background:rgba(255,255,255,.22);color:#fff}.ov-t.hi .ov-it.od{background:#fff;color:#C2522F}.ov-none{font-size:11.5px;color:var(--text3)}.ov-t.hi .ov-none{color:rgba(255,255,255,.85)}
+.ov-why{font-size:12px;color:var(--text2);padding:10px 2px 0;border-top:1px solid #E4E0D6;margin-top:10px}
 .ov-wk{background:#fff;border:1px solid #E4E0D6;border-radius:10px;padding:8px 10px;min-height:118px;min-width:0}.ov-wk.cur{border-color:#F3CDBE;background:#FFFAF7}.ov-wk b{font-size:12.5px}.ov-its{display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .ov-it{font-size:11px;padding:3px 7px;border-radius:6px;background:#EFECE5;color:#5c554c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ov-it.ab{background:#EFE7D8;color:#6E5A3A}.ov-it.s{background:#FBE3DA;color:#9A3F22}.ov-it.od{background:#F08566;color:#fff}.ov-it.h{background:transparent;border:1px dashed #D8D2C6}
 .ov-step{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #EFECE5;font-size:13px}.ov-step:last-child{border-bottom:0}.ov-step .n{width:24px;height:24px;border-radius:7px;background:#F08566;color:#fff;font-weight:700;display:grid;place-items:center;font-size:12px}
@@ -13187,7 +13195,7 @@ function openCoachingInfoModal(empId){
   var sc=function(id){return "var el=document.getElementById('"+id+"');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})";};
   h+='<div style="display:flex;min-height:0;flex:1">'
     +'<div style="width:56px;flex-shrink:0;align-self:stretch;margin:14px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
-    +railBtn('ti-timeline','Die letzten 8 Wochen',sc('ovSecZ'),true)+railBtn('ti-chart-radar','Profil',sc('ovSecP'))+railBtn('ti-calendar-week','Die nächsten 4 Wochen',sc('ovSecW'))+railBtn('ti-list-numbers','Nächste Schritte',sc('ovSecS'))+railBtn('ti-notes','Notiz zum Mitarbeiter',sc('ciSecNotiz'))+railBtn('ti-list','Verlauf',sc('ciSecVerlauf'))
+    +railBtn('ti-timeline','Leistung und Termine',sc('ovSecZ'),true)+railBtn('ti-chart-radar','Profil und nächste Schritte',sc('ovSecP'))+railBtn('ti-notes','Notiz zum Mitarbeiter',sc('ciSecNotiz'))+railBtn('ti-list','Verlauf',sc('ciSecVerlauf'))
     +'<span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span>'
     +railBtn('ti-calendar-plus','Session planen',"closeModal('coachingInfoModal');openSessionModal('"+empId+"')")
     +'</div>'
@@ -14906,6 +14914,43 @@ function ovSections(e){return ovCard('ovSecZ','Die letzten 8 Wochen','Marge/Tag 
   +ovCard('ovSecP','Profil','Skill & Will · koralle = letzte Bewertung, sand = davor',ovProfile(e))
   +ovCard('ovSecW','Die nächsten 4 Wochen','Termine, Abwesenheiten, Fälligkeiten',ovNext4(e))
   +ovCard('ovSecS','Nächste Schritte','vom Board vorgeschlagen',ovSteps(e));}
+
+// ── Übersicht v2: Leistung + Termine (8 Wochen zurück, 4 voraus) · Profil + nächste Schritte ──
+function ovTimeline2(e){var t=today(),m0=kalMon(t),NP=8,NF=4,W=[];for(var i=NP-1;i>=-NF;i--){var a=kalAdd(m0,-7*i);W.push({from:a,to:kalAdd(a,6),kw:kalKw(a),fut:a>m0,cur:a===m0});}
+  var P=performance[e.id]||[];W.forEach(function(w){if(w.fut){w.v=null;return;}var by={};P.forEach(function(r){if(r.date>=w.from&&r.date<=w.to&&r.date<t)by[r.date]=(by[r.date]||0)+(r.margeGesamt||r.margin||0);});var d=Object.keys(by);w.v=d.length?d.reduce(function(s,k){return s+by[k];},0)/d.length:null;});
+  var x=ztEmpMonth(e,t.slice(0,7)),tg=x.opt*x.mo||null,V=W.map(function(w){return w.v;}).filter(function(v){return v!=null;});
+  var N=W.length,w=640,h=170,mx=Math.max.apply(null,(V.length?V:[1]).concat(tg?[tg]:[]))*1.15,mn=V.length?Math.min.apply(null,V.concat(tg?[tg]:[]))*0.75:0,X=function(i){return 26+i*(w-52)/(N-1);},Y=function(v){return 18+(1-(v-mn)/(mx-mn||1))*(h-70);};
+  var svg='<svg viewBox="0 0 '+w+' '+(h+26)+'" style="width:100%;display:block">';
+  var fx=X(NP-0.5);svg+='<rect x="'+fx.toFixed(1)+'" y="8" width="'+(w-fx-6).toFixed(1)+'" height="'+(h-20)+'" rx="8" fill="#fff" opacity=".55"/><text x="'+(fx+8).toFixed(1)+'" y="20" font-size="10" fill="#9a9a96">voraus</text>';
+  W.forEach(function(wk,i){var u=0,k=0;for(var j=0;j<5;j++){var d=kalAdd(wk.from,j),a=kalOn(e.id,d);if(a&&!a.fixed){if(a.art==='krank')k++;else u++;}}if(u||k)svg+='<rect x="'+(X(i)-14).toFixed(1)+'" y="26" width="28" height="'+(h-78)+'" rx="5" fill="'+(k>u?'#5F564C':'#CDBB9E')+'" opacity="'+(k>u?'.2':'.45')+'"><title>KW '+wk.kw+': '+(u?u+' T Urlaub ':'')+(k?k+' T krank':'')+'</title></rect><text x="'+X(i).toFixed(1)+'" y="'+(h-46)+'" text-anchor="middle" font-size="9.5" fill="#7A7268">'+(k>u?'krank':'Urlaub')+' '+(u+k)+' T</text>';});
+  if(tg)svg+='<line x1="26" x2="'+(w-26)+'" y1="'+Y(tg).toFixed(1)+'" y2="'+Y(tg).toFixed(1)+'" stroke="#F08566" stroke-dasharray="4 4" opacity=".8"/><text x="'+(w-26)+'" y="'+(Y(tg)-5).toFixed(1)+'" text-anchor="end" font-size="10" fill="#C2522F">Ziel '+ztEur(tg)+'/Tag</text>';
+  var pts=[];W.forEach(function(wk,i){if(wk.v!=null)pts.push(X(i).toFixed(1)+','+Y(wk.v).toFixed(1));});if(pts.length)svg+='<polyline fill="none" stroke="#5C554C" stroke-width="2.2" points="'+pts.join(' ')+'"/>';
+  var best=V.length?Math.max.apply(null,V):null;W.forEach(function(wk,i){if(wk.v==null)return;svg+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(wk.v).toFixed(1)+'" r="3.4" fill="#5C554C"><title>KW '+wk.kw+': '+ztEur(wk.v)+'/Tag</title></circle>';if(wk.v===best&&V.length>2)svg+='<text x="'+X(i).toFixed(1)+'" y="'+(Y(wk.v)-10).toFixed(1)+'" text-anchor="middle" font-size="13" fill="#C9A77E">★</text>';});
+  var cy=h-22;(protocols[e.id]||[]).filter(function(p){return p.date&&p.date>=W[0].from&&p.date<=W[N-1].to;}).forEach(function(p){var i=W.findIndex(function(wk){return p.date>=wk.from&&p.date<=wk.to;});if(i<0)return;var pl=p.status==='geplant';
+    svg+='<circle cx="'+X(i).toFixed(1)+'" cy="'+cy+'" r="9" fill="'+(pl?'#fff':'#F08566')+'" stroke="#F08566" stroke-width="1.6"'+(pl?' stroke-dasharray="3 2"':'')+'><title>'+esc(p.type||'Session')+(pl?' geplant ':' am ')+kalF(p.date)+'</title></circle><text x="'+X(i).toFixed(1)+'" y="'+(cy+4)+'" text-anchor="middle" font-size="10" fill="'+(pl?'#C2522F':'#fff')+'" font-weight="700">S</text>';});
+  svg+=W.map(function(wk,i){return '<text x="'+X(i).toFixed(1)+'" y="'+(h+16)+'" text-anchor="middle" font-size="10.5" fill="'+(wk.cur?'#C2522F':wk.fut?'#B5ADA2':'#9a9a96')+'" font-weight="'+(wk.cur?700:400)+'">KW '+wk.kw+'</text>';}).join('')+'</svg>';
+  // Kopfzeile wie im Dashboard
+  var S=ovStats(e),st=puSesStats(e),cw=W[NP-1],nS=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant'&&p.date>=W[0].from&&p.date<=t;}).length;
+  var head='<div class="ov-ph"><span>Marge/Tag laufende Woche</span><b>'+(cw.v!=null?ztEur(cw.v):'–')+'</b><span>'+(tg?'Ziel '+ztEur(tg)+' · ':'')+nS+' Sessions in 8 Wochen · noch '+st.nplan+' geplant'+(S.pct!=null?' · Ziel bis heute <b>'+S.pct+' %</b>':'')+'</span><span class="ov-lg"><i style="background:#5C554C"></i>Marge/Tag <i class="ci"></i>Session <i class="ci pl"></i>geplant <i style="background:#CDBB9E"></i>Abwesenheit</span></div>';
+  // Aussage
+  var txt='',si=[];W.forEach(function(wk,i){if(!wk.fut&&(protocols[e.id]||[]).some(function(p){return p.status!=='geplant'&&p.date>=wk.from&&p.date<=wk.to;}))si.push(i);});
+  if(si.length){var i0=si[si.length-1],a0=W[i0].v,after=W.slice(i0+1,NP).map(function(wk){return wk.v;}).filter(function(v){return v!=null;});if(after.length&&a0!=null){var up=after[after.length-1]-a0;txt='Seit der letzten Session (KW '+W[i0].kw+') '+(up>=0?'steigt':'sinkt')+' die Marge/Tag um <b>'+ztEur(Math.abs(up))+'</b>.';}}
+  if(!txt&&V.length)txt='Marge/Tag in 8 Wochen: '+ztEur(V[0])+' → <b>'+ztEur(V[V.length-1])+'</b>.';
+  // Wochenkacheln (jetzt + 3)
+  var L=[];try{L=aufgAll().filter(function(o){return String(o.emp)===String(e.id);});}catch(er){}
+  var tiles=[0,1,2,3].map(function(n){var a=kalAdd(m0,7*n),b=kalAdd(a,6),it=[];
+    absences.filter(function(x){return String(x.employeeId)===String(e.id)&&x.status!=='abgelehnt'&&x.status!=='storniert'&&!x.fixed&&x.bis>=a&&x.von<=b;}).forEach(function(x){var c=kalDays(x).filter(function(d){return d>=a&&d<=b;}).length*(x.halb?0.5:1);if(c)it.push(['ab',KAL_ART[kalShowArt(x)]+' '+kalNf(c)+' T'+(x.status==='offen'?' · Antrag':'')]);});
+    for(var j=0;j<5;j++){var d=kalAdd(a,j),hn=kalHolE(e,d);if(hn)it.push(['h',hn]);}
+    (protocols[e.id]||[]).filter(function(p){return p.status==='geplant'&&p.date>=a&&p.date<=b;}).forEach(function(p){it.push(['s',(p.type||'Session')+' '+KAL_WD[kalP(p.date).getDay()]]);});
+    L.filter(function(o){return (o.due>=a&&o.due<=b)||(n===0&&o.due<a);}).forEach(function(o){it.push([aufgState(o).c==='od'?'od':'t',o.art+(aufgState(o).c==='od'?' · überfällig':' · fällig')]);});
+    var wd=0;for(var j2=0;j2<5;j2++){var dd=kalAdd(a,j2);if(kalWorkday(e,dd)&&!(kalOn(e.id,dd)&&kalOn(e.id,dd).art!=='krank'))wd++;}
+    return '<div class="ov-t'+(n===0?' hi':'')+'"><div class="ov-th"><span>KW '+kalKw(a)+(n===0?' · jetzt':'')+'</span><em>'+kalF(a)+'–'+kalF(kalAdd(a,4))+'</em></div><div class="ov-tv">'+wd+'<small> Einsatztage</small></div><div class="ov-its">'+(it.length?it.slice(0,4).map(function(x){return '<span class="ov-it '+x[0]+'">'+esc(x[1])+'</span>';}).join(''):'<span class="ov-none">nichts geplant</span>')+'</div></div>';}).join('');
+  return '<div class="ov-panel">'+head+svg+'</div><div class="ov-tiles">'+tiles+'</div>'+(txt?'<div class="ov-why"><b>Wirkung:</b> '+txt+'</div>':'');}
+function ovSteps2(e){var html=ovSteps(e);if(/Nichts Dringendes/.test(html))return '<div class="ov-tiles s1"><div class="ov-t hi"><div class="ov-th"><span>Nächster Schritt</span></div><div class="ov-tv" style="font-size:18px">Nichts Dringendes offen</div><div class="ov-none" style="color:rgba(255,255,255,.85)">Weiter so.</div></div></div>';
+  var tmp=document.createElement('div');tmp.innerHTML=html;var R=[].slice.call(tmp.querySelectorAll('.ov-step'));
+  return '<div class="ov-tiles s'+R.length+'">'+R.map(function(r,i){var b=r.querySelector('b'),n=r.querySelector('.kal-note'),bt=r.querySelector('button');return '<div class="ov-t'+(i===0?' hi':'')+'"><div class="ov-th"><span>'+(i===0?'Nächster Schritt':'Danach')+'</span><em>'+(i+1)+'</em></div><div class="ov-tv" style="font-size:16px;line-height:1.3">'+(b?b.innerHTML:'')+'</div><div class="ov-sub">'+(n?n.innerHTML:'')+'</div>'+(bt?'<button class="btn btn-sm'+(i===0?' ov-wbtn':' btn-primary')+'" onclick="'+esc(bt.getAttribute('onclick'))+'">'+bt.innerHTML+'</button>':'')+'</div>';}).join('')+'</div>';}
+function ovSections(e){return ovCard('ovSecZ','Leistung und Termine','8 Wochen zurück · 4 Wochen voraus',ovTimeline2(e))
+  +ovCard('ovSecP','Profil und nächste Schritte','Skill & Will · koralle = letzte Bewertung, sand = davor',ovProfile(e)+'<div style="margin-top:12px">'+ovSteps2(e)+'</div>');}
 </script>
 </body>
 </html>
