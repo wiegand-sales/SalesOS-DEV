@@ -138,7 +138,9 @@
       var sub = c.alt ? 'SY/MY ' + pct(c.alt.ist) : 'heute ' + (t == null ? '–' : kfmt(c, t));
       return card('<div class="kpi"><div style="display:flex;flex-direction:column;gap:1px">' + lab(KLABEL[c.label]) + '<span class="val" style="color:' + col + '">' + kfmt(c, c.ist) + '</span><span class="xxs faint">' + sub + '</span></div>' + ring(ratio, col) + '</div>');
     }).join('');
-    return h + '<div class="tiles6">' + cells + '</div>';
+    var tk = p.checks.filter(function (c) { var v = m.kpiToday[c.label]; return v != null; }), tok = tk.filter(function (c) { var v = m.kpiToday[c.label]; return c.dir === 'lte' ? v <= c.ziel : v >= c.ziel; }).length;
+    var st = tk.length ? strip('Heute', tok + ' von ' + tk.length + ' über Ziel', tok / tk.length * 100, tok === tk.length ? 'alles im Ziel' : (tk.length - tok) + ' darunter') : strip('Heute', '–', 0, 'noch keine Werte');
+    return h + '<div class="tiles6">' + cells + '</div>' + st;
   }
 
   function vProvision(m) {
@@ -153,7 +155,9 @@
     var rows = miss.length ? miss.map(function (c) { return '<div class="row"><span style="flex:1">' + KLABEL[c.label] + '</span><span class="bad" style="font-weight:600">' + kfmt(c, c.ist) + '</span><span class="pill">+' + eur(p.wertProKpi) + '</span></div>'; }).join('')
       : '<div class="empty">Alle ' + p.checks.length + ' KPIs erreicht – volle Provision.</div>';
     var c2 = card(lab('Nicht erreicht') + rows);
-    return h + '<div class="tiles">' + c1 + c2 + '</div>';
+    var oph = p.checks.filter(function (c) { return c.label === 'Opt./Std.'; })[0], ml = p.mindestleistung || 2.5;
+    var st = strip('Mindestleistung', dec(oph ? oph.ist : null) + ' / ' + dec(ml), oph ? oph.ist / ml * 100 : 0, p.bm < 2 ? 'gilt ab dem 2. Monat' : p.mindestleistungGreift ? 'unterschritten' : 'erfüllt');
+    return h + '<div class="tiles">' + c1 + c2 + '</div>' + st;
   }
 
   var WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
@@ -175,10 +179,11 @@
     var c2 = last ? card('<div class="cHead">' + lab('Dein Fokus') + '<span class="xxs faint">' + esc((last.coach_name || '').split(' ')[0]) + ' · ' + dm(last.date) + '</span></div>'
       + [['Start', GRN, last.start_note], ['Stop', RED, last.stop_note], ['Continue', '#B5513A', last.continue_note]].map(function (x) { return '<div class="ssc"><span style="color:' + x[1] + '">' + x[0] + '</span><span>' + esc(x[2] || '–') + '</span></div>'; }).join(''), 'sb')
       : card(lab('Dein Fokus') + '<div class="empty">Noch keine abgeschlossene Session.</div>');
-    var imp = m.coachingImpact, st = '';
+    var imp = m.coachingImpact, mk = m.today.slice(0, 7), doneM = ((m.coaching && m.coaching.sessions) || []).filter(function (x) { return x.status !== 'geplant' && (x.date || '').slice(0, 7) === mk && x.date <= m.today; }).length;
+    var st = strip('Sessions', doneM + ' im ' + MONATE[+mk.slice(5, 7) - 1], Math.min(100, doneM * 25), doneM ? 'zuletzt ' + dm(((m.coaching.sessions || []).filter(function (x) { return x.status !== 'geplant' && x.date <= m.today; })[0] || {}).date) : 'noch keine in diesem Monat');
     if (imp && imp.delta != null) {
       var good = imp.lte ? imp.delta <= 0 : imp.delta >= 0, d = Math.round(imp.delta * 10) / 10;
-      st = strip('Wirkung', imp.label + ' ' + (d > 0 ? '+' : '') + d.toLocaleString('de-DE') + ' Pkt.', clamp(imp.after), dec(imp.before) + ' → ' + dec(imp.after) + ' % seit ' + dm(imp.date));
+      st = strip('Wirkung', imp.label + ' ' + (d > 0 ? '+' : '') + d.toLocaleString('de-DE') + ' Pkt.', clamp(imp.after), Math.round(imp.before) + ' → ' + Math.round(imp.after) + ' %');
     }
     return h + '<div class="tiles">' + c1 + c2 + '</div>' + st;
   }
@@ -202,7 +207,9 @@
       + '<div class="pl"><span>Anspruch' + (k.uebEff ? ' + Übertrag ' + nf(k.uebEff) : '') + '</span><b>' + nf(k.gesamt) + '</b></div>'
       + '<div class="pl"><span>Genommen</span><b>' + nf(k.tk) + '</b></div><div class="pl"><span>Geplant</span><b>' + nf(k.pl) + '</b></div>'
       + '<div class="pl"><span>Beantragt</span><b>' + nf(k.be) + '</b></div><div class="pl sum"><span>Noch frei</span><b>' + nf(k.frei) + '</b></div>', 'sb tight');
-    return h + '<div class="tiles">' + c1 + c2 + '</div><button type="button" class="primary wide" id="toAntrag">Urlaub beantragen</button>';
+    var nx = u.items.filter(function (x) { return x.status === 'genehmigt' && x.art !== 'krank'; })[0];
+    var st = '<div class="strip row2"><div class="sTxt"><span class="lab">Nächster</span><span class="sVal">' + (nx ? range(nx) : 'keiner geplant') + '</span></div><button type="button" class="primary sm" id="toAntrag">Beantragen</button></div>';
+    return h + '<div class="tiles">' + c1 + c2 + '</div>' + st;
   }
   function nf(v) { return v == null ? '–' : String(Math.round(v * 10) / 10).replace('.', ','); }
   function addD(ds, n) { var d = new Date(ds + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
@@ -227,11 +234,12 @@
   }
 
   function vHinweise(m) {
-    var hs = extra.hints && extra.hints.date === m.today ? extra.hints.items : [], imp = hs.filter(function (x) { return x.imp; }).length;
+    var hs = extra.hints && extra.hints.date === m.today ? extra.hints.items.slice(0, 8) : [], imp = hs.filter(function (x) { return x.imp; }).length;
     var bar = '<div class="split">' + (hs.length ? '<div style="flex:' + imp + ' 1 0;background:#fff"></div><div style="flex:' + (hs.length - imp) + ' 1 0;background:rgba(255,255,255,0.5)"></div>' : '<div style="flex:1;background:rgba(255,255,255,0.22)"></div>') + '</div>';
     var h = banner('Hinweise heute', imp ? badge(imp + ' wichtig', false) : '', String(hs.length), side('zuletzt', hs[0] ? hs[0].t + ' Uhr' : '–'), bar);
     var list = hs.slice(0, 9).map(function (x) { return '<div class="hint"><span class="p' + (x.imp ? ' imp' : '') + '"></span><span class="tm">' + esc(x.t) + '</span><span>' + esc(x.text) + '</span></div>'; }).join('') || '<div class="empty">Heute noch keine Hinweise. Was dir gemeldet wird, stellst du über dein Kürzel unten in der Leiste ein.</div>';
-    return h + '<div class="card" style="height:320px;flex-shrink:0">' + lab('Heute') + list + '</div>';
+    var set = Object.assign({}, HINT_DEFAULTS, extra.hintSettings || {}), on = Object.keys(HINT_DEFAULTS).filter(function (k) { return set[k]; }).length, all = Object.keys(HINT_DEFAULTS).length;
+    return h + '<div class="card" style="height:300px;flex-shrink:0">' + lab('Heute') + list + '</div>' + strip('Benachrichtigungen', on + ' von ' + all + ' an', on / all * 100, '');
   }
 
   function vMe(m) {
@@ -239,10 +247,15 @@
     var sw = [['prognose', 'Prognose fällt unter das Tagesziel'], ['record', 'Neuer Rekord'], ['idle', 'Eine Stunde ohne Optimierung'], ['antrag', 'Urlaubsantrag entschieden'], ['termin', 'Termin am nächsten Tag']].map(function (x) {
       return '<button type="button" class="sw' + (set[x[0]] ? ' on' : '') + '" data-sw="' + x[0] + '" role="switch" aria-checked="' + !!set[x[0]] + '"><i></i><span>' + x[1] + '</span></button>';
     }).join('');
+    var on = Object.keys(HINT_DEFAULTS).filter(function (k) { return set[k]; }).length, all = Object.keys(HINT_DEFAULTS).length;
+    var segs = '<div class="segs">' + Object.keys(HINT_DEFAULTS).map(function (k) { return '<span style="background:' + (set[k] ? '#fff' : 'rgba(255,255,255,0.3)') + '"></span>'; }).join('') + '</div>';
+    var h = banner('Einstellungen', SOS.config.env === 'DEV' ? badge('Testsystem', true) : '', (m.emp.name || '').split(' ')[0], side('Daten', stand(m).replace('Stand ', '') + ' Uhr'), segs);
     var c0 = card('<div class="meHead"><span class="av big">' + esc(ini(m.emp.name)) + '</span><div><b>' + esc(m.emp.name) + '</b><span class="xs muted">' + esc(m.email || '') + '</span></div></div>'
-      + '<div class="pl"><span>Daten</span><b>' + stand(m) + '</b></div><div class="pl"><span>Version</span><b>' + esc(chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '') + (SOS.config.env === 'DEV' ? ' · Testsystem' : '') + '</b></div>');
+      + (m.preview && m.choices ? '<div class="pl" style="align-items:center"><span>Vorschau als</span><select id="previewSel" class="prevSel">' + m.choices.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === m.emp.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></div>' : '')
+      + '<div class="pl"><span>Version</span><b>' + esc(chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '') + '</b></div>', 'sb');
     var c1 = card(lab('Benachrichtige mich, wenn …') + sw);
-    return '<div style="height:150px;flex-shrink:0">' + c0 + '</div><div style="height:186px;flex-shrink:0">' + c1 + '</div><button type="button" class="secondary" id="meLogout">Abmelden</button>';
+    var st = '<div class="strip row2"><div class="sTxt"><span class="lab">Hinweise</span><span class="sVal">' + on + ' von ' + all + ' an</span></div><button type="button" class="secondary sm" id="meLogout">Abmelden</button></div>';
+    return h + '<div class="tiles" style="grid-template-rows:110px 180px">' + c0 + c1 + '</div>' + st;
   }
   function ini(n) { return String(n || '').split(' ').map(function (x) { return x[0] || ''; }).join('').slice(0, 2).toUpperCase(); }
 
@@ -261,20 +274,13 @@
         + (t[0] === 'hinweise' && hasNew && tab !== 'hinweise' ? '<span class="dot"></span>' : ''));
     }).join('');
   }
-  function renderSub(m) {
-    var sub = $('sub');
-    if (m && m.preview && m.choices) {
-      sub.innerHTML = '<select id="previewSel" class="prevSel" title="Testmodus: Vorschau als">'
-        + m.choices.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === m.emp.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select>';
-      $('previewSel').addEventListener('change', function () { $('view').innerHTML = '<div class="empty">Lade …</div>'; SOS.storageSet({ previewEmpId: this.value }).then(refresh); });
-    } else sub.textContent = m && m.state === 'ok' ? stand(m) : '';
-  }
+  function renderSub() {}
   function render(m) {
     model = m;
     $('rail').classList.toggle('locked', !m || m.state !== 'ok');
     if (!m || m.state === 'login') return renderLogin();
     if (m.state !== 'ok') {
-      $('title').textContent = 'Sales OS'; renderSub(null);
+
       $('view').innerHTML = '<p class="error">' + esc(m.state === 'noemp' ? 'Zu deinem Zugang (' + m.email + ') ist kein Mitarbeiter hinterlegt.' : (m.error || 'Unbekannter Fehler')) + '</p><button class="secondary" id="retry">Erneut versuchen</button>';
       $('retry').onclick = function () { refresh(); };
       return;
@@ -284,7 +290,6 @@
     render._retry = false;
     renderTabs(); renderSub(m);
     var v = VIEWS[tab];
-    $('title').textContent = tab === 'heute' ? 'Hallo ' + (m.emp.name || '').split(' ')[0] : tab === 'urlaub' && uView === 'antrag' ? 'Urlaub beantragen' : v[0];
     try { $('view').innerHTML = v[1](m); }
     catch (e) { console.error(e); $('view').innerHTML = '<p class="error">Diese Ansicht konnte nicht geladen werden.</p>'; }
     if (tab === 'hinweise') {
@@ -296,6 +301,7 @@
         b.onclick = function () { var st = Object.assign({}, HINT_DEFAULTS, extra.hintSettings || {}); st[b.dataset.sw] = !st[b.dataset.sw]; extra.hintSettings = st; SOS.storageSet({ hintSettings: st }).then(function () { render(model); }); };
       });
       $('meLogout').onclick = function () { SOS.logout().then(refresh); };
+      var ps = $('previewSel'); if (ps) ps.onchange = function () { $('view').innerHTML = '<div class="empty">Lade …</div>'; SOS.storageSet({ previewEmpId: this.value }).then(refresh); };
     }
     if (tab === 'urlaub') bindUrlaub(m);
   }
@@ -331,7 +337,7 @@
     }).catch(function () {});
   }
   function renderLogin() {
-    $('title').textContent = 'Sales OS'; $('sub').textContent = SOS.config.env === 'DEV' ? 'Testsystem' : '';
+
     $('view').innerHTML = '<form id="login"><div class="loginHead"><b>Anmelden</b><span class="empty" style="padding:0">Mit deinem Sales-OS-Zugang. Du siehst danach nur deine eigenen Zahlen.</span></div>'
       + '<label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" required><label for="pw">Passwort</label><input id="pw" type="password" autocomplete="current-password" required>'
       + '<button type="submit" class="primary" id="loginBtn">Anmelden</button><p class="error" id="loginErr" hidden></p></form>';

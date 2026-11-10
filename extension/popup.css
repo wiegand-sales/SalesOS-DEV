@@ -15,7 +15,7 @@ body { width: 354px; height: 520px; overflow: hidden; font-family: 'Urbanist', '
 [hidden] { display: none !important; }
 .shell { display: flex; height: 520px; }
 /* Symbolleiste wie im Board (.sb-rail): schwebende Karte, nur Symbole, beginnt auf Hoehe des Banners */
-.rail { width: 56px; flex-shrink: 0; margin: 48px 0 14px 10px; background: var(--white); border: 1px solid var(--edge); border-radius: 16px; box-shadow: 0 14px 34px rgba(40,32,15,.10); display: flex; flex-direction: column; align-items: center; padding: 10px 0; position: relative; z-index: 5; }
+.rail { width: 56px; flex-shrink: 0; margin: 14px 0 14px 10px; background: var(--white); border: 1px solid var(--edge); border-radius: 16px; box-shadow: 0 14px 34px rgba(40,32,15,.10); display: flex; flex-direction: column; align-items: center; padding: 10px 0; position: relative; z-index: 5; }
 .logo { width: 38px; height: 38px; border-radius: 11px; background: var(--coral); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; flex-shrink: 0; }
 #tabs { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-height: 0; }
 .tab { position: relative; width: 38px; height: 38px; border: none; border-radius: 11px; background: transparent; color: var(--text2); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background .15s, color .15s; flex-shrink: 0; }
@@ -63,8 +63,8 @@ body { width: 354px; height: 520px; overflow: hidden; font-family: 'Urbanist', '
 .segs { display: flex; gap: 4px; }
 .segs span { flex: 1; height: 6px; border-radius: 3px; }
 /* Kacheln wie im Board (Glas-Box, innen ruhig) */
-.tiles { height: 266px; flex-shrink: 0; display: grid; grid-template-rows: 120px 136px; gap: 10px; }
-.tiles6 { height: 266px; flex-shrink: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tiles { height: 300px; flex-shrink: 0; display: grid; grid-template-rows: 140px 150px; gap: 10px; }
+.tiles6 { height: 300px; flex-shrink: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .card { background: var(--white); border: 1px solid var(--edge); box-shadow: 0 10px 24px rgba(40,32,15,0.06); border-radius: 14px; padding: 11px 13px; display: flex; flex-direction: column; gap: 5px; height: 100%; overflow: hidden; }
 .card.sb { justify-content: space-between; }
 .cHead { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
@@ -170,3 +170,8 @@ form input:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 
 .meHead b { font-size: 14px; font-weight: 700; }
 .meHead .xs { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card.tight { gap: 3px; }
+.strip.row2 { flex-direction: row; align-items: center; justify-content: space-between; padding: 0 6px 0 12px; }
+.sTxt { display: flex; align-items: baseline; gap: 8px; min-width: 0; overflow: hidden; }
+.primary.sm { margin: 0; height: 32px; padding: 0 14px; font-size: 13px; box-shadow: none; }
+.strip .lab { white-space: nowrap; }
+.secondary.sm { width: auto; height: 32px; padding: 0 14px; font-size: 13px; }
