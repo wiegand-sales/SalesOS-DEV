@@ -14788,11 +14788,17 @@ function puSesStats(e){var P=(protocols[e.id]||[]).filter(function(p){return p.d
   return {mon:done.filter(function(p){return p.date.slice(0,7)===mk;}).length,last:done[0],next:plan[0],nplan:plan.length,wk:wk};}
 function puBanFor(k,e){var y=today().slice(0,4),mk=today().slice(0,7),mn=MONTH_NAMES_ZIEL[+mk.slice(5)-1],open=0;try{open=aufgAll().filter(function(o){return String(o.emp)===String(e.id);}).length;}catch(er){}
   if(k==='se'){var s=puSesStats(e);return puBanHtml(e.name.toUpperCase()+' · COACHING',[['SESSIONS',s.mon,mn],['LETZTE',s.last?kalF(s.last.date):'–',s.last?(s.last.type||'Session'):'noch keine'],['GEPLANT',s.nplan,s.next?'nächste '+kalF(s.next.date):'keine geplant'],['WEEKLYS',s.wk+'/4','letzte 4 Wochen'],['AUFGABEN',open,'offen']]);}
+  if(k==='en'){var EV=(reviews[e.id]||[]).filter(function(r){return r.einwand!==undefined;}).sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),L0=EV[0],L1=EV[1];
+    var avg=function(r,keys){if(!r)return null;var v=keys.map(function(k){return +r[k];}).filter(function(x){return !isNaN(x)&&x>0;});return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;};
+    var SK=['einwand','bedarf','produkt','gespraech'],WI=['motivation','coach','zuverl','team'],RE=['crOEM','crTW','crSY','crMY'];
+    var f=function(keys){var a=avg(L0,keys),b=avg(L1,keys);return [a==null?'–':kalNf(Math.round(a*10)/10),a!=null&&b!=null?((a-b>=0?'+':'−')+kalNf(Math.abs(Math.round((a-b)*10)/10))+' zur letzten'):(L0?'erste Bewertung':'')];};
+    var G=(goals[e.id]||[]).filter(function(g){return !g.done&&g.status!=='done'&&g.status!=='erreicht';}),s1=f(SK),s2=f(WI),s3=f(RE);
+    return puBanHtml(e.name.toUpperCase()+' · ENTWICKLUNG',[['LETZTE',L0&&L0.date?kalF(L0.date):'–',EV.length+(EV.length===1?' Bewertung':' Bewertungen')],['SKILL',s1[0],s1[1]],['WILL',s2[0],s2[1]],['RESULT',s3[0],s3[1]],['ZIELE',G.length,'offen']]);}
   if(k==='ca'){var R=(callRatings[e.id]||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),q=typeof qaCallsDue==='function'?qaCallsDue(e.id):{cnt:0,target:5},sc=R.filter(function(r){return r.score!=null;}),avg=sc.length?Math.round(sc.reduce(function(a,r){return a+(+r.score||0);},0)/sc.length):null;
     return puBanHtml(e.name.toUpperCase()+' · CALLS',[['BEWERTET',q.cnt+'/'+q.target,'Calls in 60 Tagen'],['Ø SCORE',avg==null?'–':avg+(avg<=100?' %':''),sc.length+' Bewertungen'],['LETZTE',R[0]&&R[0].date?kalF(R[0].date):'–',R[0]?'Bewertung':'noch keine'],['GESAMT',R.length,'Bewertungen'],['AUFGABEN',open,'offen']]);}
   var bm=beschaeftigungsmonat(e,mk),ist=istForEmpMonth(e.id,mk),o=0;(performance[e.id]||[]).forEach(function(r){if(r.date&&r.date.slice(0,7)===mk)o+=r.optGesamt||0;});var k2=kalKonto(e.id,y),s2=puSesStats(e);
   return puBanHtml(e.name.toUpperCase()+(e.role?' · '+e.role:''),[['IM UNTERNEHMEN','Monat '+bm,e.startDate?'seit '+kalF(e.startDate)+e.startDate.slice(2,4):''],['MARGE',ztEur(ist),mn],['OPT.',Math.round(o).toLocaleString('de-DE'),mn],['SESSIONS',s2.mon,mn],['AUFGABEN',open,'offen']]);}
-var PU_BAN_AT={neuesCoachingModal:['se','ncSecNew'],sessionPlanenModal:['se','spSecNew'],qaBewertungModal:['ca','qaSecBew'],coachingInfoModal:['ov','ciSecTop']};
+var PU_BAN_AT={cevModal:['en','cevSec1'],neuesCoachingModal:['se','ncSecNew'],sessionPlanenModal:['se','spSecNew'],qaBewertungModal:['ca','qaSecBew'],coachingInfoModal:['ov','ciSecTop']};
 function puBanEnsure(id){var m=document.getElementById(id);if(!m)return;var e=kalEmp(selectedEmp);if(!e)return;var cfg=PU_BAN_AT[id],anchor=null,host=null;
   if(cfg){anchor=document.getElementById(cfg[1]);host=anchor&&anchor.parentElement;}
   else{host=[].slice.call(m.querySelectorAll('div')).find(function(x){var cs=getComputedStyle(x);return cs.overflowY==='auto'&&x.closest('.modal-ov')===m;});anchor=host&&host.firstElementChild;}
@@ -14800,7 +14806,7 @@ function puBanEnsure(id){var m=document.getElementById(id);if(!m)return;var e=ka
   var old=host.querySelector(':scope > .pu-ban');var html=puBanFor(cfg?cfg[0]:'gen',e);var d=document.createElement('div');d.innerHTML=html;var nb=d.firstElementChild;
   if(old)host.replaceChild(nb,old);else host.insertBefore(nb,anchor||host.firstChild);}
 // „Neu …“ zum Aufklappen
-var PU_COL=['ncSecNew','spSecNew','qaSecBew'];
+var PU_COL=['ncSecNew','spSecNew','qaSecBew','cevSec1'];
 function puCollapse(id){var el=document.getElementById(id);if(!el||el.dataset.puCol)return;var hd=el.firstElementChild;if(!hd)return;el.dataset.puCol='1';
   var body=document.createElement('div');body.className='pu-colb';while(hd.nextSibling)body.appendChild(hd.nextSibling);el.appendChild(body);
   var pl=document.createElement('span');pl.className='at-pl';pl.innerHTML='<i class="ti ti-plus"></i>';hd.insertBefore(pl,hd.firstChild);hd.classList.add('pu-colh');hd.style.marginBottom='0';hd.style.cursor='pointer';
@@ -14810,7 +14816,7 @@ function puColSet(id,open){var el=document.getElementById(id);if(!el)return;var 
 function puColOpen(id){puCollapse(id);puColSet(id,true);}
 (function(){if(typeof puDecorate!=='function'||puDecorate._ban)return;var o=puDecorate;window.puDecorate=function(id){var r=o.apply(this,arguments);try{PU_COL.forEach(puCollapse);
   if(id==='neuesCoachingModal'){puColSet('ncSecNew',!!(typeof _editingSessionId!=='undefined'&&_editingSessionId)||!!window._puOpenNew);window._puOpenNew=false;}
-  if(id==='sessionPlanenModal')puColSet('spSecNew',!!window._puOpenNew);if(id==='qaBewertungModal')puColSet('qaSecBew',!!window._puOpenNew);
+  if(id==='sessionPlanenModal')puColSet('spSecNew',!!window._puOpenNew);if(id==='cevModal')puColSet('cevSec1',!!window._puOpenNew||!!(document.getElementById('cevCancelEdit')&&document.getElementById('cevCancelEdit').offsetParent));if(id==='qaBewertungModal')puColSet('qaSecBew',!!window._puOpenNew);
   puBanEnsure(id);setTimeout(function(){try{puBanEnsure(id);}catch(e){}},80);}catch(e){console.warn('Banner',e);}return r;};window.puDecorate._ban=true;window.puDecorate._au=true;})();
 </script>
 </body>
