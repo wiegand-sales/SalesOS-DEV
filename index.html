@@ -11426,7 +11426,9 @@ function puDecorate(id){
     foot.style.cssText='padding:4px 18px 14px;background:#EEEDE9';
     foot.appendChild(bar);
   }
-  top.innerHTML=PU.map(function(p){return '<button class="rl-btn'+(p.k===key?' on':'')+'" type="button" aria-label="'+p.n+'" style="width:38px;height:38px;font-size:18px;flex-shrink:0" onclick="puGo(\''+p.k+'\')"><i class="ti '+p.i+'"'+(p.k==='pf'?' style="color:#F08566"':'')+'></i><span class="rl-tip" style="left:48px">'+p.n+'</span></button>';}).join('');
+  // Reihenfolge wie im Hauptmenü: Zahlen | Arbeiten | Verwaltung (Striche dazwischen)
+  var PU_ORDER=['ov','pf','|','ta','ab','se','ca','en','ko','|','es'],seen={},lst=[];PU_ORDER.forEach(function(k){if(k==='|'){lst.push('|');return;}var p=PU.find(function(x){return x.k===k;});if(p){lst.push(p);seen[k]=1;}});PU.forEach(function(p){if(!seen[p.k])lst.splice(lst.lastIndexOf('|'),0,p);});
+  top.innerHTML=lst.map(function(p){if(p==='|')return '<span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0;flex-shrink:0"></span>';return '<button class="rl-btn'+(p.k===key?' on':'')+'" type="button" aria-label="'+p.n+'" style="width:38px;height:38px;font-size:18px;flex-shrink:0" onclick="puGo(\''+p.k+'\')"><i class="ti '+p.i+'"'+(p.k==='pf'?' style="color:#F08566"':'')+'></i><span class="rl-tip" style="left:48px">'+p.n+'</span></button>';}).join('');
   // Session: Schalter „Erfassen | Planen“ im Kopf
   if(key==='se'){
     var modal=m.querySelector('.modal')||m.firstElementChild;var hd=modal&&modal.firstElementChild;
