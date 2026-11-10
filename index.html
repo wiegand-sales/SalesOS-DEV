@@ -11812,6 +11812,16 @@ function selectAllPaginated(table,orderCol,ascending,eqFilter){
   return fetchPage(0);
 }
 
+function perfRowMap(r){return {
+        date:r.date,notReached:r.oem_nicht_erreicht,notPossible:r.oem_nicht_moeglich,notSuccessful:r.oem_nicht_erfolgreich,
+        convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka_gesamt_yes:r.wka_gesamt_yes,
+        margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,
+        convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
+        gesamtAktivitaeten:r.gesamt_aktivitaeten,gesamtNichtErreicht:r.gesamt_nicht_erreicht,
+        gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich,
+        upsNichtErfolgreich:r.ups_nicht_erfolgreich,wkaOemNichtErfolgreich:r.wka_oem_nicht_erfolgreich,
+        wkaUpsNichtErfolgreich:r.wka_ups_nicht_erfolgreich,wkaOemBeendet:r.wka_oem_beendet,wkaUpsBeendet:r.wka_ups_beendet
+      };}
 var PERF_COLS='employee_id,date,oem_nicht_erreicht,oem_nicht_moeglich,oem_nicht_erfolgreich,oem_tw,oem_yes,oem_sy,oem_my,ups_yes,wka_gesamt_yes,oem_margenerhoehung,ups_margenerhoehung,wka_margenerhoehung,oem_gesamt,oem_aktivitaeten,gesamt_optimierungen,gesamt_margenerhoehung,gesamt_aktivitaeten,gesamt_nicht_erreicht,gesamt_nicht_moeglich,gesamt_nicht_erfolgreich,ups_nicht_erfolgreich,wka_oem_nicht_erfolgreich,wka_ups_nicht_erfolgreich,wka_oem_beendet,wka_ups_beendet';
 function loadPerformanceFromSupabase(){
   return selectAllParallel('performance',PERF_COLS,['employee_id','date']).then(function(res){
@@ -14681,7 +14691,11 @@ function aufgAll(){var t=today(),out=[],add=function(o){var m=aufgMeta[o.key]&&a
     add({key:'ses:'+x.id,art:x.art==='Performance Review'?'Performance-Gespräch':x.art,kind:grp?'routine':'auto',bundle:grp,t:x.e.name,s:x.src,due:x.art==='Weekly'?kalMon(x.due):x.due,born:kalAdd(x.due,-14),def:x.coachId?'emp:'+x.coachId:aufgCoachOf(x.e),act:'Session planen',go:function(){kalPlanTask(x.id);},emp:x.e.id,task:x});});});KAL.loc=sv;_kalTC.v=null;
   // 5) QA-Bewertungen (weniger als 5 bewertete Calls in 60 Tagen)
   teamTargetList().forEach(function(e){if(typeof qaCallsDue!=='function')return;var q=qaCallsDue(e.id);if(q.due>0)add({key:'qa:'+e.id,art:'QA-Bewertung',kind:'routine',bundle:'QA-Bewertungen',t:e.name,s:q.cnt+' von '+q.target+' Calls in 60 Tagen bewertet',due:kalAdd(t,7),born:t,def:aufgCoachOf(e),act:'Mitarbeiter öffnen',go:function(){selectedEmp=e.id;view='emp';activeTab='qa';renderSidebar();renderMain();},emp:e.id});});
-  // 6) Freie Tasks
+  // 6) Mitarbeiter fehlt? (ab 09:30 an Arbeitstagen: keine Aktivität, keine Abwesenheit)
+  var nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(hm>=AUFG_FEHLT_MIN&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
+    var act=0;(performance[e.id]||[]).forEach(function(r){if(r.date===t)act+=(r.gesamtAktivitaeten||0)+(r.oem_aktivitaeten||0)+(r.optGesamt||0);});if(act>0)return;
+    add({key:'fehlt:'+e.id+':'+t,art:'Mitarbeiter fehlt?',kind:'auto',t:e.name,s:'keine Aktivität bis '+('0'+Math.floor(AUFG_FEHLT_MIN/60)).slice(-2)+':'+('0'+AUFG_FEHLT_MIN%60).slice(-2)+' · keine Abwesenheit eingetragen',due:t,born:t,def:aufgDefault(e),act:'Abwesenheit eintragen',emp:e.id,go:function(){openAbsPopup(e.id,t.slice(0,7));abNewForm();AB.fOpen=true;AB.f.art='krank';AB.f.status='genehmigt';AB.f.von=t;AB.f.bis=t;abRender();}});});
+  // 7) Freie Tasks
   Object.keys(tasks||{}).forEach(function(eid){(tasks[eid]||[]).forEach(function(k){if(k.done||k.status==='done')return;var e=kalEmp(eid);if(!e)return;
     add({key:'task:'+k.id,art:'Task',kind:'task',t:k.text,s:e.name+(k.source?' · '+k.source:''),due:k.dueDate||kalAdd(t,7),born:t,def:aufgCoachOf(e),act:'Öffnen',go:function(){selectedEmp=eid;view='emp';activeTab='tasks';renderSidebar();renderMain();},emp:eid,taskId:k.id});});});
   return out;}
@@ -14765,7 +14779,7 @@ var _aufgBT=0;function aufgBadgeLazy(){if(Date.now()-_aufgBT<20000)return;_aufgB
 function aufgClick(key){var c=aufgFind(key);if(!c)return;if(c.items){aufgOpen(key);return;}aufgOpenEmp(key);}
 function aufgOpenEmp(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!o.emp)return;AU.hl=key;openAddTaskModal(o.emp);
   setTimeout(function(){var el=document.querySelector('#atOpen [data-akey="'+key.replace(/"/g,'')+'"]');if(el)el.scrollIntoView({block:'center'});},120);}
-function aufgActLabel(o){return o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
+function aufgActLabel(o){return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
 function aufgDone(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!kalCanEdit())return;
   if(o.kind==='task'&&o.taskId){atToggle(o.taskId);return;}
   if(/^antrag:/.test(key)){kalDecide(key.slice(7),true);setTimeout(atRender,60);return;}
@@ -15016,6 +15030,16 @@ var VZ_AT={neuesCoachingModal:['ncSecNew',vzCoaching],qaBewertungModal:['qaSecBe
 function vzEnsure(id,eid){var cfg=VZ_AT[id];if(!cfg)return;var m=document.getElementById(id);if(!m)return;var e=kalEmp(eid||selectedEmp);var a=document.getElementById(cfg[0]);if(!e||!a||!a.parentElement)return;
   var old=a.parentElement.querySelector(':scope > .pu-viz'),d=document.createElement('div');try{d.innerHTML=cfg[1](e);}catch(er){console.warn('Grafik',er);return;}var nb=d.firstElementChild;if(old)old.parentElement.removeChild(old);a.parentElement.insertBefore(nb,a.nextSibling);}
 (function(){if(typeof puDecorate!=='function'||puDecorate._viz)return;var o=puDecorate;window.puDecorate=function(id){var r=o.apply(this,arguments);try{vzEnsure(id);setTimeout(function(){vzEnsure(id);},90);}catch(e){}return r;};window.puDecorate._viz=true;window.puDecorate._ban=true;window.puDecorate._au=true;})();
+
+// ── Heutige Leistungsdaten alle 15 Minuten nachladen (Cronjob füllt die Tabelle laufend) ──
+var AUFG_FEHLT_MIN=9*60+30,_perfTodayT=0;
+function perfRefreshToday(){if(typeof sb==='undefined'||!sb)return Promise.resolve(false);var t=today();_perfTodayT=Date.now();
+  return sb.from('performance').select(PERF_COLS).eq('date',t).then(function(res){if(!res||res.error){console.warn('Leistungsdaten heute',res&&res.error);return false;}
+    var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push(perfRowMap(r));});
+    Object.keys(by).forEach(function(id){performance[id]=(performance[id]||[]).filter(function(x){return x.date!==t;}).concat(by[id]);});
+    try{_aufgBT=0;aufgBadgeLazy();if(view==='aufgaben')renderAufgaben();}catch(e){}return true;}).catch(function(e){console.warn('Leistungsdaten heute',e);return false;});}
+setInterval(function(){var n=new Date(),h=n.getHours();if(h<8||h>19||document.hidden)return;if(Date.now()-_perfTodayT<14*60000)return;perfRefreshToday();},60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-_perfTodayT>14*60000)perfRefreshToday();});
 </script>
 </body>
 </html>
