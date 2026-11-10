@@ -184,7 +184,7 @@ var SOS = (function () {
   }
 
   function mapEmp(e) {
-    return { id: e.id, name: e.name, role: e.role, active: e.active, startDate: e.start_date, provisionSettings: e.provision_settings || {}, workHours: e.work_hours || null, isPureCoach: e.is_pure_coach === true };
+    return { id: e.id, name: e.name, role: e.role, active: e.active, startDate: e.start_date, provisionSettings: e.provision_settings || {}, workHours: e.work_hours || null, isPureCoach: e.is_pure_coach === true, urlaub: e.urlaub || {} };
   }
 
   // Laedt alles fuer EINEN Mitarbeiter. Agents: ueber auth_user_id. Admins im Test: Vorschau ueber previewEmpId.
@@ -211,7 +211,9 @@ var SOS = (function () {
       rest('zielvereinbarung?select=*&employee_id=eq.' + emp.id + '&month=eq.' + mk, session).catch(function () { return []; }),
       rest('kpi_targets?select=*', session).catch(function () { return []; }),
       rest('employee_kpi_targets?select=*&employee_id=eq.' + emp.id, session).catch(function () { return []; }),
-      rest('settings?select=key,value&key=eq.ftpLastSync', session).catch(function () { return []; })
+      rest('settings?select=key,value&key=eq.ftpLastSync', session).catch(function () { return []; }),
+      rest('absences?select=*&employee_id=eq.' + emp.id + '&order=von.asc', session).catch(function () { return null; }),
+      rest('settings?select=key,value&key=eq.kalenderRules', session).catch(function () { return []; })
     ]);
     var coaching = await loadCoaching(emp, preview, session);
     var bestHour = (await storageGet(['bestHour'])).bestHour || null;
@@ -219,22 +221,27 @@ var SOS = (function () {
     var ownT = {}; res[3].forEach(function (r) { ownT[r.metric_key] = r.val; if (r.dir) ownT[r.metric_key + 'Dir'] = r.dir; });
     var ziel = res[1][0] || null;
     var lastSync = res[4][0] ? res[4][0].value : null;
-    var model = compute(emp, res[0], ziel, globals, ownT, lastSync);
+    var absRows = res[5] || [], rules = parseRules(res[6]);
+    var model = compute(emp, res[0], ziel, globals, ownT, lastSync, absRows);
     model.coaching = coaching; model.timeline = buildTimeline(emp, res[0], bestHour); model.coachingImpact = coachingImpact(res[0], coaching);
-    model.preview = preview; model.choices = choices; model.email = session.user.email;
+    model.urlaub = buildUrlaub(emp, absRows, res[5] !== null);
+    model.termine = buildTermine(emp, coaching);
+    model.ausgleich = buildAusgleich(emp, res[0]);
+    model.rules = rules; model.empMeta = { role: emp.role, vlc: emp.role === 'VLC', startDate: emp.startDate };
+    model.preview = preview; model.choices = choices; model.email = session.user.email; model.workHours = emp.workHours;
     model.state = 'ok'; model.loadedAt = new Date().toISOString();
     await storageSet({ model: model });
     await recordSnapshot(model);
     return model;
   }
 
-  function compute(emp, rows, ziel, globals, ownT, lastSync) {
+  function compute(emp, rows, ziel, globals, ownT, lastSync, absRows) {
     var t = today(), mk = t.slice(0, 7);
     var sT = sumRows(rows.filter(function (r) { return r.date === t; }));
     var sM = sumRows(rows.filter(function (r) { return (r.date || '').slice(0, 7) === mk; }));
     var optTag = ziel && ziel.opt_per_tag != null ? +ziel.opt_per_tag : 0;
     var margeOpt = ziel && ziel.marge_per_opt != null ? +ziel.marge_per_opt : 0;
-    var days = workDaysOfMonth(mk, ziel && ziel.arbeitstage);
+    var days = workDaysOfMonth(mk, ziel && ziel.arbeitstage).filter(function (d) { return isWorkday(emp, d) && !offDay(absRows, d); });
     var worksToday = days.indexOf(t) >= 0;
     var planned = workHoursForDate(emp, t);
     var frac = worksToday && planned > 0 ? Math.min(1, elapsedWorkHoursTodayFor(emp, lastSync) / planned) : 0;
@@ -288,7 +295,18 @@ var SOS = (function () {
     // Werte der 6 Provisions-KPIs heute (gleiche Definition wie im Monat)
     var kpiToday = { 'Opt./Std.': fcOk ? sT.optGes / elapsedNow : null, 'CR OEM': cr(sT, 'crOEM'), 'TW-Anteil': cr(sT, 'crTW'), 'SY/MY-Anteil': cr(sT, 'crSyMy'), 'MY-Anteil': cr(sT, 'crMY'), 'OEM-Anteil': sT.optGes > 0 ? sT.oem / sT.optGes * 100 : null };
     var crMy = { today: cr(sT, 'crMY'), month: cr(sM, 'crMY'), my: sT.my, closers: sT.yes + sT.sy + sT.my };
-    return { forecast: forecast, kpiToday: kpiToday, crMy: crMy, emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, dayPlan: dayPlan, margeToday: sT.marge, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
+    // Wochen- und Monatsziel aus der Zielvereinbarung (Einsatztage laut Kalender)
+    var mo = addDays(t, -((new Date(t + 'T00:00:00Z').getUTCDay() + 6) % 7)), wkDays = [], wkDone = 0;
+    for (var wi = 0; wi < 5; wi++) { var wd = addDays(mo, wi); if (days.indexOf(wd) >= 0) wkDays.push(wd); }
+    rows.forEach(function (r) { if (r.date >= mo && r.date <= t) wkDone += (r.gesamt_optimierungen || ((r.oem_gesamt || 0) + (r.ups_yes || 0) + (r.wka_gesamt_yes || 0))); });
+    var restDays = days.filter(function (d) { return d > t; }).length + (worksToday ? 1 - frac : 0);
+    var goals = optTag > 0 ? {
+      optTag: optTag, dayGoal: worksToday ? optTag : 0,
+      week: { goal: optTag * wkDays.length, done: wkDone, days: wkDays.length },
+      month: { goal: optTag * days.length, done: sM.optGes, marge: sM.marge, margeGoal: margeOpt > 0 ? optTag * margeOpt * days.length : null, days: days.length,
+        perDayRest: restDays > 0 ? Math.max(0, optTag * days.length - sM.optGes) / restDays : null, sollNow: soll.optMonth }
+    } : null;
+    return { goals: goals, forecast: forecast, kpiToday: kpiToday, crMy: crMy, emp: { id: emp.id, name: emp.name }, monthKey: mk, today: t, optToday: sT.opt, soll: soll, kpis: kpis, prov: prov, todayDetail: todayDetail, crCount: crCount, targets: tg, dayPlan: dayPlan, margeToday: sT.marge, paceRatio: paceRatio, lastSync: lastSync, stale: stale };
   }
 
   // Stundenverlauf: Die Datenbank kennt nur Tagessummen. Die Erweiterung merkt sich deshalb bei jedem
@@ -375,5 +393,139 @@ var SOS = (function () {
     return { items: items, recordOpt: rOpt ? rOpt.opt : 0, recordOptBeforeToday: recOptPast ? recOptPast.opt : 0 };
   }
 
-  return { load: load, login: login, logout: logout, getSession: getSession, hourly: hourly, storageGet: storageGet, storageSet: storageSet, config: C };
+
+  // ── Kalender: Arbeitstage, Feiertage (Bayern, bei VLC zusaetzlich Valencia), 24.12./31.12. wie im Board ──
+  function valenciaFeiertage(y) {
+    var o = easterSunday(y), m = {}, add = function (d, n) { return new Date(d.getTime() + n * 86400000); };
+    function put(d) { m[d.toISOString().slice(0, 10)] = true; }
+    function fix(mo, da) { put(new Date(Date.UTC(y, mo, da))); }
+    fix(0, 1); fix(0, 6); fix(0, 22); fix(2, 19); put(add(o, -2)); put(add(o, 1)); put(add(o, 8)); fix(4, 1); fix(5, 24); fix(7, 15);
+    fix(9, 9); fix(9, 12); fix(10, 1); fix(11, 6); fix(11, 8); fix(11, 25);
+    return m;
+  }
+  var _hol = {};
+  function isHoliday(emp, d) {
+    var y = +d.slice(0, 4), k = y + (emp.role === 'VLC' ? 'V' : 'M');
+    if (!_hol[k]) { _hol[k] = Object.assign({}, bayernFeiertage(y), emp.role === 'VLC' ? valenciaFeiertage(y) : {}); }
+    return !!_hol[k][d];
+  }
+  function isWeekend(d) { var w = new Date(d + 'T00:00:00Z').getUTCDay(); return w === 0 || w === 6; }
+  function isFixDay(d) { return /-12-(24|31)$/.test(d); }
+  function isWorkday(emp, d) { return !isWeekend(d) && !isHoliday(emp, d) && !isFixDay(d) && workHoursForDate(emp, d) > 0; }
+  function workdaysBetween(emp, a, b) { var n = 0, d = addDays(a, 1); while (d < b) { if (isWorkday(emp, d)) n++; d = addDays(d, 1); } return n; }
+  function absDays(emp, x) { var r = [], d = x.von; while (d <= x.bis) { if (x.fixed || isWorkday(emp, d)) r.push(d); d = addDays(d, 1); } return r; }
+  // Ganzer freier Tag laut Kalender (genehmigt, nicht halb)
+  function offDay(absRows, d) { return (absRows || []).some(function (x) { return x.status === 'genehmigt' && !x.halb && x.von <= d && x.bis >= d; }); }
+  function parseRules(rows) {
+    var r = {}; try { var v = rows && rows[0] ? rows[0].value : null; r = typeof v === 'string' ? JSON.parse(v || '{}') : (v || {}); if (typeof r === 'string') r = JSON.parse(r); } catch (e) { r = {}; }
+    return { freiGrenze: r && r.freiGrenze != null ? +r.freiGrenze : 3, vorlauf: 15 };
+  }
+
+  // ── Urlaubskonto wie kalKonto() im Board (eigene Eintraege + 24.12. Urlaubstag / 31.12. Ausgleichstag) ──
+  function virtualFix(emp, y) {
+    var out = [], a = y + '-12-24', b = y + '-12-31';
+    if (!isWeekend(a) && workHoursForDate(emp, a) > 0) out.push({ id: 'x24' + y, art: 'urlaub', von: a, bis: a, halb: false, status: 'genehmigt', fixed: true });
+    if (!isWeekend(b) && workHoursForDate(emp, b) > 0) out.push({ id: 'x31' + y, art: 'ausgleich', von: b, bis: b, halb: false, status: 'genehmigt', fixed: true });
+    return out;
+  }
+  function kontoCfg(emp, absRows, y) {
+    var u = (emp.urlaub || {})[y] || {}, prev = String(+y - 1), ub = u.uebertrag != null ? +u.uebertrag : null;
+    if (ub === null) {
+      var hasPrev = (emp.urlaub || {})[prev] || absRows.some(function (x) { return x.von.slice(0, 4) === prev; });
+      ub = hasPrev && +prev >= 2026 ? Math.max(0, konto(emp, absRows, prev).rest) : 0;
+    }
+    return { anspruch: u.anspruch != null ? +u.anspruch : 28, flex: u.flex != null ? +u.flex : 5, uebertrag: ub, vorher: u.vorher_genommen != null ? +u.vorher_genommen : 0 };
+  }
+  function konto(emp, absRows, year) {
+    var y = String(year), c = kontoCfg(emp, absRows, y), t = today();
+    var k = { ans: c.anspruch, flexMax: c.flex, uebertrag: c.uebertrag, tk: c.vorher, pl: 0, be: 0, flexUsed: 0, bisMaerz: 0 };
+    absRows.concat(virtualFix(emp, y)).forEach(function (x) {
+      if (x.status === 'abgelehnt' || x.status === 'storniert') return; var f = x.halb ? 0.5 : 1;
+      absDays(emp, x).forEach(function (d) {
+        if (d.slice(0, 4) !== y) return;
+        if (x.art === 'krank' || x.art === 'freistellung' || x.art === 'ausgleich') return;
+        if (x.status === 'offen') { k.be += f; return; }
+        if (d <= t) k.tk += f; else k.pl += f;
+        if (d <= y + '-03-31') k.bisMaerz += f;
+        if (x.art === 'flex') k.flexUsed += f;
+      });
+    });
+    k.uebEff = (t > y + '-03-31' && t.slice(0, 4) === y) ? Math.min(k.uebertrag, k.bisMaerz + c.vorher) : k.uebertrag;
+    k.gesamt = k.ans + k.uebEff; k.rest = k.gesamt - k.tk - k.pl; k.frei = k.rest - k.be; k.flex = k.flexMax - k.flexUsed;
+    return k;
+  }
+  var ART_LABEL = { urlaub: 'Urlaub', flex: 'Flex Day', ausgleich: 'Ausgleichstag', freistellung: 'Freistellung', krank: 'Krank' };
+  function buildUrlaub(emp, absRows, ok) {
+    var t = today(), y = t.slice(0, 4);
+    var items = absRows.filter(function (x) { return x.bis >= t && x.status !== 'storniert'; }).map(function (x) {
+      return { id: x.id, art: x.art, label: ART_LABEL[x.art] || x.art, von: x.von, bis: x.bis, halb: !!x.halb, halbTeil: x.halb_teil || null, status: x.status, tage: absDays(emp, x).length * (x.halb ? 0.5 : 1) };
+    });
+    return { ok: ok, year: y, konto: konto(emp, absRows, y), kontoNext: konto(emp, absRows, String(+y + 1)), items: items, statusById: absRows.reduce(function (m, x) { m[x.id] = x.status; return m; }, {}) };
+  }
+  // Pruefung eines Antrags wie kalEval() im Board (ohne Namen anderer)
+  function evalAntrag(model, r) {
+    var emp = { role: model.empMeta.role, workHours: model.workHours }, H = [];
+    if (!r.von || !r.bis || r.bis < r.von) return { n: 0, H: [{ t: 'err', h: 'Bitte einen gültigen Zeitraum wählen.' }] };
+    if (r.von < today()) return { n: 0, H: [{ t: 'err', h: 'Der Zeitraum liegt in der Vergangenheit.' }] };
+    var ds = absDays(emp, { von: r.von, bis: r.bis }), n = ds.length * (r.halb ? 0.5 : 1), k = r.von.slice(0, 4) !== model.urlaub.year && model.urlaub.kontoNext ? model.urlaub.kontoNext : model.urlaub.konto;
+    if (r.von.slice(0, 4) !== r.bis.slice(0, 4)) return { n: 0, H: [{ t: 'err', h: 'Bitte über den Jahreswechsel zwei Anträge stellen (einen je Jahr).' }] };
+    if (!n) return { n: 0, H: [{ t: 'err', h: 'Im Zeitraum liegt kein Arbeitstag (Wochenende, Feiertag oder laut Arbeitszeit frei).' }] };
+    var v = workdaysBetween(emp, today(), r.von), flex = v < model.rules.vorlauf;
+    if (flex) {
+      H.push({ t: 'warn', h: 'Nur ' + v + ' Arbeitstage Vorlauf. Urlaub braucht mindestens ' + model.rules.vorlauf + ', kürzer geht nur als Flex Day. Danach noch ' + nf(Math.max(0, k.flex - n)) + ' von ' + k.flexMax + ' Flex Days.' });
+      if (k.flex < n) H.push({ t: 'err', h: 'Nicht genug Flex Days übrig (noch ' + nf(k.flex) + ').' });
+    } else H.push({ t: 'ok', h: 'Vorlauf ' + v + ' Arbeitstage, die ' + model.rules.vorlauf + '-Tage-Regel ist erfüllt.' });
+    if (/-12-2[4-9]|-12-3[01]/.test(r.bis)) H.push({ t: 'info', h: 'Der 24.12. ist für alle ein Urlaubstag, der 31.12. ein Ausgleichstag. Beide werden nicht abgezogen.' });
+    var rest = k.frei - (flex ? 0 : n);
+    H.push({ t: rest < 0 ? 'err' : 'info', h: (flex ? 'Urlaubskonto bleibt bei ' : 'Urlaubskonto danach: ') + nf(rest) + ' von ' + nf(k.gesamt) + ' Tagen frei, offene Anträge mitgerechnet.' });
+    return { n: n, days: ds, art: flex ? 'flex' : 'urlaub', H: H, blocked: H.some(function (x) { return x.t === 'err'; }) };
+  }
+  function nf(v) { return String(Math.round(v * 10) / 10).replace('.', ','); }
+  async function teamFrei(von, bis) {
+    var session = await getSession(); if (!session) return null;
+    var r = await fetch(C.supabaseUrl + '/rest/v1/rpc/my_team_frei', { method: 'POST', headers: { apikey: C.anonKey, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_von: von, p_bis: bis }) });
+    if (!r.ok) return null;
+    return r.json();
+  }
+  async function sendAntrag(model, r, ev) {
+    var session = await getSession(); if (!session) throw new Error('Bitte neu anmelden.');
+    var body = { employee_id: model.emp.id, art: ev.art, von: r.von, bis: r.halb ? r.von : r.bis, halb: !!r.halb, halb_teil: r.halb ? (r.halbTeil || 'vm') : null, status: 'offen', eingereicht_von: model.emp.name, notiz: r.notiz || null };
+    var res = await fetch(C.supabaseUrl + '/rest/v1/absences', { method: 'POST', headers: { apikey: C.anonKey, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(body) });
+    if (!res.ok) { var j = await res.json().catch(function () { return {}; }); throw new Error(j.message || ('Antrag konnte nicht gesendet werden (' + res.status + ')')); }
+  }
+  async function zurueckziehen(id) {
+    var session = await getSession(); if (!session) throw new Error('Bitte neu anmelden.');
+    var res = await fetch(C.supabaseUrl + '/rest/v1/absences?id=eq.' + encodeURIComponent(id) + '&status=eq.offen', { method: 'DELETE', headers: { apikey: C.anonKey, Authorization: 'Bearer ' + session.access_token, Prefer: 'return=minimal' } });
+    if (!res.ok) throw new Error('Antrag konnte nicht zurückgezogen werden (' + res.status + ')');
+  }
+
+  // ── Termine: geplante Sessions aus dem Kalender (Weekly, Coaching, Performance-Gespraech) und faellige Performance-Gespraeche ──
+  function buildTermine(emp, coaching) {
+    var t = today(), S = (coaching && coaching.sessions) || [], out = [];
+    S.filter(function (s) { return s.status === 'geplant' && s.date >= t; }).forEach(function (s) {
+      out.push({ date: s.date, time: (s.uhrzeit || '').slice(0, 5), art: s.art || 'Session', thema: s.focus || '', coach: s.coach_name || '', kind: /weekly/i.test(s.art || '') ? 'weekly' : /performance/i.test(s.art || '') ? 'perf' : 'coaching' });
+    });
+    // Performance-Gespraeche nach 5, 11 und 23 Monaten (feste Regel wie im Board)
+    if (emp.startDate) [5, 11, 23].forEach(function (n) {
+      var d = new Date(emp.startDate + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n); var due = d.toISOString().slice(0, 10);
+      if (due < addDays(t, -30) || due > addDays(t, 60)) return;
+      var covered = S.some(function (s) { return /performance/i.test(s.art || '') && s.date >= addDays(due, -30); });
+      if (!covered) out.push({ date: due, time: '', art: 'Performance-Gespräch', thema: n + ' Monate bei Wiegand', coach: '', kind: 'perf', due: true });
+    });
+    out.sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); });
+    var last = S.filter(function (s) { return s.status !== 'geplant' && s.date <= t; })[0] || null;
+    return { ok: !!(coaching && coaching.ok), items: out, last: last };
+  }
+
+  // ── Ausgleichstag: 140 Optimierungen von Montag bis Donnerstag, dann ist Freitag frei ──
+  function buildAusgleich(emp, rows) {
+    if (emp.role === 'VLC') return null;
+    var t = today(), wd = new Date(t + 'T00:00:00Z').getUTCDay();
+    if (wd < 1 || wd > 5) return null;
+    var mo = addDays(t, -(wd - 1)), th = addDays(mo, 3), done = 0;
+    rows.forEach(function (r) { if (r.date >= mo && r.date <= th) done += (r.gesamt_optimierungen || ((r.oem_gesamt || 0) + (r.ups_yes || 0) + (r.wka_gesamt_yes || 0))); });
+    return { goal: 140, done: done, reached: done >= 140, left: Math.max(0, 140 - done), friday: addDays(mo, 4), open: t <= th, workLeft: [0, 1, 2, 3].map(function (i) { return addDays(mo, i); }).filter(function (d) { return d >= t && isWorkday(emp, d); }).length };
+  }
+
+  return { evalAntrag: evalAntrag, teamFrei: teamFrei, sendAntrag: sendAntrag, zurueckziehen: zurueckziehen, load: load, login: login, logout: logout, getSession: getSession, hourly: hourly, storageGet: storageGet, storageSet: storageSet, config: C };
 })();

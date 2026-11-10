@@ -9,10 +9,14 @@
     provision: '<path d="M17 6.5A7 7 0 1 0 17 17.5"/><path d="M4 10h9M4 14h9"/>',
     coaching: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
     timeline: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
-    hinweise: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'
+    hinweise: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+    termine: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h3"/>',
+    urlaub: '<path d="M3 20h18"/><path d="M12 20V9"/><path d="M12 9c-4 0-7 2-8 5 3-1.5 5.5-1.5 8 0 2.5-1.5 5-1.5 8 0-1-3-4-5-8-5z"/>'
   };
-  var TABS = [['heute', 'Heute'], ['verlauf', 'Verlauf'], ['kennzahlen', 'Kennzahlen'], ['provision', 'Provision'], null, ['coaching', 'Coaching'], ['timeline', 'Timeline'], ['hinweise', 'Hinweise']];
-  var tab = 'heute', model = null, extra = {};
+  // Menue wie im Board: Zahlen | Planen, unten Hinweise und das eigene Kuerzel (Einstellungen)
+  var TABS = [['heute', 'Heute'], ['verlauf', 'Verlauf'], ['kennzahlen', 'Kennzahlen'], ['provision', 'Provision'], null, ['termine', 'Termine'], ['urlaub', 'Urlaub'], 'spacer', ['hinweise', 'Hinweise'], 'me'];
+  var HINT_DEFAULTS = { prognose: true, record: true, idle: false, antrag: true, termin: true };
+  var tab = 'heute', model = null, extra = {}, uView = 'konto', form = null, sending = false;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function n0(v) { return v == null ? '–' : Math.round(v).toLocaleString('de-DE'); }
@@ -70,15 +74,27 @@
     var mg = hrs.map(function (x) { return x.known ? x.marge : null; });
     var pa = hrs.map(function (x) { return x.known && x.opt > 0 && x.marge != null ? x.marge / x.opt : null; });
     var grid = [0.5, H / 2, H - 0.5].map(function (y) { return '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="rgba(0,0,0,0.06)"/>'; }).join('');
-    var svg = '<svg width="100%" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Marge je Stunde">' + grid + line(mg, CO) + line(pa, '#8A7F72', true) + '</svg>';
+    var svg = '<svg width="100%" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Marge je Stunde">' + grid + line(mg, P) + line(pa, '#A89C8E', true) + '</svg>';
     var c1 = card('<div class="cHead">' + lab('Marge') + '<span class="xs muted">Ø ' + eur(d.avgMarge) + ' <span class="now">' + eur(d.marge) + '</span></span></div>' + svg
-      + '<div class="axis"><span>' + r[0] + '</span><span class="leg"><i style="border-color:' + CO + '"></i>Marge</span><span class="leg"><i style="border-color:#8A7F72;border-top-style:dashed"></i>pro Auftrag</span><span>' + (r[1] + 1) + ' Uhr</span></div>', 'sb');
+      + '<div class="axis"><span>' + r[0] + '</span><span class="leg"><i style="border-color:' + P + '"></i>Marge</span><span class="leg"><i style="border-color:#A89C8E;border-top-style:dashed"></i>pro Auftrag</span><span>' + (r[1] + 1) + ' Uhr</span></div>', 'sb');
     var parts = [['OEM', d.oem, P], ['UPS', d.ups, AQ], ['WKA', d.wka, AMB]], tot = d.opt || 0, R = 34, C = 2 * Math.PI * R, off = 0, arcs = '';
     if (tot > 0) parts.forEach(function (p) { if (!p[1].n) return; var L = C * p[1].n / tot; arcs += '<circle cx="46" cy="46" r="' + R + '" fill="none" stroke="' + p[2] + '" stroke-width="12" stroke-dasharray="' + Math.max(0, L - 2).toFixed(1) + ' ' + (C - L + 2).toFixed(1) + '" stroke-dashoffset="' + (-off).toFixed(1) + '" transform="rotate(-90 46 46)"/>'; off += L; });
     else arcs = '<circle cx="46" cy="46" r="' + R + '" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="12"/>';
     var legend = parts.map(function (p) { return '<div class="lg"><span class="d" style="background:' + p[2] + '"></span><span class="muted">' + p[0] + '</span><span style="text-align:right">' + n0(p[1].n) + '</span><span class="xxs faint" style="text-align:right">Ø ' + eur(p[1].avg) + '</span></div>'; }).join('');
     var c2 = card(lab('Optimierungen') + '<div class="donutWrap"><div class="donut"><svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="Aufteilung der Optimierungen">' + arcs + '</svg><div><b>' + n0(tot) + '</b><span class="xxs faint">Opt.</span></div></div><div style="flex:1;display:flex;flex-direction:column;gap:7px">' + legend + '</div></div>', 'sb');
-    return h + '<div class="tiles">' + c1 + c2 + '</div>';
+    return h + '<div class="tiles">' + c1 + c2 + '</div>' + stripHeute(m);
+  }
+
+  function strip(label, val, pctv, right) {
+    return '<div class="strip"><div class="sTop"><span class="lab">' + esc(label) + '</span><span class="sVal">' + val + '</span><span class="sR">' + right + '</span></div>'
+      + '<div class="sBar"><i style="width:' + clamp(pctv) + '%"></i></div></div>';
+  }
+  function stripHeute(m) {
+    var a = m.ausgleich, tl = m.timeline || {}, rec = tl.recordOptBeforeToday || 0, cur = m.optToday || 0;
+    if (a && a.open) return strip('Ausgleichstag', n0(a.done) + ' / ' + a.goal, a.done / a.goal * 100, a.reached ? 'erreicht, Freitag frei' : 'noch ' + n0(a.left) + ' bis Do');
+    if (a && a.reached) return strip('Ausgleichstag', n0(a.done) + ' / ' + a.goal, 100, 'erreicht');
+    if (rec > 0) return strip('Rekord', n0(cur) + ' / ' + n0(rec), cur / rec * 100, cur > rec ? 'neuer Rekord' : 'noch ' + n0(rec - cur + 1) + ' bis zum Rekord');
+    return '';
   }
 
   function vVerlauf(m) {
@@ -92,10 +108,13 @@
     var r = hoursRange(m), hrs = SOS.hourly(extra.snapshots, r[0], r[1]);
     var p = m.dayPlan || {}, sollH = p.optTag > 0 && p.planned > 0 ? p.optTag / p.planned : null;
     var anyKnown = hrs.some(function (x) { return x.known; });
-    var c1 = card('<div class="cHead">' + lab('Optimierungen') + '<span class="xxs faint">' + (sollH ? '- - Soll' : '') + '</span></div>' + barsHtml(hrs, 'opt', 44, '#D3C8B6', CO, sollH) + axis(r[0], r[1]), 'sb');
+    var c1 = card('<div class="cHead">' + lab('Optimierungen') + '<span class="xxs faint">' + (sollH ? '- - Soll' : '') + '</span></div>' + barsHtml(hrs, 'opt', 44, '#D3C8B6', P, sollH) + axis(r[0], r[1]), 'sb');
     var aktSum = m.todayDetail ? m.todayDetail.akt : null;
-    var c2 = card('<div class="cHead">' + lab('Aktivitäten') + '<span class="xxs faint">' + n0(aktSum) + ' heute</span></div>' + barsHtml(hrs, 'akt', 58, '#E2DDD3', CO, null) + axis(r[0], r[1]), 'sb');
-    return h + '<div class="tiles">' + c1 + c2 + '</div>' + (anyKnown ? '' : '<span class="xxs faint">Der Verlauf füllt sich, solange Chrome geöffnet ist.</span>');
+    var c2 = card('<div class="cHead">' + lab('Aktivitäten') + '<span class="xxs faint">' + n0(aktSum) + ' heute</span></div>' + barsHtml(hrs, 'akt', 58, '#E2DDD3', '#8A7F72', null) + axis(r[0], r[1]), 'sb');
+    var g = m.goals, st = g ? strip('Monat', n0(g.month.done) + ' / ' + n0(g.month.goal), g.month.goal ? g.month.done / g.month.goal * 100 : 0,
+      'Woche ' + n0(g.week.done) + ' / ' + n0(g.week.goal) + (g.month.perDayRest != null && g.month.done < g.month.goal ? ' · ' + dec(g.month.perDayRest) + '/Tag' : ''))
+      : '<div class="strip"><span class="xs muted">Für diesen Monat ist noch kein Ziel hinterlegt.</span></div>';
+    return h + '<div class="tiles">' + c1 + c2 + '</div>' + st + (anyKnown ? '' : '<span class="xxs faint">Der Verlauf füllt sich, solange Chrome geöffnet ist.</span>');
   }
 
   // Bezeichnungen der 6 Provisions-KPIs (Berechnung wie im Board)
@@ -137,60 +156,109 @@
     return h + '<div class="tiles">' + c1 + c2 + '</div>';
   }
 
-  function vCoaching(m) {
-    var co = m.coaching || { ok: false, sessions: [] }, imp = m.coachingImpact, t = m.today;
-    var h;
-    if (imp && imp.delta != null) {
-      var good = imp.lte ? imp.delta <= 0 : imp.delta >= 0, d = Math.round(imp.delta * 10) / 10;
-      var bar = '<div class="split"><div style="flex:' + Math.max(1, Math.min(imp.before, imp.after)) + ' 1 0;background:rgba(255,255,255,0.35)"></div><div style="flex:' + Math.max(1, Math.abs(imp.after - imp.before)) + ' 1 0;background:' + (good ? '#fff' : 'rgba(255,255,255,0.6)') + '"></div><div style="flex:' + Math.max(1, 100 - Math.max(imp.before, imp.after)) + ' 1 0;background:rgba(255,255,255,0.12)"></div></div>';
-      h = banner('Wirkung · ' + imp.label, badge('seit ' + dm(imp.date), good), (d > 0 ? '+' : '') + d.toLocaleString('de-DE'), side('vorher → jetzt', dec(imp.before) + ' → ' + dec(imp.after) + ' %'), bar);
-    } else h = banner('Wirkung', '', '–', '<span class="bNote">' + (co.ok ? 'noch keine Session mit Ziel-KPI' : 'Coaching-Daten noch nicht freigegeben') + '</span>', '');
-    var done = co.sessions.filter(function (s) { return s.status !== 'geplant' && s.date <= t; });
-    var next = co.sessions.filter(function (s) { return s.status === 'geplant' && s.date >= t; }).sort(function (a, b) { return a.date.localeCompare(b.date); })[0];
-    var last = done[0];
-    var c1 = last ? card('<div class="cHead">' + lab('Dein Fokus') + '<span class="xxs faint">' + esc(last.coach_name || '') + ' · ' + dm(last.date) + '</span></div>'
+  var WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  function wdm(ds) { return WD[new Date(ds + 'T00:00:00').getDay()] + ' ' + dm(ds); }
+  function inDays(ds, t) { var n = Math.round((new Date(ds + 'T00:00:00') - new Date(t + 'T00:00:00')) / 864e5); return n === 0 ? 'heute' : n === 1 ? 'morgen' : n > 0 ? 'in ' + n + ' Tagen' : 'seit ' + (-n) + ' Tagen fällig'; }
+  var KIND = { weekly: 'Weekly', perf: 'Performance', coaching: 'Coaching' };
+
+  function vTermine(m) {
+    var tm = m.termine || { items: [] }, t = m.today, it = tm.items, nx = it[0];
+    var h = nx ? banner('Nächster Termin', badge(KIND[nx.kind] || 'Termin', true), wdm(nx.date),
+        side(nx.due ? 'fällig' : (nx.time ? nx.time + ' Uhr' : 'Uhrzeit offen'), nx.coach ? nx.coach.split(' ')[0] : inDays(nx.date, t)),
+        '<div class="bNote" style="text-align:left">' + esc(nx.art) + (nx.thema ? ' · ' + esc(nx.thema) : '') + ' · ' + inDays(nx.date, t) + '</div>')
+      : banner('Nächster Termin', '', '–', '<span class="bNote">' + (tm.ok ? 'nichts geplant' : 'Termine noch nicht freigegeben') + '</span>', '');
+    var rows = it.slice(1, 4).map(function (x) {
+      return '<div class="li"><span class="liD">' + wdm(x.date) + '</span><span class="liT">' + esc(x.art) + '</span><span class="liR">' + (x.due ? 'fällig' : esc(x.time || '')) + '</span></div>';
+    }).join('') || '<div class="empty">Danach ist nichts weiter geplant.</div>';
+    var c1 = card('<div class="cHead">' + lab('Danach') + '<span class="xxs faint">' + (it.length > 1 ? (it.length - 1) + ' geplant' : '') + '</span></div>' + rows);
+    var last = tm.last;
+    var c2 = last ? card('<div class="cHead">' + lab('Dein Fokus') + '<span class="xxs faint">' + esc((last.coach_name || '').split(' ')[0]) + ' · ' + dm(last.date) + '</span></div>'
       + [['Start', GRN, last.start_note], ['Stop', RED, last.stop_note], ['Continue', '#B5513A', last.continue_note]].map(function (x) { return '<div class="ssc"><span style="color:' + x[1] + '">' + x[0] + '</span><span>' + esc(x[2] || '–') + '</span></div>'; }).join(''), 'sb')
       : card(lab('Dein Fokus') + '<div class="empty">Noch keine abgeschlossene Session.</div>');
-    var c2 = next ? card('<div class="cHead">' + lab('Nächste Session') + '<span class="xxs faint">' + esc(next.art || '') + '</span></div>'
-      + '<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:20px;font-weight:500">' + dm(next.date) + '</span><span class="xs muted">' + esc((next.uhrzeit || '').slice(0, 5)) + (next.coach_name ? ' · ' + esc(next.coach_name) : '') + '</span></div>'
-      + '<div class="row"><span class="muted" style="flex:1">Thema</span><span>' + esc(next.focus || '–') + '</span></div>', 'sb')
-      : card(lab('Nächste Session') + '<div class="empty">Keine Session geplant.</div>');
-    return h + '<div class="tiles">' + c1 + c2 + '</div>';
+    var imp = m.coachingImpact, st = '';
+    if (imp && imp.delta != null) {
+      var good = imp.lte ? imp.delta <= 0 : imp.delta >= 0, d = Math.round(imp.delta * 10) / 10;
+      st = strip('Wirkung', imp.label + ' ' + (d > 0 ? '+' : '') + d.toLocaleString('de-DE') + ' Pkt.', clamp(imp.after), dec(imp.before) + ' → ' + dec(imp.after) + ' % seit ' + dm(imp.date));
+    }
+    return h + '<div class="tiles">' + c1 + c2 + '</div>' + st;
   }
 
-  function vTimeline(m) {
-    var tl = m.timeline || { items: [] }, rec = tl.recordOpt || 0, cur = m.optToday || 0;
-    var today = '<div class="today"><span>Heute <b style="font-weight:500">' + n0(cur) + ' Opt.</b></span><span class="xs muted">' + (rec && cur < rec ? 'noch ' + (rec - cur) + ' bis zum Rekord' : rec ? 'Rekord!' : '') + '</span></div>';
-    var KIND = { rec: 'Rekord', best: 'Bestwert', mile: 'Meilenstein' };
-    var list = tl.items.map(function (x, i) {
-      return '<div class="tl"><div class="ln"><span class="' + (i === 0 ? 'x' : '') + '"></span><i class="pt ' + x.kind + '"></i><span class="' + (i === tl.items.length - 1 ? 'x' : '') + '"></span></div>'
-        + '<div style="display:flex;flex-direction:column;min-width:0"><span class="t">' + esc(x.title) + '</span><span class="m">' + dm(x.date) + ' · ' + KIND[x.kind] + '</span></div><span class="v">' + esc(x.value) + '</span></div>';
-    }).join('') || '<div class="empty">Noch keine Einträge.</div>';
-    var legend = '<div class="legend"><span><i class="pt rec"></i>Rekord</span><span><i class="pt best"></i>Bestwert</span><span><i class="pt mile"></i>Meilenstein</span></div>';
-    return '<div class="card tlCard" style="height:404px;flex-shrink:0">' + today + '<div class="tlList">' + list + '</div>' + legend + '</div>';
+  var STATUS = { offen: 'beantragt', genehmigt: 'genehmigt', abgelehnt: 'abgelehnt' };
+  function range(x) { return x.von === x.bis ? wdm(x.von) + (x.halb ? (x.halbTeil === 'nm' ? ' ½ NM' : ' ½ VM') : '') : dm(x.von) + '–' + dm(x.bis); }
+  function vUrlaub(m) {
+    var u = m.urlaub;
+    if (!u || !u.ok) return banner('Urlaub', '', '–', '<span class="bNote">Urlaubsdaten noch nicht freigegeben</span>', '') + '<div class="empty">Sobald die Freigabe da ist, siehst du hier dein Urlaubskonto und kannst Urlaub beantragen.</div>';
+    if (uView === 'antrag') return vAntrag(m);
+    var k = u.konto, T = Math.max(1, k.gesamt);
+    var bar = '<div class="split"><div style="flex:' + Math.max(k.tk, 0.01) + ' 1 0;background:#fff"></div><div style="flex:' + Math.max(k.pl, 0.01) + ' 1 0;background:rgba(255,255,255,0.7)"></div><div style="flex:' + Math.max(k.be, 0.01) + ' 1 0;background:rgba(255,255,255,0.45)"></div><div style="flex:' + Math.max(k.frei, 0.01) + ' 1 0;background:rgba(255,255,255,0.2)"></div></div>';
+    var h = banner('Urlaub ' + u.year, k.be > 0 ? badge(nf(k.be) + ' T. beantragt', true) : '', nf(k.frei) + ' Tage', side('Flex Days', 'noch ' + nf(k.flex) + ' von ' + k.flexMax), bar);
+    var rows = u.items.slice(0, 3).map(function (x) {
+      var pill = '<span class="pill' + (x.status === 'offen' ? ' open' : x.status === 'abgelehnt' ? ' no' : '') + '">' + (STATUS[x.status] || x.status) + '</span>';
+      var del = x.status === 'offen' && !m.preview ? '<button type="button" class="x" data-del="' + esc(x.id) + '" title="Antrag zurückziehen" aria-label="Antrag zurückziehen"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : '';
+      return '<div class="li"><span class="liD">' + range(x) + '</span><span class="liT">' + esc(x.label) + ' · ' + nf(x.tage) + ' T.</span>' + pill + del + '</div>';
+    }).join('') || '<div class="empty">Nichts geplant oder beantragt.</div>';
+    var c1 = card('<div class="cHead">' + lab('Geplant und beantragt') + '<span class="xxs faint">' + (u.items.length > 3 ? '+' + (u.items.length - 3) + ' weitere' : '') + '</span></div>' + rows);
+    var c2 = card(lab('Konto ' + u.year)
+      + '<div class="pl"><span>Anspruch' + (k.uebEff ? ' + Übertrag ' + nf(k.uebEff) : '') + '</span><b>' + nf(k.gesamt) + '</b></div>'
+      + '<div class="pl"><span>Genommen</span><b>' + nf(k.tk) + '</b></div><div class="pl"><span>Geplant</span><b>' + nf(k.pl) + '</b></div>'
+      + '<div class="pl"><span>Beantragt</span><b>' + nf(k.be) + '</b></div><div class="pl sum"><span>Noch frei</span><b>' + nf(k.frei) + '</b></div>', 'sb tight');
+    return h + '<div class="tiles">' + c1 + c2 + '</div><button type="button" class="primary wide" id="toAntrag">Urlaub beantragen</button>';
+  }
+  function nf(v) { return v == null ? '–' : String(Math.round(v * 10) / 10).replace('.', ','); }
+  function addD(ds, n) { var d = new Date(ds + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function vAntrag(m) {
+    form = form || { von: addD(m.today, 21), bis: addD(m.today, 21), halb: false, halbTeil: 'vm', notiz: '' };
+    if (form.halb) form.bis = form.von;
+    var ev = SOS.evalAntrag(m, form), H = ev.H.slice();
+    if (form.frei && form.frei.key === form.von + form.bis) {
+      var g = m.rules.freiGrenze, hit = form.frei.rows.filter(function (r) { return r.anzahl >= g && ev.days && ev.days.indexOf(r.tag) >= 0; });
+      if (hit.length) H.splice(1, 0, { t: 'warn', h: 'Am ' + hit.map(function (r) { return dm(r.tag); }).join(', ') + ' sind am Standort schon ' + g + ' oder mehr abwesend. Beantragen geht trotzdem, die Entscheidung trifft dein Coach.' });
+    }
+    if (m.preview) H.push({ t: 'info', h: 'Testmodus: Der Antrag wird nicht gesendet.' });
+    var art = ev.n ? (ev.art === 'flex' ? 'Flex Day' : 'Urlaub') + ' · ' + nf(ev.n) + ' Arbeitstag' + (ev.n === 1 ? '' : 'e') : '';
+    return '<div class="card fcard"><div class="frow"><div class="ff"><label for="fVon">Von</label><input id="fVon" type="date" value="' + form.von + '" min="' + m.today + '"></div>'
+      + '<div class="ff"><label for="fBis">Bis</label><input id="fBis" type="date" value="' + form.bis + '" min="' + form.von + '"' + (form.halb ? ' disabled' : '') + '></div></div>'
+      + '<div class="frow"><button type="button" class="sw' + (form.halb ? ' on' : '') + '" id="fHalb" role="switch" aria-checked="' + form.halb + '"><i></i><span>Halber Tag</span></button>'
+      + (form.halb ? '<div class="seg"><button type="button" data-ht="vm" class="' + (form.halbTeil !== 'nm' ? 'on' : '') + '">Vormittag</button><button type="button" data-ht="nm" class="' + (form.halbTeil === 'nm' ? 'on' : '') + '">Nachmittag</button></div>' : '') + '</div>'
+      + '<div class="ff"><label for="fNotiz">Notiz (optional)</label><input id="fNotiz" type="text" maxlength="200" value="' + esc(form.notiz) + '" placeholder="z. B. Hochzeit, Umzug"></div>'
+      + '<div class="hints">' + (art ? '<div class="hl ok"><b>' + art + '</b></div>' : '') + H.map(function (x) { return '<div class="hl ' + x.t + '">' + esc(x.h) + '</div>'; }).join('') + '</div>'
+      + '<p class="error" id="fErr" hidden></p></div>'
+      + '<div class="btnrow"><button type="button" class="secondary" id="fBack">Abbrechen</button><button type="button" class="primary" id="fSend"' + (ev.blocked || m.preview || sending ? ' disabled' : '') + '>' + (sending ? 'Wird gesendet …' : 'Antrag senden') + '</button></div>';
   }
 
   function vHinweise(m) {
     var hs = extra.hints && extra.hints.date === m.today ? extra.hints.items : [], imp = hs.filter(function (x) { return x.imp; }).length;
     var bar = '<div class="split">' + (hs.length ? '<div style="flex:' + imp + ' 1 0;background:#fff"></div><div style="flex:' + (hs.length - imp) + ' 1 0;background:rgba(255,255,255,0.5)"></div>' : '<div style="flex:1;background:rgba(255,255,255,0.22)"></div>') + '</div>';
     var h = banner('Hinweise heute', imp ? badge(imp + ' wichtig', false) : '', String(hs.length), side('zuletzt', hs[0] ? hs[0].t + ' Uhr' : '–'), bar);
-    var set = Object.assign({ prognose: true, record: true, idle: false }, extra.hintSettings || {});
-    var sw = [['prognose', 'Prognose fällt unter das Ziel'], ['record', 'Neuer Rekord'], ['idle', 'Eine Stunde ohne Optimierung']].map(function (x) {
-      return '<button class="sw' + (set[x[0]] ? ' on' : '') + '" data-sw="' + x[0] + '" role="switch" aria-checked="' + !!set[x[0]] + '"><i></i><span>' + x[1] + '</span></button>';
-    }).join('');
-    var c1 = card(lab('Benachrichtige mich, wenn …') + sw);
-    var list = hs.slice(0, 4).map(function (x) { return '<div class="hint"><span class="p' + (x.imp ? ' imp' : '') + '"></span><span class="tm">' + esc(x.t) + '</span><span>' + esc(x.text) + '</span></div>'; }).join('') || '<div class="empty">Heute noch keine Hinweise.</div>';
-    var c2 = card(lab('Verlauf') + list);
-    return h + '<div class="tiles">' + c1 + c2 + '</div>';
+    var list = hs.slice(0, 9).map(function (x) { return '<div class="hint"><span class="p' + (x.imp ? ' imp' : '') + '"></span><span class="tm">' + esc(x.t) + '</span><span>' + esc(x.text) + '</span></div>'; }).join('') || '<div class="empty">Heute noch keine Hinweise. Was dir gemeldet wird, stellst du über dein Kürzel unten in der Leiste ein.</div>';
+    return h + '<div class="card" style="height:320px;flex-shrink:0">' + lab('Heute') + list + '</div>';
   }
 
-  var VIEWS = { heute: ['Hallo', vHeute], verlauf: ['Verlauf', vVerlauf], kennzahlen: ['Kennzahlen', vKennzahlen], provision: ['Provision', vProvision], coaching: ['Coaching', vCoaching], timeline: ['Timeline', vTimeline], hinweise: ['Hinweise', vHinweise] };
+  function vMe(m) {
+    var set = Object.assign({}, HINT_DEFAULTS, extra.hintSettings || {});
+    var sw = [['prognose', 'Prognose fällt unter das Tagesziel'], ['record', 'Neuer Rekord'], ['idle', 'Eine Stunde ohne Optimierung'], ['antrag', 'Urlaubsantrag entschieden'], ['termin', 'Termin am nächsten Tag']].map(function (x) {
+      return '<button type="button" class="sw' + (set[x[0]] ? ' on' : '') + '" data-sw="' + x[0] + '" role="switch" aria-checked="' + !!set[x[0]] + '"><i></i><span>' + x[1] + '</span></button>';
+    }).join('');
+    var c0 = card('<div class="meHead"><span class="av big">' + esc(ini(m.emp.name)) + '</span><div><b>' + esc(m.emp.name) + '</b><span class="xs muted">' + esc(m.email || '') + '</span></div></div>'
+      + '<div class="pl"><span>Daten</span><b>' + stand(m) + '</b></div><div class="pl"><span>Version</span><b>' + esc(chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '') + (SOS.config.env === 'DEV' ? ' · Testsystem' : '') + '</b></div>');
+    var c1 = card(lab('Benachrichtige mich, wenn …') + sw);
+    return '<div style="height:150px;flex-shrink:0">' + c0 + '</div><div style="height:186px;flex-shrink:0">' + c1 + '</div><button type="button" class="secondary" id="meLogout">Abmelden</button>';
+  }
+  function ini(n) { return String(n || '').split(' ').map(function (x) { return x[0] || ''; }).join('').slice(0, 2).toUpperCase(); }
 
+  var VIEWS = { heute: ['Hallo', vHeute], verlauf: ['Verlauf', vVerlauf], kennzahlen: ['Kennzahlen', vKennzahlen], provision: ['Provision', vProvision], termine: ['Termine', vTermine], urlaub: ['Urlaub', vUrlaub], hinweise: ['Hinweise', vHinweise], me: ['Einstellungen', vMe] };
+
+  function tabBtn(id, label, inner, extraCls) {
+    return '<button type="button" class="tab' + (id === tab ? ' on' : '') + (extraCls || '') + '" data-tab="' + id + '" aria-label="' + label + '"' + (id === tab ? ' aria-current="page"' : '') + '>' + inner + '</button>';
+  }
   function renderTabs() {
     var hasNew = extra.hints && model && extra.hints.date === model.today && extra.hints.items.length && (!extra.hintsSeen || extra.hintsSeen < extra.hints.items.length);
     $('tabs').innerHTML = TABS.map(function (t) {
       if (!t) return '<div class="sep"></div>';
-      return '<button class="tab' + (t[0] === tab ? ' on' : '') + '" data-tab="' + t[0] + '" title="' + t[1] + '" aria-label="' + t[1] + '"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[t[0]] + '</svg>' + (t[0] === 'hinweise' && hasNew && tab !== 'hinweise' ? '<span class="dot"></span>' : '') + '</button>';
+      if (t === 'spacer') return '<div class="spacer"></div>';
+      if (t === 'me') return tabBtn('me', 'Einstellungen', '<span class="av">' + esc(model && model.emp ? ini(model.emp.name) : '') + '</span>', ' meBtn');
+      return tabBtn(t[0], t[1], '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[t[0]] + '</svg><span class="tlab">' + t[1] + '</span>'
+        + (t[0] === 'hinweise' && hasNew && tab !== 'hinweise' ? '<span class="dot"></span>' : ''));
     }).join('');
   }
   function renderSub(m) {
@@ -212,20 +280,55 @@
       return;
     }
     // Daten aus einer aelteren Version (z. B. direkt nach einem Update): neu laden statt abstuerzen
-    if (!m.forecast || !m.crMy || !m.prov || !m.todayDetail) { $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>'; if (!render._retry) { render._retry = true; refresh(); } return; }
+    if (!m.forecast || !m.crMy || !m.prov || !m.todayDetail || !m.termine) { $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>'; if (!render._retry) { render._retry = true; refresh(); } return; }
     render._retry = false;
     renderTabs(); renderSub(m);
     var v = VIEWS[tab];
-    $('title').textContent = tab === 'heute' ? 'Hallo ' + (m.emp.name || '').split(' ')[0] : v[0];
+    $('title').textContent = tab === 'heute' ? 'Hallo ' + (m.emp.name || '').split(' ')[0] : tab === 'urlaub' && uView === 'antrag' ? 'Urlaub beantragen' : v[0];
     try { $('view').innerHTML = v[1](m); }
     catch (e) { console.error(e); $('view').innerHTML = '<p class="error">Diese Ansicht konnte nicht geladen werden.</p>'; }
     if (tab === 'hinweise') {
-      Array.prototype.forEach.call(document.querySelectorAll('[data-sw]'), function (b) {
-        b.onclick = function () { var s = Object.assign({ prognose: true, record: true, idle: false }, extra.hintSettings || {}); s[b.dataset.sw] = !s[b.dataset.sw]; extra.hintSettings = s; SOS.storageSet({ hintSettings: s }).then(function () { render(model); }); };
-      });
       var cnt = extra.hints && extra.hints.date === m.today ? extra.hints.items.length : 0;
-      if (cnt !== extra.hintsSeen) { extra.hintsSeen = cnt; SOS.storageSet({ hintsSeen: cnt }); }
+      if (cnt !== extra.hintsSeen) { extra.hintsSeen = cnt; SOS.storageSet({ hintsSeen: cnt }); renderTabs(); }
     }
+    if (tab === 'me') {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-sw]'), function (b) {
+        b.onclick = function () { var st = Object.assign({}, HINT_DEFAULTS, extra.hintSettings || {}); st[b.dataset.sw] = !st[b.dataset.sw]; extra.hintSettings = st; SOS.storageSet({ hintSettings: st }).then(function () { render(model); }); };
+      });
+      $('meLogout').onclick = function () { SOS.logout().then(refresh); };
+    }
+    if (tab === 'urlaub') bindUrlaub(m);
+  }
+  function bindUrlaub(m) {
+    var b = $('toAntrag'); if (b) b.onclick = function () { uView = 'antrag'; form = null; render(model); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-del]'), function (x) {
+      x.onclick = function () {
+        if (!confirm('Diesen Antrag zurückziehen?')) return;
+        x.disabled = true; SOS.zurueckziehen(x.dataset.del).then(refresh).catch(function (e) { alert(e.message); x.disabled = false; });
+      };
+    });
+    if (uView !== 'antrag') return;
+    function upd(k, v) { form[k] = v; if (k === 'von' && form.bis < form.von) form.bis = form.von; render(model); checkFrei(); }
+    $('fVon').onchange = function () { upd('von', this.value); };
+    $('fBis').onchange = function () { upd('bis', this.value); };
+    $('fNotiz').oninput = function () { form.notiz = this.value; };
+    $('fHalb').onclick = function () { upd('halb', !form.halb); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ht]'), function (x) { x.onclick = function () { upd('halbTeil', x.dataset.ht); }; });
+    $('fBack').onclick = function () { uView = 'konto'; form = null; render(model); };
+    $('fSend').onclick = function () {
+      var ev = SOS.evalAntrag(model, form); if (ev.blocked || model.preview) return;
+      sending = true; render(model);
+      SOS.sendAntrag(model, form, ev).then(function () { sending = false; uView = 'konto'; form = null; return refresh(); })
+        .catch(function (e) { sending = false; render(model); var el = $('fErr'); if (el) { el.textContent = e.message; el.hidden = false; } });
+    };
+    if (!form.frei || form.frei.key !== form.von + form.bis) checkFrei();
+  }
+  function checkFrei() {
+    var key = form.von + form.bis;
+    SOS.teamFrei(form.von, form.halb ? form.von : form.bis).then(function (rows) {
+      if (!rows || !form || form.von + form.bis !== key) return;
+      form.frei = { key: key, rows: rows }; if (tab === 'urlaub' && uView === 'antrag') render(model);
+    }).catch(function () {});
   }
   function renderLogin() {
     $('title').textContent = 'Sales OS'; $('sub').textContent = SOS.config.env === 'DEV' ? 'Testsystem' : '';
@@ -246,14 +349,13 @@
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('.tab'); if (!b) return;
-    tab = b.dataset.tab; SOS.storageSet({ lastTab: tab }); render(model);
+    tab = b.dataset.tab; if (tab !== 'urlaub') { uView = 'konto'; form = null; } SOS.storageSet({ lastTab: tab }); render(model);
   });
-  $('logout').addEventListener('click', function (e) { e.preventDefault(); SOS.logout().then(refresh); });
 
   SOS.storageGet(['model', 'session', 'lastTab']).then(function (st) {
     if (st.lastTab && VIEWS[st.lastTab]) tab = st.lastTab;
     if (!st.session) { render({ state: 'login' }); return; }
     $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>';
-    loadExtra().then(function () { if (st.model && st.model.state === 'ok' && st.model.forecast && st.model.prov) render(st.model); refresh(); });
+    loadExtra().then(function () { if (st.model && st.model.state === 'ok' && st.model.forecast && st.model.prov && st.model.termine) render(st.model); refresh(); });
   });
 })();

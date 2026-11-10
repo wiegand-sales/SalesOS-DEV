@@ -38,7 +38,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 // ── Hinweise: werden bei jedem Abruf geprueft, je Tag hoechstens einmal pro Art (Leerlauf: einmal pro Stunde)
-var HINT_DEFAULTS = { prognose: true, record: true, idle: false };
+var HINT_DEFAULTS = { prognose: true, record: true, idle: false, antrag: true, termin: true };
 function hhmm(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 async function addHint(day, imp, text, notify) {
   var st = await SOS.storageGet(['hints']);
@@ -83,6 +83,26 @@ async function checkHints(m) {
   if (m.crMy && m.crMy.today != null && m.crMy.month != null && m.crMy.closers >= 5 && m.crMy.today > m.crMy.month && !flags.crmy) {
     flags.crmy = true;
     await addHint(m.today, false, 'CR MY über Monatsschnitt', false);
+  }
+  // 5) Urlaubsantrag wurde genehmigt oder abgelehnt (Vergleich mit dem letzten Abruf)
+  if (m.urlaub && m.urlaub.ok && !m.preview) {
+    var prev = (await SOS.storageGet(['absStatus'])).absStatus, cur = m.urlaub.statusById || {};
+    if (prev && prev.emp === m.emp.id) {
+      for (var id in cur) {
+        if (prev.s[id] === 'offen' && (cur[id] === 'genehmigt' || cur[id] === 'abgelehnt')) {
+          var x = (m.urlaub.items || []).find(function (i) { return i.id === id; });
+          var wann = x ? (x.von === x.bis ? x.von.slice(8, 10) + '.' + x.von.slice(5, 7) + '.' : x.von.slice(8, 10) + '.' + x.von.slice(5, 7) + '.–' + x.bis.slice(8, 10) + '.' + x.bis.slice(5, 7) + '.') : '';
+          await addHint(m.today, cur[id] === 'abgelehnt', 'Urlaubsantrag ' + (wann ? wann + ' ' : '') + cur[id], set.antrag);
+        }
+      }
+    }
+    await SOS.storageSet({ absStatus: { emp: m.emp.id, s: cur } });
+  }
+  // 6) Termin am naechsten Arbeitstag (einmal am Tag, ab 15 Uhr)
+  if (m.termine && m.termine.items && now.getHours() >= 15 && !flags.termin) {
+    var tm = new Date(now.getTime() + 86400000), nextD = tm.getFullYear() + '-' + ('0' + (tm.getMonth() + 1)).slice(-2) + '-' + ('0' + tm.getDate()).slice(-2);
+    var nx = m.termine.items.filter(function (x) { return x.date === nextD && !x.due; });
+    if (nx.length) { flags.termin = true; await addHint(m.today, false, 'Morgen: ' + nx.map(function (x) { return x.art + (x.time ? ' um ' + x.time : ''); }).join(', '), set.termin); }
   }
   await SOS.storageSet({ hintFlags: flags });
 }
