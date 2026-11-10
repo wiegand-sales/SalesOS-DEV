@@ -783,6 +783,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .au-t{min-width:0!important;table-layout:fixed}.au-t th,.au-t td{text-align:left!important}.au-t td{background:#F7F5F0}.au-t tr:hover td{background:#EFECE5}.au-t td small{display:block;color:var(--text3);font-size:11.5px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.au-t td b{font-weight:600}
 .au-lt td small{display:block;color:var(--text3);font-size:11.5px}.au-due{font-weight:600;color:#5c554c}.au-due.od{color:#9A3F22;font-weight:700}.au-cm{max-width:480px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#5c554c}
 .au-sec2{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b6b67;margin:0 2px 6px;display:flex}.au-sec2 span{margin-left:auto;font-weight:500}
+.ov-h{display:flex;flex-direction:column;gap:6px}.ov-r{display:flex;align-items:center;gap:10px;min-height:42px;padding:8px 12px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;font-size:13px;cursor:pointer}.ov-r:hover{border-color:#CDBB9E}
+.ov-r>i{font-size:17px;flex-shrink:0}.ov-r.w>i{color:#C2522F}.ov-r.ok>i{color:#2F6B4F}.ov-r.i>i{color:#8A7F72}.ov-r.w{background:#FDF3EF;border-color:#F3CDBE}.ov-r span{flex:1;min-width:0}.ov-r em{font-style:normal;font-size:11.5px;color:var(--text3);white-space:nowrap}
 .at-tk{background:#fff;border:1px solid #E4E0D6;border-radius:12px;overflow:hidden;margin-bottom:8px}.at-tk.hl{border-color:#F08566;box-shadow:0 0 0 3px rgba(240,133,102,.18)}.at-tk .au-st{height:26px}
 .at-b{display:grid;grid-template-columns:minmax(0,1fr) 220px 110px;gap:10px;align-items:center;padding:10px 12px}.at-b .btn{height:36px;width:110px;justify-content:center}
 .at-selw{display:flex;align-items:center;gap:8px;min-width:0}.at-selw>span{font-size:11.5px;color:var(--text3);flex-shrink:0}.at-selw>*:last-child{flex:1;min-width:0}.at-selw select{height:36px!important}.at-selw .ui-sel{height:36px!important;min-height:36px!important}
@@ -13166,7 +13168,7 @@ function openCoachingInfoModal(empId){
     chartHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="'+x.lbl+': '+x.v+(x.fut?' geplant':' Sessions')+'"><span style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px">'+x.v+'</span><div style="width:70%;height:'+hp+'px;border-radius:4px 4px 0 0;'+(x.fut?'border:1.5px dashed #B4AC9C;background:transparent':x.cur?'background:#3a3833':'background:#B4AC9C')+'"></div></div>';});
   chartHtml+='</div><div style="display:flex;gap:6px;margin-top:4px;margin-bottom:8px">'+mVals.map(function(x){return '<span style="flex:1;text-align:center;font-size:11px;color:'+(x.cur?'var(--text)':'var(--text3)')+';font-weight:'+(x.cur?700:600)+'">'+x.lbl+'</span>';}).join('')+'</div></div>'
     +'<div id="ciSum" style="font-size:14px;color:var(--text);line-height:1.5;padding:10px 0 0;border-top:1px solid #E4E0D6">'+sumTxt+'</div>';
-  var box=ciBox('ciSecTopBox','Coaching im Überblick',chips,chartHtml);
+  var box=ciBox('ciSecTopBox','Was ist los?','<span style="font-size:12px;font-weight:600;color:var(--text3)">automatisch erkannt · Klick führt in den Bereich</span>',typeof ovHints==='function'?ovHints(emp):chartHtml);
   var notizTxt=emp.notes||'';
   var noteBox=ciBox('ciSecNotiz','Notiz zum Mitarbeiter','<span style="font-size:12px;font-weight:600;color:var(--text3)">nur für Coaches und Admins</span>',
     '<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;padding:10px 12px">'
@@ -13174,7 +13176,7 @@ function openCoachingInfoModal(empId){
     +'<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-top:4px"><span>Wird beim Verlassen des Feldes automatisch gespeichert</span><span id="coachingInfoNotizStatus"></span></div></div>');
   var role=emp.role||'';
   var h='<div style="display:flex;align-items:center;padding:14px 16px 6px">'
-    +'<div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Coaching-Historie</div>'
+    +'<div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Übersicht</div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(emp.name)+(role?' · '+esc(role):'')+(mainCoach?' · Coach '+esc(mainCoach.name.split(' ')[0]):'')+'</div></div>'
     +'<button class="btn" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal(\'coachingInfoModal\')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>';
   // Gleiche Bausteine wie die Hauptmenueleiste (rl-btn: abgerundete Quadrate, aktiv weiss mit Koralle-Strich, Namensschild beim Darueberfahren)
@@ -13182,7 +13184,7 @@ function openCoachingInfoModal(empId){
   var sc=function(id){return "var el=document.getElementById('"+id+"');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})";};
   h+='<div style="display:flex;min-height:0;flex:1">'
     +'<div style="width:56px;flex-shrink:0;align-self:stretch;margin:14px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
-    +railBtn('ti-chart-bar','Coaching im Überblick',sc('ciSecTop'),true)+railBtn('ti-notes','Notiz zum Mitarbeiter',sc('ciSecNotiz'))+railBtn('ti-list','Verlauf',sc('ciSecVerlauf'))
+    +railBtn('ti-bulb','Was ist los?',sc('ciSecTop'),true)+railBtn('ti-notes','Notiz zum Mitarbeiter',sc('ciSecNotiz'))+railBtn('ti-list','Verlauf',sc('ciSecVerlauf'))
     +'<span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span>'
     +railBtn('ti-calendar-plus','Session planen',"closeModal('coachingInfoModal');openSessionModal('"+empId+"')")
     +'</div>'
@@ -13253,7 +13255,7 @@ function openCoachingInfoModal(empId){
   h+='</div></div>'; // Ende Inhalt + Flex
   window._ciType='diverses';
   document.getElementById('coachingInfoModalBody').innerHTML=h;
-  openModal('coachingInfoModal');
+  openModal('coachingInfoModal');try{if(typeof puBanEnsure==='function')setTimeout(function(){puBanEnsure('coachingInfoModal',empId);},0);}catch(_e){}
 }
 function openSessionModalWithFocus(empId,focusText){
   openSessionModal(empId);
@@ -14796,10 +14798,11 @@ function puBanFor(k,e){var y=today().slice(0,4),mk=today().slice(0,7),mn=MONTH_N
     return puBanHtml(e.name.toUpperCase()+' · ENTWICKLUNG',[['LETZTE',L0&&L0.date?kalF(L0.date):'–',EV.length+(EV.length===1?' Bewertung':' Bewertungen')],['SKILL',s1[0],s1[1]],['WILL',s2[0],s2[1]],['RESULT',s3[0],s3[1]],['ZIELE',G.length,'offen']]);}
   if(k==='ca'){var R=(callRatings[e.id]||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),q=typeof qaCallsDue==='function'?qaCallsDue(e.id):{cnt:0,target:5},sc=R.filter(function(r){return r.score!=null;}),avg=sc.length?Math.round(sc.reduce(function(a,r){return a+(+r.score||0);},0)/sc.length):null;
     return puBanHtml(e.name.toUpperCase()+' · CALLS',[['BEWERTET',q.cnt+'/'+q.target,'Calls in 60 Tagen'],['Ø SCORE',avg==null?'–':avg+(avg<=100?' %':''),sc.length+' Bewertungen'],['LETZTE',R[0]&&R[0].date?kalF(R[0].date):'–',R[0]?'Bewertung':'noch keine'],['GESAMT',R.length,'Bewertungen'],['AUFGABEN',open,'offen']]);}
+  if(k==='ov'){var S=ovStats(e);return puBanHtml(e.name.toUpperCase()+(e.role?' · '+e.role:'')+' · '+mn.toUpperCase(),[['ZIEL BIS HEUTE',S.pct==null?'–':S.pct+' %',S.so.ziel?'hochgerechnet '+ztEur(S.hr):'kein Ziel hinterlegt'],['TREND',S.trend==null?'–':(S.trend>=0?'+':'−')+Math.abs(S.trend)+' %','Marge/Tag zum Vormonat'],['NÄCHSTER TERMIN',S.nx?kalF(S.nx.d):'–',S.nx?S.nx.l:'nichts geplant'],['ÜBERFÄLLIG',S.od,S.od?'Aufgaben':'nichts überfällig'],['URLAUB FREI',kalNf(S.frei),'Tage '+mk.slice(0,4)]]);}
   var bm=beschaeftigungsmonat(e,mk),ist=istForEmpMonth(e.id,mk),o=0;(performance[e.id]||[]).forEach(function(r){if(r.date&&r.date.slice(0,7)===mk)o+=r.optGesamt||0;});var k2=kalKonto(e.id,y),s2=puSesStats(e);
   return puBanHtml(e.name.toUpperCase()+(e.role?' · '+e.role:''),[['IM UNTERNEHMEN','Monat '+bm,e.startDate?'seit '+kalF(e.startDate)+e.startDate.slice(2,4):''],['MARGE',ztEur(ist),mn],['OPT.',Math.round(o).toLocaleString('de-DE'),mn],['SESSIONS',s2.mon,mn],['AUFGABEN',open,'offen']]);}
 var PU_BAN_AT={cevModal:['en','cevSec1'],neuesCoachingModal:['se','ncSecNew'],sessionPlanenModal:['se','spSecNew'],qaBewertungModal:['ca','qaSecBew'],coachingInfoModal:['ov','ciSecTop']};
-function puBanEnsure(id){var m=document.getElementById(id);if(!m)return;var e=kalEmp(selectedEmp);if(!e)return;var cfg=PU_BAN_AT[id],anchor=null,host=null;
+function puBanEnsure(id,eid){var m=document.getElementById(id);if(!m)return;var e=kalEmp(eid||selectedEmp||(typeof _puEmp!=='undefined'&&_puEmp&&(_puEmp.id||_puEmp)));if(!e)return;var cfg=PU_BAN_AT[id],anchor=null,host=null;
   if(cfg){anchor=document.getElementById(cfg[1]);host=anchor&&anchor.parentElement;}
   else{host=[].slice.call(m.querySelectorAll('div')).find(function(x){var cs=getComputedStyle(x);return cs.overflowY==='auto'&&x.closest('.modal-ov')===m;});anchor=host&&host.firstElementChild;}
   if(!host)return;if([].slice.call(host.querySelectorAll('div')).some(function(x){return /linear-gradient/.test(x.getAttribute('style')||'')&&!x.classList.contains('pu-ban');}))return;
@@ -14818,6 +14821,29 @@ function puColOpen(id){puCollapse(id);puColSet(id,true);}
   if(id==='neuesCoachingModal'){puColSet('ncSecNew',!!(typeof _editingSessionId!=='undefined'&&_editingSessionId)||!!window._puOpenNew);window._puOpenNew=false;}
   if(id==='sessionPlanenModal')puColSet('spSecNew',!!window._puOpenNew);if(id==='cevModal')puColSet('cevSec1',!!window._puOpenNew||!!(document.getElementById('cevCancelEdit')&&document.getElementById('cevCancelEdit').offsetParent));if(id==='qaBewertungModal')puColSet('qaSecBew',!!window._puOpenNew);
   puBanEnsure(id);setTimeout(function(){try{puBanEnsure(id);}catch(e){}},80);}catch(e){console.warn('Banner',e);}return r;};window.puDecorate._ban=true;window.puDecorate._au=true;})();
+
+// ── Übersicht: Lagebild statt Wiederholung ──
+function ovSoll(e,mk){var x=ztEmpMonth(e,mk),t=today(),all=0,done=0;ztWeeks(mk).forEach(function(wm,i){var w=x.weeks[i];if(!w)return;if(w.ds){w.ds.forEach(function(d){all++;if(d<t)done++;});}else{all+=w.n;var wd=0;for(var j=0;j<5;j++){var d=kalAdd(wm.from,j);if(d.slice(0,7)===mk&&d<t&&!kalWknd(d))wd++;}done+=Math.min(w.n,wd);}});return {ziel:x.ziel,anteil:all?x.ziel*done/all:0,done:done,all:all};}
+function ovStats(e){var t=today(),mk=t.slice(0,7),pm=kalI(new Date(+mk.slice(0,4),+mk.slice(5,7)-2,1)).slice(0,7),so=ovSoll(e,mk),ist=istForEmpMonth(e.id,mk),istPm=istForEmpMonth(e.id,pm);
+  var hr=so.done?ist/so.done*so.all:0,dayNow=so.done?ist/so.done:0,pmDays=0;ztDaysOfMonth(pm).forEach(function(d){if(kalWorkday(e,d)&&!(kalOn(e.id,d)&&kalOn(e.id,d).art!=='krank'))pmDays++;});var dayPm=pmDays?istPm/pmDays:0;
+  var nx=null;(protocols[e.id]||[]).forEach(function(p){if(p.status==='geplant'&&p.date>=t&&(!nx||p.date<nx.d))nx={d:p.date,l:p.type||'Session'};});
+  absences.forEach(function(a){if(String(a.employeeId)===String(e.id)&&a.status!=='abgelehnt'&&a.status!=='storniert'&&a.bis>=t&&(!nx||a.von<nx.d))nx={d:a.von>t?a.von:t,l:KAL_ART[kalShowArt(a)]};});
+  var od=0;try{od=aufgAll().filter(function(o){return String(o.emp)===String(e.id)&&aufgState(o).c==='od';}).length;}catch(er){}
+  return {so:so,ist:ist,pct:so.anteil?Math.round(ist/so.anteil*100):null,hr:hr,trend:dayPm?Math.round((dayNow-dayPm)/dayPm*100):null,nx:nx,od:od,frei:kalKonto(e.id,t.slice(0,4)).frei};}
+function ovHints(e){var t=today(),S=ovStats(e),H=[],key=function(k){return esc(k).replace(/'/g,"\\'");};
+  var go=function(area){return 'puGo(\''+area+'\')';};
+  if(S.pct!=null){if(S.pct<90)H.push(['w','Marge bei <b>'+S.pct+' %</b> des Ziels bis heute · hochgerechnet '+ztEur(S.hr)+' von '+ztEur(S.so.ziel),go('pf'),'Performance']);else H.push(['ok','Marge im Plan: <b>'+S.pct+' %</b> des Ziels bis heute · hochgerechnet '+ztEur(S.hr),go('pf'),'Performance']);}
+  try{var r=kalWeeklyReason(e);if(r)H.push(['w',esc(r),go('pf'),'Performance']);}catch(er){}
+  var L=[];try{L=aufgAll().filter(function(o){return String(o.emp)===String(e.id);}).sort(function(a,b){return a.due<b.due?-1:1;});}catch(er){}
+  L.filter(function(o){return aufgState(o).c==='od';}).slice(0,2).forEach(function(o){H.push(['w','<b>'+esc(o.art)+'</b> '+aufgState(o).l,'aufgOpenEmp(\''+key(o.key)+'\')','Aufgabe']);});
+  L.filter(function(o){return o.art==='Performance-Gespräch'&&aufgState(o).c!=='od';}).slice(0,1).forEach(function(o){H.push(['i','<b>Performance-Gespräch</b> fällig '+aufgFmt(o.due)+' ('+aufgState(o).l+')','aufgOpenEmp(\''+key(o.key)+'\')','Aufgabe']);});
+  var ab=absences.filter(function(a){return String(a.employeeId)===String(e.id)&&a.status!=='abgelehnt'&&a.status!=='storniert'&&a.bis>=t&&a.von<=kalAdd(t,30)&&!a.fixed;}).sort(function(a,b){return a.von<b.von?-1:1;})[0];
+  if(ab){var loc=kalIsVlc(e)?'VLC':'MUC',mx=0;kalDays(ab).forEach(function(d){var n=kalFree(d,loc,e.id).length;if(n>mx)mx=n;});H.push([mx>=kalRules().freiGrenze?'w':'i','<b>'+KAL_ART[kalShowArt(ab)]+'</b> '+(ab.von<=t?'läuft bis '+kalF(ab.bis):'ab '+kalF(ab.von))+' · '+kalNf(kalAmt(ab))+' T'+(ab.status==='offen'?' · Antrag offen':'')+(mx?' · bis zu '+mx+' andere frei':''),go('ab'),'Abwesenheit']);}
+  var last=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant'&&p.date&&p.date<=t;}).sort(function(a,b){return a.date<b.date?1:-1;})[0],dl=last?kalDiff(last.date,t):null;
+  if(dl==null||dl>14)H.push(['w',last?'Letzte Session vor <b>'+dl+' Tagen</b> ('+esc(last.type||'Session')+')':'Noch <b>keine Session</b> dokumentiert',go('se'),'Coaching']);
+  if(typeof qaCallsDue==='function'){var q=qaCallsDue(e.id);if(q.due>0)H.push([q.cnt===0?'w':'i','Nur <b>'+q.cnt+' von '+q.target+'</b> Calls in 60 Tagen bewertet',go('ca'),'Call']);}
+  if(!H.some(function(h){return h[0]==='w';}))H.unshift(['ok','<b>Alles im grünen Bereich</b> · nichts Dringendes offen','','']);
+  return '<div class="ov-h">'+H.slice(0,6).map(function(h){return '<div class="ov-r '+h[0]+'"'+(h[2]?' onclick="'+h[2]+'"':'')+'><i class="ti '+(h[0]==='w'?'ti-alert-triangle':h[0]==='ok'?'ti-circle-check':'ti-info-circle')+'"></i><span>'+h[1]+'</span>'+(h[3]?'<em>'+h[3]+' <i class="ti ti-chevron-right"></i></em>':'')+'</div>';}).join('')+'</div>';}
 </script>
 </body>
 </html>
