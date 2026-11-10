@@ -13853,7 +13853,7 @@ function kalErrText(res){var m=(res&&res.error&&res.error.message)||'';if(/halb_
 function kalActor(){return currentCoach?currentCoach.name:(currentAuthUser?resolveNonEmployeeName(currentAuthUser.email):'');}
 
 // ── Regeln (Einstellungen › Kalender) ──
-function kalRules(){var r=settings.kalenderRules||{};return {freiGrenze:r.freiGrenze!=null?+r.freiGrenze:3,freiBezug:r.freiBezug||'standort',verschieben:r.verschieben||'direkt',
+function kalRules(){var r=settings.kalenderRules||{};return {freiGrenze:r.freiGrenze!=null?+r.freiGrenze:3,freiBezug:r.freiBezug||'standort',verschieben:r.verschieben||'direkt',fehltAn:r.fehltAn!==false,fehltZeit:/^\d{2}:\d{2}$/.test(r.fehltZeit||'')?r.fehltZeit:'09:30',
   weekly:Object.assign({auto:true,minKpis:2,marge:true,zeitraum:'monat'},r.weekly||{}),routinen:r.routinen||[]};}
 function kalSaveRules(r,log){settings.kalenderRules=r;saveSettingJson('kalenderRules',r,log||'Kalender-Regeln geändert');renderMain();}
 function kalRuleSet(path,val){var r=kalRules();if(path.indexOf('weekly.')===0)r.weekly[path.slice(7)]=val;else r[path]=val;kalSaveRules(r);}
@@ -14181,6 +14181,9 @@ function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filte
     +row('Hinweis „andere frei“ ab','So viele andere haben am selben Tag schon frei oder beantragt','<input type="number" min="1" step="1" style="width:80px;text-align:right" value="'+R.freiGrenze+'" onchange="kalRuleSet(\'freiGrenze\',Math.max(1,+this.value||3))">')
     +row('Gezählt wird','Je Standort (alle Teams zusammen) oder nur im eigenen Team',seg('freiBezug',R.freiBezug,[['standort','je Standort'],['team','je Team']]))
     +row('Genehmigten Urlaub per Ziehen verschieben','„Als Antrag“: der Urlaub wird wieder offen und muss neu genehmigt werden',seg('verschieben',R.verschieben,[['direkt','direkt übernehmen'],['antrag','als Antrag']]))+'</div>';
+  h+='<div class="card"><div class="card-title">Mitarbeiter fehlt?</div><div class="card-sub">Aufgabe für den zuständigen Coach, wenn ein Agent an einem Arbeitstag ohne Abwesenheit bis zur Uhrzeit keine Aktivität hat</div>'
+    +row('Prüfen','',seg('fehltAn',R.fehltAn?'1':'0',[['1','an'],['0','aus']]).replace(/kalRuleSet\('fehltAn','(\d)'\)/g,function(m,v){return "kalRuleSet('fehltAn',"+(v==='1'?'true':'false')+")";}))
+    +row('Keine Aktivität bis','Die Leistungsdaten kommen alle 15 Minuten · danach erscheint die Aufgabe','<input type="time" step="900" style="width:120px" value="'+R.fehltZeit+'" onchange="if(/^\\d{2}:\\d{2}$/.test(this.value))kalRuleSet(\'fehltZeit\',this.value)">')+'</div>';
   h+='<div class="card"><div class="card-title">Weekly automatisch vorschlagen</div><div class="card-sub">Unter „Planen“ erscheint ein Weekly nur für Agents, die diese Woche noch keine Session haben und die Bedingung erfüllen</div>'
     +row('Automatisch vorschlagen','',seg('weekly.auto',W.auto?'1':'0',[['1','an'],['0','aus']]).replace(/kalRuleSet\('weekly\.auto','(\d)'\)/g,function(m,v){return "kalRuleSet('weekly.auto',"+(v==='1')+")";}))
     +row('wenn mindestens … KPIs unter Ziel','Geprüft werden CR OEM, CR TW, CR SY, CR MY, CR YES und Opt./Std. gegen die individuellen Ziele','<input type="number" min="1" max="6" step="1" style="width:80px;text-align:right" value="'+W.minKpis+'" onchange="kalRuleSet(\'weekly.minKpis\',Math.max(1,+this.value||2))">')
@@ -14692,9 +14695,9 @@ function aufgAll(){var t=today(),out=[],add=function(o){var m=aufgMeta[o.key]&&a
   // 5) QA-Bewertungen (weniger als 5 bewertete Calls in 60 Tagen)
   teamTargetList().forEach(function(e){if(typeof qaCallsDue!=='function')return;var q=qaCallsDue(e.id);if(q.due>0)add({key:'qa:'+e.id,art:'QA-Bewertung',kind:'routine',bundle:'QA-Bewertungen',t:e.name,s:q.cnt+' von '+q.target+' Calls in 60 Tagen bewertet',due:kalAdd(t,7),born:t,def:aufgCoachOf(e),act:'Mitarbeiter öffnen',go:function(){selectedEmp=e.id;view='emp';activeTab='qa';renderSidebar();renderMain();},emp:e.id});});
   // 6) Mitarbeiter fehlt? (ab 09:30 an Arbeitstagen: keine Aktivität, keine Abwesenheit)
-  var nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(hm>=AUFG_FEHLT_MIN&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
+  var KR=kalRules(),fz=KR.fehltZeit.split(':'),fMin=(+fz[0])*60+(+fz[1]),nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(KR.fehltAn&&hm>=Math.min(fMin,AUFG_FEHLT_MIN_OVR==null?fMin:AUFG_FEHLT_MIN_OVR)&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
     var act=0;(performance[e.id]||[]).forEach(function(r){if(r.date===t)act+=(r.gesamtAktivitaeten||0)+(r.oem_aktivitaeten||0)+(r.optGesamt||0);});if(act>0)return;
-    add({key:'fehlt:'+e.id+':'+t,art:'Mitarbeiter fehlt?',kind:'auto',t:e.name,s:'keine Aktivität bis '+('0'+Math.floor(AUFG_FEHLT_MIN/60)).slice(-2)+':'+('0'+AUFG_FEHLT_MIN%60).slice(-2)+' · keine Abwesenheit eingetragen',due:t,born:t,def:aufgDefault(e),act:'Abwesenheit eintragen',emp:e.id,go:function(){openAbsPopup(e.id,t.slice(0,7));abNewForm();AB.fOpen=true;AB.f.art='krank';AB.f.status='genehmigt';AB.f.von=t;AB.f.bis=t;abRender();}});});
+    add({key:'fehlt:'+e.id+':'+t,art:'Mitarbeiter fehlt?',kind:'auto',t:e.name,s:'keine Aktivität bis '+KR.fehltZeit+' · keine Abwesenheit eingetragen',due:t,born:t,def:aufgDefault(e),act:'Abwesenheit eintragen',emp:e.id,go:function(){openAbsPopup(e.id,t.slice(0,7));abNewForm();AB.fOpen=true;AB.f.art='krank';AB.f.status='genehmigt';AB.f.von=t;AB.f.bis=t;abRender();}});});
   // 7) Freie Tasks
   Object.keys(tasks||{}).forEach(function(eid){(tasks[eid]||[]).forEach(function(k){if(k.done||k.status==='done')return;var e=kalEmp(eid);if(!e)return;
     add({key:'task:'+k.id,art:'Task',kind:'task',t:k.text,s:e.name+(k.source?' · '+k.source:''),due:k.dueDate||kalAdd(t,7),born:t,def:aufgCoachOf(e),act:'Öffnen',go:function(){selectedEmp=eid;view='emp';activeTab='tasks';renderSidebar();renderMain();},emp:eid,taskId:k.id});});});
@@ -15032,7 +15035,7 @@ function vzEnsure(id,eid){var cfg=VZ_AT[id];if(!cfg)return;var m=document.getEle
 (function(){if(typeof puDecorate!=='function'||puDecorate._viz)return;var o=puDecorate;window.puDecorate=function(id){var r=o.apply(this,arguments);try{vzEnsure(id);setTimeout(function(){vzEnsure(id);},90);}catch(e){}return r;};window.puDecorate._viz=true;window.puDecorate._ban=true;window.puDecorate._au=true;})();
 
 // ── Heutige Leistungsdaten alle 15 Minuten nachladen (Cronjob füllt die Tabelle laufend) ──
-var AUFG_FEHLT_MIN=9*60+30,_perfTodayT=0;
+var AUFG_FEHLT_MIN_OVR=null,_perfTodayT=0;
 function perfRefreshToday(){if(typeof sb==='undefined'||!sb)return Promise.resolve(false);var t=today();_perfTodayT=Date.now();
   return sb.from('performance').select(PERF_COLS).eq('date',t).then(function(res){if(!res||res.error){console.warn('Leistungsdaten heute',res&&res.error);return false;}
     var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push(perfRowMap(r));});
