@@ -7685,7 +7685,6 @@ function renderTab(){
       });
       html+='</select>';
     }
-    html+='<button class="btn" data-eid="'+emp.id+'" onclick="openCommentModal(this.dataset.eid)" style="margin-right:8px"><i class="ti ti-message-plus"></i> Kommentar</button>';
     html+='<button class="btn btn-primary" data-eid="'+emp.id+'" onclick="openCoachingEval(this.dataset.eid)"><i class="ti ti-clipboard-plus"></i> Mitarbeiterentwicklung bewerten</button>';
     html+='</div>';
     html+='</div>'; // Ende Entwicklungsprofil-Karte
@@ -7782,7 +7781,6 @@ function renderTab(){
             +'<span style="'+CHIP+'">Kommentar · '+esc(cl)+'</span>'
             +'<span style="flex:1;min-width:0;font-size:13.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.note||'')+'</span>'
             +(c.author?'<span style="font-size:12.5px;color:var(--text3);white-space:nowrap">'+esc(c.author)+'</span>':'')
-            +(canEditHistorie()?'<button class="btn btn-sm" title="Bearbeiten" data-eid="'+emp.id+'" data-cid="'+c.id+'" onclick="event.stopPropagation();openCommentModal(this.dataset.eid,this.dataset.cid)" style="'+IB+'"><i class="ti ti-pencil"></i></button>':'')
             +(canEditHistorie()?'<button class="btn btn-sm" title="Löschen" data-eid="'+emp.id+'" data-cid="'+c.id+'" onclick="event.stopPropagation();deleteHistorieComment(this.dataset.eid,this.dataset.cid)" style="'+IB+'"><i class="ti ti-trash"></i></button>':'')
             +'<span style="width:34px;flex-shrink:0"></span>'
             +'</div>';
@@ -11322,7 +11320,6 @@ var PU=[
   {k:'se',n:'Coaching',i:'ti-users',ids:['neuesCoachingModal','sessionPlanenModal']},
   {k:'ca',n:'Call',i:'ti-phone',ids:['qaBewertungModal']},
   {k:'en',n:'Mitarbeiterentwicklung',i:'ti-trending-up',ids:['cevModal']},
-  {k:'ko',n:'Kommentar',i:'ti-message-plus',ids:['commentModal']},
   {k:'ta',n:'Task',i:'ti-checkbox',ids:['addTaskModal']},
   {k:'es',n:'Einstellungen',i:'ti-settings',ids:['empSetModal']}
 ];
@@ -11455,7 +11452,7 @@ function puDecorate(id){
     foot.appendChild(bar);
   }
   // Reihenfolge wie im Hauptmenü: Zahlen | Arbeiten | Verwaltung (Striche dazwischen)
-  var PU_ORDER=['ov','pf','|','ta','ab','se','ca','en','ko','|','es'],seen={},lst=[];PU_ORDER.forEach(function(k){if(k==='|'){lst.push('|');return;}var p=PU.find(function(x){return x.k===k;});if(p){lst.push(p);seen[k]=1;}});PU.forEach(function(p){if(!seen[p.k])lst.splice(lst.lastIndexOf('|'),0,p);});
+  var PU_ORDER=['ov','pf','|','ta','ab','se','ca','en','|','es'],seen={},lst=[];PU_ORDER.forEach(function(k){if(k==='|'){lst.push('|');return;}var p=PU.find(function(x){return x.k===k;});if(p){lst.push(p);seen[k]=1;}});PU.forEach(function(p){if(!seen[p.k])lst.splice(lst.lastIndexOf('|'),0,p);});
   top.innerHTML=lst.map(function(p){if(p==='|')return '<span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0;flex-shrink:0"></span>';return '<button class="rl-btn'+(p.k===key?' on':'')+'" type="button" aria-label="'+p.n+'" style="width:38px;height:38px;font-size:18px;flex-shrink:0" onclick="puGo(\''+p.k+'\')"><i class="ti '+p.i+'"'+(p.k==='pf'?' style="color:#F08566"':'')+'></i><span class="rl-tip" style="left:48px">'+p.n+'</span></button>';}).join('');
   // Session: Schalter „Erfassen | Planen“ im Kopf
   if(key==='se'){
@@ -13257,16 +13254,7 @@ function openCoachingInfoModal(empId){
   }
   h+=ciBox('ciSecVerlauf','Verlauf <span style="font-size:12px;font-weight:500;color:var(--text3)">('+combinedTl.length+')</span>','','<div>'+rows+'</div>','margin-bottom:6px;padding-bottom:8px');
   h+='</div>'; // Ende Scrollbereich
-  h+='<div style="padding:4px 18px 14px;background:#EEEDE9">'
-    +'<div style="display:flex;align-items:center;gap:10px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:6px 6px 6px 14px;position:relative">'
-    +'<i class="ti ti-message-plus" style="color:var(--text3);font-size:17px"></i>'
-    +'<input id="ciComposer" type="text" placeholder="Kommentar oder Notiz schreiben …" style="flex:1;border:none;background:transparent;font-size:14.5px;outline:none;padding:6px 0;min-width:0" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ciSubmit(\''+empId+'\');}">'
-    +'<div style="display:flex;align-items:center;border-radius:10px;background:#EFECE5;border:1px solid #E4E0D6;position:relative">'
-    +'<button id="ciTypeBtn" onclick="var m=document.getElementById(\'ciTypeMenu\');m.style.display=(m.style.display===\'block\')?\'none\':\'block\'" style="border:none;background:transparent;font-size:12.5px;font-weight:700;color:var(--text);padding:0 6px 0 12px;height:32px;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:inherit"><span id="ciTypeLbl">Kommentar · Diverses</span><i class="ti ti-chevron-down" style="font-size:13px"></i></button>'
-    +'<button onclick="ciSubmit(\''+empId+'\')" aria-label="Senden" style="width:32px;height:32px;border-radius:9px;border:none;background:#F08566;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:1px"><i class="ti ti-arrow-up"></i></button>'
-    +'<div id="ciTypeMenu" style="display:none;position:absolute;right:0;bottom:42px;background:#fff;border:1px solid #E4E0D6;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.12);padding:6px;min-width:270px;z-index:5;white-space:nowrap">'
-    +[['diverses','Kommentar · Diverses','in den Verlauf'],['skill','Kommentar · Skill','in den Verlauf'],['will','Kommentar · Will','in den Verlauf'],['result','Kommentar · Result','in den Verlauf'],['notiz','In Notiz übernehmen','an die Notiz anhängen']].map(function(o){return '<div onclick="ciSetType(\''+o[0]+'\',\''+o[1]+'\')" style="padding:8px 10px;border-radius:8px;font-size:13.5px;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;gap:16px" onmouseover="this.style.background=\'#EFECE5\'" onmouseout="this.style.background=\'transparent\'">'+o[1]+'<small style="color:var(--text3);font-size:11.5px">'+o[2]+'</small></div>';}).join('')
-    +'</div></div></div></div>';
+  h+='<div style="padding:4px 18px 14px;background:#EEEDE9"><div style="display:flex;justify-content:flex-end;gap:8px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:12px;padding:8px"><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal(\'coachingInfoModal\')">Schließen</button></div></div>';
   h+='</div></div>'; // Ende Inhalt + Flex
   window._ciType='diverses';
   document.getElementById('coachingInfoModalBody').innerHTML=h;
