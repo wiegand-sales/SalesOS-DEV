@@ -16,7 +16,7 @@
   // Menue wie im Board: Zahlen | Planen, unten Hinweise und das eigene Kuerzel (Einstellungen)
   var TABS = [['heute', 'Heute'], ['verlauf', 'Verlauf'], ['kennzahlen', 'Kennzahlen'], ['provision', 'Provision'], null, ['termine', 'Termine'], ['urlaub', 'Urlaub'], 'spacer', ['hinweise', 'Hinweise'], 'me'];
   var HINT_DEFAULTS = { prognose: true, record: true, idle: false, antrag: true, termin: true };
-  var tab = 'heute', model = null, extra = {}, uView = 'konto', form = null, sending = false;
+  var tab = 'heute', model = null, extra = {}, uView = 'konto', form = null, sending = false, aTab = 'antrag', tWeek = 0, tCache = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function n0(v) { return v == null ? '–' : Math.round(v).toLocaleString('de-DE'); }
@@ -213,9 +213,12 @@
   }
   function nf(v) { return v == null ? '–' : String(Math.round(v * 10) / 10).replace('.', ','); }
   function addD(ds, n) { var d = new Date(ds + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function mondayOf(ds) { var d = new Date(ds + 'T00:00:00Z'), w = (d.getUTCDay() + 6) % 7; return addD(ds, -w); }
   function vAntrag(m) {
     form = form || { von: addD(m.today, 21), bis: addD(m.today, 21), halb: false, halbTeil: 'vm', notiz: '' };
     if (form.halb) form.bis = form.von;
+    var segA = '<div class="seg full"><button type="button" data-at="antrag" class="' + (aTab === 'antrag' ? 'on' : '') + '">Antrag</button><button type="button" data-at="team" class="' + (aTab === 'team' ? 'on' : '') + '">Wer ist frei?</button></div>';
+    if (aTab === 'team') return segA + vTeam(m) + '<div class="btnrow"><button type="button" class="secondary" id="fBack">Abbrechen</button><button type="button" class="primary" id="toForm">Zum Antrag</button></div>';
     var ev = SOS.evalAntrag(m, form), H = ev.H.slice();
     if (form.frei && form.frei.key === form.von + form.bis) {
       var g = m.rules.freiGrenze, hit = form.frei.rows.filter(function (r) { return r.anzahl >= g && ev.days && ev.days.indexOf(r.tag) >= 0; });
@@ -223,7 +226,7 @@
     }
     if (m.preview) H.push({ t: 'info', h: 'Testmodus: Der Antrag wird nicht gesendet.' });
     var art = ev.n ? (ev.art === 'flex' ? 'Flex Day' : 'Urlaub') + ' · ' + nf(ev.n) + ' Arbeitstag' + (ev.n === 1 ? '' : 'e') : '';
-    return '<div class="card fcard"><div class="frow"><div class="ff"><label for="fVon">Von</label><input id="fVon" type="date" value="' + form.von + '" min="' + m.today + '"></div>'
+    return segA + '<div class="card fcard"><div class="frow"><div class="ff"><label for="fVon">Von</label><input id="fVon" type="date" value="' + form.von + '" min="' + m.today + '"></div>'
       + '<div class="ff"><label for="fBis">Bis</label><input id="fBis" type="date" value="' + form.bis + '" min="' + form.von + '"' + (form.halb ? ' disabled' : '') + '></div></div>'
       + '<div class="frow"><button type="button" class="sw' + (form.halb ? ' on' : '') + '" id="fHalb" role="switch" aria-checked="' + form.halb + '"><i></i><span>Halber Tag</span></button>'
       + (form.halb ? '<div class="seg"><button type="button" data-ht="vm" class="' + (form.halbTeil !== 'nm' ? 'on' : '') + '">Vormittag</button><button type="button" data-ht="nm" class="' + (form.halbTeil === 'nm' ? 'on' : '') + '">Nachmittag</button></div>' : '') + '</div>'
@@ -231,6 +234,48 @@
       + '<div class="hints">' + (art ? '<div class="hl ok"><b>' + art + '</b></div>' : '') + H.map(function (x) { return '<div class="hl ' + x.t + '">' + esc(x.h) + '</div>'; }).join('') + '</div>'
       + '<p class="error" id="fErr" hidden></p></div>'
       + '<div class="btnrow"><button type="button" class="secondary" id="fBack">Abbrechen</button><button type="button" class="primary" id="fSend"' + (ev.blocked || m.preview || sending ? ' disabled' : '') + '>' + (sending ? 'Wird gesendet …' : 'Antrag senden') + '</button></div>';
+  }
+
+  // Teamansicht: zwei Wochen ab der Woche des gewählten Zeitraums, nur Kolleg:innen mit Eintrag + du
+  function vTeam(m) {
+    var start = addD(mondayOf(form.von), tWeek * 7), days = [];
+    for (var i = 0; i < 14; i++) { var d = addD(start, i), w = new Date(d + 'T00:00:00Z').getUTCDay(); if (w > 0 && w < 6) days.push(d); }
+    var end = days[days.length - 1], key = start;
+    if (!tCache || tCache.key !== key) { loadTeam(start, end, key); }
+    var rows = tCache && tCache.key === key ? tCache.rows : null;
+    var head = '<div class="tg tgh"><span></span>' + days.map(function (d, i) { return '<span class="' + (i === 5 ? 'wk2 ' : '') + (d === m.today ? 'td' : '') + '">' + WD[new Date(d + 'T00:00:00').getDay()].slice(0, 1) + '<b>' + +d.slice(8, 10) + '</b></span>'; }).join('') + '</div>';
+    function cell(entries, d, i, own) {
+      var cls = i === 5 ? 'wk2 ' : '';
+      if (!SOS.workdayFor(m, d)) return '<span class="' + cls + 'c off" title="frei (Feiertag)"></span>';
+      var x = entries.filter(function (e) { return e.von <= d && e.bis >= d; })[0];
+      var sel = own && d >= form.von && d <= form.bis;
+      if (!x) return '<span class="' + cls + 'c' + (sel ? ' sel' : '') + '"></span>';
+      var k = x.art === 'urlaub' || x.art === 'flex' ? 'u' : 'x', open = x.status === 'offen';
+      return '<span class="' + cls + 'c ' + k + (open ? ' o' : '') + (x.halb ? ' h' : '') + (sel ? ' sel' : '') + '" title="' + (k === 'u' ? 'Urlaub' : 'abwesend') + (open ? ', beantragt' : '') + (x.halb ? ', halber Tag' : '') + '"></span>';
+    }
+    var own = (m.urlaub.items || []).map(function (x) { return { art: x.art, von: x.von, bis: x.bis, halb: x.halb, status: x.status }; });
+    var body = '<div class="tg tme"><span class="tn">Du</span>' + days.map(function (d, i) { return cell(own, d, i, true); }).join('') + '</div>';
+    if (rows === null) body += '<div class="empty">Lade …</div>';
+    else if (rows === false) body += '<div class="empty">Die Teamansicht ist noch nicht freigeschaltet.</div>';
+    else {
+      var by = {}; rows.forEach(function (r) { (by[r.name] = by[r.name] || []).push(r); });
+      var names = Object.keys(by).filter(function (n) { return by[n].some(function (r) { return r.bis >= start && r.von <= end; }); }).sort();
+      body += names.map(function (n) { return '<div class="tg"><span class="tn" title="' + esc(n) + '">' + esc(n) + '</span>' + days.map(function (d, i) { return cell(by[n], d, i, false); }).join('') + '</div>'; }).join('')
+        || '<div class="empty">In diesen zwei Wochen hat am Standort niemand frei.</div>';
+      var cnt = days.map(function (d) { if (!SOS.workdayFor(m, d)) return 0; return names.filter(function (n) { return by[n].some(function (r) { return r.von <= d && r.bis >= d; }); }).length; });
+      body += '<div class="tg tsum"><span class="tn">Frei</span>' + cnt.map(function (c, i) { return '<span class="' + (i === 5 ? 'wk2 ' : '') + (c >= m.rules.freiGrenze ? 'hi' : '') + '">' + (c || '') + '</span>'; }).join('') + '</div>';
+    }
+    var nav = '<div class="cHead"><button type="button" class="x" id="tPrev" aria-label="Zwei Wochen zurück"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>'
+      + '<span class="lab">KW ' + kw(start) + '–' + kw(end) + ' · ' + dm(start) + '–' + dm(end) + '</span>'
+      + '<button type="button" class="x" id="tNext" aria-label="Zwei Wochen weiter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>';
+    var leg = '<div class="legend"><span><i class="c u"></i>Urlaub</span><span><i class="c u o"></i>beantragt</span><span><i class="c x"></i>abwesend</span><span><i class="c sel"></i>dein Zeitraum</span></div>';
+    return '<div class="card fcard">' + nav + '<div class="tgrid">' + head + body + '</div>' + leg + '</div>';
+  }
+  function kw(ds) { var d = new Date(ds + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); var y = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil(((d - y) / 864e5 + 1) / 7); }
+  function loadTeam(von, bis, key) {
+    tCache = { key: key, rows: null };
+    SOS.teamKalender(von, bis).then(function (rows) { if (!tCache || tCache.key !== key) return; tCache.rows = rows || false; if (tab === 'urlaub' && uView === 'antrag' && aTab === 'team') render(model); })
+      .catch(function () { if (tCache && tCache.key === key) { tCache.rows = false; render(model); } });
   }
 
   function vHinweise(m) {
@@ -306,7 +351,7 @@
     if (tab === 'urlaub') bindUrlaub(m);
   }
   function bindUrlaub(m) {
-    var b = $('toAntrag'); if (b) b.onclick = function () { uView = 'antrag'; form = null; render(model); };
+    var b = $('toAntrag'); if (b) b.onclick = function () { uView = 'antrag'; form = null; aTab = 'antrag'; tWeek = 0; tCache = null; render(model); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-del]'), function (x) {
       x.onclick = function () {
         if (!confirm('Diesen Antrag zurückziehen?')) return;
@@ -314,6 +359,13 @@
       };
     });
     if (uView !== 'antrag') return;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-at]'), function (x) { x.onclick = function () { aTab = x.dataset.at; tWeek = 0; render(model); }; });
+    if (aTab === 'team') {
+      $('tPrev').onclick = function () { tWeek -= 2; render(model); }; $('tNext').onclick = function () { tWeek += 2; render(model); };
+      $('toForm').onclick = function () { aTab = 'antrag'; render(model); };
+      $('fBack').onclick = function () { uView = 'konto'; form = null; aTab = 'antrag'; render(model); };
+      return;
+    }
     function upd(k, v) { form[k] = v; if (k === 'von' && form.bis < form.von) form.bis = form.von; render(model); checkFrei(); }
     $('fVon').onchange = function () { upd('von', this.value); };
     $('fBis').onchange = function () { upd('bis', this.value); };

@@ -175,3 +175,29 @@ form input:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 
 .primary.sm { margin: 0; height: 32px; padding: 0 14px; font-size: 13px; box-shadow: none; }
 .strip .lab { white-space: nowrap; }
 .secondary.sm { width: auto; height: 32px; padding: 0 14px; font-size: 13px; }
+/* Antrag: Umschalter und Teamansicht */
+.seg.full { display: flex; margin: 0; flex-shrink: 0; }
+.seg.full button { flex: 1; height: 30px; font-size: 12.5px; }
+.tgrid { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; min-height: 0; flex: 1; scrollbar-width: thin; }
+.tg { display: grid; grid-template-columns: 58px repeat(10, minmax(0, 1fr)); gap: 2px; align-items: center; min-height: 18px; }
+.tg .wk2 { margin-left: 4px; }
+.tgh span { text-align: center; font-size: 9.5px; color: var(--text3); line-height: 1.1; display: flex; flex-direction: column; }
+.tgh b { font-size: 11px; font-weight: 600; color: var(--text2); }
+.tgh .td b { color: var(--coral); }
+.tn { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text2); }
+.tme .tn { color: var(--text); }
+.tme { padding-bottom: 4px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 1px; }
+.c { height: 16px; border-radius: 4px; background: var(--sub); display: block; }
+.c.off { background: repeating-linear-gradient(135deg, #E4E0D6 0 2px, transparent 2px 5px); }
+.c.u { background: #A89C8E; }
+.c.u.o { background: repeating-linear-gradient(135deg, #A89C8E 0 3px, #D3C8B6 3px 6px); }
+.c.x { background: #5C564F; }
+.c.h { background-image: linear-gradient(90deg, transparent 50%, var(--sub) 50%); }
+.c.sel { box-shadow: inset 0 0 0 2px var(--coral); }
+.c.sel:not(.u):not(.x) { background: #FBE3DA; }
+.tsum { border-top: 1px solid rgba(0,0,0,0.06); padding-top: 4px; margin-top: 1px; }
+.tsum span:not(.tn) { text-align: center; font-size: 11px; font-weight: 600; color: var(--text3); }
+.tsum .hi { color: #9A3F22; background: #FDF0EB; border-radius: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 10.5px; color: var(--text3); padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.06); flex-shrink: 0; }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend .c { width: 12px; height: 10px; border-radius: 3px; }

@@ -487,6 +487,13 @@ var SOS = (function () {
     if (!r.ok) return null;
     return r.json();
   }
+  async function teamKalender(von, bis) {
+    var session = await getSession(); if (!session) return null;
+    var r = await fetch(C.supabaseUrl + '/rest/v1/rpc/my_team_kalender', { method: 'POST', headers: { apikey: C.anonKey, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_von: von, p_bis: bis }) });
+    if (!r.ok) return null;
+    return r.json();
+  }
+  function workdayFor(model, d) { return isWorkday({ role: model.empMeta.role, workHours: model.workHours }, d); }
   async function sendAntrag(model, r, ev) {
     var session = await getSession(); if (!session) throw new Error('Bitte neu anmelden.');
     var body = { employee_id: model.emp.id, art: ev.art, von: r.von, bis: r.halb ? r.von : r.bis, halb: !!r.halb, halb_teil: r.halb ? (r.halbTeil || 'vm') : null, status: 'offen', eingereicht_von: model.emp.name, notiz: r.notiz || null };
@@ -527,5 +534,5 @@ var SOS = (function () {
     return { goal: 140, done: done, reached: done >= 140, left: Math.max(0, 140 - done), friday: addDays(mo, 4), open: t <= th, workLeft: [0, 1, 2, 3].map(function (i) { return addDays(mo, i); }).filter(function (d) { return d >= t && isWorkday(emp, d); }).length };
   }
 
-  return { evalAntrag: evalAntrag, teamFrei: teamFrei, sendAntrag: sendAntrag, zurueckziehen: zurueckziehen, load: load, login: login, logout: logout, getSession: getSession, hourly: hourly, storageGet: storageGet, storageSet: storageSet, config: C };
+  return { teamKalender: teamKalender, workdayFor: workdayFor, evalAntrag: evalAntrag, teamFrei: teamFrei, sendAntrag: sendAntrag, zurueckziehen: zurueckziehen, load: load, login: login, logout: logout, getSession: getSession, hourly: hourly, storageGet: storageGet, storageSet: storageSet, config: C };
 })();
