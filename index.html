@@ -619,6 +619,10 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .sf-chip.on .sf-d{background:#F7B39A}
 .sf-sub{font-size:11.5px;color:var(--text3);margin:8px 0 6px}
 .sf-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center}
+.sf-panel{position:absolute;top:64px;left:0;z-index:30;min-width:100%;width:max-content;max-width:300px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);padding:6px 4px}
+.sf-opt{display:flex;align-items:center;gap:8px;padding:6px 10px;margin:0;font-size:13px;font-weight:400;color:var(--text);cursor:pointer;border-radius:7px}
+.sf-opt:hover{background:#F7F5F0}
+.sf-opt input{width:auto;margin:0}
 .sf-n{display:inline-block;min-width:16px;height:16px;line-height:16px;border-radius:5px;background:#1d1c1a;color:#fff;font-size:10.5px;font-weight:700;text-align:center;margin-left:4px;padding:0 3px}
 .sf-seg{height:auto;flex-wrap:wrap;row-gap:2px;justify-self:start;max-width:100%}
 .sf-lbl{width:52px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--text2)}
@@ -10682,13 +10686,17 @@ function syncSessFocusMetric(){
   fmEl.value=mapped||'';
 }
 
-// ── Neue Session: Was (Kategorie) · Wie (Art) · Fokus (KPI + Themen) ──
-var SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metric:'',hint:'',area:'Skill'};
+// ── Neue Session: Was für eine Session · Fokus (Skill · Will · Result, je mehrere) ──
+var SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metrics:[],metric:'',hint:'',open:null};
 var SF_SKILL=['Einstieg','Einwandsentkräftung','Loop','Bedarfserweiterung','Abschluss','Gesprächsführung','Zusammenfassung','Produktwissen'];
 var SF_WILL=['Motivation','Coachability','Zuverlässigkeit','Teamfähigkeit'];
 var SF_TOPICS=SF_SKILL.concat(SF_WILL);
 var TOPIC_ALIAS={'Einwandsbehandlung':'Einwandsentkräftung','Bedarfsanalyse':'Bedarfserweiterung'};
 var SF_REVIEW_KEYS=[['opener','Einstieg'],['einwand','Einwandsentkräftung'],['loop','Loop'],['bedarf','Bedarfserweiterung'],['abschluss','Abschluss'],['gespraech','Gesprächsführung'],['zusammenfassung','Zusammenfassung'],['produkt','Produktwissen'],['motivation','Motivation'],['coach','Coachability'],['zuverl','Zuverlässigkeit'],['team','Teamfähigkeit']];
+// Result-KPIs: Schlüssel (wie im Feld focus_metric) und Beschriftung
+function sfKpiList(){return KAL_KPIS.map(function(k){return [k[0],k[1]];}).concat([['margeGesamt','Marge']]);}
+function sfKpiLabel(k){var x=sfKpiList().find(function(y){return y[0]===k;});return x?x[1]:k;}
+function sfKpiKey(l){var x=sfKpiList().find(function(y){return y[1]===l;});return x?x[0]:null;}
 function sfEmp(){var id=(ncSelectedEmpIds&&ncSelectedEmpIds.length===1)?ncSelectedEmpIds[0]:(ncSelectedEmpIds&&ncSelectedEmpIds.length?null:selectedEmp);return id?employees.find(function(e){return String(e.id)===String(id);}):null;}
 function sfMissKeys(e){if(!e||typeof kalKpiMisses!=='function')return [];var t=today(),y=addDaysUTC(t,-1),from=t.slice(0,7)+'-01';if(from>y)from=addDaysUTC(t,-7);
   var lab=kalKpiMisses(e,from,y);return KAL_KPIS.filter(function(k){return lab.indexOf(k[1])>=0;}).map(function(k){return k[0];});}
@@ -10696,47 +10704,53 @@ function sfMissKeys(e){if(!e||typeof kalKpiMisses!=='function')return [];var t=t
 function sfReviewWeak(eid,n){var L=(reviews[eid]||[]).filter(function(r){return r&&r.einwand!==undefined;}).sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});if(!L.length)return [];
   var cur=L[L.length-1],prev=L.length>1?L[L.length-2]:null;
   return SF_REVIEW_KEYS.filter(function(k){return +cur[k[0]]>0;}).map(function(k){var v=+cur[k[0]]||0,d=prev&&+prev[k[0]]>0?v-(+prev[k[0]]):0;return {t:k[1],v:v,d:d};}).sort(function(a,b){return a.d-b.d||a.v-b.v;}).slice(0,n||2).map(function(x){return x.t;});}
-function sfSyncHidden(){var c=document.getElementById('sess-category'),ty=document.getElementById('sess-type'),tp=document.getElementById('sess-topic-sel'),fm=document.getElementById('sess-focus-metric');
+function sfSyncHidden(){SF.metric=SF.metrics[0]||'';var c=document.getElementById('sess-category'),ty=document.getElementById('sess-type'),tp=document.getElementById('sess-topic-sel'),fm=document.getElementById('sess-focus-metric');
   if(c){for(var i=0;i<c.options.length;i++)if(c.options[i].text===SF.cat){c.selectedIndex=i;break;}}
   if(ty){var f=false;for(var j=0;j<ty.options.length;j++)if(ty.options[j].value===SF.art||ty.options[j].text===SF.art){ty.selectedIndex=j;f=true;break;}if(!f){var o=document.createElement('option');o.textContent=SF.art;ty.appendChild(o);ty.value=SF.art;}}
   if(tp)tp.value=SF.topics[0]&&SF_TOPICS.indexOf(SF.topics[0])>=0?SF.topics[0]:'';
-  if(fm)fm.value=SF.metric||'';}
+  if(fm){var hit=false;for(var m=0;m<fm.options.length;m++)if(fm.options[m].value===SF.metric){hit=true;break;}fm.value=hit?SF.metric:'';}}
+// Gespeichert werden alle Fokus-Punkte als Themen (Skill, Will und die Result-KPIs), die erste KPI zusätzlich als Ziel-KPI
+function sfSaveTopics(){return SF.topics.concat(SF.metrics.map(sfKpiLabel));}
 function sfRender(){var w=document.getElementById('sfWas'),f=document.getElementById('sfFokus');if(!w||!f)return;
   var h='<span class="dsh-seg">'+SF_ARTS.map(function(a){return '<button type="button" class="'+(a[0]===SF.art?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(a[0])+'">'+esc(a[1])+'</button>';}).join('')
     +(SF.legacy?'<button type="button" class="'+(SF.art===SF.legacy?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(SF.legacy)+'" title="Art aus der Zeit vor der Umstellung">'+esc(SF.legacy)+' (bisher)</button>':'')+'</span>';
   var n=(ncSelectedEmpIds||[]).length;if(n>1)h+='<div class="sf-sub" style="margin-bottom:0">Gruppensession mit '+n+' Mitarbeitern</div>';
   w.innerHTML=h;
-  var e=sfEmp(),miss=sfMissKeys(e),order=KAL_KPIS.map(function(k){return k[0];}).concat(['margeGesamt']);
-  order.sort(function(a,b){return (miss.indexOf(b)>=0)-(miss.indexOf(a)>=0);});
-  var lab=function(k){var x=KAL_KPIS.find(function(y){return y[0]===k;});return x?x[1]:(k==='margeGesamt'?'Marge':k);};
-  var cnt={Skill:SF.topics.filter(function(t){return SF_SKILL.indexOf(t)>=0;}).length,Will:SF.topics.filter(function(t){return SF_WILL.indexOf(t)>=0;}).length,Result:SF.metric?1:0};
-  var g='<span class="dsh-seg" role="tablist" aria-label="Bereich" style="margin-bottom:8px">'+['Skill','Will','Result'].map(function(a){return '<button type="button" role="tab" aria-selected="'+(SF.area===a)+'" class="'+(SF.area===a?'on':'')+'" onclick="sfArea(\''+a+'\')">'+a+(cnt[a]?' <span class="sf-n">'+cnt[a]+'</span>':'')+'</button>';}).join('')+'</span>';
-  if(SF.area==='Result'){
-    g+='<div><span class="dsh-seg sf-seg" role="group" aria-label="Result">'+order.map(function(k){var u=miss.indexOf(k)>=0;return '<button type="button" class="'+(SF.metric===k?'on':'')+'" onclick="sfMetric(\''+k+'\')"'+(u?' title="unter Ziel"':'')+'>'+(u?'<span class="sf-d" aria-hidden="true"></span>':'')+esc(lab(k))+'</button>';}).join('')+'</span></div>';
-    g+='<div class="sf-sub" style="margin-bottom:0">'+(miss.length?'<span class="sf-d"></span>unter Ziel im laufenden Monat · ':'')+'eine KPI</div>';
-  } else {
-    var L=SF.area==='Skill'?SF_SKILL:SF_WILL;
-    g+='<div><span class="dsh-seg sf-seg" role="group" aria-label="'+SF.area+'">'+L.map(function(t){var on=SF.topics.indexOf(t)>=0;return '<button type="button" class="'+(on?'on':'')+'" aria-pressed="'+on+'" onclick="sfTopic(this.dataset.t)" data-t="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</span></div>';
-    g+='<div class="sf-sub" style="margin-bottom:0">mehrere möglich'+(SF.hint?' · '+esc(SF.hint):'')+'</div>';
-  }
+  var e=sfEmp(),miss=sfMissKeys(e),kpis=sfKpiList().slice().sort(function(a,b){return (miss.indexOf(b[0])>=0)-(miss.indexOf(a[0])>=0);});
+  var A={Skill:{items:SF_SKILL.map(function(t){return [t,t];}),sel:SF.topics.filter(function(t){return SF_SKILL.indexOf(t)>=0;})},
+         Will:{items:SF_WILL.map(function(t){return [t,t];}),sel:SF.topics.filter(function(t){return SF_WILL.indexOf(t)>=0;})},
+         Result:{items:kpis,sel:SF.metrics.slice()}};
+  var g='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+['Skill','Will','Result'].map(function(a){var o=A[a],lbl=o.sel.map(function(v){return a==='Result'?sfKpiLabel(v):v;});
+    var cell='<div class="sf-cell" style="position:relative;min-width:0"><label>'+a+'</label><button type="button" class="btn" aria-expanded="'+(SF.open===a)+'" style="width:100%;height:38px;justify-content:space-between;gap:6px;font-weight:500" onclick="sfOpen(\''+a+'\')"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(lbl.length?'':'color:var(--text3)')+'">'+(lbl.length?esc(lbl.join(', ')):'— auswählen —')+'</span><i class="ti ti-chevron-down" style="font-size:11px;flex-shrink:0"></i></button>';
+    if(SF.open===a)cell+='<div class="sf-panel">'+o.items.map(function(it){var on=o.sel.indexOf(it[0])>=0,u=a==='Result'&&miss.indexOf(it[0])>=0;return '<label class="sf-opt"><input type="checkbox"'+(on?' checked':'')+' onchange="sfPick(\''+a+'\',this.dataset.v)" data-v="'+esc(it[0])+'"> <span>'+esc(it[1])+'</span>'+(u?'<span class="sf-d" title="unter Ziel" style="margin:0 0 0 auto"></span>':'')+'</label>';}).join('')+'</div>';
+    return cell+'</div>';}).join('')+'</div>';
+  var info=[];if(miss.length)info.push('<span class="sf-d"></span>Result: '+esc(miss.map(sfKpiLabel).join(', '))+' unter Ziel im laufenden Monat');if(SF.hint)info.push(esc(SF.hint));
+  if(info.length)g+='<div class="sf-sub" style="margin-bottom:0">'+info.join(' · ')+'</div>';
   f.innerHTML=g;sfSyncHidden();}
+function sfOpen(a){SF.open=SF.open===a?null:a;sfRender();}
+function sfPick(a,v){if(a==='Result'){var i=SF.metrics.indexOf(v);if(i>=0)SF.metrics.splice(i,1);else SF.metrics.push(v);}else{var j=SF.topics.indexOf(v);if(j>=0)SF.topics.splice(j,1);else SF.topics.push(v);}sfRender();}
+// Panel schließen bei Klick daneben
+document.addEventListener('mousedown',function(ev){if(!SF.open)return;var c=ev.target&&ev.target.closest?ev.target.closest('.sf-cell'):null;if(!c){SF.open=null;sfRender();}});
 function sfCat(c){SF.cat=c;var a=COACHING_CATEGORIES[c]||[];if(a.indexOf(SF.art)<0)SF.art=a[0];sfRender();}
 function sfArt(a){SF.art=a;if(a!==SF.legacy)SF.cat=findCoachingCategoryForType(a);sfRender();}
-function sfArea(a){SF.area=a;sfRender();}
-function sfMetric(k){SF.metric=SF.metric===k?'':k;sfRender();}
+function sfMetric(k){var i=SF.metrics.indexOf(k);if(i>=0)SF.metrics.splice(i,1);else SF.metrics.push(k);sfRender();}
 function sfTopic(t){var i=SF.topics.indexOf(t);if(i>=0)SF.topics.splice(i,1);else SF.topics.push(t);sfRender();}
-function sfReset(){SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metric:'',hint:'',area:'Skill'};sfRender();}
+function sfNew(){return {cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metrics:[],metric:'',hint:'',open:null};}
+function sfReset(){SF=sfNew();sfRender();}
 function sfSetType(t){if(!t)return;var inNew=Object.keys(COACHING_CATEGORIES).some(function(c){return COACHING_CATEGORIES[c].indexOf(t)>=0;});SF.art=t;SF.cat=findCoachingCategoryForType(t);SF.legacy=inNew?null:t;sfRender();}
 // Aus den (versteckten) Feldern übernehmen, z. B. beim Erfassen einer geplanten Session
 function sfFromSelects(fokusText){var ty=document.getElementById('sess-type'),fm=document.getElementById('sess-focus-metric'),tp=document.getElementById('sess-topic-sel');
   if(ty&&ty.value)sfSetType(ty.value);
-  var tx=fokusText||(tp&&tp.value)||'';SF.topics=tx?tx.split(/\s*,\s*/).filter(function(x){return x;}).map(function(x){return TOPIC_ALIAS[x]||x;}):[];SF.area=SF.topics.some(function(t){return SF_SKILL.indexOf(t)>=0;})?'Skill':SF.topics.length?'Will':'Skill';
-  SF.metric=fm&&fm.value?fm.value:'';sfRender();}
-// Aus einer Aufgabe: Art setzen, Fokus vorschlagen
-function sfPreset(typ,eid){SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metric:'',hint:'',area:'Skill'};sfSetType(typ);var e=employees.find(function(x){return String(x.id)===String(eid);});
-  var miss=sfMissKeys(e);if(miss.length){SF.metric=miss[0];SF.area='Result';}
-  if(typ==='Performance-Gespräch'&&e){var w=sfReviewWeak(e.id,2);if(w.length){SF.topics=w;SF.hint='aus der Entwicklungsbewertung';SF.area=SF_SKILL.indexOf(w[0])>=0?'Skill':'Will';}}
+  var tx=fokusText||(tp&&tp.value)||'',all=tx?tx.split(/\s*,\s*/).filter(function(x){return x;}).map(function(x){return TOPIC_ALIAS[x]||x;}):[];
+  SF.metrics=[];SF.topics=[];all.forEach(function(x){var k=sfKpiKey(x);if(k){if(SF.metrics.indexOf(k)<0)SF.metrics.push(k);}else SF.topics.push(x);});
+  if(fm&&fm.value){var i=SF.metrics.indexOf(fm.value);if(i>0)SF.metrics.splice(i,1);if(i!==0)SF.metrics.unshift(fm.value);}
   sfRender();}
+// Aus einer Aufgabe: Art setzen, Fokus vorschlagen
+function sfPreset(typ,eid){SF=sfNew();sfSetType(typ);var e=employees.find(function(x){return String(x.id)===String(eid);});
+  var miss=sfMissKeys(e);if(miss.length)SF.metrics=[miss[0]];
+  if(typ==='Performance-Gespräch'&&e){var w=sfReviewWeak(e.id,2);if(w.length){SF.topics=w;SF.hint='Skill/Will aus der Entwicklungsbewertung';}}
+  sfRender();}
+
 var _savingSession=false;
 function saveSession(empId){
   if(_savingSession)return; // verhindert doppeltes Anlegen bei ungeduldigem Doppelklick
@@ -10755,10 +10769,10 @@ function saveSession(empId){
   var notes=document.getElementById('sess-note').value.trim();
   var topics=[];
   var sel=document.getElementById('sess-topic-sel');
-  if(_sf)topics=SF.topics.slice();else if(sel&&sel.value)topics.push(sel.value);
+  if(_sf)topics=sfSaveTopics();else if(sel&&sel.value)topics.push(sel.value);
   var focus=topics.join(', ');
   var fmEl=document.getElementById('sess-focus-metric');
-  var focusMetric=_sf?(SF.metric||''):(fmEl?fmEl.value:'');
+  var focusMetric=_sf?(SF.metrics[0]||''):(fmEl?fmEl.value:'');
   var editId=_editingSessionId;
   var empIds=(!editId&&ncSelectedEmpIds.length)?ncSelectedEmpIds.slice():[empId];
 
