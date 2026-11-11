@@ -1092,51 +1092,18 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
         <div id="spSecNew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Session planen</div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Was für eine Session</div><div id="spWas"></div></div>
 <div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Wer &amp; Wann</div>
-    <div style="position:relative;margin-bottom:10px">
-      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere = Gruppensession)</span></label>
-      <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleSessionEmpDropdown()">
-        <span id="sessionEmpSelLabel">— Mitarbeiter wählen —</span>
-        <i class="ti ti-chevron-down" style="font-size:11px"></i>
-      </button>
-      <div id="sessionEmpDropdownWrap"></div>
-    </div>
-    <div class="f3" style="gap:8px">
+    <div style="display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr)) minmax(0,1.2fr);gap:8px;align-items:end">
+      <div style="position:relative;min-width:0"><label>Mitarbeiter</label>
+        <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between;gap:6px" title="Mehrere Mitarbeiter = Gruppensession" onclick="toggleSessionEmpDropdown()"><span id="sessionEmpSelLabel" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">— Mitarbeiter wählen —</span><i class="ti ti-chevron-down" style="font-size:11px;flex-shrink:0"></i></button>
+        <div id="sessionEmpDropdownWrap"></div></div>
       <div><label>Datum</label><input type="date" id="sessionDatum"></div>
       <div><label>Start</label><input type="time" id="sessionUhrzeit" value="09:00"></div>
       <div><label>Ende</label><input type="time" id="sessionEndUhrzeit"></div>
-    </div>
-    <div style="margin-top:10px"><label>Coach</label><select id="sessionCoach"></select></div>
-        </div>
-<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Was für ein Coaching</div>
-    <div class="f2" style="margin-bottom:10px">
-      <div><label>Kategorie</label><select id="sessionKategorie" onchange="onCoachingCategoryChange('sessionKategorie','sessionTyp')"></select></div>
-      <div><label>Art des Coachings</label><select id="sessionTyp"></select></div>
-    </div>
-    <div class="f2">
-      <div><label>Inhalt des Coachings</label><select id="sessionThema">
-        <option value="">— Bitte wählen —</option>
-        <option>Einwandsbehandlung</option>
-        <option>Bedarfsanalyse</option>
-        <option>Produktwissen</option>
-        <option>Gesprächsführung</option>
-        <option>Motivation</option>
-        <option>Coachability</option>
-        <option>Zuverlässigkeit</option>
-        <option>Teamfähigkeit</option>
-        <option>CR OEM</option>
-        <option>TW</option>
-        <option>SY</option>
-        <option>MY</option>
-        <option>Sonstiges</option>
-      </select></div>
-      <div><label>Ziel-KPI <span style="font-weight:400;color:var(--text3);font-size:11px">(worauf einzahlen?)</span></label>
-        <select id="sessionFocusMetric">
-          <option value="">— Kein spezifisches KPI —</option>
-        </select>
-      </div>
-    </div>
-        </div>
+      <div><label>Coach</label><select id="sessionCoach"></select></div>
+    </div></div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Fokus <span style="letter-spacing:0;text-transform:none;font-weight:500;color:var(--text3)">· optional</span></div><div id="spFokus"></div></div>
 <div id="lastContinueBox" style="display:none"></div>
 <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:0 0 8px"><span>Anlass / Notiz für den Coach</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Warum wird die Session eingeplant?</span></div><textarea id="sessionNotiz" placeholder="Warum wird diese Session eingeplant? Was soll der Coach beachten..." style="min-height:72px;resize:vertical"></textarea>
 <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="sessionSpeichernNeu()"><i class="ti ti-check"></i> Session planen</button></div></div>
@@ -12520,16 +12487,35 @@ function saveGroupSession(){
 
 
 var _savingSessionPlanen=false;
+
+// ── Session planen: gleiche Auswahl wie „Neue Session“ (Art in einer Reihe, Fokus Skill · Will · Result) ──
+var SP={art:'Einzelcoaching',topics:[],metrics:[],open:null};
+function spEmp(){var ids=sessionSelectedEmpIds||[];return ids.length===1?employees.find(function(e){return String(e.id)===String(ids[0]);}):null;}
+function spRender(){var w=document.getElementById('spWas'),f=document.getElementById('spFokus');if(!w||!f)return;
+  w.innerHTML='<span class="dsh-seg">'+SF_ARTS.map(function(a){return '<button type="button" class="'+(a[0]===SP.art?'on':'')+'" onclick="spArt(this.dataset.a)" data-a="'+esc(a[0])+'">'+esc(a[1])+'</button>';}).join('')+'</span>'
+    +((sessionSelectedEmpIds||[]).length>1?'<div class="sf-sub" style="margin-bottom:0">Gruppensession mit '+sessionSelectedEmpIds.length+' Mitarbeitern</div>':'');
+  var e=spEmp(),miss=sfMissKeys(e),kpis=sfKpiList().slice().sort(function(a,b){return (miss.indexOf(b[0])>=0)-(miss.indexOf(a[0])>=0);});
+  var A={Skill:{items:SF_SKILL.map(function(t){return [t,t];}),sel:SP.topics.filter(function(t){return SF_SKILL.indexOf(t)>=0;})},Will:{items:SF_WILL.map(function(t){return [t,t];}),sel:SP.topics.filter(function(t){return SF_WILL.indexOf(t)>=0;})},Result:{items:kpis,sel:SP.metrics.slice()}};
+  var g='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+['Skill','Will','Result'].map(function(a){var o=A[a],lbl=o.sel.map(function(v){return a==='Result'?sfKpiLabel(v):v;});
+    var c='<div class="sp-cell" style="position:relative;min-width:0"><label>'+a+'</label><button type="button" class="btn" aria-expanded="'+(SP.open===a)+'" style="width:100%;height:38px;justify-content:space-between;gap:6px;font-weight:500" onclick="spOpenSel(\''+a+'\')"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(lbl.length?'':'color:var(--text3)')+'">'+(lbl.length?esc(lbl.join(', ')):'— auswählen —')+'</span><i class="ti ti-chevron-down" style="font-size:11px;flex-shrink:0"></i></button>';
+    if(SP.open===a)c+='<div class="sf-panel">'+o.items.map(function(it){var on=o.sel.indexOf(it[0])>=0,u=a==='Result'&&miss.indexOf(it[0])>=0;return '<label class="sf-opt"><input type="checkbox"'+(on?' checked':'')+' onchange="spPick(\''+a+'\',this.dataset.v)" data-v="'+esc(it[0])+'"> <span>'+esc(it[1])+'</span>'+(u?'<span class="sf-d" title="unter Ziel" style="margin:0 0 0 auto"></span>':'')+'</label>';}).join('')+'</div>';
+    return c+'</div>';}).join('')+'</div>';
+  if(miss.length)g+='<div class="sf-sub" style="margin-bottom:0"><span class="sf-d"></span>Result: '+esc(miss.map(sfKpiLabel).join(', '))+' unter Ziel im laufenden Monat</div>';
+  f.innerHTML=g;}
+function spArt(a){SP.art=a;spRender();}
+function spOpenSel(a){SP.open=SP.open===a?null:a;spRender();}
+function spPick(a,v){var L=a==='Result'?SP.metrics:SP.topics,i=L.indexOf(v);if(i>=0)L.splice(i,1);else L.push(v);spRender();}
+document.addEventListener('mousedown',function(ev){if(!SP.open)return;var c=ev.target&&ev.target.closest?ev.target.closest('.sp-cell'):null;if(!c){SP.open=null;spRender();}});
 function sessionSpeichernNeu(){
   if(_savingSessionPlanen)return;
   var empIds=sessionSelectedEmpIds.slice();
   var datum=document.getElementById('sessionDatum').value;
   var uhrzeit=document.getElementById('sessionUhrzeit').value||'';
   var endUhrzeit=document.getElementById('sessionEndUhrzeit').value||'';
-  var typ=document.getElementById('sessionTyp').value;
-  var thema=document.getElementById('sessionThema').value||'';
-  var fmEl=document.getElementById('sessionFocusMetric');
-  var focusMetric=fmEl?fmEl.value:'';
+  var typ=SP.art;
+  var spTopics=SP.topics.concat(SP.metrics.map(sfKpiLabel));
+  var thema=spTopics.join(', ');
+  var focusMetric=SP.metrics[0]||'';
   var notiz=document.getElementById('sessionNotiz').value.trim();
   var coachSelEl=document.getElementById('sessionCoach');
   var selectedCoachId=coachSelEl&&coachSelEl.value?coachSelEl.value:(currentCoach?currentCoach.id:null);
@@ -12554,7 +12540,7 @@ function sessionSpeichernNeu(){
       protocols[eId].unshift({
         id:r.id,date:datum,uhrzeit:uhrzeit,endUhrzeit:endUhrzeit,rating:null,
         note:notiz||'',notes:notiz||'',focus:thema,type:typ,
-        status:'geplant',topics:thema?[thema]:[],
+        status:'geplant',topics:spTopics.slice(),
         coachId:r.coach_id||null,focusMetric:r.focus_metric||null,groupId:groupId
       });
     });
@@ -12564,8 +12550,7 @@ function sessionSpeichernNeu(){
     } else {
       logActivity('session','created','Session geplant: '+(typ||'Session'),empIds[0],namesTxt+' · '+fd(datum)+(uhrzeit?' · '+uhrzeit:''));
     }
-    document.getElementById('sessionThema').value='';
-    if(fmEl)fmEl.value='';
+    SP={art:'Einzelcoaching',topics:[],metrics:[],open:null};
     document.getElementById('sessionNotiz').value='';
     document.getElementById('sessionDatum').value='';
     document.getElementById('sessionUhrzeit').value='09:00';
@@ -13513,14 +13498,8 @@ function openSessionModal(empId){
   sessionSelectedEmpIds=empId?[empId]:[];
   sessionEmpDropdownOpen=false;sessionEmpSearchQuery='';
   renderSessionEmpDropdown();
-  populateCoachingCategorySelect('sessionKategorie');
-  populateCoachingTypeSelect('sessionKategorie','sessionTyp',null);
-  var fmSel=document.getElementById('sessionFocusMetric');
-  if(fmSel&&fmSel.options.length<=1){
-    FOCUS_METRICS.forEach(function(m){
-      var o=document.createElement('option');o.value=m.key;o.textContent=m.label;fmSel.appendChild(o);
-    });
-  }
+  if(!_puSwitching)SP={art:'Einzelcoaching',topics:[],metrics:[],open:null};
+  spRender();
   var coachSel=document.getElementById('sessionCoach');
   if(coachSel){
     coachSel.innerHTML='';
@@ -13618,6 +13597,7 @@ document.addEventListener('click',function(e){
   ncEmpDropdownOpen=false;ncEmpSearchQuery='';renderNcEmpDropdown();
 });
 function renderSessionEmpDropdown(){
+  if(typeof spRender==='function')setTimeout(spRender,0);
   var wrap=document.getElementById('sessionEmpDropdownWrap');
   if(!wrap)return;
   var labelEl=document.getElementById('sessionEmpSelLabel');
@@ -13633,7 +13613,7 @@ function renderSessionEmpDropdown(){
     var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
     return ra-rb||a.name.localeCompare(b.name);
   });
-  var h='<div style="position:absolute;top:64px;left:0;z-index:30;background:var(--bg-solid);border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(40,32,15,0.14);width:100%;display:flex;flex-direction:column">';
+  var h='<div style="position:absolute;top:64px;left:0;z-index:30;background:var(--bg-solid);border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(40,32,15,0.14);width:100%;min-width:280px;display:flex;flex-direction:column">';
   h+='<div style="padding:8px;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
     +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
     +'<input id="sessionEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(sessionEmpSearchQuery)+'" oninput="sessionEmpSearchQuery=this.value;filterSessionEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
