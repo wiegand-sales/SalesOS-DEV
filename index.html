@@ -14743,7 +14743,8 @@ function aufgDefault(e){var mk=today().slice(0,7),bm=e?beschaeftigungsmonat(e,mk
 function aufgCoachOf(e){var rt=(kalRules().routinen||[]).find(function(r){return (r.empIds||[]).indexOf(e.id)>=0&&r.coachId;});return rt?'emp:'+rt.coachId:aufgDefault(e);}
 function aufgFmt(d){return kalF(d);}
 // ── Aufgaben berechnen ──
-function aufgAll(){var t=today(),out=[],add=function(o){var m=aufgMeta[o.key]&&aufgMeta[o.key].assignee;o.assignee=(m&&m!=='admin')?m:o.def;out.push(o);};_kalOnIdx=null;
+// Zuständige, die keine Spalte mehr haben (z. B. kein Coach mehr), fallen auf den Standard zurück – sonst wäre die Aufgabe unsichtbar
+function aufgAll(){var t=today(),out=[],_sk=aufgStaff().map(function(p){return p.key;}).concat(['admin']),_fb=aufgOwner('dogoro')||aufgOwner('kathrin')||'admin',add=function(o){var m=aufgMeta[o.key]&&aufgMeta[o.key].assignee;var a=(m&&m!=='admin')?m:o.def;if(_sk.indexOf(a)<0)a=_sk.indexOf(o.def)>=0?o.def:_fb;o.assignee=a;out.push(o);};_kalOnIdx=null;
   // 1) Urlaubsanträge
   absences.filter(function(x){return x.status==='offen';}).forEach(function(x){var e=kalEmp(x.employeeId);if(!e)return;var tg=kalHintTags(x).replace(/<\/span>\s*<span[^>]*>/g,' · ').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
     add({key:'antrag:'+x.id,art:'Urlaubsantrag',kind:'auto',t:e.name+' · '+kalRange(x),s:tg==='keine Hinweise'?KAL_ART[kalShowArt(x)]+' · '+kalNf(kalAmt(x))+' T':tg,due:x.eingereichtAm>kalAdd(t,-2)?kalAdd(x.eingereichtAm,2):t,born:x.eingereichtAm,def:aufgDefault(e),act:'Genehmigen',go:function(){KAL.loc=kalIsVlc(e)?'VLC':'MUC';KAL.pane='gen';selectKalender();},emp:e.id});});
