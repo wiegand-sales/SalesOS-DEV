@@ -1567,6 +1567,8 @@ var settingsNavOpen=true;
 // ── Benutzer & Rechte: eine gemeinsame Liste fuer alle Personen ──
 var userFilter='all', userSearch='', userShowAllAgents=false, loginInfo=null, loginInfoLoading=false, userMsg='';
 var BOARD_ROLE_LABEL={admin:'Admin',coach:'Coach',viewer:'Betrachter',agent:'Sales Agent'};
+// Coach im Board: gesetzte Board-Rolle geht vor (Coach = ja, Betrachter/Agent = nein), sonst wie bisher nach Position
+function isCoachEmp(e){ if(!e)return false; if(e.boardRole==='coach')return true; if(e.boardRole==='viewer'||e.boardRole==='agent')return false; return !!(e.isPureCoach||e.role==='SC'||e.role==='SDM'); }
 function positionRole(p){ return (p.isPureCoach||p.role==='SC'||p.role==='SDM')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
 function updateEmpBoardRole(sel){
@@ -2623,7 +2625,7 @@ function dailyWizardNext(){wizardNext();}
 function buildCoachingAbdeckungTab(liste,hD,heute){
   var HIDDEN=[];
   var visible=liste.filter(function(e){return HIDDEN.indexOf(e.role)<0&&!e.isPureCoach;});
-  var coachEmps=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+  var coachEmps=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;});
 
   // ── Kennzahlen oben ──
   var ueberfaellig=visible.filter(function(e){var t=tageSeitLetzterSession(e.id);return t===null||t>30;}).sort(function(a,b){
@@ -2810,7 +2812,7 @@ function renderCoachingAnsicht(){
     });
   });
   all.sort(function(a,b){return b.d.localeCompare(a.d);});
-  var coachList=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+  var coachList=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;});
   if(coachFilterView!=='overview'){
     all=all.filter(function(x){return x.coachId===coachFilterView;});
   }
@@ -2884,7 +2886,7 @@ function renderCoachingAnsicht(){
   var COACH_PETROL_PALETTE=['#1d1c1a','#F08566','#F08566','#F08566','#F59A5B','#F7A777'];
   function coachPetrolColor(coachId){
     if(!coachId)return COACH_PETROL_PALETTE[1];
-    var coachList=employees.filter(function(e){return e.role==='SDM'||e.role==='SC';}).sort(function(a,b){return a.name.localeCompare(b.name);});
+    var coachList=employees.filter(function(e){return isCoachEmp(e)||e.role==='SDM'||e.role==='SC';}).sort(function(a,b){return a.name.localeCompare(b.name);});
     var idx=coachList.findIndex(function(c){return c.id===coachId;});
     return COACH_PETROL_PALETTE[idx>=0?idx%COACH_PETROL_PALETTE.length:1];
   }
@@ -4826,8 +4828,8 @@ function renderSidebar(){
   var coachSubEl=document.getElementById('coachingCoachSubItems');
   if(coachSubEl){
     coachSubEl.innerHTML='';
-    var coachOrder=['Kathrin','Dogoro','Joey'];
-    var coachListSb=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;}).sort(function(a,b){
+    var coachOrder=['Kathrin','Dogoro','Amir'];
+    var coachListSb=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;}).sort(function(a,b){
       var ia=coachOrder.indexOf(a.name.split(' ')[0]),ib=coachOrder.indexOf(b.name.split(' ')[0]);
       if(ia===-1&&ib===-1)return a.name.localeCompare(b.name,'de');
       if(ia===-1)return 1;
@@ -9081,7 +9083,7 @@ function dshEmpSection(R,all,S,Z,REF,under){
 
 function renderActivity(){
   var ma=document.getElementById('mainArea');if(!ma)return;
-  var coachList=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;});
+  var coachList=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;});
   var auditActionLabels={kpi_target_global:'Globale KPI-Ziele geändert',kpi_target_employee:'Individuelle KPI-Ziele geändert',employee_deactivated:'Mitarbeiter deaktiviert'};
   var auditActionCategory={kpi_target_global:'kpi_target',kpi_target_employee:'kpi_target',employee_deactivated:'employee'};
   var auditAsActivity=(adminAuditLog||[]).map(function(a){
@@ -13312,7 +13314,7 @@ function openSessionModal(empId){
   var coachSel=document.getElementById('sessionCoach');
   if(coachSel){
     coachSel.innerHTML='';
-    var coachList=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;}).sort(function(a,b){return a.name.localeCompare(b.name);});
+    var coachList=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;}).sort(function(a,b){return a.name.localeCompare(b.name);});
     coachList.forEach(function(c){
       var o=document.createElement('option');o.value=c.id;o.textContent=c.name;coachSel.appendChild(o);
     });
@@ -14186,7 +14188,7 @@ function kalRtSet(id,key,val){var r=kalRules(),rt=r.routinen.find(function(x){re
 function kalRtEmp(id,eid,on){var r=kalRules(),rt=r.routinen.find(function(x){return x.id===id;});if(!rt)return;rt.empIds=(rt.empIds||[]).filter(function(x){return x!==eid;});if(on)rt.empIds.push(eid);kalSaveRules(r,'Routine geändert');}
 function kalRtAdd(){var r=kalRules();r.routinen.push({id:'r'+Date.now(),art:'Weekly',rhythmus:'woche',coachId:currentCoach?currentCoach.id:null,empIds:[]});kalSaveRules(r,'Routine angelegt');}
 function kalRtDel(id){if(!confirm('Diese Routine löschen?'))return;var r=kalRules();r.routinen=r.routinen.filter(function(x){return x.id!==id;});kalSaveRules(r,'Routine gelöscht');}
-function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC')&&e.active!==false;}),agents=teamTargetList().filter(function(e){return !kalIsVlc(e);}).sort(function(a,b){return a.name.localeCompare(b.name);});
+function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;}),agents=teamTargetList().filter(function(e){return !kalIsVlc(e);}).sort(function(a,b){return a.name.localeCompare(b.name);});
   function seg(path,cur,opts){return '<div class="dsh-seg sm">'+opts.map(function(o){return '<button type="button" class="'+(cur===o[0]?'on':'')+'" onclick="kalRuleSet(\''+path+'\',\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</div>';}
   function row(lbl,sub,ctl){return '<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #E4E0D6"><div><div style="font-weight:600">'+lbl+'</div>'+(sub?'<div class="kal-note">'+sub+'</div>':'')+'</div><div>'+ctl+'</div></div>';}
   var aff=agents.map(function(e){return {e:e,why:kalWeeklyReason(e)};}).filter(function(o){return o.why.length;});
@@ -14683,11 +14685,11 @@ function loadAufgabenFromSupabase(){return Promise.all([sb.from('aufgaben_meta')
   if(r[0]&&!r[0].error)(r[0].data||[]).forEach(function(x){aufgMeta[x.key]=x;});else console.warn('aufgaben_meta (Tabelle angelegt?)',r[0]&&r[0].error);
   if(r[1]&&!r[1].error)aufgKomm=(r[1].data||[]).sort(function(a,b){return (b.am||'').localeCompare(a.am||'');});return true;}).catch(function(e){console.warn('aufgaben',e);return false;});}
 // Personen (Spalten): Admin-Spalte + Coaches/Admins aus den Mitarbeitern
-// Feste Reihenfolge der Spalten: Dogoro, Kathrin, Joey, Niklas; weitere Coaches danach alphabetisch
-var AUFG_ORDER=['dogoro','kathrin','joey','niklas'];
+// Feste Reihenfolge der Spalten: Dogoro, Kathrin, Amir, Niklas; weitere Coaches danach alphabetisch
+var AUFG_ORDER=['dogoro','kathrin','amir','niklas'];
 function aufgNiklasEmp(){return employees.find(function(x){return x.active!==false&&/^niklas/i.test(x.name||'');})||null;}
 function aufgNiklasKey(){var e=aufgNiklasEmp();return e?'emp:'+e.id:'u:n.hojdem';}
-function aufgStaff(){var C=employees.filter(function(e){return e.active!==false&&e.boardRole!=='admin'&&!/^niklas/i.test(e.name||'')&&(e.boardRole==='coach'||e.isPureCoach||e.role==='SC'||e.role==='SDM');}).sort(function(a,b){return a.name.localeCompare(b.name);});
+function aufgStaff(){var C=employees.filter(function(e){return e.active!==false&&e.boardRole!=='admin'&&!/^niklas/i.test(e.name||'')&&isCoachEmp(e);}).sort(function(a,b){return a.name.localeCompare(b.name);});
   var row=function(e){return {key:'emp:'+e.id,name:e.name,sub:e.role==='SDM'?'Sales Development':'Coach'};},L=[],used={};
   AUFG_ORDER.forEach(function(n){if(n==='niklas'){var ne=aufgNiklasEmp();L.push({key:aufgNiklasKey(),name:ne?ne.name:'Niklas Hojdem',sub:'Sales Operations'});return;}
     var e=C.find(function(x){return (x.name||'').toLowerCase().indexOf(n)===0;});if(e){used[e.id]=1;L.push(row(e));}});
