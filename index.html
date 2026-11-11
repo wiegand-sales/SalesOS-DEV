@@ -1218,9 +1218,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
         <div id="qaSecBew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px"><span id="qaCardTitle">Neue Bewertung</span> <span id="qaTotalTxt" style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)"></span></div>
           <div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Call-Details</div>
-          <div class="f3" style="gap:10px;margin-bottom:10px"><div><label>Datum</label><input type="date" id="cb-date"></div><div><label>Auftragsnummer</label><input type="text" id="cb-auftrag" placeholder="z.B. 438043417"></div><div><label>Bewertet von</label><input type="text" id="cb-bewerter" placeholder="Name"></div></div>
-          <div class="f3" style="gap:10px;margin-bottom:10px"><div><label>Abschluss?</label><select id="cb-status"><option value="nein">Nein</option><option value="ja">Ja</option></select></div><div><label>B2B / B2C</label><select id="cb-b2b"><option value="B2C">B2C</option><option value="B2B">B2B</option></select></div><div><label>Optimierung</label><select id="cb-abschlussart"><option value="">Keine Optimierung</option><option value="TW">Opt.: TW</option><option value="Yes">Opt.: Yes</option><option value="SY">Opt.: SY</option><option value="MY">Opt.: MY</option><option value="Upsell">Opt.: Upsell</option><option value="WKA">Opt.: WKA</option></select></div></div>
-          <div><label>Genannter Einwand</label><input type="text" id="cb-einwand" placeholder="z.B. Preis zu hoch, Kündigung läuft"></div></div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,0.8fr) minmax(0,1fr) minmax(0,1.6fr);gap:10px"><div><label>Datum</label><input type="date" id="cb-date"></div><div><label>B2B / B2C</label><select id="cb-b2b"><option value="B2C">B2C</option><option value="B2B">B2B</option></select></div><div><label>Optimierung</label><select id="cb-abschlussart"><option value="">Keine Optimierung</option><option value="TW">Opt.: TW</option><option value="Yes">Opt.: Yes</option><option value="SY">Opt.: SY</option><option value="MY">Opt.: MY</option><option value="Upsell">Opt.: Upsell</option><option value="WKA">Opt.: WKA</option></select></div><div><label>Genannter Einwand</label><input type="text" id="cb-einwand" placeholder="z.B. Preis zu hoch, Kündigung läuft"></div></div><div style="display:none" aria-hidden="true"><input type="text" id="cb-auftrag"><input type="text" id="cb-bewerter"><select id="cb-status"><option value="nein">Nein</option><option value="ja">Ja</option></select></div></div>
           
           <div id="qaScoringSection"></div>
           <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;margin:12px 0 6px">Notiz <span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text3)">optional</span></div><textarea id="cb-hinweis" rows="2" style="min-height:56px;resize:vertical" placeholder="Beobachtungen, Verbesserungspotenzial"></textarea>
@@ -2021,7 +2019,10 @@ function sparkline(values,color,w,h){
   }).join(' ');
   return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" style="display:block"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
-function focusMetricLabel(key){var m=FOCUS_METRICS.find(function(x){return x.key===key;});return m?m.label:key;}
+function focusMetricLabel(key){if(key&&String(key).indexOf('dev:')===0){var k=String(key).slice(4),r=(typeof SF_REVIEW_KEYS!=='undefined'?SF_REVIEW_KEYS:[]).find(function(x){return x[0]===k;});return r?r[1]:k;}var m=FOCUS_METRICS.find(function(x){return x.key===key;});return m?m.label:key;}
+function goalIsDev(key){return !!key&&String(key).indexOf('dev:')===0;}
+function goalUnit(key){if(goalIsDev(key))return '';return /^cr|Yes|optPerH/i.test(String(key))?(String(key)==='optPerH'?'':' %'):'';}
+function goalDevVal(empId,k,beforeDate){var L=(reviews[empId]||[]).filter(function(r){return r&&r.einwand!==undefined&&+r[k]>0&&(!beforeDate||String(r.date)<beforeDate);}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});return L.length?+L[0][k]:null;}
 function sessionDuration(start,end){
   if(!start||!end)return null;
   var sp=start.split(':'),ep=end.split(':');
@@ -10502,8 +10503,8 @@ function openCoachingEval(empId,editEvalId){
     +'<div id="cevSec3" style="'+CARD+'"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Ziele <span id="cevGoalN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span></div>'
     +'<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Neues Ziel</div>'
     +'<div style="margin-bottom:10px"><label>Zielbeschreibung</label><textarea id="cevg-desc" rows="2" placeholder="z. B. Super Yes Rate auf 18 % steigern bis Jahresende" style="min-height:52px;resize:vertical"></textarea></div>'
-    +'<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px"><div><label>KPI <span style="color:var(--text3)">(optional)</span></label><select id="cevg-metric"><option value="">— kein KPI —</option>'+FOCUS_METRICS.map(function(m){return '<option value="'+m.key+'">'+esc(m.label)+'</option>';}).join('')+'</select></div>'
-    +'<div><label>Zielwert</label><input type="number" id="cevg-target" placeholder="z. B. 18"></div><div><label>Ziel-Datum</label><input type="date" id="cevg-date"></div></div>'
+    +'<div id="cevgBezug" style="margin-bottom:10px"></div><select id="cevg-metric" style="display:none" aria-hidden="true"><option value=""></option></select>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>Zielwert <span id="cevgUnit" style="color:var(--text3)"></span></label><input type="number" id="cevg-target" placeholder="z. B. 18"></div><div><label>Ziel-Datum</label><input type="date" id="cevg-date"></div></div>'
     +'<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button" id="cevGoalSave" style="height:36px;width:auto"><i class="ti ti-check"></i> Ziel speichern</button></div></div>'
     +'<div id="cevGoalList"></div></div>'
     +'<div id="cevSec2" style="'+CARD+';margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Letzte Bewertungen <span id="cevN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span>'
@@ -10572,8 +10573,8 @@ function openCoachingEval(empId,editEvalId){
   setEdit(e0||null);renderList();
 
   // ── Ziele ──
-  function goalCur(g){if(!g.metricKey)return null;var rp=getPerf(empId,30);if(!rp.length)return null;var vs=rp.map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
-  function goalStart(g){if(!g.metricKey||!g.createdAt)return null;var c=String(g.createdAt).slice(0,10);var d0=new Date(c+'T00:00:00');d0.setDate(d0.getDate()-30);var f0=d0.toISOString().slice(0,10);
+  function goalCur(g){if(!g.metricKey)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4));var rp=getPerf(empId,30);if(!rp.length)return null;var vs=rp.map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
+  function goalStart(g){if(!g.metricKey||!g.createdAt)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4),String(g.createdAt).slice(0,10));var c=String(g.createdAt).slice(0,10);var d0=new Date(c+'T00:00:00');d0.setDate(d0.getDate()-30);var f0=d0.toISOString().slice(0,10);
     var vs=(performance[empId]||[]).filter(function(x){return x.date>=f0&&x.date<c;}).map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});
     return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
   function renderGoals(){
@@ -10588,7 +10589,7 @@ function openCoachingEval(empId,editEvalId){
       if(tv!=null&&cur!=null){if(st!=null&&st!==tv)pc=Math.round((cur-st)/(tv-st)*100);else pc=Math.round(cur/tv*100);pc=Math.max(0,Math.min(100,pc));}
       if(done)pc=100;
       var lbl=g.metricKey?focusMetricLabel(g.metricKey):'Ziel';
-      var meta=g.metricKey?[st!=null?'Start '+Math.round(st)+' %':'',cur!=null?'jetzt '+Math.round(cur)+' %':'',tv!=null?'Ziel '+tv+' %':''].filter(Boolean).join(' · '):(g.status||'offen');
+      var _u=goalUnit(g.metricKey);var meta=g.metricKey?[st!=null?'Start '+Math.round(st*10)/10+_u:'',cur!=null?'jetzt '+Math.round(cur*10)/10+_u:'',tv!=null?'Ziel '+tv+_u:''].filter(Boolean).join(' · '):(g.status||'offen');
       var d=g.targetDate?'bis '+g.targetDate.slice(8,10)+'.'+g.targetDate.slice(5,7)+'.':'ohne Datum';
       return '<div style="display:flex;align-items:flex-start;gap:12px;height:98px;padding:12px;border:1px solid #E4E0D6;border-radius:10px;background:'+(closed?'#F7F5F0':'#EFECE5')+';margin-bottom:6px;overflow:hidden">'
         +'<div style="width:110px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+d+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lbl)+'</span></div>'
@@ -10604,15 +10605,32 @@ function openCoachingEval(empId,editEvalId){
     [].slice.call(el.querySelectorAll('button[data-act=gdel]')).forEach(function(b){b.onclick=function(){selectedEmp=emp.id;deleteGoal(b.dataset.gid);};});
   }
   window._cevGoalsRender=function(){if(document.getElementById('cevModal'))renderGoals();};
-  window._cevGoalSaved=function(){if(!document.getElementById('cevModal'))return;$('cevg-desc').value='';$('cevg-metric').value='';var ms=$('cevg-metric');if(ms&&ms._uiBtn&&typeof ms._uiSync==='function')ms._uiSync();$('cevg-target').value='';$('cevg-date').value='';renderGoals();toast('Ziel gespeichert');};
+  window._cevGoalSaved=function(){if(!document.getElementById('cevModal'))return;$('cevg-desc').value='';$('cevg-metric').value='';GB={v:'',open:null};gbRender();var ms=$('cevg-metric');if(ms&&ms._uiBtn&&typeof ms._uiSync==='function')ms._uiSync();$('cevg-target').value='';$('cevg-date').value='';renderGoals();toast('Ziel gespeichert');};
   $('cevGoalSave').onclick=function(){
     var gd=document.getElementById('goal-desc'),gm=document.getElementById('goal-metric'),gt=document.getElementById('goal-target'),gdt=document.getElementById('goal-date');
     if(gm&&gm.options.length<=1)FOCUS_METRICS.forEach(function(m){var o=document.createElement('option');o.value=m.key;o.textContent=m.label;gm.appendChild(o);});
-    gd.value=$('cevg-desc').value;gm.value=$('cevg-metric').value;gt.value=$('cevg-target').value;gdt.value=$('cevg-date').value;
+    gd.value=$('cevg-desc').value;var _mv=$('cevg-metric').value;if(gm&&_mv&&![].some.call(gm.options,function(o){return o.value===_mv;})){var _o=document.createElement('option');_o.value=_mv;_o.textContent=focusMetricLabel(_mv);gm.appendChild(_o);}gm.value=_mv;gt.value=$('cevg-target').value;gdt.value=$('cevg-date').value;
     selectedEmp=emp.id;saveNewGoal(emp.id);
   };
+  GB={v:'',open:null};gbRender();
   renderGoals();
 }
+
+// ── Ziel: Bezug Skill · Will · Result (eine Auswahl) ──
+var GB={v:'',open:null};
+function gbItems(a){if(a==='Result')return sfKpiList().map(function(k){return [k[0],k[1]];});var L=a==='Skill'?SF_SKILL:SF_WILL;return L.map(function(t){var r=SF_REVIEW_KEYS.find(function(x){return x[1]===t;});return ['dev:'+(r?r[0]:t),t];});}
+function gbRender(){var w=document.getElementById('cevgBezug');if(!w)return;
+  var h='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+['Skill','Will','Result'].map(function(a){var it=gbItems(a),sel=it.find(function(x){return x[0]===GB.v;});
+    var c='<div class="sf-cell gb-cell" style="position:relative;min-width:0"><label>'+a+'</label><button type="button" class="btn" aria-expanded="'+(GB.open===a)+'" style="width:100%;height:38px;justify-content:space-between;gap:6px;font-weight:500" onclick="gbOpen(\''+a+'\')"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(sel?'':'color:var(--text3)')+'">'+(sel?esc(sel[1]):'—')+'</span><i class="ti ti-chevron-down" style="font-size:11px;flex-shrink:0"></i></button>';
+    if(GB.open===a)c+='<div class="sf-panel">'+it.map(function(x){return '<label class="sf-opt"><input type="radio" name="gbsel"'+(x[0]===GB.v?' checked':'')+' onchange="gbPick(this.dataset.v)" data-v="'+esc(x[0])+'"> <span>'+esc(x[1])+'</span></label>';}).join('')+'</div>';
+    return c+'</div>';}).join('')+'</div><div class="sf-sub" style="margin-bottom:0">optional · eine Auswahl'+(GB.v?' · <a href="#" onclick="gbPick(\'\');return false">entfernen</a>':'')+'</div>';
+  w.innerHTML=h;
+  var sel=document.getElementById('cevg-metric');if(sel){if(GB.v&&![].some.call(sel.options,function(o){return o.value===GB.v;})){var o=document.createElement('option');o.value=GB.v;o.textContent=focusMetricLabel(GB.v);sel.appendChild(o);}sel.value=GB.v;}
+  var u=document.getElementById('cevgUnit');if(u)u.textContent=GB.v?(goalIsDev(GB.v)?'(Bewertung 1–10)':(goalUnit(GB.v)?'(%)':'')):'';
+  var t=document.getElementById('cevg-target');if(t)t.placeholder=goalIsDev(GB.v)?'z. B. 7':'z. B. 18';}
+function gbOpen(a){GB.open=GB.open===a?null:a;gbRender();}
+function gbPick(v){GB.v=v||'';GB.open=null;gbRender();}
+document.addEventListener('mousedown',function(ev){if(!GB.open)return;var c=ev.target&&ev.target.closest?ev.target.closest('.gb-cell'):null;if(!c){GB.open=null;gbRender();}});
 function openGoalInPopup(empId){
   openCoachingEval(empId);
   setTimeout(function(){var el=document.getElementById('cevSec3');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});var d=document.getElementById('cevg-desc');if(d)d.focus();},80);
@@ -10726,9 +10744,12 @@ function sfRender(){var w=document.getElementById('sfWas'),f=document.getElement
     var cell='<div class="sf-cell" style="position:relative;min-width:0"><label>'+a+'</label><button type="button" class="btn" aria-expanded="'+(SF.open===a)+'" style="width:100%;height:38px;justify-content:space-between;gap:6px;font-weight:500" onclick="sfOpen(\''+a+'\')"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(lbl.length?'':'color:var(--text3)')+'">'+(lbl.length?esc(lbl.join(', ')):'— auswählen —')+'</span><i class="ti ti-chevron-down" style="font-size:11px;flex-shrink:0"></i></button>';
     if(SF.open===a)cell+='<div class="sf-panel">'+o.items.map(function(it){var on=o.sel.indexOf(it[0])>=0,u=a==='Result'&&miss.indexOf(it[0])>=0;return '<label class="sf-opt"><input type="checkbox"'+(on?' checked':'')+' onchange="sfPick(\''+a+'\',this.dataset.v)" data-v="'+esc(it[0])+'"> <span>'+esc(it[1])+'</span>'+(u?'<span class="sf-d" title="unter Ziel" style="margin:0 0 0 auto"></span>':'')+'</label>';}).join('')+'</div>';
     return cell+'</div>';}).join('')+'</div>';
-  var info=[];if(miss.length)info.push('<span class="sf-d"></span>Result: '+esc(miss.map(sfKpiLabel).join(', '))+' unter Ziel im laufenden Monat');if(SF.hint)info.push(esc(SF.hint));
+  var _gE=sfEmp(),_G=_gE?(goals[_gE.id]||[]).filter(function(x){return x.status!=='erreicht'&&x.status!=='verfehlt'&&x.metricKey;}):[];
+  var info=[];if(_G.length){var _gt=_G.slice(0,3).map(function(x){return focusMetricLabel(x.metricKey)+(x.targetValue!=null?' ≥ '+x.targetValue+goalUnit(x.metricKey):'')+(x.targetDate?' bis '+kalF(x.targetDate):'');});var _all=_G.every(function(x){return goalIsDev(x.metricKey)?SF.topics.indexOf(focusMetricLabel(x.metricKey))>=0:SF.metrics.indexOf(x.metricKey)>=0;});info.push('Ziele: '+esc(_gt.join(', '))+(_all?'':' · <a href="#" onclick="sfGoalsAdopt();return false">übernehmen</a>'));}
+  if(miss.length)info.push('<span class="sf-d"></span>Result: '+esc(miss.map(sfKpiLabel).join(', '))+' unter Ziel im laufenden Monat');if(SF.hint)info.push(esc(SF.hint));
   if(info.length)g+='<div class="sf-sub" style="margin-bottom:0">'+info.join(' · ')+'</div>';
   f.innerHTML=g;sfSyncHidden();}
+function sfGoalsAdopt(){var e=sfEmp();if(!e)return;(goals[e.id]||[]).forEach(function(x){if(x.status==='erreicht'||x.status==='verfehlt'||!x.metricKey)return;if(goalIsDev(x.metricKey)){var l=focusMetricLabel(x.metricKey);if(SF.topics.indexOf(l)<0)SF.topics.push(l);}else if(SF.metrics.indexOf(x.metricKey)<0)SF.metrics.push(x.metricKey);});sfRender();}
 function sfOpen(a){SF.open=SF.open===a?null:a;sfRender();}
 function sfPick(a,v){if(a==='Result'){var i=SF.metrics.indexOf(v);if(i>=0)SF.metrics.splice(i,1);else SF.metrics.push(v);}else{var j=SF.topics.indexOf(v);if(j>=0)SF.topics.splice(j,1);else SF.topics.push(v);}sfRender();}
 // Panel schließen bei Klick daneben
@@ -12568,7 +12589,7 @@ function saveNewGoal(empId){
   var targetValue=targetEl&&targetEl.value!==''?parseFloat(targetEl.value):null;
   var dateEl=document.getElementById('goal-date');
   var targetDate=dateEl?dateEl.value||null:null;
-  if(metricKey&&targetValue===null){alert('Bitte einen Zielwert angeben, wenn ein KPI ausgewählt ist.');return;}
+  if(metricKey&&targetValue===null){alert('Bitte einen Zielwert angeben, wenn Skill, Will oder Result gewählt ist.');return;}
   var payload={
     employee_id:empId,description:desc,metric_key:metricKey||null,target_value:targetValue,
     target_date:targetDate,status:'offen',created_by:currentCoach?currentCoach.id:null
@@ -12581,22 +12602,11 @@ function saveNewGoal(empId){
     goals[empId].unshift({id:r.id,description:r.description,metricKey:r.metric_key,targetValue:r.target_value,targetDate:r.target_date,status:r.status,createdAt:r.created_at,createdBy:r.created_by});
     var empForLog3=employees.find(function(e){return e.id===empId;});
     logActivity('goal','created','Neues Ziel angelegt: "'+desc+'"',empId,empForLog3?empForLog3.name:'');
-    // Zugehörige offene Aufgabe im Task-Tab anlegen
-    var taskPayload={
-      employee_id:empId,text:'Ziel: '+desc,description:(metricKey?focusMetricLabel(metricKey)+' auf '+targetValue+'% steigern':'')+(targetDate?' · bis '+fd(targetDate):''),
-      done:false,status:'open',priority:'medium',due_date:targetDate,source:'Zielvereinbarung'
-    };
-    sb.from('tasks').insert(taskPayload).select().single().then(function(tres){
-      if(!tres.error){
-        var tr=tres.data;
-        if(!tasks[empId])tasks[empId]=[];
-        tasks[empId].unshift({id:tr.id,text:tr.text,description:tr.description||'',done:false,status:tr.status||'open',priority:tr.priority,dueDate:tr.due_date,source:tr.source||''});
-      }
-      closeModal('goalModal');
-      renderTab();
-      _savingNewGoal=false;
-      if(typeof window._cevGoalSaved==='function')window._cevGoalSaved();
-    });
+    // Die Aufgabe „Ziel prüfen“ entsteht automatisch zur Frist (siehe aufgAll)
+    closeModal('goalModal');
+    renderTab();
+    _savingNewGoal=false;
+    if(typeof window._cevGoalSaved==='function')window._cevGoalSaved();
   }).catch(function(err){_savingNewGoal=false;alert('Unerwarteter Fehler: '+err.message);});
 }
 function updateGoalStatus(goalId,newStatus){
@@ -13122,7 +13132,7 @@ function qaRenderList(){
     var prev=list.slice(i+1).find(function(x){return x.scores&&Object.keys(x.scores).some(function(k){return x.scores[k]>0;});});
     var dl=(ts!=null&&prev)?ts-Math.round(totalScore(prev)):0;
     var d=r.date?r.date.slice(8,10)+'.'+r.date.slice(5,7)+'.':'';
-    var meta=[r.auftragsnr?'Auftrag '+r.auftragsnr:'',r.b2b||'',r.status==='ja'?'Abschluss'+(r.abschlussArt?' · Opt.: '+r.abschlussArt:''):'kein Abschluss'].filter(Boolean).join(' · ');
+    var meta=[r.b2b||'',r.abschlussArt?'Opt.: '+r.abschlussArt:'keine Optimierung',r.bewertetVon?'bewertet von '+r.bewertetVon:''].filter(Boolean).join(' · ');
     var txt=[r.einwand?'Einwand: '+r.einwand:'',r.hinweis||''].filter(Boolean).join(' · ');
     return '<div title="'+esc(txt)+'" style="display:flex;align-items:flex-start;gap:12px;height:84px;padding:12px;border:1px solid #E4E0D6;border-radius:10px;background:#EFECE5;margin-bottom:6px;overflow:hidden">'
       +'<div style="width:96px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+d+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text)">'+(ts!=null?ts+' %':'–')+(dl?' <span style="font-size:11.5px;font-weight:700;color:'+(dl>0?'#2f6b52':'#B5513A')+'">'+(dl>0?'▲':'▼')+'</span>':'')+'</span></div>'
@@ -13143,6 +13153,8 @@ function qaDelete(rid){
   }
 }
 
+// Name der angemeldeten Person (Coach oder Admin/Betrachter)
+function qaCurrentName(){if(typeof currentCoach!=='undefined'&&currentCoach)return currentCoach.name;if(typeof currentAuthUser!=='undefined'&&currentAuthUser){var mu=(typeof appUsers!=='undefined'?appUsers:[]).find(function(u){return u.email===currentAuthUser.email;});if(mu)return mu.name;if(typeof resolveNonEmployeeName==='function')return resolveNonEmployeeName(currentAuthUser.email)||'';}return '';}
 var _savingCallBewertung=false;
 function saveInlineCallBewertung(empId){
   if(_savingCallBewertung)return;
@@ -13160,8 +13172,8 @@ function saveInlineCallBewertung(empId){
   var payload={
     employee_id:selectedEmp,date:datum.value,
     auftragsnr:auftrag?auftrag.value.trim():'',
-    bewertet_von:bewerter?bewerter.value.trim():'',
-    status:status?status.value:'nein',
+    bewertet_von:(_editingCallRatingId&&bewerter&&bewerter.value.trim())?bewerter.value.trim():qaCurrentName(),
+    status:(abschlussart&&abschlussart.value)?'ja':(_editingCallRatingId&&status?status.value:'nein'),
     b2b:b2b?b2b.value:'B2C',
     abschluss_art:abschlussart&&abschlussart.value?abschlussart.value:null,
     einwand:einwand?einwand.value.trim():'',
@@ -14930,6 +14942,10 @@ function aufgAll(){var t=today(),out=[],_sk=aufgStaff().map(function(p){return p
   var KR=kalRules(),fz=KR.fehltZeit.split(':'),fMin=(+fz[0])*60+(+fz[1]),nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(KR.fehltAn&&hm>=Math.min(fMin,AUFG_FEHLT_MIN_OVR==null?fMin:AUFG_FEHLT_MIN_OVR)&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
     var act=0;(performance[e.id]||[]).forEach(function(r){if(r.date===t)act+=(r.gesamtAktivitaeten||0)+(r.oem_aktivitaeten||0)+(r.optGesamt||0);});if(act>0)return;
     add({key:'fehlt:'+e.id+':'+t,art:'Mitarbeiter fehlt?',kind:'auto',t:e.name,s:'keine Aktivität bis '+KR.fehltZeit+' · keine Abwesenheit eingetragen',due:t,born:t,def:aufgDefault(e),act:'Abwesenheit eintragen',emp:e.id,go:function(){openAbsPopup(e.id,t.slice(0,7));abNewForm();AB.fOpen=true;AB.f.art='krank';AB.f.status='genehmigt';AB.f.von=t;AB.f.bis=t;abRender();}});});
+  // 6a) Ziele: zur Frist „Ziel prüfen“ (ohne Doppel, wenn noch eine alte freie Ziel-Aufgabe offen ist)
+  var gl=kalAdd(t,7);employees.forEach(function(e){if(e.active===false)return;(goals[e.id]||[]).forEach(function(g){if(!g.targetDate||g.targetDate>gl||g.status==='erreicht'||g.status==='verfehlt')return;
+    if((tasks[e.id]||[]).some(function(k){return !(k.done||k.status==='done')&&k.text==='Ziel: '+g.description;}))return;
+    var u=goalUnit(g.metricKey);add({key:'ziel-pr:'+g.id,art:'Ziel prüfen',kind:'auto',t:e.name,s:(g.metricKey?focusMetricLabel(g.metricKey)+(g.targetValue!=null?' ≥ '+g.targetValue+u:'')+' · ':'')+g.description,due:g.targetDate,born:kalAdd(g.targetDate,-7),def:aufgCoachOf(e),act:'Ziel prüfen',go:function(){openGoalInPopup(e.id);},emp:e.id});});});
   // 6b) Geplante Sessions: erledigt, sobald sie erfasst sind
   var pl=kalAdd(t,14);employees.forEach(function(e){if(e.active===false)return;(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'||!p.date||p.date>pl)return;
     var ty=p.type||'Session',art=ty==='Einzelcoaching'?'Coaching':ty;
@@ -15030,7 +15046,7 @@ var _aufgBT=0;function aufgBadgeLazy(){if(Date.now()-_aufgBT<2000)return;_aufgBT
 function aufgClick(key){var c=aufgFind(key);if(!c)return;if(c.items){aufgOpen(key);return;}aufgOpenEmp(key);}
 function aufgOpenEmp(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!o.emp)return;AU.hl=key;openAddTaskModal(o.emp);
   setTimeout(function(){var el=document.querySelector('#atOpen [data-akey="'+key.replace(/"/g,'')+'"]');if(el)el.scrollIntoView({block:'center'});},120);}
-function aufgActLabel(o){if(/^plan:/.test(o.key||''))return 'Session erfassen';if(o.art==='Performance-Gespräch'||o.art==='Performance Review')return o.task&&o.task.part===2?'Session erfassen':'Entwicklung bewerten';if(o.art==='Weekly')return 'Weekly erfassen';if(o.art==='QA-Bewertung')return 'Call bewerten';if(/^ses:/.test(o.key||''))return 'Session erfassen';return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
+function aufgActLabel(o){if(/^plan:/.test(o.key||''))return 'Session erfassen';if(o.art==='Ziel prüfen')return 'Ziel prüfen';if(o.art==='Performance-Gespräch'||o.art==='Performance Review')return o.task&&o.task.part===2?'Session erfassen':'Entwicklung bewerten';if(o.art==='Weekly')return 'Weekly erfassen';if(o.art==='QA-Bewertung')return 'Call bewerten';if(/^ses:/.test(o.key||''))return 'Session erfassen';return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
 function aufgDone(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!kalCanEdit())return;
   if(o.kind==='task'&&o.taskId){atToggle(o.taskId);return;}
   if(/^antrag:/.test(key)){kalDecide(key.slice(7),true);setTimeout(atRender,60);return;}
