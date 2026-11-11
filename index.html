@@ -12518,7 +12518,7 @@ function sessionSpeichernNeu(){
   var focusMetric=SP.metrics[0]||'';
   var notiz=document.getElementById('sessionNotiz').value.trim();
   var coachSelEl=document.getElementById('sessionCoach');
-  var selectedCoachId=coachSelEl&&coachSelEl.value?coachSelEl.value:(currentCoach?currentCoach.id:null);
+  var selectedCoachId=coachSelEl&&coachSelEl.value?coachSelEl.value:(currentCoach?currentCoach.id:null); // leer = angemeldete Person
   if(!empIds.length||!datum)return alert('Bitte mindestens einen Mitarbeiter und ein Datum auswählen.');
   if(uhrzeit&&endUhrzeit&&endUhrzeit<=uhrzeit)return alert('Die Endzeit muss nach der Startzeit liegen.');
   var groupId=empIds.length>1?('grp_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)):null;
@@ -13495,7 +13495,7 @@ function spAfterSave(){
 }
 function openSessionModal(empId){
   if(empId)selectedEmp=empId;
-  sessionSelectedEmpIds=empId?[empId]:[];
+  sessionSelectedEmpIds=[]; // Mitarbeiter beim Planen bewusst leer – wird ausgewählt
   sessionEmpDropdownOpen=false;sessionEmpSearchQuery='';
   renderSessionEmpDropdown();
   if(!_puSwitching)SP={art:'Einzelcoaching',topics:[],metrics:[],open:null};
@@ -13507,7 +13507,9 @@ function openSessionModal(empId){
     coachList.forEach(function(c){
       var o=document.createElement('option');o.value=c.id;o.textContent=c.name;coachSel.appendChild(o);
     });
-    coachSel.value=currentCoach?currentCoach.id:(coachList[0]?coachList[0].id:'');
+    // Vorbelegt ist immer die angemeldete Person; Admins ohne Mitarbeiter-Eintrag erscheinen als „Ich“
+    if(!currentCoach||!coachList.some(function(c){return String(c.id)===String(currentCoach.id);})){var me=document.createElement('option');me.value='';me.textContent=(typeof qaCurrentName==='function'&&qaCurrentName())?qaCurrentName()+' (ich)':'Ich';coachSel.insertBefore(me,coachSel.firstChild);}
+    coachSel.value=currentCoach&&coachList.some(function(c){return String(c.id)===String(currentCoach.id);})?currentCoach.id:'';
   }
   var datumEl=document.getElementById('sessionDatum');
   if(datumEl&&!datumEl.value)datumEl.value=today();
