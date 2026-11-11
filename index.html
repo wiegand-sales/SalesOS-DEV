@@ -2644,7 +2644,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
     +covTile('MITARBEITER',visible.length,'#F08566','aktiv, ohne Coaches')
     +covTile('ÜBERFÄLLIG',ueberfaellig.length,ueberfaellig.length?'var(--red)':'var(--teal-dark)','>30 Tage kein Coaching')
     +covTile('Ø TAGE SEIT LETZTEM',(avgTage!==null?avgTage+'d':'—'),'#F08566','Team-Durchschnitt')
-    +covTile('QA FÄLLIG',qaDueListe.length,qaDueListe.length?'var(--amber-dark)':'var(--teal-dark)','unter 5 Calls / 60 Tage')
+    +covTile('QA FÄLLIG',qaDueListe.length,qaDueListe.length?'var(--amber-dark)':'var(--teal-dark)','unter 4 Calls / Woche')
     +covTile('QA-BEDARF',bedarfListe.length,bedarfListe.length?'var(--red)':'var(--teal-dark)','konstant schwache Kategorie')
     +'</div>';
 
@@ -2759,7 +2759,7 @@ function buildCoachingAbdeckungTab(liste,hD,heute){
 
   // ── QA-Bewertungen fällig: volle Liste ──
   h+='<div class="card">';
-  h+='<div class="card-title"><i class="ti ti-phone-check"></i> QA-Bewertungen fällig <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+qaDueListe.length+') · Ziel: 5 Calls / 60 Tage</span></div>';
+  h+='<div class="card-title"><i class="ti ti-phone-check"></i> QA-Bewertungen fällig <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+qaDueListe.length+') · Ziel: 4 Calls / Woche</span></div>';
   if(!qaDueListe.length){
     h+='<div style="text-align:center;color:var(--teal-dark);padding:20px"><i class="ti ti-check" style="font-size:24px;display:block;margin-bottom:6px"></i>Alle im Ziel</div>';
   } else {
@@ -6762,7 +6762,7 @@ function renderTeam(){
     var cnt=(callRatings[e.id]||[]).filter(function(r){return r.date>=qaCutoff60;}).length;
     return {e:e,cnt:cnt};
   }).filter(function(x){return x.cnt<5;}).sort(function(a,b){return a.cnt-b.cnt;});
-  coverageHtml+='<div><div class="sec-title" style="margin-bottom:8px">QA-Bewertungen fällig <span style="font-weight:400;text-transform:none;letter-spacing:0">(Ziel: 5 / 60 Tage)</span></div>';
+  coverageHtml+='<div><div class="sec-title" style="margin-bottom:8px">QA-Bewertungen fällig <span style="font-weight:400;text-transform:none;letter-spacing:0">(Ziel: 4 / Woche)</span></div>';
   if(!qaDueListe.length){
     coverageHtml+='<div style="font-size:12px;color:var(--teal-dark);display:flex;align-items:center;gap:6px"><i class="ti ti-check"></i> Alle im Ziel</div>';
   } else {
@@ -7233,10 +7233,12 @@ function qaWeakSpots(empId,n){
 // QA-Kategorie: Ø der letzten n Calls vs. Ø der n Calls davor (analog "dieser Monat vs Vormonat")
 // QA-Kategorie: Ø über aktive Kollegen der gleichen Rolle (jeweils letzte n Calls)
 // QA-Kategorie: letzte 7 Bewertungen chronologisch (für Sparkline)
-// QA-Bewertungspflicht: Ziel 5 Calls / 60 Tage. Gibt {due, cnt, target} zurück.
+// QA-Bewertungspflicht: Ziel 4 Calls pro Woche (ab Montag der laufenden Woche). Gibt {due, cnt, target} zurück.
+var QA_WEEK_TARGET=4;
 function qaCallsDue(empId){
-  var target=5;
-  var cutoff=addDaysUTC(today(),-60);
+  var target=QA_WEEK_TARGET;
+  var t=today(),d=new Date(+t.slice(0,4),+t.slice(5,7)-1,+t.slice(8,10));d.setDate(d.getDate()-((d.getDay()+6)%7));
+  var cutoff=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var cnt=(callRatings[empId]||[]).filter(function(r){return r.date>=cutoff;}).length;
   return {due:Math.max(0,target-cnt),cnt:cnt,target:target};
 }
@@ -8159,7 +8161,7 @@ function renderTab(){
         +'<div class="task-row" style="cursor:default">'
         +'<div class="task-check" style="background:'+ps.bg+';border-color:'+ps.color+';cursor:default"><i class="ti ti-phone-plus" style="font-size:11px;color:'+ps.color+'"></i></div>'
         +'<div style="flex:1;min-width:0"><div class="task-title">QA-Bewertungen: noch '+qaDue.due+' Call'+(qaDue.due!==1?'s':'')+' bewerten</div>'
-        +'<div class="task-meta"><span>Automatisch &middot; Ziel 5 Calls / 60 Tage</span><span style="color:'+ps.color+'">'+qaDue.cnt+'/'+qaDue.target+' bewertet</span></div></div>'
+        +'<div class="task-meta"><span>Automatisch &middot; Ziel 4 Calls / Woche</span><span style="color:'+ps.color+'">'+qaDue.cnt+'/'+qaDue.target+' bewertet</span></div></div>'
         +'<span class="task-prio" style="background:'+ps.bg+';color:'+ps.color+'">'+(qaHigh?'high':'medium')+'</span>'
         +'<button class="btn btn-sm btn-primary" data-eid="'+emp.id+'" onclick="event.stopPropagation();openQaBewertungModal(this.dataset.eid)"><i class="ti ti-phone-plus"></i> Bewerten</button>'
         +'</div></div>';
@@ -14670,9 +14672,20 @@ function loadAufgabenFromSupabase(){return Promise.all([sb.from('aufgaben_meta')
   if(r[0]&&!r[0].error)(r[0].data||[]).forEach(function(x){aufgMeta[x.key]=x;});else console.warn('aufgaben_meta (Tabelle angelegt?)',r[0]&&r[0].error);
   if(r[1]&&!r[1].error)aufgKomm=(r[1].data||[]).sort(function(a,b){return (b.am||'').localeCompare(a.am||'');});return true;}).catch(function(e){console.warn('aufgaben',e);return false;});}
 // Personen (Spalten): Admin-Spalte + Coaches/Admins aus den Mitarbeitern
-function aufgStaff(){var L=[];employees.filter(function(e){return e.active!==false&&e.boardRole!=='admin'&&!/^niklas/i.test(e.name||'')&&(e.boardRole==='coach'||e.isPureCoach||e.role==='SC'||e.role==='SDM');}).sort(function(a,b){return a.name.localeCompare(b.name);})
-  .forEach(function(e){L.push({key:'emp:'+e.id,name:e.name,sub:e.boardRole==='admin'?'Admin':(e.role==='SDM'?'Sales Development':'Coach')});});if(!L.length)L.push({key:'admin',name:'Nicht zugeordnet',sub:'kein Coach angelegt'});return L;}
-function aufgMeKeys(){var k=[];if(currentCoach)k.push('emp:'+currentCoach.id);if(currentUserRole==='admin')k.push('admin');return k;}
+// Feste Reihenfolge der Spalten: Dogoro, Kathrin, Joey, Niklas; weitere Coaches danach alphabetisch
+var AUFG_ORDER=['dogoro','kathrin','joey','niklas'];
+function aufgNiklasEmp(){return employees.find(function(x){return x.active!==false&&/^niklas/i.test(x.name||'');})||null;}
+function aufgNiklasKey(){var e=aufgNiklasEmp();return e?'emp:'+e.id:'u:n.hojdem';}
+function aufgStaff(){var C=employees.filter(function(e){return e.active!==false&&e.boardRole!=='admin'&&!/^niklas/i.test(e.name||'')&&(e.boardRole==='coach'||e.isPureCoach||e.role==='SC'||e.role==='SDM');}).sort(function(a,b){return a.name.localeCompare(b.name);});
+  var row=function(e){return {key:'emp:'+e.id,name:e.name,sub:e.role==='SDM'?'Sales Development':'Coach'};},L=[],used={};
+  AUFG_ORDER.forEach(function(n){if(n==='niklas'){var ne=aufgNiklasEmp();L.push({key:aufgNiklasKey(),name:ne?ne.name:'Niklas Hojdem',sub:'Sales Operations'});return;}
+    var e=C.find(function(x){return (x.name||'').toLowerCase().indexOf(n)===0;});if(e){used[e.id]=1;L.push(row(e));}});
+  C.forEach(function(e){if(!used[e.id])L.push(row(e));});return L;}
+function aufgMeKeys(){var k=[];if(currentCoach)k.push('emp:'+currentCoach.id);if(currentUserRole==='admin')k.push('admin');
+  var nk=aufgNiklasKey(),em=String(currentAuthUser&&currentAuthUser.email||'').toLowerCase();if(em==='n.hojdem@wiegand-gmbh.de'&&k.indexOf(nk)<0)k.push(nk);return k;}
+// QA-Bewertungen: zufällig, aber gleichmäßig auf Dogoro, Kathrin und Niklas verteilt; stabil innerhalb der Woche, neu gemischt jeden Montag
+function aufgQaPool(){var P=[aufgOwner('dogoro'),aufgOwner('kathrin'),aufgNiklasKey()].filter(Boolean);return P.length?P:['admin'];}
+function aufgQaHash(s){var h=2166136261;s=String(s);for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function aufgName(key){var s=aufgStaff().find(function(x){return x.key===key;});if(s)return s.name;var e=key&&key.indexOf('emp:')===0?kalEmp(key.slice(4)):null;return e?e.name:'–';}
 function aufgOwner(n){var e=employees.find(function(x){return x.active!==false&&(x.name||'').toLowerCase().indexOf(n)===0;});return e?'emp:'+e.id:null;}
 function aufgDefault(e){var mk=today().slice(0,7),bm=e?beschaeftigungsmonat(e,mk):99;var k=bm<=1?aufgOwner('kathrin'):aufgOwner('dogoro');return k||aufgOwner('dogoro')||aufgOwner('kathrin')||'admin';}
@@ -14692,8 +14705,12 @@ function aufgAll(){var t=today(),out=[],add=function(o){var m=aufgMeta[o.key]&&a
   // 4) Sessions planen: Performance-Gespräche, Routinen, Weeklys nach Regeln (aus dem Kalender, beide Standorte)
   var sv=KAL.loc;['MUC','VLC'].forEach(function(l){KAL.loc=l;_kalTC.v=null;kalTasks().forEach(function(x){var grp=/^rt/.test(x.id)?'Routine · '+x.art:(x.art==='Weekly'?'Weeklys':null);
     add({key:'ses:'+x.id,art:x.art==='Performance Review'?'Performance-Gespräch':x.art,kind:grp?'routine':'auto',bundle:grp,t:x.e.name,s:x.src,due:x.art==='Weekly'?kalMon(x.due):x.due,born:kalAdd(x.due,-14),def:x.coachId?'emp:'+x.coachId:aufgCoachOf(x.e),act:'Session planen',go:function(){kalPlanTask(x.id);},emp:x.e.id,task:x});});});KAL.loc=sv;_kalTC.v=null;
-  // 5) QA-Bewertungen (weniger als 5 bewertete Calls in 60 Tagen)
-  teamTargetList().forEach(function(e){if(typeof qaCallsDue!=='function')return;var q=qaCallsDue(e.id);if(q.due>0)add({key:'qa:'+e.id,art:'QA-Bewertung',kind:'routine',bundle:'QA-Bewertungen',t:e.name,s:q.cnt+' von '+q.target+' Calls in 60 Tagen bewertet',due:kalAdd(t,7),born:t,def:aufgCoachOf(e),act:'Mitarbeiter öffnen',go:function(){selectedEmp=e.id;view='emp';activeTab='qa';renderSidebar();renderMain();},emp:e.id});});
+  // 5) QA-Bewertungen (weniger als 4 bewertete Calls in der laufenden Woche), zufällig verteilt auf Dogoro, Kathrin, Niklas
+  var qMo=kalMon(t),qFr=kalAdd(qMo,4),qPool=aufgQaPool(),qWho={};
+  teamTargetList().filter(function(e){if(e.startDate&&e.startDate>t)return false;for(var i=0;i<5;i++){var d=kalAdd(qMo,i);if(kalWorkday(e,d)&&!kalOn(e.id,d))return true;}return false;})
+    .sort(function(a,b){return aufgQaHash(a.id+'|'+qMo)-aufgQaHash(b.id+'|'+qMo)||String(a.id).localeCompare(String(b.id));})
+    .forEach(function(e,i){qWho[e.id]=qPool[(i+aufgQaHash(qMo))%qPool.length];});
+  teamTargetList().forEach(function(e){if(typeof qaCallsDue!=='function'||!qWho[e.id])return;var q=qaCallsDue(e.id);if(q.due>0)add({key:'qa:'+e.id+':'+qMo,art:'QA-Bewertung',kind:'routine',bundle:'QA-Bewertungen',t:e.name,s:q.cnt+' von '+q.target+' Calls diese Woche bewertet',due:qFr,born:qMo,def:qWho[e.id],act:'Mitarbeiter öffnen',go:function(){selectedEmp=e.id;view='emp';activeTab='qa';renderSidebar();renderMain();},emp:e.id});});
   // 6) Mitarbeiter fehlt? (ab 09:30 an Arbeitstagen: keine Aktivität, keine Abwesenheit)
   var KR=kalRules(),fz=KR.fehltZeit.split(':'),fMin=(+fz[0])*60+(+fz[1]),nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(KR.fehltAn&&hm>=Math.min(fMin,AUFG_FEHLT_MIN_OVR==null?fMin:AUFG_FEHLT_MIN_OVR)&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
     var act=0;(performance[e.id]||[]).forEach(function(r){if(r.date===t)act+=(r.gesamtAktivitaeten||0)+(r.oem_aktivitaeten||0)+(r.optGesamt||0);});if(act>0)return;
@@ -14724,8 +14741,10 @@ function aufgCardHtml(c){var s=aufgState(c),items=c.items;
     +'<div class="au-b"><b>'+esc(c.art)+'</b><small>'+esc(c.t)+'</small><div class="ft"><span class="au-tag">'+(items?'Routine':c.kind==='task'?'Task':'automatisch')+'</span>'+(items&&c.total?'<span class="au-pr"><i><b style="width:'+Math.max(0,(c.total-items.length)/c.total*100)+'%"></b></i>'+(c.total-items.length)+'/'+c.total+'</span>':'<small class="au-s">'+esc(c.s||'')+'</small>')+'</div></div></div>';}
 function aufgKanban(C,S){if(AU.group==='d'||AU.group==='a')return aufgKanban2(C);return '<div class="au-kb" style="grid-template-columns:repeat('+S.length+',minmax(250px,1fr))">'+S.map(function(p){var X=C.filter(function(c){return c.assignee===p.key;}),od=X.some(function(c){return aufgState(c).c==='od';});
   return '<div class="au-col" data-acol="'+esc(p.key)+'"><div class="au-ch"><i style="background:'+(od?'#F08566':'#9a9a96')+'"></i>'+esc(p.name)+'<small>'+esc(p.sub)+'</small><span>'+X.length+'</span></div>'+(X.length?X.map(aufgCardHtml).join(''):'<div class="kal-note" style="text-align:center;padding:14px">Keine Aufgaben</div>')+'</div>';}).join('')+'</div>';}
+// Spalte in der Ansicht „Art“: alles außer Performance-Gespräch, Weekly und QA landet unter „Aufgaben“
+function aufgArtCol(c){var a=String(c.art||'');if(/Performance/.test(a))return 'Performance-Gespräche';if(/Weekly/.test(a))return 'Weekly';if(/QA/.test(a))return 'QA-Bewertungen';return 'Aufgaben';}
 function aufgKanban2(C){var cols;if(AU.group==='d'){var wk=kalAdd(kalMon(kalRef()),4);cols=[['Überfällig',function(c){return aufgState(c).c==='od';}],['Heute',function(c){return aufgState(c).c==='td';}],['Bis Freitag',function(c){var s=aufgState(c).c;return s!=='od'&&s!=='td'&&c.due<=wk;}],['Später',function(c){return c.due>wk;}]];}
-  else{var arts=[];C.forEach(function(c){var a=c.items?'Routinen':c.art;if(arts.indexOf(a)<0)arts.push(a);});cols=arts.map(function(a){return [a,function(c){return (c.items?'Routinen':c.art)===a;}];});}
+  else{cols=['Performance-Gespräche','Weekly','QA-Bewertungen','Aufgaben'].map(function(a){return [a,function(c){return aufgArtCol(c)===a;}];});}
   return '<div class="au-kb" style="grid-template-columns:repeat('+cols.length+',minmax(250px,1fr))">'+cols.map(function(cl){var X=C.filter(cl[1]);return '<div class="au-col"><div class="au-ch"><i style="background:'+(cl[0]==='Überfällig'&&X.length?'#F08566':'#9a9a96')+'"></i>'+esc(cl[0])+'<span>'+X.length+'</span></div>'+(X.length?X.map(function(c){return aufgCardHtml(c).replace('<span class="au-tag">','<span class="au-tag">'+esc(kalFirst(aufgName(c.assignee)))+'</span><span class="au-tag">');}).join(''):'<div class="kal-note" style="text-align:center;padding:14px">Keine Aufgaben</div>')+'</div>';}).join('')+'</div>';}
 function aufgRow(c){var s=aufgState(c),km=aufgKomm.find(function(k){return k.key===c.key;});
   return '<tr onclick="aufgClick(\''+esc(c.key).replace(/'/g,"\\'")+'\')" style="cursor:pointer"><td class="au-due '+s.c+'">'+s.l.replace('überfällig seit','seit')+'</td><td><b>'+esc(c.art)+'</b> · '+esc(c.t)+'<small>'+esc(c.s||'')+'</small></td><td>'+esc(aufgName(c.assignee))+'</td><td class="au-cm">'+(km?'<b>'+new Date(km.am).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'</b> '+esc(km.text):'<span class="zt-dim">–</span>')+'</td></tr>';}
@@ -14830,7 +14849,7 @@ function puBanFor(k,e){var y=today().slice(0,4),mk=today().slice(0,7),mn=MONTH_N
     var G=(goals[e.id]||[]).filter(function(g){return !g.done&&g.status!=='done'&&g.status!=='erreicht';}),s1=f(SK),s2=f(WI),s3=f(RE);
     return puBanHtml(e.name.toUpperCase()+' · ENTWICKLUNG',[['LETZTE',L0&&L0.date?kalF(L0.date):'–',EV.length+(EV.length===1?' Bewertung':' Bewertungen')],['SKILL',s1[0],s1[1]],['WILL',s2[0],s2[1]],['RESULT',s3[0],s3[1]],['ZIELE',G.length,'offen']]);}
   if(k==='ca'){var R=(callRatings[e.id]||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),q=typeof qaCallsDue==='function'?qaCallsDue(e.id):{cnt:0,target:5},sc=R.filter(function(r){return r.score!=null;}),avg=sc.length?Math.round(sc.reduce(function(a,r){return a+(+r.score||0);},0)/sc.length):null;
-    return puBanHtml(e.name.toUpperCase()+' · CALLS',[['BEWERTET',q.cnt+'/'+q.target,'Calls in 60 Tagen'],['Ø SCORE',avg==null?'–':avg+(avg<=100?' %':''),sc.length+' Bewertungen'],['LETZTE',R[0]&&R[0].date?kalF(R[0].date):'–',R[0]?'Bewertung':'noch keine'],['GESAMT',R.length,'Bewertungen'],['AUFGABEN',open,'offen']]);}
+    return puBanHtml(e.name.toUpperCase()+' · CALLS',[['BEWERTET',q.cnt+'/'+q.target,'Calls diese Woche'],['Ø SCORE',avg==null?'–':avg+(avg<=100?' %':''),sc.length+' Bewertungen'],['LETZTE',R[0]&&R[0].date?kalF(R[0].date):'–',R[0]?'Bewertung':'noch keine'],['GESAMT',R.length,'Bewertungen'],['AUFGABEN',open,'offen']]);}
   if(k==='ov'){var S=ovStats(e);return puBanHtml(e.name.toUpperCase()+(e.role?' · '+e.role:'')+' · '+mn.toUpperCase(),[['ZIEL BIS HEUTE',S.pct==null?'–':S.pct+' %',S.so.ziel?'hochgerechnet '+ztEur(S.hr):'kein Ziel hinterlegt'],['TREND',S.trend==null?'–':(S.trend>=0?'+':'−')+Math.abs(S.trend)+' %','Marge/Tag zum Vormonat'],['NÄCHSTER TERMIN',S.nx?kalF(S.nx.d):'–',S.nx?S.nx.l:'nichts geplant'],['ÜBERFÄLLIG',S.od,S.od?'Aufgaben':'nichts überfällig'],['URLAUB FREI',kalNf(S.frei),'Tage '+mk.slice(0,4)]]);}
   var bm=beschaeftigungsmonat(e,mk),ist=istForEmpMonth(e.id,mk),o=0;(performance[e.id]||[]).forEach(function(r){if(r.date&&r.date.slice(0,7)===mk)o+=r.optGesamt||0;});var k2=kalKonto(e.id,y),s2=puSesStats(e);
   return puBanHtml(e.name.toUpperCase()+(e.role?' · '+e.role:''),[['IM UNTERNEHMEN','Monat '+bm,e.startDate?'seit '+kalF(e.startDate)+e.startDate.slice(2,4):''],['MARGE',ztEur(ist),mn],['OPT.',Math.round(o).toLocaleString('de-DE'),mn],['SESSIONS',s2.mon,mn],['AUFGABEN',open,'offen']]);}
@@ -14874,7 +14893,7 @@ function ovHints(e){var t=today(),S=ovStats(e),H=[],key=function(k){return esc(k
   if(ab){var loc=kalIsVlc(e)?'VLC':'MUC',mx=0;kalDays(ab).forEach(function(d){var n=kalFree(d,loc,e.id).length;if(n>mx)mx=n;});H.push([mx>=kalRules().freiGrenze?'w':'i','<b>'+KAL_ART[kalShowArt(ab)]+'</b> '+(ab.von<=t?'läuft bis '+kalF(ab.bis):'ab '+kalF(ab.von))+' · '+kalNf(kalAmt(ab))+' T'+(ab.status==='offen'?' · Antrag offen':'')+(mx?' · bis zu '+mx+' andere frei':''),go('ab'),'Abwesenheit']);}
   var last=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant'&&p.date&&p.date<=t;}).sort(function(a,b){return a.date<b.date?1:-1;})[0],dl=last?kalDiff(last.date,t):null;
   if(dl==null||dl>14)H.push(['w',last?'Letzte Session vor <b>'+dl+' Tagen</b> ('+esc(last.type||'Session')+')':'Noch <b>keine Session</b> dokumentiert',go('se'),'Coaching']);
-  if(typeof qaCallsDue==='function'){var q=qaCallsDue(e.id);if(q.due>0)H.push([q.cnt===0?'w':'i','Nur <b>'+q.cnt+' von '+q.target+'</b> Calls in 60 Tagen bewertet',go('ca'),'Call']);}
+  if(typeof qaCallsDue==='function'){var q=qaCallsDue(e.id);if(q.due>0)H.push([q.cnt===0?'w':'i','Nur <b>'+q.cnt+' von '+q.target+'</b> Calls diese Woche bewertet',go('ca'),'Call']);}
   if(!H.some(function(h){return h[0]==='w';}))H.unshift(['ok','<b>Alles im grünen Bereich</b> · nichts Dringendes offen','','']);
   return '<div class="ov-h">'+H.slice(0,6).map(function(h){return '<div class="ov-r '+h[0]+'"'+(h[2]?' onclick="'+h[2]+'"':'')+'><i class="ti '+(h[0]==='w'?'ti-alert-triangle':h[0]==='ok'?'ti-circle-check':'ti-info-circle')+'"></i><span>'+h[1]+'</span>'+(h[3]?'<em>'+h[3]+' <i class="ti ti-chevron-right"></i></em>':'')+'</div>';}).join('')+'</div>';}
 
@@ -14927,7 +14946,7 @@ function ovSteps(e){var t=today(),S=[],L=[];try{L=aufgAll().filter(function(o){r
   var lastD=st.last?kalDiff(st.last.date,t):null;
   if(rs||lastD==null||lastD>14){var wk=L.find(function(o){return o.art==='Weekly';});S.push(['Weekly führen',(rs?rs:'')+(lastD!=null?(rs?' · ':'')+'letzte Session vor '+lastD+' Tagen':' · noch keine Session dokumentiert'),'Session erfassen',wk?'aufgDone(\''+key(wk.key)+'\')':'window._puOpenNew=true;puGo(\'se\')']);}
   L.filter(function(o){return aufgState(o).c==='od'&&o.art!=='Weekly';}).slice(0,2).forEach(function(o){S.push([o.art+(o.kind==='task'?': '+o.t:''),aufgState(o).l+(o.s?' · '+o.s:''),aufgActLabel(o),'aufgDone(\''+key(o.key)+'\')']);});
-  var q=typeof qaCallsDue==='function'?qaCallsDue(e.id):{due:0};if(q.due>0)S.push([q.due+' Call'+(q.due>1?'s':'')+' bewerten',q.cnt+' von '+q.target+' Calls in 60 Tagen bewertet','Call bewerten','window._puOpenNew=true;puGo(\'ca\')']);
+  var q=typeof qaCallsDue==='function'?qaCallsDue(e.id):{due:0};if(q.due>0)S.push([q.due+' Call'+(q.due>1?'s':'')+' bewerten',q.cnt+' von '+q.target+' Calls diese Woche bewertet','Call bewerten','window._puOpenNew=true;puGo(\'ca\')']);
   var pg=L.find(function(o){return o.art==='Performance-Gespräch'&&aufgState(o).c!=='od';});if(pg)S.push(['Performance-Gespräch vorbereiten','fällig '+aufgFmt(pg.due)+' · '+(pg.s||''),'Aufgabe öffnen','aufgOpenEmp(\''+key(pg.key)+'\')']);
   var so=ovStats(e);if(so.pct!=null&&so.pct<85)S.push(['Ziel prüfen','Marge bei '+so.pct+' % des Ziels bis heute · hochgerechnet '+ztEur(so.hr),'Zur Zielvereinbarung','closeModal(\'coachingInfoModal\');view=\'team\';wiegandView=\'ziel\';ZT.open[\'m'+t.slice(0,7)+'\']=true;renderSidebar();renderMain();']);
   if(!S.length)return '<div class="kal-note" style="padding:6px 0">Nichts Dringendes offen. Weiter so.</div>';
