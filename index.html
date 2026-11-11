@@ -685,6 +685,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-tl .blk{position:absolute;left:0;right:0;top:7px;bottom:7px;font-size:10.5px;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer}
 .kal-tl .blk[draggable=true]{cursor:grab}.kal-tl .blk.h{top:20px}.kal-tl .blk.s{left:3px;border-top-left-radius:7px;border-bottom-left-radius:7px}.kal-tl .blk.e{right:3px;border-top-right-radius:7px;border-bottom-right-radius:7px}
 .kal-tl .dot{position:absolute;bottom:3px;width:7px;height:7px;border-radius:2px}
+.kal-cw.co .kal-tlw{overflow:auto}.kal-cw.co .kal-tl .hd{position:sticky;top:0;z-index:3}.kal-cw.co .kal-tl .hd.nm{z-index:4}.kal-cw.co .kal-tl .ft{position:sticky;bottom:0;z-index:3}.kal-cw.co .kal-tl .ft.nm{z-index:4}
 .kal-tl .sb{position:absolute;left:4px;right:4px;top:9px;bottom:9px;border-radius:6px;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer}.kal-tl .sb[draggable=true]{cursor:grab}
 .kal-tl .ft{font-size:12px;font-weight:700;color:var(--text2);background:#EFECE5;border-bottom:0}.kal-tl .ft.nm{background:#EFECE5;padding-left:12px}.kal-tl .ft.w3{background:#FBE3DA;color:#9A3F22}
 .kal-tl .cell{cursor:pointer}.kal-tl .cell:hover{background:rgba(240,133,102,.08)}
@@ -14093,7 +14094,7 @@ function kalVYearCoach(){var y=+KAL.cur.slice(0,4),t=today(),h='<div class="kal-
     h+='<div class="kal-ym'+(m===+t.slice(5,7)-1&&String(y)===t.slice(0,4)?' cur':'')+'" data-kmonth="'+kalI(f)+'"><h4>'+KAL_MON[m]+'<span>'+tot+' Session'+(tot===1?'':'s')+'</span></h4><div class="g">'+g+'</div></div>';}
   return h+'</div>';}
 function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=new Date(y,mo+1,0).getDate(),D=[],t=today();for(var i=1;i<=n;i++)D.push(kalI(new Date(y,mo,i)));
-  var h='<div class="kal-tlw"><div class="kal-tl" style="grid-template-columns:210px repeat('+n+',minmax(28px,1fr))"><div class="hd nm">Mitarbeiter</div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(kalWknd(d)||hn?' we':'')+(d===t?' td':'')+'"'+(hn?' data-ktip="'+esc(hn)+'"':'')+'><b>'+kalP(d).getDate()+'</b>'+KAL_WD[kalP(d).getDay()]+'</div>';}).join('');
+  var h='<div class="kal-tlw"'+(kalCtx()==='coach'?' style="max-height:'+(kalEmps(KAL.loc).length*42+94)+'px"':'')+'><div class="kal-tl" style="grid-template-columns:210px repeat('+n+',minmax(28px,1fr))"><div class="hd nm">Mitarbeiter</div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(kalWknd(d)||hn?' we':'')+(d===t?' td':'')+'"'+(hn?' data-ktip="'+esc(hn)+'"':'')+'><b>'+kalP(d).getDate()+'</b>'+KAL_WD[kalP(d).getDay()]+'</div>';}).join('');
   var co=kalCtx()==='coach',TE=co?kalEmps('MUC').concat(kalEmps('VLC')):kalEmps();
   TE.forEach(function(e){h+='<div class="nm"><span class="kal-av">'+kalIni(e.name)+'</span>'+esc(e.name)+'<small>'+esc(e.role||'')+'</small></div>';
     D.forEach(function(d,ix){var hn=kalHol(d,KAL.loc),x=kalOnV(e.id,d),inner='';
