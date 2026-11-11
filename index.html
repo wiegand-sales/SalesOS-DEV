@@ -13981,12 +13981,15 @@ function kalCtx(){return view==='coaching'?'coach':'kal';}
 function kalSesCat(p){var t=p.type||p.typ||'';if(/^weekly$/i.test(t))return 'Weekly';return typeof findCoachingCategoryForType==='function'?findCoachingCategoryForType(t):'Coaching';}
 function kalFilterCats(){var a=kalIsViewer()?[['urlaub','Urlaub'],['flex','Flex Day'],['abwesend','Abwesend']]:[['urlaub','Urlaub'],['flex','Flex Day'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']];
   var c=[['Weekly','Weekly']].concat(Object.keys(COACHING_CATEGORIES).map(function(x){return [x,x];}));return {abs:a,ses:c};}
-function kalShowAbs(x){return !KAL.hide[kalShowArt(x)];}
+// Filter getrennt je Kalender: im Coaching-Kalender sind Abwesenheiten standardmäßig ausgeblendet
+function kalHid(){if(kalCtx()!=='coach')return KAL.hide;if(!KAL.chide){KAL.chide={};kalFilterCats().abs.forEach(function(o){KAL.chide[o[0]]=1;});}return KAL.chide;}
+function kalSetHide(h){if(kalCtx()==='coach')KAL.chide=h;else KAL.hide=h;}
+function kalShowAbs(x){return !kalHid()[kalShowArt(x)];}
 function kalOnV(eid,d){var x=kalOn(eid,d);return x&&kalShowAbs(x)?x:null;}
-function kalFilt(key){if(key==='*')KAL.hide={};else if(KAL.hide[key])delete KAL.hide[key];else KAL.hide[key]=1;kalRerender();}
-function kalFiltOnly(grp){var f=kalFilterCats();KAL.hide={};(grp==='abs'?f.ses:f.abs).forEach(function(o){KAL.hide[o[0]]=1;});kalRerender();}
-function kalFilterBtn(){var f=kalFilterCats(),n=Object.keys(KAL.hide).length;
-  function box(o){var on=!KAL.hide[o[0]];return '<label style="display:flex;align-items:center;gap:8px;margin:0;padding:5px 6px;border-radius:7px;cursor:pointer;font-weight:400;font-size:13px"><input type="checkbox" style="width:auto;margin:0" '+(on?'checked':'')+' onchange="kalFilt(\''+o[0]+'\')">'+esc(o[1])+'</label>';}
+function kalFilt(key){if(key==='*')kalSetHide({});else if(kalHid()[key])delete kalHid()[key];else kalHid()[key]=1;kalRerender();}
+function kalFiltOnly(grp){var f=kalFilterCats();kalSetHide({});(grp==='abs'?f.ses:f.abs).forEach(function(o){kalHid()[o[0]]=1;});kalRerender();}
+function kalFilterBtn(){var f=kalFilterCats(),n=Object.keys(kalHid()).length;
+  function box(o){var on=!kalHid()[o[0]];return '<label style="display:flex;align-items:center;gap:8px;margin:0;padding:5px 6px;border-radius:7px;cursor:pointer;font-weight:400;font-size:13px"><input type="checkbox" style="width:auto;margin:0" '+(on?'checked':'')+' onchange="kalFilt(\''+o[0]+'\')">'+esc(o[1])+'</label>';}
   return '<div style="position:relative" id="kalFiltWrap"><button class="btn'+(n?' kal-tgl on':'')+'" onclick="KAL.fOpen=!KAL.fOpen;kalRerender()"><i class="ti ti-filter"></i> Filter'+(n?'<b>'+n+' aus</b>':'')+'</button>'
     +(KAL.fOpen?'<div style="position:absolute;top:40px;right:0;z-index:50;background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px;width:250px;box-shadow:0 8px 24px rgba(0,0,0,.12)">'
       +'<div style="display:flex;align-items:center;margin:0 6px 4px"><b style="font-size:11px;letter-spacing:.06em;color:var(--text2)">ABWESENHEITEN</b><a style="margin-left:auto;font-size:11.5px;cursor:pointer;color:var(--text2)" onclick="kalFiltOnly(\'abs\')">nur diese</a></div>'+f.abs.map(box).join('')
@@ -13997,7 +14000,7 @@ document.addEventListener('mousedown',function(ev){if(!KAL.fOpen)return;var w=do
 // ── Sessions aus protocols ──
 function kalSessEmps(){return kalCtx()==='coach'?employees.filter(function(e){return e.active!==false;}):kalEmps();}
 function kalSess(d,eid,raw){var out=[],grp={},cf=kalCtx()==='coach'&&typeof coachFilterView!=='undefined'&&coachFilterView&&coachFilterView!=='overview'?coachFilterView:null;
-  kalSessEmps().forEach(function(e){if(eid&&e.id!==eid)return;(protocols[e.id]||[]).forEach(function(p){if(p.date!==d||kalOn(e.id,d))return;if(cf&&p.coachId!==cf)return;if(!raw&&KAL.hide[kalSesCat(p)])return;
+  kalSessEmps().forEach(function(e){if(eid&&e.id!==eid)return;(protocols[e.id]||[]).forEach(function(p){if(p.date!==d||kalOn(e.id,d))return;if(cf&&p.coachId!==cf)return;if(!raw&&kalHid()[kalSesCat(p)])return;
     if(p.groupId&&!eid){if(grp[p.groupId]){grp[p.groupId].n++;return;}var o={e:e,p:p,n:1};grp[p.groupId]=o;out.push(o);return;}out.push({e:e,p:p,n:1});});});
   return out.sort(function(a,b){return (a.p.uhrzeit||'').localeCompare(b.p.uhrzeit||'');});}
 function kalSesPast(p){return p.status!=='geplant'||p.date<today();}
