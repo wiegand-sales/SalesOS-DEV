@@ -3486,6 +3486,7 @@ function openPlannedSessionFromChip(el){
   var proto=proto0;
   openNeuesCoachingModal(empId);
   _editingSessionId=sessionId||null;
+  if(_editingSessionId&&typeof puColSet==='function')puColSet('ncSecNew',true); // Bereich „Neue Session“ direkt aufgeklappt, damit die geplante Session erfasst werden kann
   var dateEl=document.getElementById('sess-date');
   var timeEl=document.getElementById('sess-time');
   var endTimeEl=document.getElementById('sess-end-time');
@@ -12246,6 +12247,7 @@ function openPlannedSession(empId, sessionId, typ, fokus, datum, uhrzeit){
   setTimeout(function(){
     openNeuesCoachingModal(empId);
     _editingSessionId=sessionId||null;
+    if(_editingSessionId&&typeof puColSet==='function')puColSet('ncSecNew',true);
     var dateEl=document.getElementById('sess-date');
     var timeEl=document.getElementById('sess-time');
     var endTimeEl=document.getElementById('sess-end-time');
