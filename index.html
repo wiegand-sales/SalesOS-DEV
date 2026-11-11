@@ -1436,14 +1436,14 @@ function loadEmployeesFromSupabase(){
     if(res.error){ console.warn('employees load failed:', res.error); return false; }
     employees = res.data.map(function(e){
       return {
-        id: e.id, name: e.name, role: e.role, phase: e.phase,
+        id: e.id, name: e.name, role: e.role==='SC'?'SDC':e.role, phase: e.phase, sdlTeam: Array.isArray(e.sdl_team)?e.sdl_team.map(String):[],
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
         isPureCoach: e.is_pure_coach===true, boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
       };
     });
-    return true;
+    return loadSalariesFromSupabase();
   });
 }
 
@@ -1457,7 +1457,7 @@ var provisionTeamDropdownOpen=false;
 var provisionTeamSearchQuery='';
 function toggleProvisionTeamDropdown(){provisionTeamDropdownOpen=!provisionTeamDropdownOpen;if(!provisionTeamDropdownOpen)provisionTeamSearchQuery='';renderProvisionTeam();}
 function toggleProvisionTeamEmpId(id){
-  var visIds=employees.filter(function(e){return !e.isPureCoach&&e.active!==false;}).map(function(e){return e.id;});
+  var visIds=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e);}).map(function(e){return e.id;});
   if(!provisionTeamSelectedIds)provisionTeamSelectedIds=visIds.slice();
   var idx=provisionTeamSelectedIds.indexOf(id);
   if(idx>=0)provisionTeamSelectedIds.splice(idx,1);else provisionTeamSelectedIds.push(id);
@@ -1568,8 +1568,19 @@ var settingsNavOpen=true;
 var userFilter='all', userSearch='', userShowAllAgents=false, loginInfo=null, loginInfoLoading=false, userMsg='';
 var BOARD_ROLE_LABEL={admin:'Admin',coach:'Coach',viewer:'Betrachter',agent:'Sales Agent'};
 // Coach im Board: gesetzte Board-Rolle geht vor (Coach = ja, Betrachter/Agent = nein), sonst wie bisher nach Position
-function isCoachEmp(e){ if(!e)return false; if(e.boardRole==='coach')return true; if(e.boardRole==='viewer'||e.boardRole==='agent')return false; return !!(e.isPureCoach||e.role==='SC'||e.role==='SDM'); }
-function positionRole(p){ return (p.isPureCoach||p.role==='SC'||p.role==='SDM')?'Coach':'Sales Agent'; }
+function isCoachEmp(e){ if(!e)return false; if(e.boardRole==='coach')return true; if(e.boardRole==='viewer'||e.boardRole==='agent')return false; return !!(e.isPureCoach||e.role==='SDC'||e.role==='SDM'||e.role==='SDL'); }
+// SDL (Sales Department Lead): sieht Provision und Gehalt nur von sich und seinem Team (Stammdaten › Team)
+function isSdlUser(){return currentUserRole==='coach'&&!!currentCoach&&currentCoach.role==='SDL';}
+function canSeeSalary(emp){if(!emp||!isSdlUser())return true;var id=String(emp.id);return id===String(currentCoach.id)||(currentCoach.sdlTeam||[]).indexOf(id)>=0;}
+var SALARY_TABLE=false; // true, sobald die Tabelle employee_salary existiert (SQL 29)
+function loadSalariesFromSupabase(){return sb.from('employee_salary').select('*').then(function(res){
+  if(res.error){SALARY_TABLE=false;console.warn('employee_salary (SQL 29 ausgeführt?)',res.error);return true;}
+  SALARY_TABLE=true;var by={};(res.data||[]).forEach(function(r){by[String(r.employee_id)]=r;});
+  employees.forEach(function(e){var r=by[String(e.id)];var pv=e.provisionSettings||(e.provisionSettings={});delete pv.grundgehalt;delete pv.agSozialabgaben;
+    if(r){if(r.grundgehalt!=null)pv.grundgehalt=+r.grundgehalt;if(r.ag_sozialabgaben!=null)pv.agSozialabgaben=+r.ag_sozialabgaben;}});
+  return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;});}
+function esSdlToggle(v){var b=document.getElementById('es-sdl-team');if(b)b.style.display=v==='SDL'?'':'none';}
+function positionRole(p){ return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
 function updateEmpBoardRole(sel){
   var emp=employees.find(function(e){return String(e.id)===String(sel.dataset.eid);});if(!emp)return;
@@ -2022,7 +2033,7 @@ function resolveCurrentCoach(){
     if(currentCoach && currentCoach.boardRole && BOARD_ROLE_LABEL[currentCoach.boardRole]){
       // bewusst gesetzte Board-Rolle geht vor der Position
       currentUserRole=currentCoach.boardRole;
-    } else if(currentCoach && !(currentCoach.isPureCoach || currentCoach.role==='SC' || currentCoach.role==='SDM')){
+    } else if(currentCoach && !(currentCoach.isPureCoach || currentCoach.role==='SDC' || currentCoach.role==='SDM' || currentCoach.role==='SDL')){
       // Mitarbeiter mit Login, aber kein Coach: Agent (nutzt nur die Chrome-Erweiterung, kein Board-Zugang)
       currentUserRole='agent';
     } else if(currentCoach){
@@ -2412,7 +2423,7 @@ function buildDailyWizardCr(){
 // Schwaechste 3: nur Verkaeufer (keine Coaches SC/SDM, keine inaktiven) mit mehr als minOpt Optimierungen heute
 function dwWorstCandidates(minOpt){
   var lim=(minOpt!=null)?+minOpt:5;
-  return employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&e.role!=='SC'&&e.role!=='SDM';})
+  return employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&e.role!=='SDC'&&e.role!=='SDM';})
     .map(function(e){return {e:e,s:dwSums(dwRowsToday(e.id))};})
     .filter(function(x){return x.s.opt>lim;});
 }
@@ -2483,7 +2494,7 @@ var WIZ_SLIDES={
     return [{type:'stagerow',title:'Worst 3 Mitarbeiter',sub:(c.kpi==='marge'||c.kpi==='opt'?'Summe ':'Ø ')+wizKpiLabel(c.kpi)+' der letzten 30 Tage'+(c.minOpt>0?' · ab '+c.minOpt+' Opt.':'')+'.',
       boxes:r.length?r.map(function(x){return{n:wizKpiFmt(x.v,c.kpi),l:wizFirst(x.e)};}):[{n:'—',l:'Keine Daten'}]}];}},
   dist:{label:'Verteilung über Coaches',desc:'Abgeschlossene Coachings je Coach, gesamt',def:{},build:function(){
-    var coachEmps=employees.filter(function(e){return(e.role==='SDM'||e.role==='SC')&&e.active!==false;}),cnt={};
+    var coachEmps=employees.filter(function(e){return(e.role==='SDM'||e.role==='SDC')&&e.active!==false;}),cnt={};
     employeeActiveList().forEach(function(e){(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'&&p.coachId)cnt[p.coachId]=(cnt[p.coachId]||0)+1;});});
     var d=coachEmps.map(function(c){return{n:String(cnt[c.id]||0),l:wizFirst(c)};}).sort(function(a,b){return(+b.n)-(+a.n);});
     return [{type:'stagerow',title:'Verteilung über Coaches',sub:'Alle abgeschlossenen Coachings, gesamt.',boxes:d.length?d:[{n:'0',l:'—'}]}];}},
@@ -2886,7 +2897,7 @@ function renderCoachingAnsicht(){
   var COACH_PETROL_PALETTE=['#1d1c1a','#F08566','#F08566','#F08566','#F59A5B','#F7A777'];
   function coachPetrolColor(coachId){
     if(!coachId)return COACH_PETROL_PALETTE[1];
-    var coachList=employees.filter(function(e){return isCoachEmp(e)||e.role==='SDM'||e.role==='SC';}).sort(function(a,b){return a.name.localeCompare(b.name);});
+    var coachList=employees.filter(function(e){return isCoachEmp(e)||e.role==='SDM'||e.role==='SDC';}).sort(function(a,b){return a.name.localeCompare(b.name);});
     var idx=coachList.findIndex(function(c){return c.id===coachId;});
     return COACH_PETROL_PALETTE[idx>=0?idx%COACH_PETROL_PALETTE.length:1];
   }
@@ -4268,7 +4279,7 @@ function zielvereinbarungHtml(){
   var weekDetailHtml=(function(){
     if(!zielMonth)return '';
     var monthLabel=MONTH_NAMES_ZIEL[+zielMonth.slice(5,7)-1]+' '+zielMonth.slice(0,4);
-    var ZIEL_ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+    var ZIEL_ROLE_ORDER={SDM:0,SDC:1,SDL:2,SE:3,SR:4,VLC:5};
     var visibleEmps=employees.filter(function(e){return empActiveInZielMonth(e,zielMonth)&&!e.isPureCoach;}).sort(function(a,b){
       var ra=ZIEL_ROLE_ORDER[a.role]!=null?ZIEL_ROLE_ORDER[a.role]:99,rb=ZIEL_ROLE_ORDER[b.role]!=null?ZIEL_ROLE_ORDER[b.role]:99;
       if(ra!==rb)return ra-rb;
@@ -4851,7 +4862,7 @@ function renderSidebar(){
   var onboardingEmps=visible.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';});
   var aktivEmps=visible.filter(function(e){return e.phase!=='Onboarding'||e.role==='VLC';});
   // Gruppen dynamisch nach Position (role), feste Reihenfolge
-  var order=['SE','SR','VLC','SDM','SC'];
+  var order=['SE','SR','SDL','VLC','SDM','SDC'];
   var positions=[];
   aktivEmps.forEach(function(e){
     var r=e.role||'Sonstige';
@@ -4960,7 +4971,7 @@ var coachingNavOpen=false;
 // ── Team-Ziele: Durchschnitt der aktuell gueltigen Einzelziele (Stammdaten & Provisionsvereinbarung) ──
 // Ersetzt die frueheren „Allgemeinen KPIs“. Mitarbeiter ohne eigenes Ziel (leeres Feld) zaehlen nicht mit.
 var TEAM_TARGET_KEYS=['crOEM','crTeilweise','crSuperYes','crMegaYes','optPerH','crSyMy','crYes','anteilOEM'];
-function teamTargetList(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach&&e.role!=='SC'&&e.role!=='SDM';});}
+function teamTargetList(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach&&e.role!=='SDC'&&e.role!=='SDM';});}
 function teamTargetFor(list,key){
   var vals=[],dirs={};
   (list||[]).forEach(function(e){if(!e||!e.startDate)return;var t=empTargets(e)[key];if(t&&t.val!=null&&t.val!==''&&!isNaN(+t.val)){vals.push(+t.val);dirs[t.dir||'gte']=1;}});
@@ -6207,7 +6218,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       +'<input id="overviewEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(overviewEmpSearchQuery)+'" oninput="overviewEmpSearchQuery=this.value;filterOverviewEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
       +'</div></div>';
     h+='<div id="overviewEmpScrollList" style="max-height:160px;overflow-y:auto;padding-top:4px">';
-    var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+    var ROLE_ORDER={SDM:0,SDC:1,SDL:2,SE:3,SR:4,VLC:5};
     var sortedVisible=visible.slice().sort(function(a,b){
       var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
       return ra-rb||a.name.localeCompare(b.name);
@@ -6655,7 +6666,7 @@ function renderTeam(){
       else{noCoachCount++;}
     });
   });
-  var coachEmps=employees.filter(function(e){return (e.role==='SDM'||e.role==='SC');});
+  var coachEmps=employees.filter(function(e){return (e.role==='SDM'||e.role==='SDC');});
   var coachDistRows=coachEmps.map(function(c){return {name:c.name,n:coachCounts[c.id]||0};});
   if(noCoachCount>0)coachDistRows.push({name:'Ohne Zuordnung (Altdaten)',n:noCoachCount});
   var maxCoachN=Math.max.apply(null,coachDistRows.map(function(x){return x.n;}).concat([1]));
@@ -8268,7 +8279,7 @@ function renderTab(){
     html=esBuildHtml(emp,false,html);
     if(true){
       // ── Zugang zur Sales-OS-Erweiterung (nur Admins, nur fuer Agents) ──
-      if(currentUserRole==='admin' && !(emp.isPureCoach||emp.role==='SC'||emp.role==='SDM')){
+      if(currentUserRole==='admin' && !(emp.isPureCoach||emp.role==='SDC'||emp.role==='SDM')){
         var hasLogin=!!emp.auth_user_id;
         html+='<div class="card" id="agentLoginCard"><div class="card-title"><i class="ti ti-puzzle"></i> Zugang zur Sales-OS-Erweiterung</div>';
         html+='<p style="font-size:12px;color:var(--text2);margin:0 0 12px;line-height:1.5">'+(hasLogin
@@ -8617,8 +8628,8 @@ function dshRangeKey(p){return p==='days'?'day':p==='weeks'?'week':p==='months'?
 var DSH_TEAMS=['SE','SR','OB','VLC'],DSH_AREAS=['OEM','UPS','WKA'],DSH_AC=['#5C564F','#A89C8E','#D3C8B6'];
 function dshSetPeriod(p){dshPeriod=p;renderDashboard();}
 function dshSetEmpTeam(t){dshEmpTeam=t;renderDashboard();}
-function dshActive(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach&&e.role!=='SC'&&e.role!=='SDM';});}
-function dshTeamOf(e){if(e.role==='VLC')return 'VLC';if(e.phase==='Onboarding')return 'OB';if(e.role==='SE')return 'SE';if(e.role==='SR')return 'SR';return null;}
+function dshActive(){return employees.filter(function(e){return e.active!==false&&!e.isPureCoach&&e.role!=='SDC'&&e.role!=='SDM';});}
+function dshTeamOf(e){if(e.role==='VLC')return 'VLC';if(e.phase==='Onboarding')return 'OB';if(e.role==='SE'||e.role==='SDL')return 'SE';if(e.role==='SR')return 'SR';return null;}
 function dshAll(){return dshActive().filter(function(e){return !!dshTeamOf(e);});}
 function dshTeam(t){return dshAll().filter(function(e){return dshTeamOf(e)===t;});}
 function dshYmd(d){return d.toISOString().slice(0,10);}
@@ -9534,7 +9545,7 @@ function buildIntegrationsHtml(){
   var tok=sCard('ti-key','Zugangsschlüssel','Ablaufende Schlüssel rechtzeitig erneuern, sonst stoppt der Sync',tokSt,
     '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:200px"><label for="tokExp">GitHub-Token für cron-job.org läuft ab am</label><input id="tokExp" type="date" value="'+esc(settings.tokenExpiry||'')+'" onchange="settings.tokenExpiry=this.value;sb.from(\'settings\').upsert({key:\'tokenExpiry\',value:this.value},{onConflict:\'key\'}).then(function(){renderMain();})"></div></div>'
     +sKvTable(sKv('SFTP-Passwort','in GitHub gespeichert')+sKv('Supabase Service-Schlüssel','nur auf dem Server')));
-  var agentsAll=employees.filter(function(e){return e.active!==false&&!(e.isPureCoach||e.role==='SC'||e.role==='SDM');});
+  var agentsAll=employees.filter(function(e){return e.active!==false&&!(e.isPureCoach||e.role==='SDC'||e.role==='SDM');});
   var withLogin=agentsAll.filter(function(e){return !!e.auth_user_id;}).length;
   var ext=sCard('ti-puzzle','Chrome-Erweiterung','„Sales OS – Deine Kennzahlen“ für die Sales Agents',settings.extensionUrl?sStatus('Im Web Store','ok'):sStatus('Link fehlt','off'),
     sKvTable(sKv('Agents mit Zugang',withLogin+' von '+agentsAll.length))
@@ -9992,7 +10003,7 @@ function buildProvisionTeamTable(){
     }
     return {urlaub:urlaub,krank:krank};
   }
-  var visible=employees.filter(function(e){return !e.isPureCoach&&e.active!==false;});
+  var visible=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e);});
   var selectedEmps=provisionTeamSelectedIds?visible.filter(function(e){return provisionTeamSelectedIds.indexOf(e.id)>=0;}):visible;
   var isAll=!provisionTeamSelectedIds||provisionTeamSelectedIds.length===visible.length;
   var selLabel=isAll?'Alle Mitarbeiter':(selectedEmps.length===1?selectedEmps[0].name:selectedEmps.length+' Mitarbeiter ausgewählt');
@@ -10011,7 +10022,7 @@ function buildProvisionTeamTable(){
       +'<input placeholder="Mitarbeiter suchen…" value="'+esc(provisionTeamSearchQuery)+'" oninput="provisionTeamSearchQuery=this.value;filterProvisionTeamEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
       +'</div></div>';
     h+='<div id="provisionTeamEmpScrollList" style="max-height:160px;overflow-y:auto;padding-top:4px">';
-    var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+    var ROLE_ORDER={SDM:0,SDC:1,SDL:2,SE:3,SR:4,VLC:5};
     var sortedVisible=visible.slice().sort(function(a,b){
       var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
       return ra-rb||a.name.localeCompare(b.name);
@@ -10189,6 +10200,7 @@ function buildProvisionTeamTable(){
   return h;
 }
 function buildProvisionTable(empId){
+  if(!canSeeSalary(employees.find(function(e){return String(e.id)===String(empId);})))return '<div class="card"><div class="kal-note">Provision ist für dich nur bei deinem Team sichtbar.</div></div>';
   var emp=employees.find(function(e){return e.id===empId;});
   if(!emp)return '<div class="card">Mitarbeiter nicht gefunden</div>';
   function stackCell(main,sub){
@@ -10908,12 +10920,13 @@ function esBuildHtml(emp,asPopup,html){
         html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
         html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+esc(emp.name)+'"></div>';
         html+='<div><label>Position</label>'
-          +'<select id="es-role" onchange="var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}toggleProvisionModel(this.value);">'
+          +'<select id="es-role"'+(currentUserRole!=='admin'&&(!asPopup||asPopup==='panels')?' disabled title="Position ändern nur Admins"':'')+' onchange="esSdlToggle(this.value);var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}toggleProvisionModel(this.value);">'
           +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
           +'<option'+(emp.role==='SE'?' selected':'')+'>SE</option>'
           +'<option'+(emp.role==='VLC'?' selected':'')+'>VLC</option>'
           +'<option'+(emp.role==='SDM'?' selected':'')+'>SDM</option>'
-          +'<option'+(emp.role==='SC'?' selected':'')+'>SC</option>'
+          +'<option'+(emp.role==='SDC'?' selected':'')+'>SDC</option>'
+          +'<option'+(emp.role==='SDL'?' selected':'')+(currentUserRole!=='admin'&&emp.role!=='SDL'?' disabled':'')+'>SDL</option>'
           +'<option value="__new__">+ Neue Position hinzufügen</option>'
           +'</select></div>';
         html+='<div><label>Phase</label><select id="es-phase">'
@@ -10931,6 +10944,9 @@ function esBuildHtml(emp,asPopup,html){
         html+='<div><label>Avatar-Farbe</label><div style="margin-top:6px">'+swatches+'</div></div>';
         html+='</div>';
 
+        (function(){var cands=teamTargetList().filter(function(x){return String(x.id)!==String(emp.id)&&x.role!=='SDL';}).sort(function(a,b){return a.name.localeCompare(b.name);});var mine=(emp.sdlTeam||[]),ro=currentUserRole!=='admin';
+          html+='<div id="es-sdl-team" style="'+(emp.role==='SDL'?'':'display:none;')+'margin:6px 0 12px"><label>Team (Position SDL)</label><div class="kal-note" style="margin-bottom:8px">Diese Mitarbeiter sieht der SDL in der Provisionsübersicht, dazu sich selbst. Ihre Weeklys und QA-Bewertungen gehen an ihn.'+(ro?' Ändern nur Admins.':'')+'</div>'
+            +'<div style="display:flex;flex-wrap:wrap;gap:6px 14px">'+cands.map(function(x){var on=mine.indexOf(String(x.id))>=0;return '<label style="display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:400;cursor:pointer;font-size:13px"><input type="checkbox" class="es-sdl-cb" value="'+esc(String(x.id))+'" style="width:auto;margin:0" '+(on?'checked':'')+(ro?' disabled':'')+'>'+esc(x.name)+'</label>';}).join('')+'</div></div>';})();
         cut('person');
         html+='<p style="font-size:11.5px;color:var(--text3);margin-bottom:10px;line-height:1.5">Arbeitszeiten je Wochentag – ermöglicht präzise Teilzeit-Steuerung und eine korrekte Optimierungen/Std.-Berechnung (z.B. kürzerer Freitag, längerer Montag).</p>';
         (function(){
@@ -10994,8 +11010,13 @@ function esBuildHtml(emp,asPopup,html){
         }
         html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
         html+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
+        if(canSeeSalary(emp)){
         html+=stripField('Grundgehalt/Mon.','pv-grundgehalt',2800,'€',10);
         html+=stripField('AG-Sozialabgaben','pv-agSozialabgaben',21,'%',1);
+        } else {
+          html+=stripField('Grundgehalt/Mon.','pv-grundgehalt-x','','€',10).replace('type="number"','type="text" disabled').replace('value=""','value="–"');
+          html+=stripField('AG-Sozialabgaben','pv-agSozialabgaben-x','','%',1).replace('type="number"','type="text" disabled').replace('value=""','value="–"');
+        }
         html+=stripField('Basisprov./Opt.','pv-basisProOpt',1.00,'€',0.10);
         html+=stripField('Mindestprov.','pv-mindestprovision',20,'%',5).replace('border-right:1px solid rgba(255,255,255,0.14)','');
         html+='</div>';
@@ -11158,7 +11179,7 @@ function esBuildHtml(emp,asPopup,html){
           {n:1,t:'Person',sum:esc(emp.role||'–')+' · '+esc(emp.phase||'–')+' · '+esc(emp.contract==='part'?'Teilzeit':emp.contract==='full'?'Vollzeit':(emp.contract||'–'))+' · '+(emp.email?esc(emp.email):'<span style="color:var(--red)">keine E-Mail</span>'),body:SEG.person},
           {n:2,t:'Vertrag',sum:'Beginn '+esD(emp.startDate)+' · Gültig ab '+esD(pv.gueltigAb)+' · '+(emp.endDate?'Ende '+esD(emp.endDate):'unbefristet')+(esBm?' · Beschäftigungsmonat '+esBm:''),body:SEG.vertrag},
           {n:3,t:'Arbeitszeit',sum:(esWorkDaysTxt?esWorkDaysTxt+' · ':'')+esN(esWeekTotal,1)+' Std. pro Woche',body:SEG.zeit},
-          {n:4,t:deOnly('Provision')+vlcOnly('Bonus'),sum:deOnly(esN(pvNum('grundgehalt',2800))+' € Grundgehalt · '+esN(pvNum('basisProOpt',1),2)+' €/Opt. · −'+esN(pvNum('reduktionProKpi',20))+' % je KPI · Mindestprov. '+esN(pvNum('mindestprovision',20))+' %')+vlcOnly(esN(vpv.serviceRate)+' € Service Rate · '+esN(vpv.bonusProOpt,2)+' €/Opt. · Stufen '+stufenUniq.join('/')+' % · Extra Pay folgt'),body:SEG.prov},
+          {n:4,t:deOnly('Provision')+vlcOnly('Bonus'),sum:deOnly((canSeeSalary(emp)?esN(pvNum('grundgehalt',2800))+' € Grundgehalt':'Gehalt nicht sichtbar')+' · '+esN(pvNum('basisProOpt',1),2)+' €/Opt. · −'+esN(pvNum('reduktionProKpi',20))+' % je KPI · Mindestprov. '+esN(pvNum('mindestprovision',20))+' %')+vlcOnly(esN(vpv.serviceRate)+' € Service Rate · '+esN(vpv.bonusProOpt,2)+' €/Opt. · Stufen '+stufenUniq.join('/')+' % · Extra Pay folgt'),body:SEG.prov},
           {n:5,t:'Provisionsrelevante KPIs',sum:deOnly('6 Kennzahlen')+vlcOnly('3 Kennzahlen')+(mLabel?' · aktuell „'+mLabel+'“':''),body:SEG.kpi},
           {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('9 Kennzahlen')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
         ];
@@ -12580,6 +12601,10 @@ function saveEmpEinstellungen(){
   var oldSnapshot={name:emp.name,role:emp.role,phase:emp.phase,contract:emp.contract,hours:emp.hours,startDate:emp.startDate,endDate:emp.endDate,email:emp.email};
   emp.name=document.getElementById('es-name').value.trim()||emp.name;
   emp.role=document.getElementById('es-role').value;
+  var oldSdlTeam=JSON.stringify(emp.sdlTeam||[]);
+  if(emp.role==='SDL'){var cbs=document.querySelectorAll('#es-sdl-team .es-sdl-cb');if(cbs.length||document.getElementById('es-sdl-team'))emp.sdlTeam=Array.prototype.filter.call(cbs,function(c){return c.checked;}).map(function(c){return String(c.value);});}
+  else emp.sdlTeam=[];
+  var sdlTeamChanged=JSON.stringify(emp.sdlTeam||[])!==oldSdlTeam;
   emp.phase=document.getElementById('es-phase').value;
   var wasActive=oldSnapshot.phase!=='Inaktiv';
   var nowActive=emp.phase!=='Inaktiv';
@@ -12613,16 +12638,19 @@ function saveEmpEinstellungen(){
   if(notesEl)emp.notes=notesEl.value;
   renderSidebar();renderEmpDetail();  lsSave();
   _savingEmpEinstellungen=true;
-  sb.from('employees').update({
+  var empUpd={
     name:emp.name,role:emp.role,phase:emp.phase,team:emp.team,active:emp.active,
     start_date:emp.startDate||null,end_date:emp.endDate||null,
     contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color,email:emp.email||null,work_hours:emp.workHours||null
-  }).eq('id',emp.id).then(function(res){
+  };
+  if(sdlTeamChanged)empUpd.sdl_team=emp.sdlTeam||[];
+  sb.from('employees').update(empUpd).eq('id',emp.id).then(function(res){
     _savingEmpEinstellungen=false;
     if(res.error){alert('Fehler beim Speichern in Supabase: '+res.error.message+'\n\nDie Änderung ist lokal sichtbar, aber NICHT gespeichert -- bitte nochmal versuchen.');return;}
     var stammChanges=[];
     if(oldSnapshot.name!==emp.name)stammChanges.push('Name: '+oldSnapshot.name+' → '+emp.name);
     if(oldSnapshot.role!==emp.role)stammChanges.push('Rolle: '+oldSnapshot.role+' → '+emp.role);
+    if(sdlTeamChanged)stammChanges.push('Team: '+((emp.sdlTeam||[]).map(function(i){var x=kalEmp(i);return x?x.name:i;}).join(', ')||'keins'));
     if(oldSnapshot.phase!==emp.phase)stammChanges.push('Phase: '+oldSnapshot.phase+' → '+emp.phase);
     if(oldSnapshot.contract!==emp.contract)stammChanges.push('Anstellung: '+oldSnapshot.contract+' → '+emp.contract);
     if(oldSnapshot.hours!==emp.hours)stammChanges.push('Stunden: '+oldSnapshot.hours+' → '+emp.hours);
@@ -12826,6 +12854,8 @@ function saveProvisionSettings(empId){
     ['optH','syMy','crOem'].forEach(function(k){vlcS.stufen[k]={aus1:nval('pv-vlc-st-'+k+'-aus1'),grenze:nval('pv-vlc-st-'+k+'-grenze'),aus2:nval('pv-vlc-st-'+k+'-aus2')};});
     settings.vlc=vlcS;
   } else if(oldSettings.vlc){settings.vlc=oldSettings.vlc;}
+  var salaryVisible=canSeeSalary(emp);
+  if(!salaryVisible){settings.grundgehalt=oldSettings.grundgehalt;settings.agSozialabgaben=oldSettings.agSozialabgaben;if(settings.grundgehalt==null)delete settings.grundgehalt;if(settings.agSozialabgaben==null)delete settings.agSozialabgaben;}
   emp.provisionSettings=settings;
   // Aenderungshistorie fuer Provisionseinstellungen
   var actorNamePv=null;
@@ -12839,6 +12869,7 @@ function saveProvisionSettings(empId){
   Object.keys(TOPFIELD_LABELS).forEach(function(k){
     var ov=oldSettings[k], nv=settings[k];
     var ovNorm=(ov==null||ov==='')?null:ov, nvNorm=(nv==null||nv==='')?null:nv;
+    if(!salaryVisible&&(k==='grundgehalt'||k==='agSozialabgaben'))return;
     if(String(ovNorm)!==String(nvNorm))pvHistRows.push({employee_id:empId,field:'provision_'+k,old_value:ovNorm!=null?String(ovNorm):null,new_value:nvNorm!=null?String(nvNorm):null,changed_by:currentCoach?currentCoach.id:null,changed_by_name:actorNamePv});
   });
   var MONAT_SUBFIELD_LABELS={optH:'Opt. Gesamt / Std.',crOem:'CR OEM',tw:'CR TW',sy:'CR SY',my:'CR MY',syMy:'CR SY/MY',oemAnteil:'Anteil OEM',crYes:'CR YES',notReached:'NE - Nicht Erreicht',notPossible:'NM - Nicht Möglich',notSuccessful:'NEF - Nicht Erfolgreich',aktivitaeten:'Aktivitäten / Std.',convOEM:'Conv. OEM / Tag',optGesamt:'Opt. Gesamt / Tag',margeZiel:'Marge Ziel'};
@@ -12871,7 +12902,12 @@ function saveProvisionSettings(empId){
   _savingProvisionSettings=true;
   var statusEl=document.getElementById('pv-save-status');
   if(statusEl)statusEl.textContent='Speichere...';
-  sb.from('employees').update({provision_settings:settings}).eq('id',empId).then(function(res){
+  var dbSettings=settings;
+  if(SALARY_TABLE){
+    dbSettings=JSON.parse(JSON.stringify(settings));delete dbSettings.grundgehalt;delete dbSettings.agSozialabgaben;
+    if(salaryVisible)sb.from('employee_salary').upsert({employee_id:empId,grundgehalt:settings.grundgehalt!=null?settings.grundgehalt:null,ag_sozialabgaben:settings.agSozialabgaben!=null?settings.agSozialabgaben:null,updated_at:new Date().toISOString()},{onConflict:'employee_id'}).then(function(r){if(r.error){console.error('employee_salary',r.error);alert('Gehalt konnte nicht gespeichert werden: '+r.error.message);}});
+  }
+  sb.from('employees').update({provision_settings:dbSettings}).eq('id',empId).then(function(res){
     _savingProvisionSettings=false;
     if(res.error){
       if(statusEl)statusEl.textContent='Fehler: Spalte "provision_settings" fehlt evtl. in der employees-Tabelle (siehe Konsole)';
@@ -13347,7 +13383,7 @@ function renderNcEmpDropdown(){
       ncSelectedEmpIds.length+' Mitarbeiter ausgewählt (Gruppencoaching)';
   }
   if(!ncEmpDropdownOpen){wrap.innerHTML='';return;}
-  var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+  var ROLE_ORDER={SDM:0,SDC:1,SDL:2,SE:3,SR:4,VLC:5};
   var sorted=visible.slice().sort(function(a,b){
     var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
     return ra-rb||a.name.localeCompare(b.name);
@@ -13418,7 +13454,7 @@ function renderSessionEmpDropdown(){
       sessionSelectedEmpIds.length+' Mitarbeiter ausgewählt (Gruppencoaching)';
   }
   if(!sessionEmpDropdownOpen){wrap.innerHTML='';return;}
-  var ROLE_ORDER={SDM:0,SC:1,SE:2,SR:3,VLC:4};
+  var ROLE_ORDER={SDM:0,SDC:1,SDL:2,SE:3,SR:4,VLC:5};
   var sorted=visible.slice().sort(function(a,b){
     var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
     return ra-rb||a.name.localeCompare(b.name);
@@ -13835,12 +13871,9 @@ function kalActor(){return currentCoach?currentCoach.name:(currentAuthUser?resol
 
 // ── Regeln (Einstellungen › Kalender) ──
 function kalRules(){var r=settings.kalenderRules||{};return {freiGrenze:r.freiGrenze!=null?+r.freiGrenze:3,freiBezug:r.freiBezug||'standort',verschieben:r.verschieben||'direkt',fehltAn:r.fehltAn!==false,fehltZeit:/^\d{2}:\d{2}$/.test(r.fehltZeit||'')?r.fehltZeit:'09:30',
-  weekly:Object.assign({auto:true,minKpis:2,marge:true,zeitraum:'monat'},r.weekly||{}),routinen:r.routinen||[],teams:Array.isArray(r.teams)?r.teams:kalDefaultTeams()};}
-// Standard-Team, solange unter Einstellungen › Kalender noch keins gespeichert ist
-function kalDefaultTeams(){var f=function(n){var e=employees.find(function(x){return x.active!==false&&(x.name||'').toLowerCase().indexOf(n)===0;});return e?e.id:null;};var lead=f('amir');if(!lead)return [];
-  return [{id:'t1',coachId:lead,empIds:['john','beren','abenezer','roque'].map(f).filter(Boolean)}];}
-// Teamleiter eines Agents (nur wenn er aktiv und Coach ist) → Aufgaben-Schlüssel 'emp:<id>'
-function aufgTeamLead(e){if(!e)return null;var tm=(kalRules().teams||[]).find(function(t){return (t.empIds||[]).indexOf(e.id)>=0&&t.coachId;});if(!tm)return null;var c=kalEmp(tm.coachId);return c&&c.active!==false&&isCoachEmp(c)?'emp:'+c.id:null;}
+  weekly:Object.assign({auto:true,minKpis:2,marge:true,zeitraum:'monat'},r.weekly||{}),routinen:r.routinen||[]};}
+// Teamleiter (Position SDL) eines Agents laut Stammdaten des SDL → Aufgaben-Schlüssel 'emp:<id>'
+function aufgTeamLead(e){if(!e)return null;var id=String(e.id);var l=employees.find(function(x){return x.role==='SDL'&&x.active!==false&&String(x.id)!==id&&(x.sdlTeam||[]).indexOf(id)>=0;});return l?'emp:'+l.id:null;}
 function kalSaveRules(r,log){settings.kalenderRules=r;saveSettingJson('kalenderRules',r,log||'Kalender-Regeln geändert');renderMain();}
 function kalRuleSet(path,val){var r=kalRules();if(path.indexOf('weekly.')===0)r.weekly[path.slice(7)]=val;else r[path]=val;kalSaveRules(r);}
 function kalTeamOf(e){return e.team||e.role||'';}
@@ -14191,10 +14224,6 @@ function kalKontoList(){var L=kalEmps().slice().sort(function(a,b){return KAL.so
 var KAL_ARTEN=['Weekly'].concat(Object.keys(COACHING_CATEGORIES).reduce(function(a,c){return a.concat(COACHING_CATEGORIES[c]);},[]).filter(function(x,i,arr){return x!=='Weekly'&&arr.indexOf(x)===i;}));
 function kalRtSet(id,key,val){var r=kalRules(),rt=r.routinen.find(function(x){return x.id===id;});if(!rt)return;rt[key]=val;kalSaveRules(r,'Routine geändert');}
 function kalRtEmp(id,eid,on){var r=kalRules(),rt=r.routinen.find(function(x){return x.id===id;});if(!rt)return;rt.empIds=(rt.empIds||[]).filter(function(x){return x!==eid;});if(on)rt.empIds.push(eid);kalSaveRules(r,'Routine geändert');}
-function kalTmAdd(){var r=kalRules();r.teams.push({id:'t'+Date.now(),coachId:null,empIds:[]});kalSaveRules(r,'Team angelegt');}
-function kalTmSet(id,key,val){var r=kalRules(),tm=r.teams.find(function(x){return x.id===id;});if(!tm)return;tm[key]=val;kalSaveRules(r,'Team geändert');}
-function kalTmEmp(id,eid,on){var r=kalRules();r.teams.forEach(function(x){x.empIds=(x.empIds||[]).filter(function(y){return y!==eid;});});var tm=r.teams.find(function(x){return x.id===id;});if(!tm)return;if(on)tm.empIds.push(eid);kalSaveRules(r,'Team geändert');}
-function kalTmDel(id){if(!confirm('Dieses Team löschen? Weeklys und QA-Bewertungen gehen dann wieder nach der Standardregel.'))return;var r=kalRules();r.teams=r.teams.filter(function(x){return x.id!==id;});kalSaveRules(r,'Team gelöscht');}
 function kalRtAdd(){var r=kalRules();r.routinen.push({id:'r'+Date.now(),art:'Weekly',rhythmus:'woche',coachId:currentCoach?currentCoach.id:null,empIds:[]});kalSaveRules(r,'Routine angelegt');}
 function kalRtDel(id){if(!confirm('Diese Routine löschen?'))return;var r=kalRules();r.routinen=r.routinen.filter(function(x){return x.id!==id;});kalSaveRules(r,'Routine gelöscht');}
 function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;}),agents=teamTargetList().filter(function(e){return !kalIsVlc(e);}).sort(function(a,b){return a.name.localeCompare(b.name);});
@@ -14214,14 +14243,6 @@ function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filte
     +row('Zeitraum für die KPIs','',seg('weekly.zeitraum',W.zeitraum,[['monat','laufender Monat'],['7','letzte 7 Tage']]))
     +row('oder Ø Marge/Opt. unter Ziel','Ø Marge je Opt. im laufenden Monat liegt unter dem Wert aus der Zielvereinbarung',seg('weekly.marge',W.marge?'1':'0',[['1','ja'],['0','nein']]).replace(/kalRuleSet\('weekly\.marge','(\d)'\)/g,function(m,v){return "kalRuleSet('weekly.marge',"+(v==='1')+")";}))
     +'<div style="margin-top:12px;font-size:13px"><b>Aktuell betroffen: '+aff.length+'</b>'+(aff.length?'<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">'+aff.map(function(o){return '<div><span style="font-weight:600">'+esc(o.e.name)+'</span> <span class="kal-note">· '+esc(o.why.join(' · '))+'</span></div>';}).join('')+'</div>':' <span class="kal-note">· alle im Ziel</span>')+'</div></div>';
-  var allAg=teamTargetList().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
-  h+='<div class="card"><div class="card-title" style="display:flex;align-items:center">Teams<button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="kalTmAdd()"><i class="ti ti-plus"></i> Team</button></div><div class="card-sub">Weeklys und QA-Bewertungen dieser Agents gehen an den Teamleiter. Alle übrigen Aufgaben (Urlaubsanträge usw.) bleiben bei der Standardregel. Ein Agent kann nur in einem Team sein.</div>';
-  if(!R.teams.length)h+='<div class="kal-note" style="padding:10px 0">Noch keine Teams.</div>';
-  R.teams.forEach(function(tm){h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:12px;margin-top:10px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-    +'<select style="width:220px" onchange="kalTmSet(\''+tm.id+'\',\'coachId\',this.value||null)"><option value="">Teamleiter wählen</option>'+coaches.map(function(c){return '<option value="'+c.id+'"'+(c.id===tm.coachId?' selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select>'
-    +'<span class="kal-note">'+(tm.empIds||[]).length+' Mitarbeiter</span><button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="kalTmDel(\''+tm.id+'\')">Löschen</button></div>'
-    +'<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px">'+allAg.map(function(e){var on=(tm.empIds||[]).indexOf(e.id)>=0;return '<label style="display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:400;cursor:pointer;font-size:13px"><input type="checkbox" style="width:auto;margin:0" '+(on?'checked':'')+' onchange="kalTmEmp(\''+tm.id+'\',\''+e.id+'\',this.checked)">'+esc(e.name)+'</label>';}).join('')+'</div></div>';});
-  h+='</div>';
   h+='<div class="card"><div class="card-title" style="display:flex;align-items:center">Routinen<button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="kalRtAdd()"><i class="ti ti-plus"></i> Routine</button></div><div class="card-sub">Feste Termine je Mitarbeiter, z. B. „Weekly wöchentlich mit Dogoro“. Fehlt der Termin im Zeitraum, erscheint er unter „Planen“.</div>';
   if(!R.routinen.length)h+='<div class="kal-note" style="padding:10px 0">Noch keine Routinen.</div>';
   R.routinen.forEach(function(rt){h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:12px;margin-top:10px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
@@ -14402,7 +14423,7 @@ function loadZielLocksFromSupabase(){
 function ztKeep(mk){if(!ZT.saved[mk])ZT.saved[mk]=JSON.parse(JSON.stringify(zielStore[mk]||{}));}
 function ztIsAdmin(){return currentUserRole==='admin';}
 function ztCalMonth(mk){return mk>=ZT_KAL_START;}
-function ztEmps(mk){var R={SDM:0,SC:1,SE:2,SR:3,VLC:4};return employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;}).sort(function(a,b){var ra=R[a.role]!=null?R[a.role]:99,rb=R[b.role]!=null?R[b.role]:99;return ra!==rb?ra-rb:a.name.localeCompare(b.name);});}
+function ztEmps(mk){var R={SDM:0,SDC:1,SDL:2,SE:3,SR:4,VLC:5};return employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;}).sort(function(a,b){var ra=R[a.role]!=null?R[a.role]:99,rb=R[b.role]!=null?R[b.role]:99;return ra!==rb?ra-rb:a.name.localeCompare(b.name);});}
 function ztDaysOfMonth(mk){var r=[],d=mk+'-01';while(d.slice(0,7)===mk){r.push(d);d=kalAdd(d,1);}return r;}
 function ztWeeks(mk){return getMonthWeeksZiel(mk);}
 // geplante Tage eines Mitarbeiters in einer KW (nur Tage im Monat)
