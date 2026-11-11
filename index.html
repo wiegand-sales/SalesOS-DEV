@@ -13835,7 +13835,12 @@ function kalActor(){return currentCoach?currentCoach.name:(currentAuthUser?resol
 
 // ── Regeln (Einstellungen › Kalender) ──
 function kalRules(){var r=settings.kalenderRules||{};return {freiGrenze:r.freiGrenze!=null?+r.freiGrenze:3,freiBezug:r.freiBezug||'standort',verschieben:r.verschieben||'direkt',fehltAn:r.fehltAn!==false,fehltZeit:/^\d{2}:\d{2}$/.test(r.fehltZeit||'')?r.fehltZeit:'09:30',
-  weekly:Object.assign({auto:true,minKpis:2,marge:true,zeitraum:'monat'},r.weekly||{}),routinen:r.routinen||[]};}
+  weekly:Object.assign({auto:true,minKpis:2,marge:true,zeitraum:'monat'},r.weekly||{}),routinen:r.routinen||[],teams:Array.isArray(r.teams)?r.teams:kalDefaultTeams()};}
+// Standard-Team, solange unter Einstellungen › Kalender noch keins gespeichert ist
+function kalDefaultTeams(){var f=function(n){var e=employees.find(function(x){return x.active!==false&&(x.name||'').toLowerCase().indexOf(n)===0;});return e?e.id:null;};var lead=f('amir');if(!lead)return [];
+  return [{id:'t1',coachId:lead,empIds:['john','beren','abenezer','roque'].map(f).filter(Boolean)}];}
+// Teamleiter eines Agents (nur wenn er aktiv und Coach ist) → Aufgaben-Schlüssel 'emp:<id>'
+function aufgTeamLead(e){if(!e)return null;var tm=(kalRules().teams||[]).find(function(t){return (t.empIds||[]).indexOf(e.id)>=0&&t.coachId;});if(!tm)return null;var c=kalEmp(tm.coachId);return c&&c.active!==false&&isCoachEmp(c)?'emp:'+c.id:null;}
 function kalSaveRules(r,log){settings.kalenderRules=r;saveSettingJson('kalenderRules',r,log||'Kalender-Regeln geändert');renderMain();}
 function kalRuleSet(path,val){var r=kalRules();if(path.indexOf('weekly.')===0)r.weekly[path.slice(7)]=val;else r[path]=val;kalSaveRules(r);}
 function kalTeamOf(e){return e.team||e.role||'';}
@@ -14186,6 +14191,10 @@ function kalKontoList(){var L=kalEmps().slice().sort(function(a,b){return KAL.so
 var KAL_ARTEN=['Weekly'].concat(Object.keys(COACHING_CATEGORIES).reduce(function(a,c){return a.concat(COACHING_CATEGORIES[c]);},[]).filter(function(x,i,arr){return x!=='Weekly'&&arr.indexOf(x)===i;}));
 function kalRtSet(id,key,val){var r=kalRules(),rt=r.routinen.find(function(x){return x.id===id;});if(!rt)return;rt[key]=val;kalSaveRules(r,'Routine geändert');}
 function kalRtEmp(id,eid,on){var r=kalRules(),rt=r.routinen.find(function(x){return x.id===id;});if(!rt)return;rt.empIds=(rt.empIds||[]).filter(function(x){return x!==eid;});if(on)rt.empIds.push(eid);kalSaveRules(r,'Routine geändert');}
+function kalTmAdd(){var r=kalRules();r.teams.push({id:'t'+Date.now(),coachId:null,empIds:[]});kalSaveRules(r,'Team angelegt');}
+function kalTmSet(id,key,val){var r=kalRules(),tm=r.teams.find(function(x){return x.id===id;});if(!tm)return;tm[key]=val;kalSaveRules(r,'Team geändert');}
+function kalTmEmp(id,eid,on){var r=kalRules();r.teams.forEach(function(x){x.empIds=(x.empIds||[]).filter(function(y){return y!==eid;});});var tm=r.teams.find(function(x){return x.id===id;});if(!tm)return;if(on)tm.empIds.push(eid);kalSaveRules(r,'Team geändert');}
+function kalTmDel(id){if(!confirm('Dieses Team löschen? Weeklys und QA-Bewertungen gehen dann wieder nach der Standardregel.'))return;var r=kalRules();r.teams=r.teams.filter(function(x){return x.id!==id;});kalSaveRules(r,'Team gelöscht');}
 function kalRtAdd(){var r=kalRules();r.routinen.push({id:'r'+Date.now(),art:'Weekly',rhythmus:'woche',coachId:currentCoach?currentCoach.id:null,empIds:[]});kalSaveRules(r,'Routine angelegt');}
 function kalRtDel(id){if(!confirm('Diese Routine löschen?'))return;var r=kalRules();r.routinen=r.routinen.filter(function(x){return x.id!==id;});kalSaveRules(r,'Routine gelöscht');}
 function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filter(function(e){return isCoachEmp(e)&&e.active!==false;}),agents=teamTargetList().filter(function(e){return !kalIsVlc(e);}).sort(function(a,b){return a.name.localeCompare(b.name);});
@@ -14205,6 +14214,14 @@ function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filte
     +row('Zeitraum für die KPIs','',seg('weekly.zeitraum',W.zeitraum,[['monat','laufender Monat'],['7','letzte 7 Tage']]))
     +row('oder Ø Marge/Opt. unter Ziel','Ø Marge je Opt. im laufenden Monat liegt unter dem Wert aus der Zielvereinbarung',seg('weekly.marge',W.marge?'1':'0',[['1','ja'],['0','nein']]).replace(/kalRuleSet\('weekly\.marge','(\d)'\)/g,function(m,v){return "kalRuleSet('weekly.marge',"+(v==='1')+")";}))
     +'<div style="margin-top:12px;font-size:13px"><b>Aktuell betroffen: '+aff.length+'</b>'+(aff.length?'<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">'+aff.map(function(o){return '<div><span style="font-weight:600">'+esc(o.e.name)+'</span> <span class="kal-note">· '+esc(o.why.join(' · '))+'</span></div>';}).join('')+'</div>':' <span class="kal-note">· alle im Ziel</span>')+'</div></div>';
+  var allAg=teamTargetList().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  h+='<div class="card"><div class="card-title" style="display:flex;align-items:center">Teams<button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="kalTmAdd()"><i class="ti ti-plus"></i> Team</button></div><div class="card-sub">Weeklys und QA-Bewertungen dieser Agents gehen an den Teamleiter. Alle übrigen Aufgaben (Urlaubsanträge usw.) bleiben bei der Standardregel. Ein Agent kann nur in einem Team sein.</div>';
+  if(!R.teams.length)h+='<div class="kal-note" style="padding:10px 0">Noch keine Teams.</div>';
+  R.teams.forEach(function(tm){h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:12px;margin-top:10px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    +'<select style="width:220px" onchange="kalTmSet(\''+tm.id+'\',\'coachId\',this.value||null)"><option value="">Teamleiter wählen</option>'+coaches.map(function(c){return '<option value="'+c.id+'"'+(c.id===tm.coachId?' selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select>'
+    +'<span class="kal-note">'+(tm.empIds||[]).length+' Mitarbeiter</span><button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="kalTmDel(\''+tm.id+'\')">Löschen</button></div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px">'+allAg.map(function(e){var on=(tm.empIds||[]).indexOf(e.id)>=0;return '<label style="display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:400;cursor:pointer;font-size:13px"><input type="checkbox" style="width:auto;margin:0" '+(on?'checked':'')+' onchange="kalTmEmp(\''+tm.id+'\',\''+e.id+'\',this.checked)">'+esc(e.name)+'</label>';}).join('')+'</div></div>';});
+  h+='</div>';
   h+='<div class="card"><div class="card-title" style="display:flex;align-items:center">Routinen<button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="kalRtAdd()"><i class="ti ti-plus"></i> Routine</button></div><div class="card-sub">Feste Termine je Mitarbeiter, z. B. „Weekly wöchentlich mit Dogoro“. Fehlt der Termin im Zeitraum, erscheint er unter „Planen“.</div>';
   if(!R.routinen.length)h+='<div class="kal-note" style="padding:10px 0">Noch keine Routinen.</div>';
   R.routinen.forEach(function(rt){h+='<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:12px;margin-top:10px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
@@ -14696,8 +14713,8 @@ function aufgStaff(){var C=employees.filter(function(e){return e.active!==false&
   C.forEach(function(e){if(!used[e.id])L.push(row(e));});return L;}
 function aufgMeKeys(){var k=[];if(currentCoach)k.push('emp:'+currentCoach.id);if(currentUserRole==='admin')k.push('admin');
   var nk=aufgNiklasKey(),em=String(currentAuthUser&&currentAuthUser.email||'').toLowerCase();if(em==='n.hojdem@wiegand-gmbh.de'&&k.indexOf(nk)<0)k.push(nk);return k;}
-// QA-Bewertungen: zufällig, aber gleichmäßig auf Dogoro, Kathrin und Niklas verteilt; stabil innerhalb der Woche, neu gemischt jeden Montag
-function aufgQaPool(){var P=[aufgOwner('dogoro'),aufgOwner('kathrin'),aufgNiklasKey()].filter(Boolean);return P.length?P:['admin'];}
+// QA-Bewertungen (Zufallstopf): gleichmäßig auf Dogoro und Niklas, Kathrin nur ohne eigene Erster-Monat-Agents; stabil innerhalb der Woche, neu gemischt jeden Montag
+function aufgQaPool(ohneKathrin){var P=[aufgOwner('dogoro'),ohneKathrin?null:aufgOwner('kathrin'),aufgNiklasKey()].filter(Boolean);return P.length?P:['admin'];}
 function aufgQaHash(s){var h=2166136261;s=String(s);for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function aufgName(key){var s=aufgStaff().find(function(x){return x.key===key;});if(s)return s.name;var e=key&&key.indexOf('emp:')===0?kalEmp(key.slice(4)):null;return e?e.name:'–';}
 function aufgOwner(n){var e=employees.find(function(x){return x.active!==false&&(x.name||'').toLowerCase().indexOf(n)===0;});return e?'emp:'+e.id:null;}
@@ -14717,11 +14734,15 @@ function aufgAll(){var t=today(),out=[],add=function(o){var m=aufgMeta[o.key]&&a
     if(o>=140&&!kalOn(e.id,fr))add({key:'ausgl:'+e.id+':'+fr,art:'Ausgleichstag eintragen?',kind:'auto',t:e.name,s:Math.round(o)+' Opt. von Mo bis Do',due:th,born:th,def:aufgCoachOf(e),act:'Eintragen',go:function(){kalOpenForm(e.id,fr);if(KF){KF.art='ausgleich';kalDrawForm();}},emp:e.id});});
   // 4) Sessions planen: Performance-Gespräche, Routinen, Weeklys nach Regeln (aus dem Kalender, beide Standorte)
   var sv=KAL.loc;['MUC','VLC'].forEach(function(l){KAL.loc=l;_kalTC.v=null;kalTasks().forEach(function(x){var grp=/^rt/.test(x.id)?'Routine · '+x.art:(x.art==='Weekly'?'Weeklys':null);
-    add({key:'ses:'+x.id,art:x.art==='Performance Review'?'Performance-Gespräch':x.art,kind:grp?'routine':'auto',bundle:grp,t:x.e.name,s:x.src,due:x.art==='Weekly'?kalMon(x.due):x.due,born:kalAdd(x.due,-14),def:x.coachId?'emp:'+x.coachId:aufgCoachOf(x.e),act:'Session planen',go:function(){kalPlanTask(x.id);},emp:x.e.id,task:x});});});KAL.loc=sv;_kalTC.v=null;
-  // 5) QA-Bewertungen (weniger als 4 bewertete Calls in der laufenden Woche), zufällig verteilt auf Dogoro, Kathrin, Niklas
-  var qMo=kalMon(t),qFr=kalAdd(qMo,4),qPool=aufgQaPool(),qWho={};
+    add({key:'ses:'+x.id,art:x.art==='Performance Review'?'Performance-Gespräch':x.art,kind:grp?'routine':'auto',bundle:grp,t:x.e.name,s:x.src,due:x.art==='Weekly'?kalMon(x.due):x.due,born:kalAdd(x.due,-14),def:x.coachId?'emp:'+x.coachId:((x.art==='Weekly'&&aufgTeamLead(x.e))||aufgCoachOf(x.e)),act:'Session planen',go:function(){kalPlanTask(x.id);},emp:x.e.id,task:x});});});KAL.loc=sv;_kalTC.v=null;
+  // 5) QA-Bewertungen (weniger als 4 bewertete Calls in der laufenden Woche):
+  //    Team-Mitglieder → ihr Teamleiter; erster Beschäftigungsmonat → Kathrin; alle übrigen zufällig auf Dogoro und Niklas
+  //    (Kathrin kommt in den Zufallstopf, wenn sie diese Woche niemanden aus dem ersten Monat hat)
+  var qMo=kalMon(t),qFr=kalAdd(qMo,4),qWho={},qKat=aufgOwner('kathrin'),qMk=qMo.slice(0,7),qRest=[];
   teamTargetList().filter(function(e){if(e.startDate&&e.startDate>t)return false;for(var i=0;i<5;i++){var d=kalAdd(qMo,i);if(kalWorkday(e,d)&&!kalOn(e.id,d))return true;}return false;})
-    .sort(function(a,b){return aufgQaHash(a.id+'|'+qMo)-aufgQaHash(b.id+'|'+qMo)||String(a.id).localeCompare(String(b.id));})
+    .forEach(function(e){var tl=aufgTeamLead(e);if(tl){qWho[e.id]=tl;return;}if(qKat&&beschaeftigungsmonat(e,qMk)<=1){qWho[e.id]=qKat;return;}qRest.push(e);});
+  var qHatKat=Object.keys(qWho).some(function(k){return qWho[k]===qKat;}),qPool=aufgQaPool(qHatKat);
+  qRest.sort(function(a,b){return aufgQaHash(a.id+'|'+qMo)-aufgQaHash(b.id+'|'+qMo)||String(a.id).localeCompare(String(b.id));})
     .forEach(function(e,i){qWho[e.id]=qPool[(i+aufgQaHash(qMo))%qPool.length];});
   teamTargetList().forEach(function(e){if(typeof qaCallsDue!=='function'||!qWho[e.id])return;var q=qaCallsDue(e.id);if(q.due>0)add({key:'qa:'+e.id+':'+qMo,art:'QA-Bewertung',kind:'routine',bundle:'QA-Bewertungen',t:e.name,s:q.cnt+' von '+q.target+' Calls diese Woche bewertet',due:qFr,born:qMo,def:qWho[e.id],act:'Mitarbeiter öffnen',go:function(){selectedEmp=e.id;view='emp';activeTab='qa';renderSidebar();renderMain();},emp:e.id});});
   // 6) Mitarbeiter fehlt? (ab 09:30 an Arbeitstagen: keine Aktivität, keine Abwesenheit)
