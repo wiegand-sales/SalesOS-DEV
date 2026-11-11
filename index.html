@@ -14,7 +14,7 @@
 <!-- feste Versionen mit Pruefsumme: veraenderte Dateien vom CDN werden vom Browser abgelehnt -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <style>
-:root{
+:root{--ban-h:282px;
   /* Feste Flaechen-Palette (Ebenen 3-6): nur diese hellen Toene innerhalb von Boxen verwenden */
   --page:#EEEDE9;--s-sub:#EFECE5;--s-white:#F7F5F0;--s-tint:rgba(29,28,26,0.035);--s-tint-strong:rgba(29,28,26,0.07);
   --bg:var(--s-white);--bg-solid:var(--s-white);--bg2:var(--s-sub);--bg3:var(--s-sub);
@@ -29,6 +29,7 @@
   --r-sm:6px;--r-md:8px;--r-lg:14px;
   --sidebar:250px;
 }
+@media(max-width:1649px){:root{--ban-h:332px}} /* schmalere Bildschirme: Kacheln brechen um, alle Banner gleich hoch */
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 button,input,select,textarea,optgroup{font-family:inherit;}
@@ -5377,7 +5378,7 @@ function buildBannerSlide1Html(visible,dotsHtml,marginTop){
   }
   var optOemZiel=avgOptTagZielvereinbarungLocal();
 
-  h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:'+marginTop+'px;min-height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
+  h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:'+marginTop+'px;min-height:var(--ban-h);width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   h+='<div style="grid-column:span 1;padding-left:14px">'
     +'<div style="font-size:10.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">OPT. GESAMT</div>'
@@ -5559,7 +5560,7 @@ function buildGlobalBannerHtml(visible){
       });
     });
     var margeMonatZiel=teamMonthZiel(visible,ovMkZiel,true);
-    h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:var(--ban-h);width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:'+CH2+'px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
@@ -5646,7 +5647,7 @@ function buildGlobalBannerHtml(visible){
     var _sessPct=_sessionsZiel>0?Math.min(100,Math.round(_sessionsMonat/_sessionsZiel*100)):0;
     var _sessDiff=_sessionsMonat-_sessionsZiel;
     var _sessBarCol='#fff';
-    h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:var(--ban-h);width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
@@ -5731,7 +5732,7 @@ function buildGlobalBannerHtml(visible){
     var _actTrendArrow=_actTrendPct===null?'':(_actTrendPct>0?' ↑':_actTrendPct<0?' ↓':'');
     var _actTrendCol='#fff';
     var _actAvgPerDay=(_act30Sum/30).toFixed(1);
-    h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
+    h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px 10px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:var(--ban-h);width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
     h+='<div style="display:flex;height:195px">';
     h+='<div style="width:16.6667%;flex-shrink:0;display:flex;flex-direction:column">';
     h+='<div style="min-height:118px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);display:flex;align-items:center">'
@@ -5818,7 +5819,7 @@ function buildGlobalBannerHtml(visible){
     });
     return count;
   }
-  h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:278px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
+  h+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:var(--ban-h);width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:118px;align-items:center">';
   h+='<div style="grid-column:span 1;padding-left:14px">'+renderOemTileHtml(visible)+'</div>'
     +'<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(ovLast14WD.map(function(d){return ovCountsForDate(d,'oem');}),'#F7B39A',300,34,ovLast14WD,function(v){return Math.round(v).toLocaleString('de-DE')+' Stk.';})+'</div>';
@@ -14039,7 +14040,7 @@ function kalBanner(){var t=today(),L=kalEmps(),wds=[],d=t;while(wds.length<10){i
   function big(l,v,s){return '<div style="grid-column:span 1;padding-left:14px"><div style="font-size:10.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">'+l+'</div><div style="font-size:30px;font-weight:700;line-height:1">'+v+'</div><div style="font-size:11px;color:#E9B2A6;margin-top:4px">'+s+'</div></div>';}
   function chart(vals,lab,fmt){return '<div style="grid-column:span 1;display:flex;align-items:center;height:100%;padding:4px 14px">'+barsHighlightLast(vals,'#F7B39A',300,34,lab,fmt)+'</div>';}
   function small(l,v,s){return '<div style="padding:4px 14px"><div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em">'+l+'</div><div style="font-size:18px;font-weight:700;margin-top:4px">'+v+'</div><div style="font-size:9.5px;color:#E9B2A6;margin-top:3px">'+s+'</div></div>';}
-  var h='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:220px;width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
+  var h='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin-bottom:22px;margin-top:16px;min-height:var(--ban-h);width:100%;box-sizing:border-box;position:relative;overflow:hidden">';
   h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.14);min-height:110px;align-items:center">';
   h+=big('ABWESEND HEUTE',L.filter(function(e){return kalOn(e.id,t);}).length,'von '+L.length+' · '+KAL.loc)+chart(abw,wds.map(kalF),function(v){return v+' abwesend';});
   h+=big('SESSIONS KW '+kalKw(mo),sesN,'geplant und durchgeführt')+chart(sesW,wk.map(kalF),function(v){return v+' Sessions';});
@@ -14748,7 +14749,7 @@ function renderAufgaben(){var ma=document.getElementById('mainArea');if(!ma)retu
   var big=function(l,v,s){return '<div style="padding-left:14px"><div style="font-size:10.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">'+l+'</div><div style="font-size:30px;font-weight:700;line-height:1">'+v+'</div><div style="font-size:11px;color:#E9B2A6;margin-top:4px">'+s+'</div></div>';};
   var sm=function(l,v,s){return '<div style="padding:4px 14px"><div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em">'+l+'</div><div style="font-size:18px;font-weight:700;margin-top:4px">'+v+'</div><div style="font-size:9.5px;color:#E9B2A6;margin-top:3px">'+s+'</div></div>';};
   var wk=kalAdd(kalMon(today()),4);
-  var h='<div class="content"><div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin:16px 0 22px">'
+  var h='<div class="content"><div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin:16px 0 22px;min-height:var(--ban-h);box-sizing:border-box">'
     +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.14)">'+big('ÜBERFÄLLIG',cnt(function(o){return st(o)==='od';}),'seit Fälligkeit offen')+big('HEUTE FÄLLIG',cnt(function(o){return st(o)==='td';}),'alle Personen')+big('BIS FREITAG',cnt(function(o){return o.due<=wk;}),'diese Woche')+'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">'+sm('ANTRÄGE',cnt(function(o){return o.art==='Urlaubsantrag';}),'offen')+sm('WEEKLYS',cnt(function(o){return o.art==='Weekly';}),'offen')+sm('QA',cnt(function(o){return o.art==='QA-Bewertung';}),'Mitarbeiter')+sm('PERFORMANCE-GESPR.',cnt(function(o){return o.art==='Performance-Gespräch';}),'fällig')+sm('ZIEL ANPASSEN?',cnt(function(o){return o.art==='Ziel anpassen?';}),'prüfen')+sm('MEINE',cnt(function(o){return me.indexOf(o.assignee)>=0;}),'offen')+'</div></div>';
   h+='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-checklist"></i> Aufgaben</div><span class="kal-note">'+(AU.view==='k'?(AU.group==='d'?'nach Fälligkeit · Klick öffnet':AU.group==='a'?'nach Art · Klick öffnet':'eine Spalte je Person · Karte ziehen = neu zuweisen · Klick öffnet'):'oben die Aufgaben der anderen, darunter deine zum Abarbeiten')+'</span>'
