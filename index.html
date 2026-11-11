@@ -816,7 +816,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .au-now{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:#9A3F22}.au-now:after{content:"";flex:1;height:2px;background:#F08566}
 .au-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#CDBB9E}.au-dot.od{background:#F08566}
 .au-cell{display:inline-flex;min-width:54px;justify-content:center;padding:3px 6px;border-radius:7px;font-size:12px;font-weight:700}.au-cell.c3{background:#E5EDE6;color:#2F6B4F}.au-cell.c2{background:#F1E9D9;color:#6E5A3A}.au-cell.c1{background:#FBE3DA;color:#9A3F22}.au-cell.c0{background:#EFECE5;color:#7A7268}
-.rl-btn.au-badge{position:relative}.rl-btn.au-badge::after{content:attr(data-n);position:absolute;top:3px;right:3px;min-width:15px;height:15px;padding:0 3px;border-radius:5px;background:#F08566;color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.rl-btn.au-badge{position:relative}.rl-btn.au-badge::after{content:attr(data-n);position:absolute;top:2px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#F08566;color:#fff;font-size:10.5px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;box-sizing:border-box;box-shadow:0 0 0 2px #F7F5F0;pointer-events:none}
 /* Formular */
 #kalFormModal .kal-fs{background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)}
 .kal-fs{background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px}
@@ -14781,7 +14781,12 @@ function aufgRoutineTable(){var R=kalRules().routinen||[];if(!R.length)return ''
       (rt.empIds||[]).forEach(function(id){var e=kalEmp(id);if(!e)return;soll++;if((protocols[id]||[]).some(function(p){return p.date>=pd.from&&p.date<=pd.to&&(p.type||'')===(rt.art||'Weekly')&&p.status!=='geplant';}))ist++;});
       var p=soll?ist/soll:0,cl=ix===5?'c0':p>=1?'c3':p>=0.75?'c2':'c1';return '<td class="c"><span class="au-cell '+cl+'">'+ist+' / '+soll+'</span></td>';}).join('')+'</tr>';}).join('');
   return '<div class="card card-static"><div class="card-title">Routinen-Übersicht<span class="kal-note" style="font-weight:400;margin-left:6px">erledigt = Session dokumentiert · Routinen pflegst du unter Einstellungen › Kalender</span></div><div class="std-wrap"><table class="std-table"><thead><tr><th>Person · Routine</th>'+W.map(function(w){return '<th class="c">KW '+kalKw(w)+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div><div class="kal-legend"><span><span class="au-cell c3">✓</span> vollständig</span><span><span class="au-cell c2">≥ 75 %</span></span><span><span class="au-cell c1">&lt; 75 %</span></span><span>laufende Woche grau</span></div></div>';}
-function aufgBadge(L){var b=document.getElementById('rail-aufgaben');if(!b)return;L=L||aufgAll();var me=aufgMeKeys(),n=L.filter(function(o){return me.indexOf(o.assignee)>=0&&aufgState(o).r<=1;}).length;b.classList.toggle('au-badge',n>0);b.setAttribute('data-n',n>9?'9+':String(n));}
+// Hinweise an den Menü-Icons (Entwurf A): Zahl oben rechts, nur wenn etwas offen ist
+function railSetBadge(id,n,tip){var b=document.getElementById(id);if(!b)return;b.classList.toggle('au-badge',n>0);b.setAttribute('data-n',n>9?'9+':String(n));var t=b.querySelector('.rl-tip');if(t){if(!t.dataset.base)t.dataset.base=t.textContent;t.textContent=t.dataset.base+(n>0?' · '+n+' '+tip:'');}}
+function aufgBadge(L){var adm=currentUserRole==='admin';
+  try{L=L||aufgAll();var me=aufgMeKeys(),n=L.filter(function(o){return (adm||me.indexOf(o.assignee)>=0)&&aufgState(o).r<=1;}).length;railSetBadge('rail-aufgaben',n,'überfällig / heute');}catch(e){}
+  try{var nr=kalCanEdit()?kalOpenReqs().length:0;railSetBadge('rail-kalender',nr,nr===1?'Antrag offen':'Anträge offen');}catch(e){}
+  try{var t=today(),me2=currentCoach?currentCoach.id:null,c=0;if(adm||me2){var grp={};employees.forEach(function(e){if(e.active===false)return;(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'||!p.date||p.date>=t)return;if(!adm&&p.coachId!==me2)return;if(p.groupId){if(grp[p.groupId])return;grp[p.groupId]=1;}c++;});});}railSetBadge('rail-coaching',c,c===1?'Session überfällig':'Sessions überfällig');}catch(e){}}
 function selectAufgaben(){view='aufgaben';bannerViewMode='aufgaben';resetBannerRotation();renderSidebar();renderMain();}
 // ── Öffnen ──
 function aufgFind(key){var L=aufgAll(),C=aufgCards(L);return C.find(function(c){return c.key===key;})||L.find(function(o){return o.key===key;});}
@@ -14809,7 +14814,7 @@ document.addEventListener('dragend',function(){if(view!=='aufgaben')return;AU.dr
 document.addEventListener('dragover',function(ev){if(!AU.drag||view!=='aufgaben')return;var c=ev.target.closest('[data-acol]');document.querySelectorAll('.au-over').forEach(function(x){if(x!==c)x.classList.remove('au-over');});if(c){ev.preventDefault();c.classList.add('au-over');}});
 document.addEventListener('drop',function(ev){if(!AU.drag||view!=='aufgaben')return;var c=ev.target.closest('[data-acol]');if(!c)return;ev.preventDefault();var k=AU.drag;AU.drag=null;if(!kalCanEdit())return;var card=aufgFind(k);if(card&&card.assignee!==c.getAttribute('data-acol'))aufgAssign(k,c.getAttribute('data-acol'));});
 
-var _aufgBT=0;function aufgBadgeLazy(){if(Date.now()-_aufgBT<20000)return;_aufgBT=Date.now();try{aufgBadge();}catch(e){}}
+var _aufgBT=0;function aufgBadgeLazy(){if(Date.now()-_aufgBT<2000)return;_aufgBT=Date.now();try{aufgBadge();}catch(e){}}
 (function(){if(typeof updateRail!=='function')return;var o=updateRail;window.updateRail=function(){var r=o.apply(this,arguments);aufgBadgeLazy();return r;};window.updateRail._sep=true;})();
 
 // ── Aufgaben in der Mitarbeiterkarte (Bereich „Task“) ──
