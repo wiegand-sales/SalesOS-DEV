@@ -7182,12 +7182,13 @@ var CALL_CATS=[
   {key:'einwand',       label:'Einwandsentkräftung', short:'Einwand',    weight:0.30, col:'#3a3833', fill:'rgba(29,28,26,0.15)', bg:'rgba(29,28,26,0.10)', items:['qualifizieren','solidarisierung','entkraeftung','testabschluss']},
   {key:'loop',          label:'Loop',                short:'Loop',       weight:0.10, col:'#F08566', fill:'rgba(29,28,26,0.075)', bg:'rgba(29,28,26,0.05)', items:['dranbleiben']},
   {key:'bedarf',        label:'Bedarfserweiterung',  short:'Bedarf',     weight:0.10, col:'#F08566', fill:'rgba(240,133,102,0.15)',  bg:'rgba(240,133,102,0.12)', items:['quantifizieren']},
-  {key:'abschluss',     label:'Abschluss',           short:'Abschluss',  weight:0.20, col:'#F59A5B', fill:'rgba(245,154,91,0.15)', bg:'rgba(245,154,91,0.12)', items:['abschlussversuch','angebotsqualitaet','kaufsignale']},
+  {key:'produkt',       label:'Produktwissen',       short:'Produkt',    weight:0.10, col:'#C9502F', fill:'rgba(201,80,47,0.12)', bg:'rgba(201,80,47,0.10)', items:['produktnutzen','produktfragen']},
+  {key:'abschluss',     label:'Abschluss',           short:'Abschluss',  weight:0.20, col:'#F59A5B', fill:'rgba(245,154,91,0.15)', bg:'rgba(245,154,91,0.12)', items:['abschlussversuch','angebotsqualitaet']},
   {key:'gespraech',     label:'Gesprächsführung',    short:'Gespräch',   weight:0.10, col:'#F7A777', fill:'rgba(247,179,154,0.15)',   bg:'rgba(247,179,154,0.15)', items:['struktur','kontrolle','fragequalitaet']},
   {key:'zusammenfassung',label:'Zusammenfassung',    short:'Zusammenf.', weight:0.05, col:'#3a3833', fill:'rgba(29,28,26,0.12)', bg:'rgba(29,28,26,0.10)', items:['naechsteschritte']},
-  {key:'produkt',       label:'Produktwissen',       short:'Produkt',    weight:0.10, col:'#C9502F', fill:'rgba(201,80,47,0.12)', bg:'rgba(201,80,47,0.10)', items:['produktnutzen','produktfragen']},
 ];
-function qaCatsFor(rat){return rat&&rat.date&&String(rat.date)<QA_V2_FROM?CALL_CATS_V1:CALL_CATS;}
+// Neue Struktur, wenn ab dem Stichtag bewertet oder Produktwissen schon bewertet wurde
+function qaCatsFor(rat){var sc=rat&&rat.scores||{};if(sc.produktnutzen||sc.produktfragen)return CALL_CATS;return rat&&rat.date&&String(rat.date)<QA_V2_FROM?CALL_CATS_V1:CALL_CATS;}
 var ITEM_LABELS={
   intro:'Intro / Einstieg',ziel:'Ziel des Calls',
   qualifizieren:'Einwand qualifizieren',solidarisierung:'Solidarisierung',umgang:'Umgang mit Einwand',
@@ -7665,10 +7666,10 @@ function renderTab(){
       {key:'einwand',   label:'Einwandsentkräftung', short:'Einwand',    cat:'skill'},
       {key:'loop',      label:'Loop',                short:'Loop',       cat:'skill'},
       {key:'bedarf',    label:'Bedarfserweiterung',  short:'Bedarf',     cat:'skill'},
+      {key:'produkt',   label:'Produktwissen',       short:'Produktw.',  cat:'skill'},
       {key:'abschluss', label:'Abschluss',           short:'Abschluss',  cat:'skill'},
       {key:'gespraech', label:'Gesprächsführung',    short:'Gesprächsf.',cat:'skill'},
       {key:'zusammenfassung',label:'Zusammenfassung',short:'Zusammenf.', cat:'skill'},
-      {key:'produkt',   label:'Produktwissen',       short:'Produktw.',  cat:'skill'},
       {key:'motivation',label:'Motivation',          short:'Motivation', cat:'will'},
       {key:'coach',     label:'Coachability',        short:'Coachab.',   cat:'will'},
       {key:'zuverl',    label:'Zuverlässigkeit',      short:'Zuverl.',    cat:'will'},
@@ -10441,8 +10442,8 @@ function openCoachingEval(empId,editEvalId){
   var DIMS=[
     {key:'opener',label:'Einstieg',cat:'skill'},{key:'einwand',label:'Einwandsentkräftung',cat:'skill'},
     {key:'loop',label:'Loop',cat:'skill'},{key:'bedarf',label:'Bedarfserweiterung',cat:'skill'},
-    {key:'abschluss',label:'Abschluss',cat:'skill'},{key:'gespraech',label:'Gesprächsführung',cat:'skill'},
-    {key:'zusammenfassung',label:'Zusammenfassung',cat:'skill'},{key:'produkt',label:'Produktwissen',cat:'skill'},
+    {key:'produkt',label:'Produktwissen',cat:'skill'},{key:'abschluss',label:'Abschluss',cat:'skill'},
+    {key:'gespraech',label:'Gesprächsführung',cat:'skill'},{key:'zusammenfassung',label:'Zusammenfassung',cat:'skill'},
     {key:'motivation',label:'Motivation',cat:'will'},{key:'coach',label:'Coachability',cat:'will'},
     {key:'zuverl',label:'Zuverlässigkeit',cat:'will'},{key:'team',label:'Teamfähigkeit',cat:'will'},
     {key:'crOEM',label:'CR OEM',cat:'result'},{key:'crTW',label:'CR TW',cat:'result'},
@@ -10688,7 +10689,7 @@ function syncSessFocusMetric(){
 
 // ── Neue Session: Was für eine Session · Fokus (Skill · Will · Result, je mehrere) ──
 var SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metrics:[],metric:'',hint:'',open:null};
-var SF_SKILL=['Einstieg','Einwandsentkräftung','Loop','Bedarfserweiterung','Abschluss','Gesprächsführung','Zusammenfassung','Produktwissen'];
+var SF_SKILL=['Einstieg','Einwandsentkräftung','Loop','Bedarfserweiterung','Produktwissen','Abschluss','Gesprächsführung','Zusammenfassung'];
 var SF_WILL=['Motivation','Coachability','Zuverlässigkeit','Teamfähigkeit'];
 var SF_TOPICS=SF_SKILL.concat(SF_WILL);
 var TOPIC_ALIAS={'Einwandsbehandlung':'Einwandsentkräftung','Bedarfsanalyse':'Bedarfserweiterung'};
