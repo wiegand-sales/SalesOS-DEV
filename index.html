@@ -1174,15 +1174,15 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
         </div>
 </div>
 <div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Wer &amp; Wann</div>
-    <div style="position:relative;margin-bottom:10px">
-      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere = Gruppensession)</span></label>
-      <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleNcEmpDropdown()">
-        <span id="ncEmpSelLabel">— Mitarbeiter wählen —</span>
-        <i class="ti ti-chevron-down" style="font-size:11px"></i>
-      </button>
-      <div id="ncEmpDropdownWrap"></div>
-    </div>
-    <div class="f3" style="gap:8px">
+    <div style="display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:8px;align-items:end">
+      <div style="position:relative;min-width:0">
+        <label>Mitarbeiter</label>
+        <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between;gap:6px" title="Mehrere Mitarbeiter = Gruppensession" onclick="toggleNcEmpDropdown()">
+          <span id="ncEmpSelLabel" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">— Mitarbeiter wählen —</span>
+          <i class="ti ti-chevron-down" style="font-size:11px;flex-shrink:0"></i>
+        </button>
+        <div id="ncEmpDropdownWrap"></div>
+      </div>
       <div><label>Datum</label><input type="date" id="sess-date" value=""></div>
       <div><label>Start</label><input type="time" id="sess-time" value=""></div>
       <div><label>Ende</label><input type="time" id="sess-end-time" value=""></div>
@@ -13452,7 +13452,7 @@ function renderNcEmpDropdown(){
   if(labelEl){
     labelEl.textContent=ncSelectedEmpIds.length===0?'— Mitarbeiter wählen —':
       ncSelectedEmpIds.length===1?(employees.find(function(e){return e.id===ncSelectedEmpIds[0];})||{}).name||'1 Mitarbeiter':
-      ncSelectedEmpIds.length+' Mitarbeiter ausgewählt (Gruppencoaching)';
+      ncSelectedEmpIds.length+' Mitarbeiter (Gruppe)';
   }
   if(!ncEmpDropdownOpen){wrap.innerHTML='';return;}
   var ROLE_ORDER={SDM:0,SDC:1,SDL:2,SE:3,SR:4,VLC:5};
@@ -13460,7 +13460,7 @@ function renderNcEmpDropdown(){
     var ra=ROLE_ORDER[a.role]!=null?ROLE_ORDER[a.role]:99,rb=ROLE_ORDER[b.role]!=null?ROLE_ORDER[b.role]:99;
     return ra-rb||a.name.localeCompare(b.name);
   });
-  var h='<div style="position:absolute;top:64px;left:0;z-index:30;background:var(--bg-solid);border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(40,32,15,0.14);width:100%;display:flex;flex-direction:column">';
+  var h='<div style="position:absolute;top:64px;left:0;z-index:30;background:var(--bg-solid);border:1px solid var(--border2);border-radius:var(--r-md);box-shadow:0 10px 24px rgba(40,32,15,0.14);width:100%;min-width:280px;display:flex;flex-direction:column">';
   h+='<div style="padding:8px;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:6px;padding:6px 8px">'
     +'<i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>'
     +'<input id="ncEmpSearchInput" placeholder="Mitarbeiter suchen…" value="'+esc(ncEmpSearchQuery)+'" oninput="ncEmpSearchQuery=this.value;filterNcEmpList(this.value)" style="border:none;background:none;outline:none;font-size:12.5px;width:100%;color:var(--text)">'
