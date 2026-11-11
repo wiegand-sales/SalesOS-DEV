@@ -614,6 +614,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .sf-chip{height:30px;padding:0 11px;border-radius:9px;border:1px solid #E4E0D6;background:#F7F5F0;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer}
 .sf-chip.on{background:#1d1c1a;border-color:#1d1c1a;color:#fff}
 .sf-chip.t{background:transparent}
+.sf-chip.t.on{background:#1d1c1a;border-color:#1d1c1a;color:#fff}
 .sf-chip .sf-d{display:inline-block;width:6px;height:6px;border-radius:2px;background:#C9502F;margin-right:6px;vertical-align:1px}
 .sf-chip.on .sf-d{background:#F7B39A}
 .sf-sub{font-size:11.5px;color:var(--text3);margin:8px 0 6px}
@@ -1925,16 +1926,17 @@ function setCoachCalMonth(delta){
   renderCoachingAnsicht();
 }
 var COACHING_CATEGORIES={
-  'Coaching':['Einzelcoaching','Call Shadowing (Aktiv)','Call Shadowing (Passiv)'],
+  'Coaching':['Einzelcoaching'],
   'Performance':['Weekly','Performance-Gespräch'],
-  'Training':['Training']
+  'Onboarding':['Onboarding']
 };
-// Anzeige im Formular (gespeichert wird der Wert links)
-var COACHING_WIE_LABEL={'Einzelcoaching':'Gespräch','Call Shadowing (Aktiv)':'Call Shadowing aktiv','Call Shadowing (Passiv)':'Call Shadowing passiv'};
+// Eine Reihe „Was für eine Session“: gespeicherte Art → Knopf-Beschriftung
+var SF_ARTS=[['Einzelcoaching','Coaching'],['Weekly','Weekly'],['Performance-Gespräch','Performance-Gespräch'],['Onboarding','Onboarding']];
+var COACHING_WIE_LABEL={'Einzelcoaching':'Coaching'};
 // Alte Arten aus der Zeit vor Nov 2026: behalten ihren Namen, zählen für Filter und Auswertung zu einer der drei Kategorien
 var COACHING_LEGACY_CAT=(function(){var m={},add=function(cat,l){l.forEach(function(t){m[t]=cat;});};
-  add('Coaching',['Gruppencoaching','Call Shadowing Aktiv','Call Shadowing Passiv','1:1 Coaching','Live Coaching','Call Review','Rollenspiel','Feedbackgespräch','Motivation','Mentoring','Onboarding','Call Blitz','Mega YES','Cross Selling','Neukunden','Bestandskunden','Follow-up','Angebotsnachverfolgung','Abschlusstraining','Lead-Abarbeitung','Fokuszeit']);
-  add('Training',['Produkttraining','Pitch-Training','Einwandtraining','Systemtraining','SolidRoad-Training','Wissens-Quiz','Nachschulung']);
+  add('Coaching',['Gruppencoaching','Call Shadowing Aktiv','Call Shadowing Passiv','Call Shadowing (Aktiv)','Call Shadowing (Passiv)','1:1 Coaching','Live Coaching','Call Review','Rollenspiel','Feedbackgespräch','Motivation','Mentoring','Call Blitz','Mega YES','Cross Selling','Neukunden','Bestandskunden','Follow-up','Angebotsnachverfolgung','Abschlusstraining','Lead-Abarbeitung','Fokuszeit']);
+  add('Onboarding',['Training','Produkttraining','Pitch-Training','Einwandtraining','Systemtraining','SolidRoad-Training','Wissens-Quiz','Nachschulung']);
   add('Performance',['KPI Review','Performance Review','Zielvereinbarung','Tagesziel','Wochenziel','Monatsziel','Teammeeting','Daily','Kick-off','Karrieregespräch','Entwicklungsplan']);return m;})();
 function findCoachingCategoryForType(typeValue){
   var cats=Object.keys(COACHING_CATEGORIES);
@@ -10666,10 +10668,8 @@ function sfSyncHidden(){var c=document.getElementById('sess-category'),ty=docume
   if(tp)tp.value=SF.topics[0]&&SF_TOPICS.indexOf(SF.topics[0])>=0?SF.topics[0]:'';
   if(fm)fm.value=SF.metric||'';}
 function sfRender(){var w=document.getElementById('sfWas'),f=document.getElementById('sfFokus');if(!w||!f)return;
-  var cats=Object.keys(COACHING_CATEGORIES),arts=COACHING_CATEGORIES[SF.cat]||[];
-  var h='<span class="dsh-seg">'+cats.map(function(c){return '<button type="button" class="'+(c===SF.cat?'on':'')+'" onclick="sfCat(\''+c+'\')">'+c+'</button>';}).join('')+'</span>';
-  if(arts.length>1||SF.legacy){h+='<div class="sf-sub">Wie</div><span class="dsh-seg">'+arts.map(function(a){return '<button type="button" class="'+(a===SF.art?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(a)+'">'+esc(COACHING_WIE_LABEL[a]||a)+'</button>';}).join('')
-    +(SF.legacy?'<button type="button" class="'+(SF.art===SF.legacy?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(SF.legacy)+'" title="Art aus der Zeit vor der Umstellung">'+esc(SF.legacy)+' (bisher)</button>':'')+'</span>';}
+  var h='<span class="dsh-seg">'+SF_ARTS.map(function(a){return '<button type="button" class="'+(a[0]===SF.art?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(a[0])+'">'+esc(a[1])+'</button>';}).join('')
+    +(SF.legacy?'<button type="button" class="'+(SF.art===SF.legacy?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(SF.legacy)+'" title="Art aus der Zeit vor der Umstellung">'+esc(SF.legacy)+' (bisher)</button>':'')+'</span>';
   var n=(ncSelectedEmpIds||[]).length;if(n>1)h+='<div class="sf-sub" style="margin-bottom:0">Gruppensession mit '+n+' Mitarbeitern</div>';
   w.innerHTML=h;
   var e=sfEmp(),miss=sfMissKeys(e),order=KAL_KPIS.map(function(k){return k[0];}).concat(['margeGesamt']);
