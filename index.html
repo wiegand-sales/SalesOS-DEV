@@ -12305,11 +12305,11 @@ function saveGroupSession(){
   var rating=ratingEl&&ratingEl.value?parseInt(ratingEl.value):null;
   var note=document.getElementById('groupSessNote').value.trim();
   _savingGroupSession=true;
-  sb.from('protocols').update({status:'durchgeführt',rating:rating,note:note}).eq('group_id',groupId).then(function(res){
+  sb.from('protocols').update({status:'abgeschlossen',rating:rating,note:note}).eq('group_id',groupId).then(function(res){
     _savingGroupSession=false;
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     members.forEach(function(m){
-      m.proto.status='durchgeführt';m.proto.rating=rating;m.proto.note=note;m.proto.notes=note;
+      m.proto.status='abgeschlossen';m.proto.rating=rating;m.proto.note=note;m.proto.notes=note;
     });
     var namesTxt=members.map(function(m){return m.emp.name;}).join(', ');
     logActivity('session','updated','Gruppensession durchgeführt ('+members.length+' Mitarbeiter)',null,namesTxt);
