@@ -7161,7 +7161,8 @@ function renderTabBar(){
 
 function switchTab(t){activeTab=t;renderTabBar();renderTab();}
 
-var CALL_CATS=[
+// Bis 11.11.2026: alte Phasen und Gewichtung – damit ältere QA-Bewertungen ihre Punktzahl behalten
+var CALL_CATS_V1=[
   {key:'opener',        label:'Einstieg',            short:'Einstieg',   weight:0.05, col:'#F7B39A', fill:'rgba(247,179,154,0.15)',  bg:'rgba(247,179,154,0.18)', items:['intro','ziel']},
   {key:'einwand',       label:'Einwandsentkräftung', short:'Einwand',    weight:0.35, col:'#3a3833', fill:'rgba(29,28,26,0.15)', bg:'rgba(29,28,26,0.10)', items:['qualifizieren','solidarisierung','umgang','entkraeftung','testabschluss','vertrauen']},
   {key:'loop',          label:'Loop',                short:'Loop',       weight:0.10, col:'#F08566', fill:'rgba(29,28,26,0.075)', bg:'rgba(29,28,26,0.05)', items:['dranbleiben']},
@@ -7170,25 +7171,40 @@ var CALL_CATS=[
   {key:'gespraech',     label:'Gesprächsführung',    short:'Gespräch',   weight:0.10, col:'#F7A777', fill:'rgba(247,179,154,0.15)',   bg:'rgba(247,179,154,0.15)', items:['struktur','kontrolle','klarheit','fragequalitaet']},
   {key:'zusammenfassung',label:'Zusammenfassung',    short:'Zusammenf.', weight:0.05, col:'#3a3833', fill:'rgba(29,28,26,0.12)', bg:'rgba(29,28,26,0.10)', items:['naechsteschritte']},
 ];
+// Ab der Umstellung (QA_V2_FROM): Einwandsentkräftung bleibt am stärksten, Produktwissen neu
+var QA_V2_FROM='2026-11-12';
+var CALL_CATS=[
+  {key:'opener',        label:'Einstieg',            short:'Einstieg',   weight:0.05, col:'#F7B39A', fill:'rgba(247,179,154,0.15)',  bg:'rgba(247,179,154,0.18)', items:['intro','ziel']},
+  {key:'einwand',       label:'Einwandsentkräftung', short:'Einwand',    weight:0.30, col:'#3a3833', fill:'rgba(29,28,26,0.15)', bg:'rgba(29,28,26,0.10)', items:['qualifizieren','solidarisierung','entkraeftung','testabschluss']},
+  {key:'loop',          label:'Loop',                short:'Loop',       weight:0.10, col:'#F08566', fill:'rgba(29,28,26,0.075)', bg:'rgba(29,28,26,0.05)', items:['dranbleiben']},
+  {key:'bedarf',        label:'Bedarfserweiterung',  short:'Bedarf',     weight:0.10, col:'#F08566', fill:'rgba(240,133,102,0.15)',  bg:'rgba(240,133,102,0.12)', items:['quantifizieren']},
+  {key:'abschluss',     label:'Abschluss',           short:'Abschluss',  weight:0.20, col:'#F59A5B', fill:'rgba(245,154,91,0.15)', bg:'rgba(245,154,91,0.12)', items:['abschlussversuch','angebotsqualitaet','kaufsignale']},
+  {key:'gespraech',     label:'Gesprächsführung',    short:'Gespräch',   weight:0.10, col:'#F7A777', fill:'rgba(247,179,154,0.15)',   bg:'rgba(247,179,154,0.15)', items:['struktur','kontrolle','fragequalitaet']},
+  {key:'zusammenfassung',label:'Zusammenfassung',    short:'Zusammenf.', weight:0.05, col:'#3a3833', fill:'rgba(29,28,26,0.12)', bg:'rgba(29,28,26,0.10)', items:['naechsteschritte']},
+  {key:'produkt',       label:'Produktwissen',       short:'Produkt',    weight:0.10, col:'#C9502F', fill:'rgba(201,80,47,0.12)', bg:'rgba(201,80,47,0.10)', items:['produktnutzen','produktfragen']},
+];
+function qaCatsFor(rat){return rat&&rat.date&&String(rat.date)<QA_V2_FROM?CALL_CATS_V1:CALL_CATS;}
 var ITEM_LABELS={
   intro:'Intro / Einstieg',ziel:'Ziel des Calls',
   qualifizieren:'Einwand qualifizieren',solidarisierung:'Solidarisierung',umgang:'Umgang mit Einwand',
   entkraeftung:'Entkräftung',testabschluss:'Testabschluss',vertrauen:'Vertrauen aufbauen',
   dranbleiben:'Re-Opening / Dranbleiben',
-  quantifizieren:'Bedarf quantifizieren',potenzial:'Potenzial erkennen',
+  quantifizieren:'Bedarf ermitteln',potenzial:'Potenzial erkennen',
   abschlussversuch:'Abschlussversuch',angebotsqualitaet:'Angebotsqualität',kaufsignale:'Kaufsignale nutzen',
-  struktur:'Struktur',kontrolle:'Gesprächskontrolle',klarheit:'Klarheit',fragequalitaet:'Fragequalität',
-  naechsteschritte:'Zusammenfassung & nächste Schritte'
+  struktur:'Gesprächsstruktur',kontrolle:'Gesprächskontrolle',klarheit:'Klarheit',fragequalitaet:'Fragequalität',
+  naechsteschritte:'Zusammenfassung & nächste Schritte',
+  produktnutzen:'Produktnutzen erklären',produktfragen:'Fragen sicher beantworten'
 };
 // ── „Aktuelle Bewertung im Detail“ (Entwurf C): Gesamt oben, je Kriterium ein vierstufiger Balken ──
 function callDetailBodyHtml(call){
+  var CATS=qaCatsFor(call);
   var sc=call.scores||{};
   function f1(x){return x.toFixed(1).replace('.',',');}
   function cAvg(cat){var v=cat.items.map(function(k){return sc[k]||0;}).filter(function(x){return x>0;});return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;}
-  var all=[];CALL_CATS.forEach(function(c){all=all.concat(c.items);});
+  var all=[];CATS.forEach(function(c){all=all.concat(c.items);});
   var rated=all.filter(function(k){return sc[k]>0;}).length;
   var ts=totalScore(call);
-  var einw=CALL_CATS.find(function(c){return c.key==='einwand';}),absch=CALL_CATS.find(function(c){return c.key==='abschluss';});
+  var einw=CATS.find(function(c){return c.key==='einwand';}),absch=CATS.find(function(c){return c.key==='abschluss';});
   var h='<div style="display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;padding:14px 0 12px;margin-bottom:6px;border-bottom:1px solid var(--border)">'
     +'<div><div style="font-size:40px;font-weight:300;line-height:1">'+(rated?Math.round(ts)+' %':'–')+'</div><div style="font-size:12.5px;color:var(--text3);font-weight:600">Gesamtpunktzahl</div></div>';
   [einw,absch].forEach(function(c){if(!c)return;var a=cAvg(c);h+='<div><div style="font-size:28px;font-weight:300;line-height:1.05">'+(a!=null?f1(a):'–')+'</div><div style="font-size:12.5px;color:var(--text3);font-weight:600">'+esc(c.short||c.label)+' ('+Math.round(c.weight*100)+' %)</div></div>';});
@@ -7198,7 +7214,7 @@ function callDetailBodyHtml(call){
     +'<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#E4E0D6;margin-right:5px;vertical-align:-1px"></i>offen bis 4</span>'
     +'<span style="font-weight:600">'+rated+' von '+all.length+' Kriterien bewertet</span></div></div>';
   if(!rated)h+='<div style="background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13px">Für diesen Call wurden keine Einzelpunkte gespeichert. Über „Neuen Call bewerten“ bzw. Bearbeiten in der Historie kannst du die Punkte nachtragen.</div>';
-  CALL_CATS.forEach(function(cat){
+  CATS.forEach(function(cat){
     var a=cAvg(cat);
     h+='<div style="display:flex;align-items:center;gap:8px;margin:14px 0 4px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)">'+esc(cat.label)+' · '+Math.round(cat.weight*100)+' %'
       +'<span style="margin-left:auto;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:10px;letter-spacing:0;text-transform:none;'+(a!=null&&a<2?'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A':'background:#fff;border:1px solid #E4E0D6;color:var(--text2)')+'">Ø '+(a!=null?f1(a):'–')+'</span></div>';
@@ -7224,7 +7240,7 @@ function catAvg(rat,cat){
   return vals.reduce(function(a,b){return a+b;},0)/vals.length;
 }
 function totalScore(rat){
-  var sum=0;CALL_CATS.forEach(function(cat){sum+=catAvg(rat,cat)*cat.weight*25;});return sum;
+  var sum=0;qaCatsFor(rat).forEach(function(cat){sum+=catAvg(rat,cat)*cat.weight*25;});return sum;
 }
 // ── Bedarfserkennung: welche QA-Kategorie ist über mehrere Calls hinweg konstant schwach? ──
 // Schwelle: Ø unter 2.0 von 4 (=unter 50%) UND mind. 60% der letzten Calls einzeln unter 2.0
