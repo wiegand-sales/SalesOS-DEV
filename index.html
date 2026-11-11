@@ -7190,7 +7190,9 @@ var CALL_CATS=[
   {key:'zusammenfassung',label:'Zusammenfassung',    short:'Zusammenf.', weight:0.05, col:'#3a3833', fill:'rgba(29,28,26,0.12)', bg:'rgba(29,28,26,0.10)', items:['naechsteschritte']},
 ];
 // Neue Struktur, wenn ab dem Stichtag bewertet oder Produktwissen schon bewertet wurde
-function qaCatsFor(rat){var sc=rat&&rat.scores||{};if(sc.produktnutzen||sc.produktfragen)return CALL_CATS;return rat&&rat.date&&String(rat.date)<QA_V2_FROM?CALL_CATS_V1:CALL_CATS;}
+function qaCatsFor(rat){var sc=rat&&rat.scores||{};if(sc.produktnutzen||sc.produktfragen)return CALL_CATS;
+  // Mit dem neuen Formular entstanden (keine der alten, entfallenen Punkte, mindestens ein Wert): neue Struktur
+  var ks=Object.keys(sc).filter(function(k){return sc[k]>0;});if(ks.length&&!ks.some(function(k){return ['umgang','vertrauen','potenzial','klarheit','kaufsignale'].indexOf(k)>=0;}))return CALL_CATS;return rat&&rat.date&&String(rat.date)<QA_V2_FROM?CALL_CATS_V1:CALL_CATS;}
 var ITEM_LABELS={
   intro:'Intro / Einstieg',ziel:'Ziel des Calls',
   qualifizieren:'Einwand qualifizieren',solidarisierung:'Solidarisierung',umgang:'Umgang mit Einwand',
@@ -7247,7 +7249,9 @@ function catAvg(rat,cat){
   return vals.reduce(function(a,b){return a+b;},0)/vals.length;
 }
 function totalScore(rat){
-  var sum=0;qaCatsFor(rat).forEach(function(cat){sum+=catAvg(rat,cat)*cat.weight*25;});return sum;
+  var cats=qaCatsFor(rat);
+  if(cats===CALL_CATS_V1){var sum=0;cats.forEach(function(cat){sum+=catAvg(rat,cat)*cat.weight*25;});return sum;}
+  var s2=0,w=0;cats.forEach(function(cat){var a=catAvg(rat,cat);if(a>0){s2+=a*cat.weight;w+=cat.weight;}});return w?s2/w*25:0;
 }
 // ── Bedarfserkennung: welche QA-Kategorie ist über mehrere Calls hinweg konstant schwach? ──
 // Schwelle: Ø unter 2.0 von 4 (=unter 50%) UND mind. 60% der letzten Calls einzeln unter 2.0
@@ -13099,14 +13103,16 @@ var _cbScores={};
 
 
 var _qaBase=null;
+// Ein Punkt zählt erst, wenn er bewertet ist (leer = kam im Call nicht vor)
+function qaTap(key,n){setCbScore(key,_cbScores[key]===n?0:n);}
 function setCbScore(key,val){
-  _cbScores[key]=val;
-  var sl=document.getElementById('qas_'+key);if(sl&&+sl.value!==val)sl.value=val;
-  var disp=document.getElementById('cbv_'+key);if(disp)disp.textContent=val;
+  val=+val||0;if(val)_cbScores[key]=val;else delete _cbScores[key];
+  var sg=document.getElementById('qas_'+key);if(sg)[].forEach.call(sg.querySelectorAll('button'),function(b){b.className=(+b.dataset.n===val)?'on':'';});
+  var disp=document.getElementById('cbv_'+key);if(disp){disp.textContent=val?val:'–';disp.style.color=val?'':'var(--text3)';}
   var lv=_qaBase&&_qaBase.scores?_qaBase.scores[key]:null;
   var l=document.getElementById('qal_'+key);if(l)l.textContent=lv?'zuletzt '+lv:'';
   var d=document.getElementById('qad_'+key);
-  if(d){if(!lv)d.textContent='';else{var dd=val-lv;d.textContent=dd>0?'+'+dd:dd<0?String(dd):'±0';d.style.color=dd>0?'#2f6b52':dd<0?'#B5513A':'var(--text3)';}}
+  if(d){if(!lv||!val)d.textContent='';else{var dd=val-lv;d.textContent=dd>0?'+'+dd:dd<0?String(dd):'±0';d.style.color=dd>0?'#2f6b52':dd<0?'#B5513A':'var(--text3)';}}
   updateQaChips();
 }
 function updateQaChips(){
@@ -13731,14 +13737,14 @@ function openQaBewertungModal(empId,editRatingId){
         h+='<div style="display:flex;align-items:center;gap:12px;height:36px;padding:0 10px;border-bottom:1px solid #eae7e0">'
           +'<span style="flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ITEM_LABELS[k]+'</span>'
           +'<span id="qal_'+k+'" style="width:62px;flex-shrink:0;font-size:12px;color:var(--text3)"></span>'
-          +'<input type="range" min="1" max="4" step="1" id="qas_'+k+'" oninput="setCbScore(\''+k+'\',+this.value)" style="width:150px;flex-shrink:0;accent-color:#3a3833;margin:0;padding:0;height:20px;border:none;background:transparent">'
+          +'<span class="dsh-seg sm" id="qas_'+k+'" role="group" aria-label="'+esc(ITEM_LABELS[k]||k)+'" style="flex-shrink:0">'+[1,2,3,4].map(function(n){return '<button type="button" data-n="'+n+'" onclick="qaTap(\''+k+'\','+n+')" title="'+n+' von 4 – nochmal klicken = leer">'+n+'</button>';}).join('')+'</span>'
           +'<b id="cbv_'+k+'" style="width:18px;text-align:right;font-size:13.5px"></b>'
           +'<span id="qad_'+k+'" style="width:30px;text-align:right;font-size:12px;font-weight:700"></span></div>';
       });
     });
-    box.innerHTML=h;
+    box.innerHTML='<div class="sf-sub" style="margin:0 0 8px">Nur bewerten, was im Call vorkam · leer wird nicht gezählt · nochmal klicken leert den Punkt</div>'+h;
     CALL_CATS.forEach(function(cat){cat.items.forEach(function(k){
-      var v=editingRating&&editingRating.scores&&editingRating.scores[k]?editingRating.scores[k]:(_qaBase&&_qaBase.scores[k]?_qaBase.scores[k]:2);
+      var v=editingRating&&editingRating.scores&&editingRating.scores[k]?editingRating.scores[k]:0;
       setCbScore(k,v);
     });});
   }
