@@ -623,8 +623,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-tgl b{margin-left:4px}.kal-tgl.on{background:#1d1c1a!important;color:#fff!important;border-color:#1d1c1a!important}
 .kal-cw{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
 .kal-cw.nopane{grid-template-columns:minmax(0,1fr)}.kal-cw.nopane .kal-pane{display:none}
-.kal-cw.co{align-items:stretch}.kal-cw.co .kal-pane{position:relative;padding:0;max-height:none;overflow:hidden}.kal-cw.co .kal-pin{position:absolute;inset:0;overflow:auto;padding:14px}
-@media(max-width:1250px){.kal-cw.co .kal-pin{position:static;max-height:420px}}
+.kal-cw.co{align-items:stretch}.kal-cw.co .kal-pane{position:relative;top:0;padding:0;max-height:none;overflow:hidden;contain:size;align-self:stretch}.kal-cw.co .kal-pin{position:absolute;inset:0;overflow:auto;padding:14px}
+@media(max-width:1250px){.kal-cw.co .kal-pane{contain:none}.kal-cw.co .kal-pin{position:static;max-height:420px}}
 @media(max-width:1250px){.kal-cw{grid-template-columns:1fr}}
 .kal-pane{background:#EFECE5;border:1px solid #E4E0D6;border-radius:14px;padding:14px;position:sticky;top:8px;max-height:calc(100vh - 40px);overflow:auto}
 .kal-pane .ph{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin:2px 2px 6px}.kal-pane .ph span{margin-left:auto;color:var(--text3);font-weight:500}
