@@ -1780,17 +1780,24 @@ document.addEventListener('click',function(){document.querySelectorAll('.dd-pane
 
 function setOverviewChartMetric(m){overviewChartMetric=m;renderTeam();}
 function setOverviewChartEmp(v){overviewChartEmpId=v||null;renderTeam();}
-var _bannerRotationOrder=['performance','overview','ziel','coaching','activity'];
+var _bannerRotationOrder=['performance','overview','ziel','coaching','activity','kalender','aufgaben'];
+var BANNER_TITLES={performance:'Performance',overview:'Overview',ziel:'Zielvereinbarung',coaching:'Coaching',activity:'Aktivitäten',kalender:'Kalender',aufgaben:'Aufgaben'};
+// Punkte des Banner-Karussells (für alle Folien gleich, aktive Folie als breiter Strich)
+function bannerDots(active){return _bannerRotationOrder.map(function(m){var on=m===active;return '<div onclick="setBannerViewMode(\''+m+'\')" style="'+(on?'width:20px;height:7px;border-radius:4px;background:#F7B39A':'width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25)')+';cursor:pointer" title="'+BANNER_TITLES[m]+'"></div>';}).join('');}
+function bannerDotsBar(active){return '<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'+bannerDots(active)+'</div>';}
+function gbVisible(){return employees.filter(function(e){return !e.isPureCoach;});}
+// In Kalender und Aufgaben nur den Banner austauschen (die Seite selbst bleibt unberührt: Scroll, Ziehen, offene Leisten)
+function bannerSwapInPlace(){if(view!=='kalender'&&view!=='aufgaben')return false;var el=document.getElementById('gBan');if(!el)return false;el.outerHTML=buildGlobalBannerHtml(gbVisible());return true;}
 var _bannerRotationTimer=null;
 function _bannerRotateNext(){
   // Auf der Mitarbeiter-Detailseite wird ein eigenstaendiger Banner gezeigt (nicht der globale) -
   // ein Re-Render hier wuerde nur unnoetig die Seite zuruecksetzen (u.a. Scroll-Position), ohne
   // dass sich optisch etwas Sichtbares aendert. Rotation daher auf diesen Seiten pausieren.
-  if(view!=='team'&&view!=='coaching'&&view!=='activity')return;
+  if(view!=='team'&&view!=='coaching'&&view!=='activity'&&view!=='kalender'&&view!=='aufgaben')return;
   var cur=bannerViewMode||'overview';
   var idx=_bannerRotationOrder.indexOf(cur);
   bannerViewMode=_bannerRotationOrder[(idx+1)%_bannerRotationOrder.length];
-  renderMain();
+  if(!bannerSwapInPlace())renderMain();
 }
 // Idempotent: laeuft die Rotation schon, wird nichts veraendert (sonst wuerde jeder normale
 // Re-Render z.B. bei Dateneingaben den 60s-Timer immer wieder zuruecksetzen und er wuerde nie feuern)
@@ -1807,7 +1814,7 @@ function resetBannerRotation(){
 function setBannerViewMode(m){
   bannerViewMode=m;
   resetBannerRotation();
-  renderMain();
+  if(!bannerSwapInPlace())renderMain();
 }
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
 function setOverviewDateRange(from,to){overviewFromDate=from||null;overviewToDate=to||null;rerenderOverviewContext();}
@@ -5483,8 +5490,12 @@ function buildBannerSlide1Html(visible,dotsHtml,marginTop){
   h+='</div>'; // Ende Hero-Panel
   return h;
 }
-function buildGlobalBannerHtml(visible){
+function buildGlobalBannerHtml(visible){return '<div id="gBan">'+buildGlobalBannerInner(visible)+'</div>';}
+function buildGlobalBannerInner(visible){
   ensureBannerRotation();
+  var _bm=bannerViewMode||'overview';
+  if(_bm==='kalender'){if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;return kalBanner();}
+  if(_bm==='aufgaben')return aufgBannerHtml(aufgAll());
   function avgOptTagZielvereinbarungLocal(){
     var zmk=today().slice(0,7);
     var zRec=zielStore[zmk]||{};
@@ -5593,11 +5604,7 @@ function buildGlobalBannerHtml(visible){
     h+='</div>';
     h+='</div>';
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
-      +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
-      +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
-      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:20px;height:7px;border-radius:4px;background:#F7B39A;cursor:pointer" title="Zielvereinbarung"></div>'
-      +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
-      +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
+    +bannerDots('ziel')
       +'</div>';
     h+='</div>';
     return h;
@@ -5701,11 +5708,7 @@ function buildGlobalBannerHtml(visible){
     })();
     h+='</div>';
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
-      +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
-      +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
-      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
-      +'<div onclick="setBannerViewMode(\'coaching\')" style="width:20px;height:7px;border-radius:4px;background:#F7B39A;cursor:pointer" title="Coaching"></div>'
-      +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
+    +bannerDots('coaching')
       +'</div>';
     h+='</div>';
     return h;
@@ -5759,22 +5762,14 @@ function buildGlobalBannerHtml(visible){
     h+='</div>';
     h+='</div>';
     h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
-      +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
-      +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
-      +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
-      +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
-      +'<div onclick="setBannerViewMode(\'activity\')" style="width:20px;height:7px;border-radius:4px;background:#F7B39A;cursor:pointer" title="Aktivitäten"></div>'
+    +bannerDots('activity')
       +'</div>';
     h+='</div>';
     return h;
   }
   if(_bvMode==='performance'){
   h+=buildBannerSlide1Html(visible,
-    '<div onclick="setBannerViewMode(\'performance\')" style="width:20px;height:7px;border-radius:4px;background:#F7B39A;cursor:pointer" title="Performance"></div>'
-    +'<div onclick="setBannerViewMode(\'overview\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Overview"></div>'
-    +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
-    +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
-    +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
+    bannerDots('performance')
   );
   } else {
   // ── NEUE, eigenstaendige Overview-Hero-Panel-Version (gleiche Optik wie Performance, andere Kennzahlen) ──
@@ -5896,11 +5891,7 @@ function buildGlobalBannerHtml(visible){
   h+=ovRingTile('Margenerhöhung (Monat)',ovMargeGesamtNeu,ovMargeZielMonatNeu,moSollFrac,'€');
   h+='</div>'; // Ende KPI-Zeile
   h+='<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'
-    +'<div onclick="setBannerViewMode(\'performance\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Performance"></div>'
-    +'<div onclick="setBannerViewMode(\'overview\')" style="width:20px;height:7px;border-radius:4px;background:#F7B39A;cursor:pointer" title="Overview"></div>'
-    +'<div onclick="setBannerViewMode(\'ziel\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Zielvereinbarung"></div>'
-    +'<div onclick="setBannerViewMode(\'coaching\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Coaching"></div>'
-    +'<div onclick="setBannerViewMode(\'activity\')" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer" title="Aktivitäten"></div>'
+    +bannerDots('overview')
     +'</div>';
   h+='</div>'; // Ende Hero-Panel
   } // Ende else (Overview)
@@ -14048,7 +14039,7 @@ function kalBanner(){var t=today(),L=kalEmps(),wds=[],d=t;while(wds.length<10){i
   h+='</div><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;min-height:56px;align-items:center">';
   h+=small('ABWESEND KW '+kalKw(nmo),abwN.size,'Mitarbeiter')+small('RESTURLAUB TEAM',kalNf(sum('frei')),'Tage frei')+small('FLEX DAYS ÜBRIG',kalNf(sum('flex')),'im Team');
   h+=small('KRANKHEITSTAGE',kalNf(kr),KAL_MON[+mk.slice(5)-1])+small('AUSGLEICHSTAGE',ag,KAL_MON[+mk.slice(5)-1])+small('ZU PLANEN',kalTasks().length,'Sessions');
-  return h+'</div></div>';}
+  return h+'</div>'+bannerDotsBar('kalender')+'</div>';}
 
 // ── Ansichten ──
 function kalAbsRz(x,d){if(!(kalCanEdit()&&!x.fixed&&!x.masked))return '';var ds=kalDays(x);return (ds[0]===d?'<span class="kal-rz l" data-krz="von"></span>':'')+(ds[ds.length-1]===d?'<span class="kal-rz r" data-krz="bis"></span>':'');}
@@ -14226,14 +14217,14 @@ function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filte
 function kalRerender(){_kalTC.v=null;if(view==='coaching')renderCoachingAnsicht();else if(view==='kalender')renderKalender();}
 function renderKalender(){var ma=document.getElementById('mainArea');if(!ma)return;if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;
   var vw=KAL.view==='woche'?kalVWeek():KAL.view==='jahr'?kalVYear():KAL.view==='team'?kalVTeam():kalVMonth();
-  var h='<div class="content">'+kalBanner();
+  var h='<div class="content">'+buildGlobalBannerHtml(gbVisible());
   h+='<div class="card"><div class="kal-bar">'+kalBar()+'</div><div class="kal-cw'+(KAL.pane?'':' nopane')+'"><div style="min-width:0">'+vw+'</div><aside class="kal-pane">'+kalPane()+'</aside></div>'+kalLegend()+'</div>';
   h+='<div class="card"><div class="card-title">'+(KAL.low==='req'?'Offene Anträge':'Zu planen')+'<span class="kal-note" style="font-weight:400;margin-left:6px">'+(KAL.low==='req'?'alle Hinweise auf einen Blick':'Zeile in den Kalender ziehen oder „Einplanen“')+'</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.low==='req'?'on':'')+'" onclick="KAL.low=\'req\';kalRerender()">Anträge · '+kalOpenReqs().length+'</button><button type="button" class="'+(KAL.low==='plan'?'on':'')+'" onclick="KAL.low=\'plan\';kalRerender()">Planen · '+kalTasks().length+'</button></span></span></div>'+(KAL.low==='req'?kalReqTable():kalTaskTable())+'</div>';
   h+='<div class="card"><div class="card-title">Urlaubskonto '+today().slice(0,4)+'<span class="kal-note" style="font-weight:400;margin-left:6px">Klick auf einen Mitarbeiter öffnet die Details</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.sort==='rest'?'on':'')+'" onclick="KAL.sort=\'rest\';kalRerender()">Resturlaub</button><button type="button" class="'+(KAL.sort==='name'?'on':'')+'" onclick="KAL.sort=\'name\';kalRerender()">Name</button></span></span></div>'+kalKontoList()+'</div>';
   h+='</div>';
   var oc=ma.querySelector('.content'),st=oc?oc.scrollTop:0;ma.innerHTML=h;var nc=ma.querySelector('.content');if(nc&&st)nc.scrollTop=st;
   if(document.getElementById('kalFormModal')&&!document.getElementById('kalFormModal').classList.contains('hidden'))kalDrawForm();}
-function selectKalender(){view='kalender';renderSidebar();renderMain();}
+function selectKalender(){view='kalender';bannerViewMode='kalender';resetBannerRotation();renderSidebar();renderMain();}
 function kalSetView(v){if(kalCtx()==='coach')KAL.cview=v;else KAL.view=v;kalRerender();}
 function kalSetPane(p){KAL.pane=KAL.pane===p?null:p;kalRerender();}
 function kalSetLoc(l){KAL.loc=l;KAL.open=null;kalRerender();}
@@ -14744,14 +14735,18 @@ function aufgCards(L){var B={},out=[];L.forEach(function(o){if(o.bundle){var k=o
   out.forEach(function(c){if(c.items){var rt=c.items[0].task&&/^rt/.test(c.items[0].task.id)?(kalRules().routinen||[]).find(function(r){return c.items[0].task.id.indexOf('rt'+r.id)===0;}):null;c.total=rt?(rt.empIds||[]).length:null;c.t=c.items.length+' offen'+(c.total?' von '+c.total:'');c.s=c.items.slice(0,3).map(function(o){return kalFirst(o.t);}).join(', ')+(c.items.length>3?' …':'');}});
   return out.sort(function(a,b){var x=aufgState(a).r-aufgState(b).r;return x||(a.due<b.due?-1:a.due>b.due?1:0);});}
 // ── Seite ──
-function renderAufgaben(){var ma=document.getElementById('mainArea');if(!ma)return;var L=aufgAll(),S=aufgStaff(),me=aufgMeKeys(),C=aufgCards(L);
-  var cnt=function(f){return L.filter(f).length;},st=function(o){return aufgState(o).c;};
+// Aufgaben-Folie des Banner-Karussells
+function aufgBannerHtml(L){var me=aufgMeKeys(),cnt=function(f){return L.filter(f).length;},st=function(o){return aufgState(o).c;};
   var big=function(l,v,s){return '<div style="padding-left:14px"><div style="font-size:10.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em;margin-bottom:4px">'+l+'</div><div style="font-size:30px;font-weight:700;line-height:1">'+v+'</div><div style="font-size:11px;color:#E9B2A6;margin-top:4px">'+s+'</div></div>';};
   var sm=function(l,v,s){return '<div style="padding:4px 14px"><div style="font-size:9.5px;font-weight:600;color:#FFE1D6;letter-spacing:.04em">'+l+'</div><div style="font-size:18px;font-weight:700;margin-top:4px">'+v+'</div><div style="font-size:9.5px;color:#E9B2A6;margin-top:3px">'+s+'</div></div>';};
   var wk=kalAdd(kalMon(today()),4);
-  var h='<div class="content"><div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin:16px 0 22px;min-height:var(--ban-h);box-sizing:border-box">'
+  var h='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);box-shadow:0 12px 28px rgba(40,32,15,0.22);border-radius:16px;padding:22px 26px;color:#fff;margin:16px 0 22px;min-height:var(--ban-h);box-sizing:border-box;position:relative;overflow:hidden">'
     +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.14)">'+big('ÜBERFÄLLIG',cnt(function(o){return st(o)==='od';}),'seit Fälligkeit offen')+big('HEUTE FÄLLIG',cnt(function(o){return st(o)==='td';}),'alle Personen')+big('BIS FREITAG',cnt(function(o){return o.due<=wk;}),'diese Woche')+'</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">'+sm('ANTRÄGE',cnt(function(o){return o.art==='Urlaubsantrag';}),'offen')+sm('WEEKLYS',cnt(function(o){return o.art==='Weekly';}),'offen')+sm('QA',cnt(function(o){return o.art==='QA-Bewertung';}),'Mitarbeiter')+sm('PERFORMANCE-GESPR.',cnt(function(o){return o.art==='Performance-Gespräch';}),'fällig')+sm('ZIEL ANPASSEN?',cnt(function(o){return o.art==='Ziel anpassen?';}),'prüfen')+sm('MEINE',cnt(function(o){return me.indexOf(o.assignee)>=0;}),'offen')+'</div></div>';
+    +'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">'+sm('ANTRÄGE',cnt(function(o){return o.art==='Urlaubsantrag';}),'offen')+sm('WEEKLYS',cnt(function(o){return o.art==='Weekly';}),'offen')+sm('QA',cnt(function(o){return o.art==='QA-Bewertung';}),'Mitarbeiter')+sm('PERFORMANCE-GESPR.',cnt(function(o){return o.art==='Performance-Gespräch';}),'fällig')+sm('ZIEL ANPASSEN?',cnt(function(o){return o.art==='Ziel anpassen?';}),'prüfen')+sm('MEINE',cnt(function(o){return me.indexOf(o.assignee)>=0;}),'offen')+'</div>'+bannerDotsBar('aufgaben')+'</div>';
+  return h;}
+function renderAufgaben(){var ma=document.getElementById('mainArea');if(!ma)return;var L=aufgAll(),S=aufgStaff(),me=aufgMeKeys(),C=aufgCards(L);
+  var cnt=function(f){return L.filter(f).length;},st=function(o){return aufgState(o).c;};
+  var h='<div class="content">'+buildGlobalBannerHtml(gbVisible());
   h+='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-checklist"></i> Aufgaben</div><span class="kal-note">'+(AU.view==='k'?(AU.group==='d'?'nach Fälligkeit · Klick öffnet':AU.group==='a'?'nach Art · Klick öffnet':'eine Spalte je Person · Karte ziehen = neu zuweisen · Klick öffnet'):'oben die Aufgaben der anderen, darunter deine zum Abarbeiten')+'</span>'
     +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center">'+(AU.view==='k'?'<span class="kal-note">Spalten</span><span class="dsh-seg"><button type="button" class="'+(!AU.group||AU.group==='p'?'on':'')+'" onclick="AU.group=\'p\';renderAufgaben()">Person</button><button type="button" class="'+(AU.group==='d'?'on':'')+'" onclick="AU.group=\'d\';renderAufgaben()">Fälligkeit</button><button type="button" class="'+(AU.group==='a'?'on':'')+'" onclick="AU.group=\'a\';renderAufgaben()">Art</button></span>':'')+'<span class="dsh-seg"><button type="button" class="'+(AU.view==='k'?'on':'')+'" onclick="AU.view=\'k\';renderAufgaben()">Kanban</button><button type="button" class="'+(AU.view==='l'?'on':'')+'" onclick="AU.view=\'l\';renderAufgaben()">Liste</button></span></span></div>';
   h+=(AU.view==='k'?aufgKanban(C,S):aufgList(C,me))+'</div>'+aufgRoutineTable()+'</div>';
@@ -14787,7 +14782,7 @@ function aufgRoutineTable(){var R=kalRules().routinen||[];if(!R.length)return ''
       var p=soll?ist/soll:0,cl=ix===5?'c0':p>=1?'c3':p>=0.75?'c2':'c1';return '<td class="c"><span class="au-cell '+cl+'">'+ist+' / '+soll+'</span></td>';}).join('')+'</tr>';}).join('');
   return '<div class="card card-static"><div class="card-title">Routinen-Übersicht<span class="kal-note" style="font-weight:400;margin-left:6px">erledigt = Session dokumentiert · Routinen pflegst du unter Einstellungen › Kalender</span></div><div class="std-wrap"><table class="std-table"><thead><tr><th>Person · Routine</th>'+W.map(function(w){return '<th class="c">KW '+kalKw(w)+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div><div class="kal-legend"><span><span class="au-cell c3">✓</span> vollständig</span><span><span class="au-cell c2">≥ 75 %</span></span><span><span class="au-cell c1">&lt; 75 %</span></span><span>laufende Woche grau</span></div></div>';}
 function aufgBadge(L){var b=document.getElementById('rail-aufgaben');if(!b)return;L=L||aufgAll();var me=aufgMeKeys(),n=L.filter(function(o){return me.indexOf(o.assignee)>=0&&aufgState(o).r<=1;}).length;b.classList.toggle('au-badge',n>0);b.setAttribute('data-n',n>9?'9+':String(n));}
-function selectAufgaben(){view='aufgaben';renderSidebar();renderMain();}
+function selectAufgaben(){view='aufgaben';bannerViewMode='aufgaben';resetBannerRotation();renderSidebar();renderMain();}
 // ── Öffnen ──
 function aufgFind(key){var L=aufgAll(),C=aufgCards(L);return C.find(function(c){return c.key===key;})||L.find(function(o){return o.key===key;});}
 function aufgOpen(key){var c=aufgFind(key);if(!c)return;AU.open=key;var m=document.getElementById('aufgModal');if(!m){m=document.createElement('div');m.className='modal-ov hidden';m.id='aufgModal';m.innerHTML='<div class="modal" style="width:640px!important;background:#EEEDE9;padding:18px"><div id="aufgBody"></div></div>';m.addEventListener('mousedown',function(ev){if(ev.target===m)closeModal('aufgModal');});document.body.appendChild(m);}
