@@ -14027,7 +14027,7 @@ function kalSesWho(o){return o.p.groupId?'Gruppencoaching ('+o.n+')':o.e.name;}
 function kalSesAttrs(o){return ' data-eid="'+esc(o.e.id)+'" data-sid="'+esc(o.p.id)+'" data-typ="'+esc(o.p.type||'')+'" data-focus="'+esc(o.p.focus||'')+'" data-datum="'+esc(o.p.date)+'" data-uhrzeit="'+esc(o.p.uhrzeit||'')+'"';}
 function kalSesTip(o){return esc((o.p.uhrzeit?o.p.uhrzeit+(o.p.endUhrzeit?'–'+o.p.endUhrzeit:'')+' ':'')+(o.p.type||'Session'))+'<br>'+esc(kalSesWho(o))+(o.p.focus?' · '+esc(o.p.focus):'')+(o.p.coachId?' mit '+esc(kalCoachName(o.p.coachId)):'')+(o.p.status==='geplant'?'<br>geplant':'');}
 
-// ── Zu planen: Performance-Gespräche (5/11/23 Monate) und Weekly je Agent ohne Session in dieser Woche ──
+// ── Zu planen: Performance-Gespräche (3/5/12/23 Monate) und Weekly je Agent ohne Session in dieser Woche ──
 var KAL_KPIS=[['crOEM','CR OEM'],['crTeilweise','CR TW'],['crSuperYes','CR SY'],['crMegaYes','CR MY'],['crYes','CR YES'],['optPerH','Opt./Std.']];
 function kalKpiMisses(e,from,to){var T=empTargets(e),s=chartSumsForRange([e],from,to),out=[];var rows=(performance[e.id]||[]).filter(function(x){return x.date&&x.date>=from&&x.date<=to;});if(!rows.length)return out;
   KAL_KPIS.forEach(function(k){var t=T[k[0]];if(!t||t.val==null||t.val==='')return;var v;
@@ -14045,7 +14045,7 @@ var _kalTC={at:0,k:'',v:null};
 function kalTasks(){var k=KAL.loc+'|'+view;if(_kalTC.v&&_kalTC.k===k&&Date.now()-_kalTC.at<400)return _kalTC.v;_kalTC.v=kalTasksCalc();_kalTC.k=k;_kalTC.at=Date.now();return _kalTC.v;}
 function kalTasksCalc(){var out=[],t=today(),ref=kalRef(),wk=kalPeriod('woche',ref),R=kalRules(),covered={};
   kalEmps().forEach(function(e){
-    if(e.startDate){[5,11,23].forEach(function(n){var s=kalP(e.startDate);s.setMonth(s.getMonth()+n);var due=kalI(s);
+    if(e.startDate){[3,5,12,23].forEach(function(n){var s=kalP(e.startDate);s.setMonth(s.getMonth()+n);var due=kalI(s);
       if(due<kalAdd(t,-60)||due>kalAdd(t,14))return;
       var done=(protocols[e.id]||[]).some(function(p){return /Performance/i.test(p.type||'')&&p.date>=kalAdd(due,-30);});
       if(!done)out.push({id:'pg'+e.id+n,e:e,art:'Performance Review',l:'Performance-Gespräch '+e.name,src:n+' Monate im Unternehmen',due:due});});}});
