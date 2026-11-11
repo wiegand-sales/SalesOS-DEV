@@ -3104,28 +3104,7 @@ function renderCoachingAnsicht(){
   // ══ Performance-Tabelle (dieselbe Tabelle wie im Performance-Reiter, ohne Banner und ohne Diagramm) ══
   h+=buildOverviewTab(liste,'performance',true,true);
 
-  // ══ Geplante Sessions (volle Breite, weiße Box) ══
-  var gep10=gep.slice(0,10);
-  h+='<div class="card" style="margin-bottom:22px">';
-  h+='<div class="card-title"><i class="ti ti-calendar-event"></i> Geplante Sessions'+(gep.length?' <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">('+gep10.length+(gep.length>10?' von '+gep.length:'')+')</span>':'')+'</div>';
-  if(!gep.length){
-    h+='<div style="text-align:center;color:var(--text3);padding:28px"><i class="ti ti-calendar-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Keine Sessions geplant<div style="margin-top:10px"><button class="btn btn-sm btn-primary" onclick="openSessionModal(0)"><i class="ti ti-plus"></i> Jetzt planen</button></div></div>';
-  } else {
-    h+='<div style="display:flex;flex-direction:column;gap:8px">';
-    gep10.forEach(function(x){
-      var c=ec(x.eid),dt2=new Date(x.d+'T00:00:00'),df=Math.round((dt2-hD)/86400000);
-      var pTyp=(x.t||'').replace(/[<>"']/g,'');
-      var pFok=(x.f||'').replace(/[<>"']/g,'');
-      var pUhr=(x.uhrzeit||'').replace(/[<>"']/g,'');
-      h+='<div style="background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-lg);padding:11px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="openPlannedSession(\''+x.eid+'\',\''+x.sid+'\',\''+pTyp+'\',\''+pFok+'\',\''+x.d+'\',\''+pUhr+'\')">';
-      h+='<div style="min-width:46px;text-align:center;background:var(--purple-bg);border-radius:var(--r-md);padding:6px 8px;flex-shrink:0"><div style="font-size:10px;font-weight:600;color:var(--purple)">'+wday(x.d)+'</div><div style="font-size:21px;font-weight:700;color:var(--purple);line-height:1.1">'+dt2.getDate()+'</div></div>';
-      h+='<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+';flex-shrink:0">'+ini(x.en)+'</div><span style="font-weight:600;font-size:13px;white-space:nowrap">'+x.en+'</span>'+(pUhr?'<span style="font-size:10px;color:var(--text2)"><i class="ti ti-clock" style="font-size:10px"></i> '+pUhr+'</span>':'')+' <span style="font-size:10px;padding:1px 6px;border-radius:20px;background:'+(df<=1?'var(--amber-bg)':'var(--bg2)')+';color:'+(df<=1?'var(--amber-dark)':'var(--text2)')+'">'+tdiff(x.d)+'</span></div><div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(pTyp||'Coaching')+(pFok?' · '+pFok:'')+'</div></div>';
-      h+='<button class="btn btn-sm" data-id="'+x.eid+'" data-d="'+x.d+'" data-f="'+pFok+'" onclick="event.stopPropagation();emailSession(this.dataset.id,this.dataset.d,this.dataset.f)" title="Termin-E-Mail" style="padding:6px 9px;flex-shrink:0"><i class="ti ti-mail"></i></button>';
-      h+='</div>';
-    });
-    h+='</div>';
-  }
-  h+='</div>';
+  // Geplante Sessions: jetzt im Coaching-Kalender über den Knopf „Geplant“ (Seitenleiste)
 
   // ══ Letzte Sessions (volle Breite, weiße Box, gleiches Tabellenformat wie Coaching-Historie) ══
   var let7=abg.slice(0,10);
@@ -14139,11 +14118,26 @@ function kalBar(){var v=[['woche','Woche'],['monat','Monat'],['jahr','Jahr'],['t
 function kalCoachBar(){var v=[['woche','Woche'],['monat','Monat'],['jahr','Jahr'],['team','Team']];
   return '<div class="dsh-seg" role="group" aria-label="Ansicht">'+v.map(function(o){return '<button type="button" class="'+(KAL.view===o[0]?'on':'')+'" onclick="kalSetView(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</div>'
     +'<button class="btn" onclick="kalToday()"><i class="ti ti-calendar"></i> Heute</button><button class="kal-nav" aria-label="Zurück" onclick="kalStep(-1)">‹</button><button class="kal-nav" aria-label="Weiter" onclick="kalStep(1)">›</button><span class="rng">'+kalRangeLabel()+'</span>'
-    +'<div class="r">'+kalFilterBtn()+(kalCanEdit()?'<button class="btn btn-primary" onclick="openSessionModal(0)"><i class="ti ti-plus"></i> Session planen</button>':'')+'</div>';}
+    +'<div class="r"><button class="btn kal-tgl'+(KAL.cpane==='gep'?' on':'')+'" onclick="kalCoachSetPane(\'gep\')"><i class="ti ti-calendar-event"></i> Geplant<b>'+kalCoachPlanned().length+'</b></button>'+kalFilterBtn()+(kalCanEdit()?'<button class="btn btn-primary" onclick="openSessionModal(0)"><i class="ti ti-plus"></i> Session planen</button>':'')+'</div>';}
 // Kalender im Menü Coaching: gleiche Ansichten wie im Menü Kalender (Woche/Monat/Jahr/Team), alle Standorte, Coach-Filter der Seite
 function kalCoachView(){return ['monat','jahr','team'].indexOf(KAL.cview)>=0?KAL.cview:'woche';}
 function kalCoachCard(){if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;var sv=KAL.view;KAL.view=kalCoachView();
-  var h='<div class="card" style="margin-bottom:22px"><div class="kal-bar">'+kalCoachBar()+'</div>'+(KAL.view==='woche'?kalVWeek():KAL.view==='jahr'?kalVYear():KAL.view==='team'?kalVTeam():kalVMonth())+kalLegend()+'</div>';KAL.view=sv;return h;}
+  var vw=KAL.view==='woche'?kalVWeek():KAL.view==='jahr'?kalVYear():KAL.view==='team'?kalVTeam():kalVMonth();
+  var h='<div class="card" style="margin-bottom:22px"><div class="kal-bar">'+kalCoachBar()+'</div><div class="kal-cw'+(KAL.cpane?'':' nopane')+'"><div style="min-width:0">'+vw+'</div><aside class="kal-pane">'+(KAL.cpane?kalCoachPane():'')+'</aside></div>'+kalLegend()+'</div>';KAL.view=sv;return h;}
+function kalCoachSetPane(p){KAL.cpane=KAL.cpane===p?null:p;kalRerender();}
+// Alle geplanten Sessions ab heute (Coach-Filter der Seite gilt), Gruppencoaching als ein Eintrag
+function kalCoachPlanned(){var t=today(),out=[],grp={},cf=typeof coachFilterView!=='undefined'&&coachFilterView&&coachFilterView!=='overview'?coachFilterView:null;
+  kalSessEmps().forEach(function(e){(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'||!p.date||p.date<t)return;if(cf&&p.coachId!==cf)return;
+    if(p.groupId){if(grp[p.groupId]){grp[p.groupId].n++;return;}var o={e:e,p:p,n:1};grp[p.groupId]=o;out.push(o);return;}out.push({e:e,p:p,n:1});});});
+  return out.sort(function(a,b){return (a.p.date+(a.p.uhrzeit||'99')).localeCompare(b.p.date+(b.p.uhrzeit||'99'));});}
+function kalCoachPane(){var L=kalCoachPlanned(),t=today(),so=kalAdd(kalMon(t),6),mo=kalAdd(t,1);
+  function card(o){var d=o.p.date,wd=KAL_WD[kalP(d).getDay()],rel=d===t?'Heute':d===mo?'Morgen':'',f=String(o.p.focus||'').replace(/[<>"']/g,'');
+    return '<div class="kal-card kal-sopen'+(rel?' due':'')+'" style="cursor:pointer;display:flex;gap:10px;align-items:flex-start"'+kalSesAttrs(o)+'><div style="flex:1;min-width:0"><div class="t">'+esc(o.p.groupId?'Gruppencoaching ('+o.n+')':o.e.name)+(rel?' <span class="kal-tag warn" style="margin-left:4px">'+rel+'</span>':'')+'</div><div class="s">'+wd+' '+kalF(d)+(o.p.uhrzeit?' · '+esc(o.p.uhrzeit):'')+' · '+esc(o.p.type||'Session')+'</div></div>'
+      +(o.p.groupId?'':'<button class="btn btn-sm" title="Termin-E-Mail" style="padding:5px 8px;flex-shrink:0" data-id="'+esc(o.e.id)+'" data-d="'+esc(d)+'" data-f="'+esc(f)+'" onclick="event.stopPropagation();emailSession(this.dataset.id,this.dataset.d,this.dataset.f)"><i class="ti ti-mail"></i></button>')+'</div>';}
+  var wk=L.filter(function(o){return o.p.date<=so;}),la=L.filter(function(o){return o.p.date>so;});
+  return '<div class="ph"><i class="ti ti-calendar-event"></i> Geplante Sessions<span>'+L.length+'</span></div><div class="kal-note">Klick öffnet die Session.</div>'
+    +(wk.length?'<div class="gp">Diese Woche<span>'+wk.length+'</span></div>'+wk.map(card).join(''):'')+(la.length?'<div class="gp">Später<span>'+la.length+'</span></div>'+la.map(card).join(''):'')
+    +(L.length?'':'<div class="kal-note" style="margin-top:10px">Keine Sessions geplant.</div>');}
 function kalLegend(){return '<div class="kal-legend"><span><i class="kal-sw kal-u"></i>Urlaub</span><span><i class="kal-sw kal-f"></i>Flex Day</span>'+(kalIsViewer()?'<span><i class="kal-sw kal-x"></i>Abwesend</span>':'<span><i class="kal-sw kal-a"></i>Ausgleichstag</span><span><i class="kal-sw kal-fs2"></i>Freistellung</span><span><i class="kal-sw kal-k"></i>Krank</span>')+'<span><i class="kal-sw kal-u kal-op"></i>beantragt</span><span><i class="kal-sw kal-hol"></i>Feiertag / Wochenende</span><span><i class="kal-sw kal-ses"></i>Session geplant</span><span><i class="kal-sw kal-ses past"></i>Session vergangen</span>'
   +(kalCtx()==='coach'?'<span class="kal-note">'+(KAL.view==='jahr'?'Je dunkler, desto mehr Sessions. Klick öffnet den Monat.':KAL.view==='team'?'Klick auf eine Session öffnet sie, Klick auf einen freien Tag plant eine neue für den Mitarbeiter.':'Klick auf eine Session öffnet sie, Klick auf eine freie Zeit plant eine neue.')+'</span>':KAL.view==='jahr'?'<span class="kal-note">Je dunkler, desto mehr fehlen. Koralle-Rand ab 3. Klick öffnet den Monat.</span>':kalCanEdit()?'<span class="kal-note">Einträge und Sessions lassen sich ziehen, Klick auf einen Eintrag bearbeitet ihn.</span>':'')+'</div>';}
 function kalReqTable(){var L=kalOpenReqs();if(!L.length)return '<div class="kal-note" style="padding:10px 2px">Keine offenen Anträge.</div>';
@@ -14337,7 +14331,7 @@ document.addEventListener('dragover',function(ev){if(!KAL.drag||(view!=='kalende
 document.addEventListener('dragend',function(){KAL.drag=null;document.querySelectorAll('.kal-over').forEach(function(x){x.classList.remove('kal-over');});var g=document.querySelector('.kal-ghost');if(g)g.remove();});
 document.addEventListener('drop',function(ev){if(!KAL.drag||(view!=='kalender'&&view!=='coaching'))return;var z=ev.target.closest('[data-kslot],[data-kday]');if(!z)return;ev.preventDefault();var day=z.dataset.kslot||z.dataset.kday,tm=z.dataset.kslot?kalSlotTime(z,ev):null,d=KAL.drag;KAL.drag=null;
   if(d.k==='abs')kalMoveAbs(d.id,d.from,day);else if(d.k==='ses')kalMoveSes(d.emp,d.id,day,tm);else{var t=kalTasks().find(function(x){return x.id===d.id;});if(t)kalPlanSession(t,day,tm);}});
-document.addEventListener('click',function(ev){if(KAL.rzDone){KAL.rzDone=false;ev.stopPropagation();return;}if((view!=='kalender'&&view!=='coaching')||!ev.target.closest)return;if(!ev.target.closest('#mainArea'))return;if(view==='coaching'&&!ev.target.closest('.kal-bar,.kal-wv,.kal-mg,.kal-yv,.kal-tlw'))return;
+document.addEventListener('click',function(ev){if(KAL.rzDone){KAL.rzDone=false;ev.stopPropagation();return;}if((view!=='kalender'&&view!=='coaching')||!ev.target.closest)return;if(!ev.target.closest('#mainArea'))return;if(view==='coaching'&&!ev.target.closest('.kal-bar,.kal-wv,.kal-mg,.kal-yv,.kal-tlw,.kal-pane'))return;
   var so=ev.target.closest('.kal-sopen');if(so){if(typeof openPlannedSessionFromChip==='function')openPlannedSessionFromChip(so);return;}
   var mo=ev.target.closest('[data-kmonth]');if(mo){KAL.cur=mo.dataset.kmonth;if(kalCtx()==='coach')KAL.cview='monat';else KAL.view='monat';kalRerender();return;}
   var ed=ev.target.closest('[data-kedit]');if(ed){if(kalCanEdit())kalOpenForm(null,null,ed.dataset.kedit);return;}
