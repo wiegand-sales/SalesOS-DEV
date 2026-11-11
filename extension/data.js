@@ -193,13 +193,13 @@ var SOS = (function () {
     if (!session) return { state: 'login' };
     var st = await storageGet(['previewEmpId']);
     var own = await rest('employees?select=*&auth_user_id=eq.' + session.user.id, session);
-    // Coaches (SC, SDM, reine Coaches) bekommen wie Admins den Testmodus: Ansicht eines Agents waehlen
-    var ownRow = own[0], isCoachRow = !!ownRow && (ownRow.is_pure_coach === true || ownRow.role === 'SC' || ownRow.role === 'SDM');
+    // Coaches (SDC, SDM, reine Coaches; SDL nutzt die Erweiterung als Agent) bekommen wie Admins den Testmodus: Ansicht eines Agents waehlen
+    var ownRow = own[0], isCoachRow = !!ownRow && (ownRow.is_pure_coach === true || ownRow.role === 'SC' || ownRow.role === 'SDC' || ownRow.role === 'SDM');
     var emp = ownRow && !isCoachRow ? mapEmp(ownRow) : null, preview = false, choices = null;
     if (!emp) {
       // Kein Agent-Datensatz (Admin, Betrachter, Coach): Testmodus mit Auswahl
       var all = await rest('employees?select=id,name,role,active,is_pure_coach&order=name', session);
-      choices = all.filter(function (e) { return e.active !== false && e.is_pure_coach !== true && e.role !== 'SC' && e.role !== 'SDM'; }).map(function (e) { return { id: e.id, name: e.name }; });
+      choices = all.filter(function (e) { return e.active !== false && e.is_pure_coach !== true && e.role !== 'SC' && e.role !== 'SDC' && e.role !== 'SDM'; }).map(function (e) { return { id: e.id, name: e.name }; });
       var pid = st.previewEmpId && choices.some(function (c) { return c.id === st.previewEmpId; }) ? st.previewEmpId : (choices[0] && choices[0].id);
       if (!pid) return { state: 'noemp', email: session.user.email };
       var one = await rest('employees?select=*&id=eq.' + pid, session);
