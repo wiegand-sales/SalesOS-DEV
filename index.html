@@ -1037,10 +1037,11 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px">
         <div id="atBan"></div>
         <div id="atSec1" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div class="at-newh" onclick="atNewToggle()"><span class="at-pl"><i class="ti ti-plus"></i></span><b>Neue Aufgabe</b><span class="kal-note" style="margin-left:auto" id="atNewHint">zum Aufklappen klicken</span></div><div id="atNewBody" style="display:none;margin-top:12px">
-  <div style="margin-bottom:10px"><label>Aufgabentitel</label><input type="text" id="taskText" placeholder="z.B. Pitch-Skript lesen – pages 1 to 9"></div>
+  <div style="margin-bottom:12px"><label>Art</label><div id="atArtSeg"></div></div>
+  <div style="margin-bottom:10px"><label id="taskTextLbl">Aufgabentitel</label><input type="text" id="taskText" placeholder="z.B. Pitch-Skript lesen – pages 1 to 9"></div>
   <div style="margin-bottom:10px"><label>Beschreibung</label><textarea id="taskDesc" placeholder="Was soll der Mitarbeiter tun..." style="min-height:80px"></textarea></div>
-  <div class="f3"><div><label>Priorität</label><select id="taskPrio"><option value="high">Hoch</option><option value="medium" selected>Mittel</option><option value="low">Niedrig</option></select></div><div><label>Fälligkeitsdatum</label><input type="date" id="taskDue"></div><div><label>Quelle</label><input type="text" id="taskQuelle" placeholder="Session 10.06"></div></div>
-          <div style="margin-top:10px"><label>Zuständig</label><select id="taskAssignee"></select></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="saveNewTask()"><i class="ti ti-check"></i> Aufgabe hinzufügen</button></div></div>
+  <div class="f3"><div><label>Priorität</label><select id="taskPrio"><option value="high">Hoch</option><option value="medium" selected>Mittel</option><option value="low">Niedrig</option></select></div><div><label id="taskDueLbl">Fälligkeitsdatum</label><div style="display:flex;gap:6px"><input type="date" id="taskDue" style="flex:1;min-width:0"><input type="time" id="taskTime" value="10:00" style="width:110px;display:none" aria-label="Uhrzeit"></div></div><div><label>Quelle</label><input type="text" id="taskQuelle" placeholder="Session 10.06"></div></div>
+          <div style="margin-top:10px"><label>Zuständig</label><select id="taskAssignee"></select></div><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="saveNewTask()" id="taskSaveBtn"><i class="ti ti-check"></i> Aufgabe hinzufügen</button></div></div>
         </div>
         <div id="atSec2" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Offene Aufgaben <span id="atOpenN" style="font-weight:500;color:var(--text3);font-size:12.5px"></span></div><div id="atOpen"></div></div>
         <div id="atSec3" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06);margin-bottom:4px"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px">Zuletzt erledigt <span style="font-weight:500;color:var(--text3);font-size:12.5px">die letzten drei</span><button class="btn" type="button" style="margin-left:auto;height:28px;padding:0 10px;font-size:12px" onclick="closeModal('addTaskModal');view='emp';activeTab='tasks';renderSidebar();renderMain();">Alle im Reiter „Task“</button></div><div id="atDone"></div></div>
@@ -10968,6 +10969,7 @@ function deleteTask(id){
 var _savingNewTask=false;
 function saveNewTask(){
   if(_savingNewTask)return;
+  if(AT_ART){atPlanSession();return;}
   var text=document.getElementById('taskText').value.trim();
   var desc=document.getElementById('taskDesc').value.trim();
   var prio=document.getElementById('taskPrio').value;
@@ -11003,6 +11005,35 @@ function saveNewTask(){
     alert('Unerwarteter Fehler: '+err.message);
   });
 }
+
+// ── Neue Aufgabe mit Art: „Aufgabe“ = freier Task, sonst eine geplante Session (Termin, Coach = Zuständig) ──
+var AT_ART='';
+function atArtRender(){var w=document.getElementById('atArtSeg');if(!w)return;var opts=[['','Aufgabe']].concat(typeof SF_ARTS!=='undefined'?SF_ARTS:[]);
+  w.innerHTML='<span class="dsh-seg">'+opts.map(function(a){return '<button type="button" class="'+(a[0]===AT_ART?'on':'')+'" onclick="atArtSet(this.dataset.a)" data-a="'+esc(a[0])+'">'+esc(a[1])+'</button>';}).join('')+'</span>';
+  var ses=!!AT_ART,g=function(id){return document.getElementById(id);};
+  if(g('taskTextLbl'))g('taskTextLbl').textContent=ses?'Thema / Anlass (optional)':'Aufgabentitel';
+  if(g('taskText'))g('taskText').placeholder=ses?'z. B. Einwände bei Preisfragen':'z.B. Pitch-Skript lesen – pages 1 to 9';
+  if(g('taskDueLbl'))g('taskDueLbl').textContent=ses?'Termin':'Fälligkeitsdatum';
+  if(g('taskTime'))g('taskTime').style.display=ses?'':'none';
+  if(g('taskPrio'))g('taskPrio').disabled=ses;
+  var b=g('taskSaveBtn');if(b)b.innerHTML=ses?'<i class="ti ti-calendar-plus"></i> Session planen':'<i class="ti ti-check"></i> Aufgabe hinzufügen';}
+function atArtSet(a){AT_ART=a||'';atArtRender();}
+function atPlanSession(){var g=function(id){return document.getElementById(id);};var e=kalEmp(selectedEmp);if(!e)return;
+  var day=(g('taskDue')&&g('taskDue').value)||today(),uz=(g('taskTime')&&g('taskTime').value)||'10:00',key=g('taskAssignee')?g('taskAssignee').value:'';
+  var coach=/^emp:/.test(key)?key.slice(4):(currentCoach?currentCoach.id:null);
+  var note=[g('taskText')?g('taskText').value.trim():'',g('taskDesc')?g('taskDesc').value.trim():''].filter(Boolean).join(' – ');
+  var row={employee_id:e.id,date:day,uhrzeit:uz,end_uhrzeit:kalAddMin(uz,AT_ART==='Weekly'?30:60),art:AT_ART,rating:null,note:note,focus:'',status:'geplant',coach_id:coach,focus_metric:null,group_id:null};
+  var p={id:'t'+Date.now(),date:day,uhrzeit:uz,endUhrzeit:row.end_uhrzeit,type:AT_ART,status:'geplant',rating:null,note:note,notes:note,focus:'',topics:[],coachId:coach};
+  if(!protocols[e.id])protocols[e.id]=[];protocols[e.id].unshift(p);
+  var lbl=(SF_ARTS.find(function(x){return x[0]===AT_ART;})||[0,AT_ART])[1];
+  sb.from('protocols').insert(row).select().single().then(function(res){
+    if(res&&res.error){alert('Planen fehlgeschlagen: '+res.error.message);protocols[e.id]=protocols[e.id].filter(function(q){return q!==p;});atRender();return;}
+    if(res&&res.data&&res.data.id)p.id=res.data.id;
+    if(key&&!/^emp:/.test(key)&&typeof aufgAssign==='function')aufgAssign('plan:'+p.id,key);
+    atRender();});
+  logActivity('session','created','Session geplant: '+lbl,e.id,e.name+' · '+fd(day)+' · '+uz);
+  ['taskText','taskDesc','taskDue'].forEach(function(id){if(g(id))g(id).value='';});
+  atRender();if(typeof atToast==='function')atToast('Geplant: '+lbl+', '+kalF(day)+' '+uz,null);}
 var _savingNewEmp=false;
 function esBuildHtml(emp,asPopup,html){
   html=html||'';
@@ -14899,6 +14930,10 @@ function aufgAll(){var t=today(),out=[],_sk=aufgStaff().map(function(p){return p
   var KR=kalRules(),fz=KR.fehltZeit.split(':'),fMin=(+fz[0])*60+(+fz[1]),nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(KR.fehltAn&&hm>=Math.min(fMin,AUFG_FEHLT_MIN_OVR==null?fMin:AUFG_FEHLT_MIN_OVR)&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
     var act=0;(performance[e.id]||[]).forEach(function(r){if(r.date===t)act+=(r.gesamtAktivitaeten||0)+(r.oem_aktivitaeten||0)+(r.optGesamt||0);});if(act>0)return;
     add({key:'fehlt:'+e.id+':'+t,art:'Mitarbeiter fehlt?',kind:'auto',t:e.name,s:'keine Aktivität bis '+KR.fehltZeit+' · keine Abwesenheit eingetragen',due:t,born:t,def:aufgDefault(e),act:'Abwesenheit eintragen',emp:e.id,go:function(){openAbsPopup(e.id,t.slice(0,7));abNewForm();AB.fOpen=true;AB.f.art='krank';AB.f.status='genehmigt';AB.f.von=t;AB.f.bis=t;abRender();}});});
+  // 6b) Geplante Sessions: erledigt, sobald sie erfasst sind
+  var pl=kalAdd(t,14);employees.forEach(function(e){if(e.active===false)return;(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'||!p.date||p.date>pl)return;
+    var ty=p.type||'Session',art=ty==='Einzelcoaching'?'Coaching':ty;
+    add({key:'plan:'+p.id,art:art,kind:'auto',t:e.name,s:'geplant '+kalF(p.date)+(p.uhrzeit?' · '+String(p.uhrzeit).slice(0,5):'')+(p.note?' · '+p.note:''),due:p.date,born:kalAdd(p.date,-14),def:p.coachId?'emp:'+p.coachId:aufgDefault(e),act:'Session erfassen',go:function(){openPlannedSession(e.id,p.id,p.type,p.focus||'',p.date,p.uhrzeit||'');},emp:e.id});});});
   // 7) Freie Tasks
   Object.keys(tasks||{}).forEach(function(eid){(tasks[eid]||[]).forEach(function(k){if(k.done||k.status==='done')return;var e=kalEmp(eid);if(!e)return;
     add({key:'task:'+k.id,art:'Task',kind:'task',t:k.text,s:e.name+(k.source?' · '+k.source:''),due:k.dueDate||kalAdd(t,7),born:t,def:aufgCoachOf(e),act:'Öffnen',go:function(){selectedEmp=eid;view='emp';activeTab='tasks';renderSidebar();renderMain();},emp:eid,taskId:k.id});});});
@@ -14995,7 +15030,7 @@ var _aufgBT=0;function aufgBadgeLazy(){if(Date.now()-_aufgBT<2000)return;_aufgBT
 function aufgClick(key){var c=aufgFind(key);if(!c)return;if(c.items){aufgOpen(key);return;}aufgOpenEmp(key);}
 function aufgOpenEmp(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!o.emp)return;AU.hl=key;openAddTaskModal(o.emp);
   setTimeout(function(){var el=document.querySelector('#atOpen [data-akey="'+key.replace(/"/g,'')+'"]');if(el)el.scrollIntoView({block:'center'});},120);}
-function aufgActLabel(o){if(o.art==='Performance-Gespräch'||o.art==='Performance Review')return o.task&&o.task.part===2?'Session erfassen':'Entwicklung bewerten';if(o.art==='Weekly')return 'Weekly erfassen';if(o.art==='QA-Bewertung')return 'Call bewerten';if(/^ses:/.test(o.key||''))return 'Session erfassen';return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
+function aufgActLabel(o){if(/^plan:/.test(o.key||''))return 'Session erfassen';if(o.art==='Performance-Gespräch'||o.art==='Performance Review')return o.task&&o.task.part===2?'Session erfassen':'Entwicklung bewerten';if(o.art==='Weekly')return 'Weekly erfassen';if(o.art==='QA-Bewertung')return 'Call bewerten';if(/^ses:/.test(o.key||''))return 'Session erfassen';return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
 function aufgDone(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!kalCanEdit())return;
   if(o.kind==='task'&&o.taskId){atToggle(o.taskId);return;}
   if(/^antrag:/.test(key)){kalDecide(key.slice(7),true);setTimeout(atRender,60);return;}
@@ -15029,7 +15064,7 @@ function aufgEmpHtml(eid){var L=aufgAll().filter(function(o){return String(o.emp
       +'<div class="at-km">'+(km?'<span><b>'+new Date(km.am).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'</b> '+esc(km.text)+' <span class="kal-note">· '+esc(km.von||'')+'</span></span>':'')+(ed?'<input type="text" placeholder="Kommentar schreiben …" onkeydown="if(event.key===\'Enter\'&&this.value.trim()){aufgKommAt(\''+k+'\',this.value);this.value=\'\';}">':'')+'</div></div>';}).join('')};}
 function aufgKommAt(key,txt){var row={key:key,text:txt.trim(),von:kalActor()};aufgKomm.unshift(Object.assign({am:new Date().toISOString()},row));
   sb.from('aufgaben_kommentare').insert(row).then(function(r){if(r&&r.error)alert(/aufgaben_kommentare/i.test(r.error.message||'')?'Die Tabelle „aufgaben_kommentare“ fehlt noch. Bitte 26_aufgaben.sql ausführen.':kalErrText(r));});atRender();}
-(function(){if(typeof atRender!=='function'||atRender._au)return;var o=atRender;window.atRender=function(){var r=o.apply(this,arguments);try{var x=aufgEmpHtml(selectedEmp),el=document.getElementById('atOpen'),n=document.getElementById('atOpenN');if(el)el.innerHTML=x.h;if(n)n.textContent='('+x.n+')';var dn=document.getElementById('atDone');if(dn)dn.innerHTML=aufgEmpDoneHtml(selectedEmp);aufgPuBadge();atBanner();atAssigneeSel();}catch(e){console.warn('Aufgaben in Task',e);}return r;};window.atRender._au=true;})();
+(function(){if(typeof atRender!=='function'||atRender._au)return;var o=atRender;window.atRender=function(){var r=o.apply(this,arguments);try{var x=aufgEmpHtml(selectedEmp),el=document.getElementById('atOpen'),n=document.getElementById('atOpenN');if(el)el.innerHTML=x.h;if(n)n.textContent='('+x.n+')';var dn=document.getElementById('atDone');if(dn)dn.innerHTML=aufgEmpDoneHtml(selectedEmp);aufgPuBadge();atBanner();atAssigneeSel();atArtRender();}catch(e){console.warn('Aufgaben in Task',e);}return r;};window.atRender._au=true;})();
 function atNewToggle(force){var b=document.getElementById('atNewBody'),h=document.getElementById('atNewHint');if(!b)return;var open=force!=null?force:b.style.display==='none';b.style.display=open?'':'none';if(h)h.textContent=open?'zuklappen':'zum Aufklappen klicken';if(open){var t=document.getElementById('taskText');if(t)setTimeout(function(){t.focus();},30);}}
 function atAssigneeSel(){var sel=document.getElementById('taskAssignee');if(!sel)return;var e=kalEmp(selectedEmp),d=aufgDefault(e),cur=sel.getAttribute('data-emp')===String(selectedEmp)?sel.value:d;sel.innerHTML=aufgStaff().map(function(p){return '<option value="'+esc(p.key)+'"'+(p.key===cur?' selected':'')+'>'+esc(p.name)+'</option>';}).join('');sel.setAttribute('data-emp',String(selectedEmp));}
 function aufgAfterNewTask(id){var sel=document.getElementById('taskAssignee'),e=kalEmp(selectedEmp);if(!sel||!id)return;var v=sel.value;if(v&&v!==aufgDefault(e))aufgAssign('task:'+id,v);atNewToggle(false);}
