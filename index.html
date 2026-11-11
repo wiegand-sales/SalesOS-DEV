@@ -13713,7 +13713,7 @@ function openNeuesCoachingModal(empId){
   if(typeof sfReset==='function')sfReset();
   updateNcHdSub();
   ncRenderList();
-  var nf=document.getElementById('ncFrom');if(nf){var cn=(typeof currentCoach!=='undefined'&&currentCoach)?currentCoach.name:((typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof resolveNonEmployeeName==='function'&&resolveNonEmployeeName(currentAuthUser.email))||'');nf.textContent=cn?'von '+cn:'';}
+  var nf=document.getElementById('ncFrom');if(nf){var cn=(typeof currentCoach!=='undefined'&&currentCoach)?currentCoach.name:((typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof resolveNonEmployeeName==='function'&&resolveNonEmployeeName(currentAuthUser.email))||'');nf.textContent='';}
   openModal('neuesCoachingModal');
 }
 
