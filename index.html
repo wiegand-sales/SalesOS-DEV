@@ -14776,7 +14776,8 @@ function aufgAll(){var t=today(),out=[],_sk=aufgStaff().map(function(p){return p
     add({key:'task:'+k.id,art:'Task',kind:'task',t:k.text,s:e.name+(k.source?' · '+k.source:''),due:k.dueDate||kalAdd(t,7),born:t,def:aufgCoachOf(e),act:'Öffnen',go:function(){selectedEmp=eid;view='emp';activeTab='tasks';renderSidebar();renderMain();},emp:eid,taskId:k.id});});});
   return out;}
 function aufgState(o){var t=today(),d=kalDiff(t,o.due);if(d<0)return {c:'od',l:'überfällig seit '+(-d)+' T',r:0};if(d===0)return {c:'td',l:'heute',r:1};if(d===1)return {c:'tm',l:'morgen',r:2};return {c:'',l:d<=6?KAL_WD[kalP(o.due).getDay()]+' '+aufgFmt(o.due):'in '+d+' T',r:3};}
-function aufgCards(L){var B={},out=[];L.forEach(function(o){if(o.bundle){var k=o.bundle+'|'+o.assignee;if(!B[k]){B[k]={key:'b:'+k,bundle:o.bundle,art:o.bundle,items:[],assignee:o.assignee,due:o.due,kind:o.kind};out.push(B[k]);}B[k].items.push(o);if(o.due<B[k].due)B[k].due=o.due;}else out.push(o);});
+// Weeklys und QA-Bewertungen immer einzeln (je Mitarbeiter eine Karte), andere Routinen weiter gebündelt
+function aufgCards(L){var B={},out=[];L.forEach(function(o){if(o.bundle&&o.art!=='Weekly'&&o.art!=='QA-Bewertung'){var k=o.bundle+'|'+o.assignee;if(!B[k]){B[k]={key:'b:'+k,bundle:o.bundle,art:o.bundle,items:[],assignee:o.assignee,due:o.due,kind:o.kind};out.push(B[k]);}B[k].items.push(o);if(o.due<B[k].due)B[k].due=o.due;}else out.push(o);});
   out.forEach(function(c){if(c.items){var rt=c.items[0].task&&/^rt/.test(c.items[0].task.id)?(kalRules().routinen||[]).find(function(r){return c.items[0].task.id.indexOf('rt'+r.id)===0;}):null;c.total=rt?(rt.empIds||[]).length:null;c.t=c.items.length+' offen'+(c.total?' von '+c.total:'');c.s=c.items.slice(0,3).map(function(o){return kalFirst(o.t);}).join(', ')+(c.items.length>3?' …':'');}});
   return out.sort(function(a,b){var x=aufgState(a).r-aufgState(b).r;return x||(a.due<b.due?-1:a.due>b.due?1:0);});}
 // ── Seite ──
