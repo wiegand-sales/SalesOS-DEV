@@ -618,6 +618,10 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .sf-chip .sf-d{display:inline-block;width:6px;height:6px;border-radius:2px;background:#C9502F;margin-right:6px;vertical-align:1px}
 .sf-chip.on .sf-d{background:#F7B39A}
 .sf-sub{font-size:11.5px;color:var(--text3);margin:8px 0 6px}
+.sf-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center}
+.sf-seg{height:auto;flex-wrap:wrap;row-gap:2px;justify-self:start;max-width:100%}
+.sf-lbl{width:52px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--text2)}
+.sf-d{display:inline-block;width:6px;height:6px;border-radius:2px;background:#C9502F;margin-right:6px;vertical-align:1px}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -10675,9 +10679,9 @@ function sfRender(){var w=document.getElementById('sfWas'),f=document.getElement
   var e=sfEmp(),miss=sfMissKeys(e),order=KAL_KPIS.map(function(k){return k[0];}).concat(['margeGesamt']);
   order.sort(function(a,b){return (miss.indexOf(b)>=0)-(miss.indexOf(a)>=0);});
   var lab=function(k){var x=KAL_KPIS.find(function(y){return y[0]===k;});return x?x[1]:(k==='margeGesamt'?'Marge':k);};
-  var g='<div class="sf-chips">'+order.map(function(k){var u=miss.indexOf(k)>=0;return '<button type="button" class="sf-chip'+(SF.metric===k?' on':'')+'" onclick="sfMetric(\''+k+'\')"'+(u?' title="unter Ziel"':'')+'>'+(u?'<span class="sf-d" aria-hidden="true"></span>':'')+esc(lab(k))+'</button>';}).join('')+'</div>';
-  g+='<div class="sf-chips" style="margin-top:6px">'+SF_TOPICS.map(function(t){return '<button type="button" class="sf-chip t'+(SF.topics.indexOf(t)>=0?' on':'')+'" onclick="sfTopic(this.dataset.t)" data-t="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</div>';
-  g+='<div class="sf-sub" style="margin-bottom:0">'+(miss.length?'<span class="sf-d" style="display:inline-block;width:6px;height:6px;border-radius:2px;background:#C9502F;margin-right:6px"></span>unter Ziel im laufenden Monat · ':'')+'eine KPI, beliebig viele Themen'+(SF.hint?' · '+esc(SF.hint):'')+'</div>';
+  var g='<div class="sf-row" style="margin-bottom:8px"><span class="sf-lbl">KPI</span><span class="dsh-seg sf-seg" role="group" aria-label="KPI">'+order.map(function(k){var u=miss.indexOf(k)>=0;return '<button type="button" class="'+(SF.metric===k?'on':'')+'" onclick="sfMetric(\''+k+'\')"'+(u?' title="unter Ziel"':'')+'>'+(u?'<span class="sf-d" aria-hidden="true"></span>':'')+esc(lab(k))+'</button>';}).join('')+'</span></div>';
+  g+='<div class="sf-row"><span class="sf-lbl">Themen</span><span class="dsh-seg sf-seg" role="group" aria-label="Themen">'+SF_TOPICS.map(function(t){return '<button type="button" class="'+(SF.topics.indexOf(t)>=0?'on':'')+'" aria-pressed="'+(SF.topics.indexOf(t)>=0?'true':'false')+'" onclick="sfTopic(this.dataset.t)" data-t="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</span></div>';
+  g+='<div class="sf-sub" style="margin-bottom:0">'+(miss.length?'<span class="sf-d"></span>unter Ziel im laufenden Monat · ':'')+'eine KPI, beliebig viele Themen'+(SF.hint?' · '+esc(SF.hint):'')+'</div>';
   f.innerHTML=g;sfSyncHidden();}
 function sfCat(c){SF.cat=c;var a=COACHING_CATEGORIES[c]||[];if(a.indexOf(SF.art)<0)SF.art=a[0];sfRender();}
 function sfArt(a){SF.art=a;if(a!==SF.legacy)SF.cat=findCoachingCategoryForType(a);sfRender();}
