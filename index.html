@@ -609,6 +609,14 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .dsh-tc .ex{margin-top:0!important}
 @media (max-width:1100px){.dsh-q{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1100px){.dsh-g3{grid-template-columns:repeat(2,minmax(0,1fr))}.dsh-g12{grid-template-columns:minmax(0,1fr)!important}}
+/* Neue Session: Was/Wie und Fokus */
+.sf-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sf-chip{height:30px;padding:0 11px;border-radius:9px;border:1px solid #E4E0D6;background:#F7F5F0;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer}
+.sf-chip.on{background:#1d1c1a;border-color:#1d1c1a;color:#fff}
+.sf-chip.t{background:transparent}
+.sf-chip .sf-d{display:inline-block;width:6px;height:6px;border-radius:2px;background:#C9502F;margin-right:6px;vertical-align:1px}
+.sf-chip.on .sf-d{background:#F7B39A}
+.sf-sub{font-size:11.5px;color:var(--text3);margin:8px 0 6px}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -1075,7 +1083,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
         <div id="spSecNew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Session planen</div>
 <div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Wer &amp; Wann</div>
     <div style="position:relative;margin-bottom:10px">
-      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
+      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere = Gruppensession)</span></label>
       <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleSessionEmpDropdown()">
         <span id="sessionEmpSelLabel">— Mitarbeiter wählen —</span>
         <i class="ti ti-chevron-down" style="font-size:11px"></i>
@@ -1147,9 +1155,22 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 18px),transparent 100%)">
         <div id="ncSecNew" style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)"><div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Neue Session<span id="ncFrom" style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text3)"></span></div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Was für eine Session</div><div id="sfWas"></div><div style="display:none" aria-hidden="true"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Was für ein Coaching</div>
+    <div class="f2" style="margin-bottom:10px">
+      <div><label>Kategorie</label><select id="sess-category" onchange="onCoachingCategoryChange('sess-category','sess-type')"></select></div>
+      <div><label>Art des Coachings</label><select id="sess-type"></select></div>
+    </div>
+    <div class="f2">
+      <div><label>Inhalt des Coachings</label><select id="sess-topic-sel" onchange="syncSessFocusMetric()"><option value="">— Bitte wählen —</option></select></div>
+      <div><label>Ziel-KPI <span style="font-weight:400;color:var(--text3);font-size:11px">(worauf einzahlen?)</span></label>
+        <select id="sess-focus-metric"><option value="">— Kein spezifisches KPI —</option></select>
+      </div>
+    </div>
+        </div>
+</div>
 <div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Wer &amp; Wann</div>
     <div style="position:relative;margin-bottom:10px">
-      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere für Gruppencoaching)</span></label>
+      <label>Mitarbeiter <span style="font-weight:400;color:var(--text3);font-size:11px">(mehrere = Gruppensession)</span></label>
       <button type="button" class="btn" style="width:100%;height:38px;justify-content:space-between" onclick="toggleNcEmpDropdown()">
         <span id="ncEmpSelLabel">— Mitarbeiter wählen —</span>
         <i class="ti ti-chevron-down" style="font-size:11px"></i>
@@ -1162,18 +1183,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
       <div><label>Ende</label><input type="time" id="sess-end-time" value=""></div>
     </div>
         </div>
-<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Was für ein Coaching</div>
-    <div class="f2" style="margin-bottom:10px">
-      <div><label>Kategorie</label><select id="sess-category" onchange="onCoachingCategoryChange('sess-category','sess-type')"></select></div>
-      <div><label>Art des Coachings</label><select id="sess-type"></select></div>
-    </div>
-    <div class="f2">
-      <div><label>Inhalt des Coachings</label><select id="sess-topic-sel" onchange="syncSessFocusMetric()"><option value="">— Bitte wählen —</option></select></div>
-      <div><label>Ziel-KPI <span style="font-weight:400;color:var(--text3);font-size:11px">(worauf einzahlen?)</span></label>
-        <select id="sess-focus-metric"><option value="">— Kein spezifisches KPI —</option></select>
-      </div>
-    </div>
-        </div>
+<div style="background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Fokus <span style="letter-spacing:0;text-transform:none;font-weight:500;color:var(--text3)">· optional</span></div><div id="sfFokus"></div></div>
 <div id="ncLastContinueBox" style="display:none"></div>
 <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:0 0 8px"><span>Start</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Was soll neu begonnen werden?</span></div><textarea id="sess-start" rows="2" style="min-height:72px;resize:vertical"></textarea>
 <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin:12px 0 8px"><span>Stop</span><span style="letter-spacing:0;text-transform:none;color:var(--text3);font-weight:600">Was soll aufgehört werden?</span></div><textarea id="sess-stop" rows="2" style="min-height:72px;resize:vertical"></textarea>
@@ -1915,19 +1925,23 @@ function setCoachCalMonth(delta){
   renderCoachingAnsicht();
 }
 var COACHING_CATEGORIES={
-  'Coaching':['Einzelcoaching','Gruppencoaching','Call Shadowing (Aktiv)','Call Shadowing (Passiv)','Live Coaching','Call Review','Rollenspiel','Feedbackgespräch'],
-  'Training':['Produkttraining','Pitch-Training','Einwandtraining','Systemtraining','SolidRoad-Training','Wissens-Quiz','Nachschulung'],
-  'Performance':['KPI Review','Performance Review','Zielvereinbarung','Tagesziel','Wochenziel','Monatsziel'],
-  'Power Hour':['Call Blitz','Mega YES','Cross Selling','Neukunden','Bestandskunden','Follow-up','Angebotsnachverfolgung','Einwandtraining','Abschlusstraining','Lead-Abarbeitung','Fokuszeit'],
-  'Motivation & Organisation':['Motivation','Teammeeting','Daily','Weekly','Kick-off'],
-  'Entwicklung':['Onboarding','Mentoring','Karrieregespräch','Entwicklungsplan']
+  'Coaching':['Einzelcoaching','Call Shadowing (Aktiv)','Call Shadowing (Passiv)'],
+  'Performance':['Weekly','Performance-Gespräch'],
+  'Training':['Training']
 };
+// Anzeige im Formular (gespeichert wird der Wert links)
+var COACHING_WIE_LABEL={'Einzelcoaching':'Gespräch','Call Shadowing (Aktiv)':'Call Shadowing aktiv','Call Shadowing (Passiv)':'Call Shadowing passiv'};
+// Alte Arten aus der Zeit vor Nov 2026: behalten ihren Namen, zählen für Filter und Auswertung zu einer der drei Kategorien
+var COACHING_LEGACY_CAT=(function(){var m={},add=function(cat,l){l.forEach(function(t){m[t]=cat;});};
+  add('Coaching',['Gruppencoaching','Call Shadowing Aktiv','Call Shadowing Passiv','1:1 Coaching','Live Coaching','Call Review','Rollenspiel','Feedbackgespräch','Motivation','Mentoring','Onboarding','Call Blitz','Mega YES','Cross Selling','Neukunden','Bestandskunden','Follow-up','Angebotsnachverfolgung','Abschlusstraining','Lead-Abarbeitung','Fokuszeit']);
+  add('Training',['Produkttraining','Pitch-Training','Einwandtraining','Systemtraining','SolidRoad-Training','Wissens-Quiz','Nachschulung']);
+  add('Performance',['KPI Review','Performance Review','Zielvereinbarung','Tagesziel','Wochenziel','Monatsziel','Teammeeting','Daily','Kick-off','Karrieregespräch','Entwicklungsplan']);return m;})();
 function findCoachingCategoryForType(typeValue){
   var cats=Object.keys(COACHING_CATEGORIES);
   for(var i=0;i<cats.length;i++){
     if(COACHING_CATEGORIES[cats[i]].indexOf(typeValue)>=0)return cats[i];
   }
-  return cats[0];
+  return COACHING_LEGACY_CAT[typeValue]||cats[0];
 }
 function populateCoachingCategorySelect(catSelId){
   var catEl=document.getElementById(catSelId);
@@ -1945,9 +1959,11 @@ function populateCoachingTypeSelect(catSelId,typeSelId,preselectType){
     var o=document.createElement('option');o.textContent=t;typeEl.appendChild(o);
   });
   if(preselectType){
+    var _found=false;
     for(var i=0;i<typeEl.options.length;i++){
-      if(typeEl.options[i].value===preselectType||typeEl.options[i].text===preselectType){typeEl.selectedIndex=i;break;}
+      if(typeEl.options[i].value===preselectType||typeEl.options[i].text===preselectType){typeEl.selectedIndex=i;_found=true;break;}
     }
+    if(!_found){var _o=document.createElement('option');_o.textContent=preselectType;typeEl.appendChild(_o);typeEl.value=preselectType;}
   }
 }
 function onCoachingCategoryChange(catSelId,typeSelId){
@@ -1968,6 +1984,7 @@ var FOCUS_METRICS=[
   {key:'convOEM',label:'Conv. OEM'},
   {key:'optGesamt',label:'Opt. Gesamt'},
   {key:'crOEM',label:'CR OEM %'},
+  {key:'optPerH',label:'Opt./Std.'},
   {key:'crTeilweise',label:'CR Teilweise %'},
   {key:'crYes',label:'CR Yes %'},
   {key:'crSuperYes',label:'CR Super Yes %'},
@@ -3524,6 +3541,7 @@ function openPlannedSessionFromChip(el){
     }
   }
   if(noteEl&&proto&&proto.note) noteEl.value=proto.note;
+  if(typeof sfFromSelects==='function')sfFromSelects(fokus);
 }
 function kalKlickMitZeit(d,hh){
   openSessionModal(0);
@@ -10630,6 +10648,53 @@ function syncSessFocusMetric(){
   var mapped=TOPIC_TO_METRIC[topicEl.value];
   fmEl.value=mapped||'';
 }
+
+// ── Neue Session: Was (Kategorie) · Wie (Art) · Fokus (KPI + Themen) ──
+var SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metric:'',hint:''};
+var SF_TOPICS=['Einwandsbehandlung','Bedarfsanalyse','Produktwissen','Gesprächsführung','Motivation','Coachability','Zuverlässigkeit','Teamfähigkeit','Sonstiges'];
+var SF_REVIEW_KEYS=[['einwand','Einwandsbehandlung'],['bedarf','Bedarfsanalyse'],['produkt','Produktwissen'],['gespraech','Gesprächsführung'],['motivation','Motivation'],['coach','Coachability'],['zuverl','Zuverlässigkeit'],['team','Teamfähigkeit']];
+function sfEmp(){var id=(ncSelectedEmpIds&&ncSelectedEmpIds.length===1)?ncSelectedEmpIds[0]:(ncSelectedEmpIds&&ncSelectedEmpIds.length?null:selectedEmp);return id?employees.find(function(e){return String(e.id)===String(id);}):null;}
+function sfMissKeys(e){if(!e||typeof kalKpiMisses!=='function')return [];var t=today(),y=addDaysUTC(t,-1),from=t.slice(0,7)+'-01';if(from>y)from=addDaysUTC(t,-7);
+  var lab=kalKpiMisses(e,from,y);return KAL_KPIS.filter(function(k){return lab.indexOf(k[1])>=0;}).map(function(k){return k[0];});}
+// Schwächste bzw. nicht gewachsene Punkte der letzten Entwicklungsbewertung (für das Performance-Gespräch)
+function sfReviewWeak(eid,n){var L=(reviews[eid]||[]).filter(function(r){return r&&r.einwand!==undefined;}).sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});if(!L.length)return [];
+  var cur=L[L.length-1],prev=L.length>1?L[L.length-2]:null;
+  return SF_REVIEW_KEYS.map(function(k){var v=+cur[k[0]]||0,d=prev?v-(+prev[k[0]]||0):0;return {t:k[1],v:v,d:d};}).sort(function(a,b){return a.d-b.d||a.v-b.v;}).slice(0,n||2).map(function(x){return x.t;});}
+function sfSyncHidden(){var c=document.getElementById('sess-category'),ty=document.getElementById('sess-type'),tp=document.getElementById('sess-topic-sel'),fm=document.getElementById('sess-focus-metric');
+  if(c){for(var i=0;i<c.options.length;i++)if(c.options[i].text===SF.cat){c.selectedIndex=i;break;}}
+  if(ty){var f=false;for(var j=0;j<ty.options.length;j++)if(ty.options[j].value===SF.art||ty.options[j].text===SF.art){ty.selectedIndex=j;f=true;break;}if(!f){var o=document.createElement('option');o.textContent=SF.art;ty.appendChild(o);ty.value=SF.art;}}
+  if(tp)tp.value=SF.topics[0]&&SF_TOPICS.indexOf(SF.topics[0])>=0?SF.topics[0]:'';
+  if(fm)fm.value=SF.metric||'';}
+function sfRender(){var w=document.getElementById('sfWas'),f=document.getElementById('sfFokus');if(!w||!f)return;
+  var cats=Object.keys(COACHING_CATEGORIES),arts=COACHING_CATEGORIES[SF.cat]||[];
+  var h='<span class="dsh-seg">'+cats.map(function(c){return '<button type="button" class="'+(c===SF.cat?'on':'')+'" onclick="sfCat(\''+c+'\')">'+c+'</button>';}).join('')+'</span>';
+  if(arts.length>1||SF.legacy){h+='<div class="sf-sub">Wie</div><span class="dsh-seg">'+arts.map(function(a){return '<button type="button" class="'+(a===SF.art?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(a)+'">'+esc(COACHING_WIE_LABEL[a]||a)+'</button>';}).join('')
+    +(SF.legacy?'<button type="button" class="'+(SF.art===SF.legacy?'on':'')+'" onclick="sfArt(this.dataset.a)" data-a="'+esc(SF.legacy)+'" title="Art aus der Zeit vor der Umstellung">'+esc(SF.legacy)+' (bisher)</button>':'')+'</span>';}
+  var n=(ncSelectedEmpIds||[]).length;if(n>1)h+='<div class="sf-sub" style="margin-bottom:0">Gruppensession mit '+n+' Mitarbeitern</div>';
+  w.innerHTML=h;
+  var e=sfEmp(),miss=sfMissKeys(e),order=KAL_KPIS.map(function(k){return k[0];}).concat(['margeGesamt']);
+  order.sort(function(a,b){return (miss.indexOf(b)>=0)-(miss.indexOf(a)>=0);});
+  var lab=function(k){var x=KAL_KPIS.find(function(y){return y[0]===k;});return x?x[1]:(k==='margeGesamt'?'Marge':k);};
+  var g='<div class="sf-chips">'+order.map(function(k){var u=miss.indexOf(k)>=0;return '<button type="button" class="sf-chip'+(SF.metric===k?' on':'')+'" onclick="sfMetric(\''+k+'\')"'+(u?' title="unter Ziel"':'')+'>'+(u?'<span class="sf-d" aria-hidden="true"></span>':'')+esc(lab(k))+'</button>';}).join('')+'</div>';
+  g+='<div class="sf-chips" style="margin-top:6px">'+SF_TOPICS.map(function(t){return '<button type="button" class="sf-chip t'+(SF.topics.indexOf(t)>=0?' on':'')+'" onclick="sfTopic(this.dataset.t)" data-t="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</div>';
+  g+='<div class="sf-sub" style="margin-bottom:0">'+(miss.length?'<span class="sf-d" style="display:inline-block;width:6px;height:6px;border-radius:2px;background:#C9502F;margin-right:6px"></span>unter Ziel im laufenden Monat · ':'')+'eine KPI, beliebig viele Themen'+(SF.hint?' · '+esc(SF.hint):'')+'</div>';
+  f.innerHTML=g;sfSyncHidden();}
+function sfCat(c){SF.cat=c;var a=COACHING_CATEGORIES[c]||[];if(a.indexOf(SF.art)<0)SF.art=a[0];sfRender();}
+function sfArt(a){SF.art=a;if(a!==SF.legacy)SF.cat=findCoachingCategoryForType(a);sfRender();}
+function sfMetric(k){SF.metric=SF.metric===k?'':k;sfRender();}
+function sfTopic(t){var i=SF.topics.indexOf(t);if(i>=0)SF.topics.splice(i,1);else SF.topics.push(t);sfRender();}
+function sfReset(){SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metric:'',hint:''};sfRender();}
+function sfSetType(t){if(!t)return;var inNew=Object.keys(COACHING_CATEGORIES).some(function(c){return COACHING_CATEGORIES[c].indexOf(t)>=0;});SF.art=t;SF.cat=findCoachingCategoryForType(t);SF.legacy=inNew?null:t;sfRender();}
+// Aus den (versteckten) Feldern übernehmen, z. B. beim Erfassen einer geplanten Session
+function sfFromSelects(fokusText){var ty=document.getElementById('sess-type'),fm=document.getElementById('sess-focus-metric'),tp=document.getElementById('sess-topic-sel');
+  if(ty&&ty.value)sfSetType(ty.value);
+  var tx=fokusText||(tp&&tp.value)||'';SF.topics=tx?tx.split(/\s*,\s*/).filter(function(x){return x;}):[];
+  SF.metric=fm&&fm.value?fm.value:'';sfRender();}
+// Aus einer Aufgabe: Art setzen, Fokus vorschlagen
+function sfPreset(typ,eid){SF={cat:'Coaching',art:'Einzelcoaching',legacy:null,topics:[],metric:'',hint:''};sfSetType(typ);var e=employees.find(function(x){return String(x.id)===String(eid);});
+  var miss=sfMissKeys(e);if(miss.length)SF.metric=miss[0];
+  if(typ==='Performance-Gespräch'&&e){var w=sfReviewWeak(e.id,2);if(w.length){SF.topics=w;SF.hint='Themen aus der Entwicklungsbewertung';}}
+  sfRender();}
 var _savingSession=false;
 function saveSession(empId){
   if(_savingSession)return; // verhindert doppeltes Anlegen bei ungeduldigem Doppelklick
@@ -10640,17 +10705,18 @@ function saveSession(empId){
   var endTimeEl=document.getElementById('sess-end-time');
   var endUhrzeit=endTimeEl?endTimeEl.value:'';
   if(uhrzeit&&endUhrzeit&&endUhrzeit<=uhrzeit){alert('Die Endzeit muss nach der Startzeit liegen.');return;}
-  var type=document.getElementById('sess-type').value;
+  var _sf=!!document.getElementById('sfWas');
+  var type=_sf?SF.art:document.getElementById('sess-type').value;
   var start=document.getElementById('sess-start').value.trim();
   var stop=document.getElementById('sess-stop').value.trim();
   var cont=document.getElementById('sess-cont').value.trim();
   var notes=document.getElementById('sess-note').value.trim();
   var topics=[];
   var sel=document.getElementById('sess-topic-sel');
-  if(sel&&sel.value)topics.push(sel.value);
+  if(_sf)topics=SF.topics.slice();else if(sel&&sel.value)topics.push(sel.value);
   var focus=topics.join(', ');
   var fmEl=document.getElementById('sess-focus-metric');
-  var focusMetric=fmEl?fmEl.value:'';
+  var focusMetric=_sf?(SF.metric||''):(fmEl?fmEl.value:'');
   var editId=_editingSessionId;
   var empIds=(!editId&&ncSelectedEmpIds.length)?ncSelectedEmpIds.slice():[empId];
 
@@ -10728,6 +10794,7 @@ function saveSession(empId){
   });
 }
 function resetSessionFormFields(){
+  if(typeof sfReset==='function')setTimeout(sfReset,0);
   ['sess-start','sess-stop','sess-cont','sess-note'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
@@ -12280,6 +12347,7 @@ function openPlannedSession(empId, sessionId, typ, fokus, datum, uhrzeit){
       }
     }
     if(noteEl&&proto&&proto.note) noteEl.value=proto.note;
+  if(typeof sfFromSelects==='function')sfFromSelects(fokus);
   },100);
 }
 // ── Gruppensession: gemeinsame Abarbeitung fuer alle Teilnehmer auf einmal ──
@@ -13423,7 +13491,7 @@ function toggleNcEmpId(id){
 // Einzelcoaching o.ae. gespeichert werden.
 function onNcSelectionChanged(){
   renderNcEmpDropdown();
-  if(ncSelectedEmpIds.length>1)setCoachingTypeSelection('sess-category','sess-type','Gruppencoaching');
+  if(typeof sfRender==='function')sfRender();
 }
 function filterNcEmpList(q){
   q=(q||'').toLowerCase().trim();
@@ -13638,6 +13706,7 @@ function openNeuesCoachingModal(empId){
   var saveBtn=document.getElementById('ncSaveBtn');
   if(saveBtn)saveBtn.dataset.eid=selectedEmp;
   renderLastContinueBox(selectedEmp,'ncLastContinueBox');
+  if(typeof sfReset==='function')sfReset();
   updateNcHdSub();
   ncRenderList();
   var nf=document.getElementById('ncFrom');if(nf){var cn=(typeof currentCoach!=='undefined'&&currentCoach)?currentCoach.name:((typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof resolveNonEmployeeName==='function'&&resolveNonEmployeeName(currentAuthUser.email))||'');nf.textContent=cn?'von '+cn:'';}
@@ -14047,8 +14116,10 @@ function kalTasksCalc(){var out=[],t=today(),ref=kalRef(),wk=kalPeriod('woche',r
   kalEmps().forEach(function(e){
     if(e.startDate){[3,5,11,23].forEach(function(n){var s=kalP(e.startDate);s.setMonth(s.getMonth()+n);var due=kalI(s);
       if(due<kalAdd(t,-60)||due>kalAdd(t,14))return;
-      var done=(protocols[e.id]||[]).some(function(p){return /Performance/i.test(p.type||'')&&p.date>=kalAdd(due,-30);});
-      if(!done)out.push({id:'pg'+e.id+n,e:e,art:'Performance Review',l:'Performance-Gespräch '+e.name,src:n+' Monate im Unternehmen',due:due});});}});
+      // Zwei Teile: 1) Entwicklungsbewertung (vor dem Gespräch), 2) Session. Erledigt erst, wenn beides da ist.
+      var ses=(protocols[e.id]||[]).some(function(p){return /Performance/i.test(p.type||'')&&p.date>=kalAdd(due,-30);});
+      var rev=(reviews[e.id]||[]).some(function(r){return r&&r.einwand!==undefined&&(r.date||'')>=kalAdd(due,-30);});
+      if(!(ses&&rev))out.push({id:'pg'+e.id+n,e:e,art:'Performance-Gespräch',part:rev?2:1,l:'Performance-Gespräch '+e.name,src:n+' Monate im Unternehmen'+(rev?' · Bewertung ✓, Gespräch offen':' · 1. Entwicklung bewerten, 2. Session'),due:due});});}});
   // Routinen: feste Termine je Mitarbeiter
   R.routinen.forEach(function(rt){(rt.empIds||[]).forEach(function(id){var e=kalEmp(id);if(!e||kalEmps().indexOf(e)<0)return;var pd=kalPeriod(rt.rhythmus,ref),art=rt.art||'Weekly';
     var has=(protocols[e.id]||[]).some(function(p){return p.date>=pd.from&&p.date<=pd.to&&(p.type||'')===art;});if(art==='Weekly')covered[e.id]=1;
@@ -14867,11 +14938,13 @@ var _aufgBT=0;function aufgBadgeLazy(){if(Date.now()-_aufgBT<2000)return;_aufgBT
 function aufgClick(key){var c=aufgFind(key);if(!c)return;if(c.items){aufgOpen(key);return;}aufgOpenEmp(key);}
 function aufgOpenEmp(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!o.emp)return;AU.hl=key;openAddTaskModal(o.emp);
   setTimeout(function(){var el=document.querySelector('#atOpen [data-akey="'+key.replace(/"/g,'')+'"]');if(el)el.scrollIntoView({block:'center'});},120);}
-function aufgActLabel(o){return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
+function aufgActLabel(o){if(o.art==='Performance-Gespräch'||o.art==='Performance Review')return o.task&&o.task.part===2?'Session erfassen':'Entwicklung bewerten';if(o.art==='Weekly')return 'Weekly erfassen';if(o.art==='QA-Bewertung')return 'Call bewerten';if(/^ses:/.test(o.key||''))return 'Session erfassen';return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
 function aufgDone(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!kalCanEdit())return;
   if(o.kind==='task'&&o.taskId){atToggle(o.taskId);return;}
   if(/^antrag:/.test(key)){kalDecide(key.slice(7),true);setTimeout(atRender,60);return;}
-  if(/^ses:/.test(key)){var typ=o.task&&o.task.art||'Weekly';closeModal('addTaskModal');window._puOpenNew=true;openNeuesCoachingModal(o.emp);setTimeout(function(){puColOpen('ncSecNew');aufgPrefillSession(typ);},80);return;}
+  if(/^ses:/.test(key)){var typ=o.task&&o.task.art||'Weekly';if(typ==='Performance Review')typ='Performance-Gespräch';
+    if(typ==='Performance-Gespräch'&&o.task&&o.task.part!==2){closeModal('addTaskModal');openCoachingEval(o.emp);return;}
+    closeModal('addTaskModal');window._puOpenNew=true;openNeuesCoachingModal(o.emp);setTimeout(function(){puColOpen('ncSecNew');aufgPrefillSession(typ);if(typeof sfPreset==='function')sfPreset(typ,o.emp);},80);return;}
   if(/^qa:/.test(key)){closeModal('addTaskModal');window._puOpenNew=true;if(typeof openQaBewertungModal==='function')openQaBewertungModal(o.emp);return;}
   closeModal('addTaskModal');if(o.go)o.go();}
 function aufgPrefillSession(typ){var cat=document.getElementById('sess-category'),ty=document.getElementById('sess-type'),dt=document.getElementById('sess-date');if(dt)dt.value=today();if(!cat||!ty)return;
