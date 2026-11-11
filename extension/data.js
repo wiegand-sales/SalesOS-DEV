@@ -512,8 +512,8 @@ var SOS = (function () {
     S.filter(function (s) { return s.status === 'geplant' && s.date >= t; }).forEach(function (s) {
       out.push({ date: s.date, time: (s.uhrzeit || '').slice(0, 5), art: s.art || 'Session', thema: s.focus || '', coach: s.coach_name || '', kind: /weekly/i.test(s.art || '') ? 'weekly' : /performance/i.test(s.art || '') ? 'perf' : 'coaching' });
     });
-    // Performance-Gespraeche nach 5, 11 und 23 Monaten (feste Regel wie im Board)
-    if (emp.startDate) [5, 11, 23].forEach(function (n) {
+    // Performance-Gespraeche nach 3, 5, 12 und 23 Monaten (feste Regel wie im Board)
+    if (emp.startDate) [3, 5, 12, 23].forEach(function (n) {
       var d = new Date(emp.startDate + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n); var due = d.toISOString().slice(0, 10);
       if (due < addDays(t, -30) || due > addDays(t, 60)) return;
       var covered = S.some(function (s) { return /performance/i.test(s.art || '') && s.date >= addDays(due, -30); });
