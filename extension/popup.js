@@ -16,6 +16,13 @@
   // Menue wie im Board: Zahlen | Planen, unten Hinweise und das eigene Kuerzel (Einstellungen)
   var TABS = [['heute', 'Heute'], ['verlauf', 'Verlauf'], ['kennzahlen', 'Kennzahlen'], ['provision', 'Provision'], null, ['termine', 'Termine'], ['urlaub', 'Urlaub'], 'spacer', ['hinweise', 'Hinweise'], 'me'];
   var HINT_DEFAULTS = { prognose: true, record: true, idle: false, antrag: true, termin: true };
+  // Seitenleiste: gleiche Oberflaeche, Groesse folgt der Leiste (Breite zieht jeder selbst)
+  var PANEL = /sidepanel\.html$/.test(location.pathname), ZOOM = 0.8, displayMode = 'popup';
+  if (PANEL) {
+    document.documentElement.classList.add('panel');
+    var fit = function () { document.body.style.width = Math.floor(window.innerWidth / ZOOM) + 'px'; document.body.style.height = Math.floor(window.innerHeight / ZOOM) + 'px'; };
+    fit(); window.addEventListener('resize', function () { fit(); if (model) render(model); });
+  }
   var tab = 'heute', model = null, extra = {}, uView = 'konto', form = null, sending = false, aTab = 'antrag', tWeek = 0, tCache = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -82,7 +89,13 @@
     else arcs = '<circle cx="46" cy="46" r="' + R + '" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="12"/>';
     var legend = parts.map(function (p) { return '<div class="lg"><span class="d" style="background:' + p[2] + '"></span><span class="muted">' + p[0] + '</span><span style="text-align:right">' + n0(p[1].n) + '</span><span class="xxs faint" style="text-align:right">Ø ' + eur(p[1].avg) + '</span></div>'; }).join('');
     var c2 = card(lab('Optimierungen') + '<div class="donutWrap"><div class="donut"><svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="Aufteilung der Optimierungen">' + arcs + '</svg><div><b>' + n0(tot) + '</b><span class="xxs faint">Opt.</span></div></div><div style="flex:1;display:flex;flex-direction:column;gap:7px">' + legend + '</div></div>', 'sb');
-    return h + '<div class="tiles">' + c1 + c2 + '</div>' + stripHeute(m);
+    var more = '';
+    if (PANEL && window.innerHeight / ZOOM > 700) {
+      var tm = m.termine || { items: [] }, it = tm.items.slice(0, 3);
+      more = '<div class="card" style="height:auto;flex-shrink:0">' + lab('Nächste Termine') + (it.map(function (x) { return '<div class="li"><span class="liD">' + wdm(x.date) + '</span><span class="liT">' + esc(x.art) + '</span><span class="liR">' + (x.due ? 'fällig' : esc(x.time || '')) + '</span></div>'; }).join('') || '<div class="empty">Nichts geplant.</div>') + '</div>';
+      var u = m.urlaub; if (u && u.ok) more += '<div class="card" style="height:auto;flex-shrink:0"><div class="cHead">' + lab('Urlaub ' + u.year) + '<span class="xxs faint">noch ' + nf(u.konto.frei) + ' Tage frei</span></div>' + (u.items.slice(0, 2).map(function (x) { return '<div class="li"><span class="liD">' + range(x) + '</span><span class="liT">' + esc(x.label) + '</span><span class="pill' + (x.status === 'offen' ? ' open' : '') + '">' + (STATUS[x.status] || x.status) + '</span></div>'; }).join('') || '<div class="empty">Nichts geplant.</div>') + '</div>';
+    }
+    return h + '<div class="tiles">' + c1 + c2 + '</div>' + stripHeute(m) + more;
   }
 
   function strip(label, val, pctv, right) {
@@ -298,10 +311,11 @@
     var h = banner('Einstellungen', SOS.config.env === 'DEV' ? badge('Testsystem', true) : '', (m.emp.name || '').split(' ')[0], side('Daten', stand(m).replace('Stand ', '') + ' Uhr'), segs);
     var c0 = card('<div class="meHead"><span class="av big">' + esc(ini(m.emp.name)) + '</span><div><b>' + esc(m.emp.name) + '</b><span class="xs muted">' + esc(m.email || '') + '</span></div></div>'
       + (m.preview && m.choices ? '<div class="pl" style="align-items:center"><span>Vorschau als</span><select id="previewSel" class="prevSel">' + m.choices.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === m.emp.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></div>' : '')
+      + '<div class="pl" style="align-items:center"><span>Anzeige</span><div class="seg sm2"><button type="button" data-dm="popup" class="' + (displayMode !== 'panel' ? 'on' : '') + '">Fenster</button><button type="button" data-dm="panel" class="' + (displayMode === 'panel' ? 'on' : '') + '">Seitenleiste</button></div></div>'
       + '<div class="pl"><span>Version</span><b>' + esc(chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '') + '</b></div>', 'sb');
     var c1 = card(lab('Benachrichtige mich, wenn …') + sw);
     var st = '<div class="strip row2"><div class="sTxt"><span class="lab">Hinweise</span><span class="sVal">' + on + ' von ' + all + ' an</span></div><button type="button" class="secondary sm" id="meLogout">Abmelden</button></div>';
-    return h + '<div class="tiles" style="grid-template-rows:110px 180px">' + c0 + c1 + '</div>' + st;
+    return h + '<div class="tiles" style="grid-template-rows:134px 156px">' + c0 + c1 + '</div>' + st;
   }
   function ini(n) { return String(n || '').split(' ').map(function (x) { return x[0] || ''; }).join('').slice(0, 2).toUpperCase(); }
 
@@ -347,6 +361,12 @@
         b.onclick = function () { var st = Object.assign({}, HINT_DEFAULTS, extra.hintSettings || {}); st[b.dataset.sw] = !st[b.dataset.sw]; extra.hintSettings = st; SOS.storageSet({ hintSettings: st }).then(function () { render(model); }); };
       });
       $('meLogout').onclick = function () { SOS.logout().then(refresh); };
+      Array.prototype.forEach.call(document.querySelectorAll('[data-dm]'), function (x) {
+        x.onclick = function () {
+          displayMode = x.dataset.dm; SOS.storageSet({ displayMode: displayMode });
+          if (displayMode === 'panel' && !PANEL) openPanel(); else render(model);
+        };
+      });
       var ps = $('previewSel'); if (ps) ps.onchange = function () { $('view').innerHTML = '<div class="empty">Lade …</div>'; SOS.storageSet({ previewEmpId: this.value }).then(refresh); };
     }
     if (tab === 'urlaub') bindUrlaub(m);
@@ -401,7 +421,18 @@
         .finally(function () { var b = $('loginBtn'); if (b) b.disabled = false; });
     });
   }
-  function loadExtra() { return SOS.storageGet(['snapshots', 'hints', 'hintSettings', 'hintsSeen']).then(function (st) { extra = st; }); }
+  function loadExtra() { return SOS.storageGet(['snapshots', 'hints', 'hintSettings', 'hintsSeen', 'displayMode']).then(function (st) { extra = st; displayMode = st.displayMode || 'popup'; }); }
+  // Aus dem Fenster in die Seitenleiste wechseln (Klick aufs Logo oder Einstellung)
+  function openPanel() {
+    try {
+      chrome.windows.getCurrent(function (w) {
+        chrome.sidePanel.open({ windowId: w.id }).then(function () { window.close(); }).catch(function () { render(model); });
+      });
+    } catch (e) { render(model); }
+  }
+  var tp = $('toPanel');
+  if (tp) { if (PANEL) { tp.disabled = true; tp.querySelector('.tlab').textContent = 'Sales OS'; } else tp.onclick = openPanel; }
+  if (PANEL) setInterval(function () { if (model && model.state === 'ok') refresh(); }, 120000);
   function refresh() {
     return SOS.load().catch(function (e) { return { state: 'error', error: String(e.message || e) }; })
       .then(function (m) { return loadExtra().then(function () { render(m); try { chrome.runtime.sendMessage({ type: 'refresh' }); } catch (e) {} return m; }); });
