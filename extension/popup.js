@@ -152,9 +152,10 @@
       + '<div class="pl"><span>Umsatzprovision</span><b>' + eur(p.umsatz) + '</b></div><div class="pl sum"><span>Regulär</span><b>' + eur(p.regulaer) + '</b></div>'
       + '<div class="pl"><span>' + ab + '</span><b style="color:' + RED + '">' + (p.abzug > 0.5 ? '−' + eur(p.abzug) : '0 €') + '</b></div>', 'sb');
     var miss = p.checks.filter(function (c) { return !c.ok; });
-    var rows = miss.length ? miss.map(function (c) { return '<div class="row"><span style="flex:1">' + KLABEL[c.label] + '</span><span class="bad" style="font-weight:600">' + kfmt(c, c.ist) + '</span><span class="pill">+' + eur(p.wertProKpi) + '</span></div>'; }).join('')
+    // Kompaktes Raster (2 Spalten): auch 5 oder 6 verfehlte KPIs bleiben sichtbar; der Wert je KPI steht einmal im Kopf
+    var rows = miss.length ? '<div class="mgrid">' + miss.map(function (c) { return '<div class="mk"><span>' + KLABEL[c.label] + '</span><b>' + kfmt(c, c.ist) + '</b></div>'; }).join('') + '</div>'
       : '<div class="empty">Alle ' + p.checks.length + ' KPIs erreicht – volle Provision.</div>';
-    var c2 = card(lab('Nicht erreicht') + rows);
+    var c2 = card('<div class="cHead">' + lab('Nicht erreicht · ' + miss.length + ' von ' + p.checks.length) + (miss.length ? '<span class="pill">je +' + eur(p.wertProKpi) + '</span>' : '') + '</div>' + rows);
     var oph = p.checks.filter(function (c) { return c.label === 'Opt./Std.'; })[0], ml = p.mindestleistung || 2.5;
     var st = strip('Mindestleistung', dec(oph ? oph.ist : null) + ' / ' + dec(ml), oph ? oph.ist / ml * 100 : 0, p.bm < 2 ? 'gilt ab dem 2. Monat' : p.mindestleistungGreift ? 'unterschritten' : 'erfüllt');
     return h + '<div class="tiles">' + c1 + c2 + '</div>' + st;
