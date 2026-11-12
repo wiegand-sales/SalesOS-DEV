@@ -14373,7 +14373,7 @@ function kalPersonCard(eid){var e=kalEmp(eid),k=kalKonto(eid),y=today().slice(0,
   return '<div class="kal-pc"><div>'+left+'</div><div>'+right+'</div></div>';}
 function kalVzTz(e){var c=String(e.contract||'');if(/teil/i.test(c))return 'TZ';if(/voll/i.test(c))return 'VZ';return (+e.hours>=38||!e.hours)?'VZ':'TZ';}
 function kalKontoList(){var L=kalEmps().slice().sort(function(a,b){return KAL.sort==='name'?a.name.localeCompare(b.name):kalKonto(b.id).frei-kalKonto(a.id).frei;}),vw=kalIsViewer();
-  var cols='30px minmax(170px,1.3fr) minmax(200px,2fr) 60px 96px '+(vw?'':'60px 64px 84px ')+'minmax(140px,1fr) 16px',yy=today().slice(0,4);
+  var cols='30px minmax(170px,1.3fr) minmax(200px,2fr) 88px 88px '+(vw?'':'88px 88px 88px ')+'minmax(140px,1fr) 16px',yy=today().slice(0,4);
   var h='<div class="kal-kt kal-kh" style="grid-template-columns:'+cols+'"><span></span><span>Mitarbeiter</span><span>Urlaub '+today().slice(0,4)+'</span><span class="r">Frei</span><span>Flex Days</span>'+(vw?'':'<span class="r">Krank</span><span class="r">Ausgl.</span><span class="r">Verspät.</span>')+'<span>Hinweise</span><span></span></div>';
   h+=L.map(function(e){var k=kalKonto(e.id),T=k.ans+k.uebEff||1,f=kalFlags(e.id),op=KAL.open===e.id;
     function seg(v,c,cls){return v>0?'<i class="'+cls+'" style="width:'+(v/T*100)+'%;background:'+c+'">'+(v/T>0.06?kalNf(v):'')+'</i>':'';}
