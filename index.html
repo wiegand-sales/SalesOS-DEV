@@ -654,6 +654,9 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-mg .c>.kal-ch{flex-shrink:0}
 .kal-vsg{font-weight:500}
 .kal-vsg b{font-size:12px;opacity:1;margin-right:2px}
+.kal-bar.kal-bar2{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:end}
+.kal-bar.kal-bar2 .kb-l{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.kal-bar.kal-bar2 .kb-r{display:flex;justify-content:flex-end}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -14384,7 +14387,9 @@ function kalBar(){var v=[['woche','Woche'],['monat','Monat'],['jahr','Jahr'],['t
   return '<div class="dsh-seg" role="group" aria-label="Ansicht">'+v.map(function(o){return '<button type="button" class="'+(KAL.view===o[0]?'on':'')+'" onclick="kalSetView(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</div>'
     +'<button class="btn" onclick="kalToday()"><i class="ti ti-calendar"></i> Heute</button><button class="kal-nav" aria-label="Zurück" onclick="kalStep(-1)">‹</button><button class="kal-nav" aria-label="Weiter" onclick="kalStep(1)">›</button><span class="rng">'+kalRangeLabel()+'</span>'
     +'<div class="r">'+kalPaneSeg([['gen','Genehmigen',R],['plan','Planen',T],['ueb','Überfällig',kalCoachPlanned(true).length]],KAL.pane,'kalSetPane')
-    +kalFilterBtn()+kalPlusBtn()+'</div>';}
+    +kalFilterBtn()+(view==='kalender'?'':kalPlusBtn())+'</div>';}
+// Menü Kalender: Leiste in zwei Spalten wie darunter – links bis zum Kalenderrand, rechts über der Liste die Knöpfe Abwesenheit · Session
+function kalBarFx(){return '<div class="kal-bar kal-bar2"><div class="kb-l">'+kalBar()+'</div><div class="kb-r">'+kalPlusBtn()+'</div></div>';}
 function kalCoachBar(){var v=[['woche','Woche'],['monat','Monat'],['jahr','Jahr'],['team','Team']];
   return '<div class="dsh-seg" role="group" aria-label="Ansicht">'+v.map(function(o){return '<button type="button" class="'+(KAL.view===o[0]?'on':'')+'" onclick="kalSetView(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</div>'
     +'<button class="btn" onclick="kalToday()"><i class="ti ti-calendar"></i> Heute</button><button class="kal-nav" aria-label="Zurück" onclick="kalStep(-1)">‹</button><button class="kal-nav" aria-label="Weiter" onclick="kalStep(1)">›</button><span class="rng">'+kalRangeLabel()+'</span>'
@@ -14517,7 +14522,7 @@ function kalLastSesHtml(){var L=kalLastSes().slice(0,15);if(!L.length)return '<d
 function renderKalender(){var ma=document.getElementById('mainArea');if(!ma)return;if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;if(KAL.pane==='auto'||!KAL.pane)KAL.pane=kalCoachPlanned(true).length?'ueb':'gen';
   var vw=KAL.view==='woche'?kalVWeek():KAL.view==='jahr'?kalVYear():KAL.view==='team'?kalVTeam():kalVMonth();
   var h='<div class="content">'+buildGlobalBannerHtml(gbVisible());
-  h+='<div class="card"><div class="kal-bar">'+kalBar()+'</div><div class="kal-cw fx'+(KAL.pane?'':' nopane')+'"><div style="min-width:0">'+vw+'</div><aside class="kal-pane">'+kalPane()+'</aside></div>'+kalLegend()+'</div>';
+  h+='<div class="card">'+kalBarFx()+'<div class="kal-cw fx'+(KAL.pane?'':' nopane')+'"><div style="min-width:0">'+vw+'</div><aside class="kal-pane">'+kalPane()+'</aside></div>'+kalLegend()+'</div>';
   if(false)h+='<div class="card"><div class="card-title">'+(KAL.low==='req'?'Offene Anträge':'Zu planen')+'<span class="kal-note" style="font-weight:400;margin-left:6px">'+(KAL.low==='req'?'alle Hinweise auf einen Blick':'Zeile in den Kalender ziehen oder „Einplanen“')+'</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.low==='req'?'on':'')+'" onclick="KAL.low=\'req\';kalRerender()">Anträge · '+kalOpenReqs().length+'</button><button type="button" class="'+(KAL.low==='plan'?'on':'')+'" onclick="KAL.low=\'plan\';kalRerender()">Planen · '+kalTasks().length+'</button></span></span></div>'+(KAL.low==='req'?kalReqTable():kalTaskTable())+'</div>';
   h+=kalAccCard('accS','ti-history','Letzte Sessions',kalLastSesCount()+' im '+KAL_MON[+today().slice(5,7)-1],'',KAL.accS?kalLastSesHtml():'');
   h+=kalAccCard('accW','ti-chart-line','Coach-Wirksamkeit','Ø KPI-Veränderung 14 Tage vor vs. nach Coachings mit Ziel-KPI','',KAL.accW?kalEffHtml():'');
