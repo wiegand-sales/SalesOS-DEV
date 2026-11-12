@@ -953,7 +953,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <div class="rl-sep"></div>
     <button class="rl-btn" id="rail-aufgaben" onclick="selectAufgaben()"><i class="ti ti-checklist"></i><span class="rl-tip">Aufgaben</span></button>
     <button class="rl-btn" id="rail-kalender" onclick="selectKalender()"><i class="ti ti-calendar"></i><span class="rl-tip">Kalender</span></button>
-    <button class="rl-btn" id="rail-coaching" onclick="bannerViewMode='coaching';resetBannerRotation();setCoachFilterView('overview')"><i class="ti ti-message-circle"></i><span class="rl-tip">Coaching</span></button>
+    <!-- Menü Coaching entfällt (Nov 2026): alles im Kalender -->
     <div class="rl-sep" id="rail-sep-admin"></div>
     <button class="rl-btn" id="rail-activity" onclick="selectCoachingActivity()"><i class="ti ti-activity"></i><span class="rl-tip">Aktivitäten</span></button>
     <button class="rl-btn" id="rail-settings" onclick="selectSettingsSub(settingsView||'users')" style="display:none"><i class="ti ti-settings"></i><span class="rl-tip">Einstellungen</span></button>
@@ -985,7 +985,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
     <div id="wiegandSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-team-dashboard" onclick="selectDashboard()">Dashboard</div>
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Performance</div>
-      <div class="sb-item sb-navsub" id="nav-team-coaching" onclick="bannerViewMode='coaching';resetBannerRotation();setCoachFilterView('overview')">Coaching</div>
+      
       <div class="sb-item sb-navsub" id="nav-team-provision" onclick="selectProvisionTeam()">Provision</div>
       <div class="sb-item sb-navsub" id="nav-team-kalender" onclick="selectKalender()">Kalender</div>
       <div class="sb-item sb-navsub" id="nav-team-aufgaben" onclick="selectAufgaben()">Aufgaben</div>
@@ -2203,7 +2203,7 @@ sb.auth.onAuthStateChange(function(event, session){
   if(session){ initAppAfterLogin(); }
 });
 
-function setCoachFilterView(v){coachFilterView=v;view='coaching';coachingNavOpen=true;renderSidebar();renderMain();}
+function setCoachFilterView(v){coachFilterView='overview';if(v&&v!=='overview'&&v!=='coverage'&&typeof kalCoachOpts==='function'){KAL.chf={};kalCoachOpts().forEach(function(o){if(o[0]!==String(v))KAL.chf[o[0]]=1;});}selectKalender();}
 // Coach-Wirksamkeit: für jede abgeschlossene Session mit Coach + Ziel-KPI wird die
 // Ø-Veränderung 14 Tage vor vs. nach der Session berechnet (in Zielrichtung normalisiert:
 // positiv = Bewegung Richtung Ziel, unabhängig davon ob das KPI "mind." oder "max." ist).
@@ -5008,7 +5008,7 @@ function recomputeTeamTargets(){
   TEAM_TARGET_KEYS.forEach(function(k){var t=teamTargetFor(list,k);if(t){KPI_TARGETS[k]=KPI_TARGETS[k]||{};KPI_TARGETS[k].val=t.val;KPI_TARGETS[k].dir=t.dir;}});
   if(KPI_TARGETS.crOEM)CR_GOOD=KPI_TARGETS.crOEM.val;
 }
-function renderMain(){recomputeTeamTargets();if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching')renderCoachingAnsicht();else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else renderEmpDetail();}
+function renderMain(){recomputeTeamTargets();if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching'){view='kalender';renderKalender();}else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else renderEmpDetail();}
 
 // ── Browser-Zurück/Vor innerhalb des Boards ──
 // Jede neue Ansicht (Bereich, Mitarbeiter, Reiter, Einstellungen-Unterseite) wird als Verlaufseintrag gemerkt.
@@ -15167,8 +15167,8 @@ function aufgRoutineTable(){var R=kalRules().routinen||[];if(!R.length)return ''
 function railSetBadge(id,n,tip){var b=document.getElementById(id);if(!b)return;b.classList.toggle('au-badge',n>0);b.setAttribute('data-n',n>9?'9+':String(n));var t=b.querySelector('.rl-tip');if(t){if(!t.dataset.base)t.dataset.base=t.textContent;t.textContent=t.dataset.base+(n>0?' · '+n+' '+tip:'');}}
 function aufgBadge(L){var adm=currentUserRole==='admin';
   try{L=L||aufgAll();var me=aufgMeKeys(),n=L.filter(function(o){return (adm||me.indexOf(o.assignee)>=0)&&aufgState(o).r<=1;}).length;railSetBadge('rail-aufgaben',n,'überfällig / heute');}catch(e){}
-  try{var nr=kalCanEdit()?kalOpenReqs().length:0;railSetBadge('rail-kalender',nr,nr===1?'Antrag offen':'Anträge offen');}catch(e){}
-  try{var t=today(),me2=currentCoach?currentCoach.id:null,c=0;if(adm||me2){var grp={};employees.forEach(function(e){if(e.active===false)return;(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'||!p.date||p.date>=t)return;if(!adm&&p.coachId!==me2)return;if(p.groupId){if(grp[p.groupId])return;grp[p.groupId]=1;}c++;});});}railSetBadge('rail-coaching',c,c===1?'Session überfällig':'Sessions überfällig');}catch(e){}}
+  try{var nr=kalCanEdit()?kalOpenReqs().length:0;var _nr=nr;}catch(e){var _nr=0;}
+  try{var t=today(),me2=currentCoach?currentCoach.id:null,c=0;if(adm||me2){var grp={};employees.forEach(function(e){if(e.active===false)return;(protocols[e.id]||[]).forEach(function(p){if(p.status!=='geplant'||!p.date||p.date>=t)return;if(!adm&&p.coachId!==me2)return;if(p.groupId){if(grp[p.groupId])return;grp[p.groupId]=1;}c++;});});}var tot=(typeof _nr==='number'?_nr:0)+c,tp=[_nr?_nr+(_nr===1?' Antrag offen':' Anträge offen'):'',c?c+(c===1?' Session überfällig':' Sessions überfällig'):''].filter(Boolean).join(' · ');railSetBadge('rail-kalender',tot,tp||'nichts offen');}catch(e){}}
 function selectAufgaben(){view='aufgaben';bannerViewMode='aufgaben';resetBannerRotation();renderSidebar();renderMain();}
 // ── Öffnen ──
 function aufgFind(key){var L=aufgAll(),C=aufgCards(L);return C.find(function(c){return c.key===key;})||L.find(function(o){return o.key===key;});}
