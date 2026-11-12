@@ -646,9 +646,9 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-mc .grip{color:var(--text3);user-select:none}
 .kal-mc.drag{cursor:grab}
 .kal-pnote{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
-.kal-cw.fx{align-items:stretch;height:600px}
-.kal-cw.fx>div:first-child{height:600px;overflow:auto;min-height:0}
-.kal-cw.fx .kal-pane{position:static;top:auto;height:600px;max-height:none;overflow:hidden;box-sizing:border-box}
+.kal-cw.fx{align-items:stretch;height:810px}
+.kal-cw.fx>div:first-child{height:810px;overflow:auto;min-height:0}
+.kal-cw.fx .kal-pane{position:static;top:auto;height:810px;max-height:none;overflow:hidden;box-sizing:border-box}
 .kal-cw.fx .kal-mg{height:100%;grid-template-rows:auto;grid-auto-rows:minmax(0,1fr)}
 .kal-cw.fx .kal-mg .c{min-height:0;overflow:hidden}
 .kal-mg .c>.kal-ch{flex-shrink:0}
@@ -14322,7 +14322,7 @@ function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){retu
       c+='<div class="ev kal-ses kal-sopen'+(kalSesPast(o.p)?' past':'')+'" style="top:'+top.toFixed(0)+'px;height:'+hgt.toFixed(0)+'px;left:calc('+(o._col*100/o._n)+'% + 4px);right:auto;width:calc('+(100/o._n)+'% - 8px)" '+(kalCanEdit()?'draggable="true" data-kses="'+o.p.id+'" data-kemp="'+o.e.id+'"':'')+kalSesAttrs(o)+' data-ktip="'+esc(kalSesTip(o))+'">'+(kalCanEdit()?'<span class="kal-rz t" data-krz="s"></span><span class="kal-rz b" data-krz="e"></span>':'')+'<div><b class="kal-tm">'+o.p.uhrzeit+'</b> '+esc(kalSesWho(o))+'</div><div>'+esc(o.p.type||'Session')+(o.p.coachId?' · '+esc(kalCoachName(o.p.coachId)):'')+'</div></div>';});
     h+=c+'</div>';});
   return h+'</div>';}
-function kalMgCut(n){if(view!=='kalender')return n>5?5:n;return n>2?2:n;}
+function kalMgCut(n){if(view!=='kalender')return n>5?5:n;return n>3?3:n;}
 function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),first=kalI(new Date(y,mo,1)),last=kalI(new Date(y,mo+1,0)),t=today();var d=kalMon(first);
   var h='<div class="kal-mg">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(w){return '<div class="wh">'+w+'</div>';}).join('');
   while(d<=last||kalP(d).getDay()!==1){var hn=kalHol(d,KAL.loc),out=kalP(d).getMonth()!==mo;
@@ -14363,7 +14363,7 @@ function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=n
   h+='<div class="ft nm">Frei (ohne Krank)</div>'+D.map(function(d){if(kalWknd(d)||kalHol(d,KAL.loc)||kalFixDay(d))return '<div class="ft we">·</div>';var o=kalFree(d,KAL.loc,null);return '<div class="ft'+(kalFreeOver(d,o)?' w3':'')+'"'+(o.length?' data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'"':'')+'>'+(o.length||'')+'</div>';}).join('');
   return h+'</div></div>';}
 // Einheitliche, schmale Karten rechts (alle gleich hoch), höchstens 8
-var KAL_PANE_MAX=8;
+var KAL_PANE_MAX=12;
 function kalMini(o){return '<div class="kal-mc'+(o.due?' due':'')+(o.cls?' '+o.cls:'')+'"'+(o.attrs||'')+(o.tip?' title="'+esc(o.tip)+'"':'')+'>'+(o.grip?'<span class="grip" aria-hidden="true">⋮⋮</span>':'')
   +'<div class="l"><div class="t"><span>'+o.title+'</span>'+(o.tag?'<em class="tg">'+o.tag+'</em>':'')+'</div><div class="s">'+o.sub+'</div></div>'+(o.acts?'<div class="a">'+o.acts+'</div>':'')+'</div>';}
 function kalIb(ic,tip,on,pri){return '<button type="button" class="btn btn-sm ib'+(pri?' btn-primary':'')+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'" onclick="event.stopPropagation();'+on+'"><i class="ti '+ic+'"></i></button>';}
