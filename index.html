@@ -14008,7 +14008,7 @@ try{puInit();}catch(e){console.warn('puInit',e);}
 // Sessions aus protocols. Betrachter lesen über absences_team() (Krank/Ausgleich nur als „abwesend“).
 var absences=[];
 var lateness=[]; // Verspätungen (art 'verspaetung'), getrennt gehalten: zählen nicht als Abwesenheit // {id,employeeId,art,von,bis,halb,status,verschobenVon,notiz,eingereichtAm,eingereichtVon,entschiedenVon,entschiedenAm}
-var KAL={hide:null,fOpen:false,pOpen:false,cview:'woche',view:'monat',cur:null,loc:'ALL',pane:'auto',cpane:'ueb',chf:{},accS:false,accK:false,low:'req',sort:'rest',open:null,drag:null,snap:null,ut:null};
+var KAL={hide:null,fOpen:false,pOpen:false,cview:'woche',view:'monat',cur:null,loc:'ALL',pane:'auto',cpane:'ueb',chf:{},accS:false,accK:false,accW:false,low:'req',sort:'rest',open:null,drag:null,snap:null,ut:null};
 var KAL_MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 var KAL_WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
 var KAL_ART={urlaub:'Urlaub',flex:'Flex Day',ausgleich:'Ausgleichstag',freistellung:'Freistellung',krank:'Krank',abwesend:'Abwesend',verspaetung:'Verspätung'};
@@ -14457,6 +14457,16 @@ function buildKalRulesHtml(){var R=kalRules(),W=R.weekly,coaches=employees.filte
 
 // ── Seite ──
 function kalRerender(){_kalTC.v=null;if(view==='coaching')renderCoachingAnsicht();else if(view==='kalender')renderKalender();}
+// Coach-Wirksamkeit (Ø KPI-Veränderung 14 Tage vor/nach Coachings mit Ziel-KPI) – im Kalender zum Aufklappen
+function kalEffHtml(){var eff=computeCoachEffectiveness(),h='';
+  if(!eff.length)return '<div class="kal-note" style="padding:10px 0">Noch nicht genug Coachings mit Ziel-KPI vorhanden, um das zu berechnen.</div>';
+  var maxAbs=Math.max.apply(null,eff.map(function(x){return Math.abs(x.avgDelta);}).concat([1]));
+  h+='<div style="display:flex;flex-direction:column;gap:12px">';
+  eff.forEach(function(x){var pct=Math.min(Math.abs(x.avgDelta)/maxAbs*100,100),col=x.avgDelta>0?'var(--teal-dark)':'var(--red)';
+    h+='<div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:13px;font-weight:600">'+esc(x.name)+'</span><span style="font-size:13px;font-weight:700;color:'+col+'">'+(x.avgDelta>=0?'+':'')+x.avgDelta.toFixed(1)+' Ø-Punkte</span></div>'
+      +'<div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:3px">'+x.n+' Coachings mit Ziel-KPI · '+x.positivePct+'% davon Richtung Ziel bewegt</div></div>';});
+  return h+'</div><div style="font-size:11px;color:var(--text3);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">Basiert nur auf Sessions, bei denen ein Ziel-KPI hinterlegt wurde. Kleine Fallzahlen bitte mit Vorsicht interpretieren.</div>';}
 // Aufklapp-Karte unter dem Kalender (wie „Neue Session“: + / –)
 function kalAccCard(k,ic,title,sub,right,body){var op=!!KAL[k];return '<div class="card" style="padding:14px 16px"><div class="at-newh" style="cursor:pointer" onclick="KAL.'+k+'=!KAL.'+k+';kalRerender()"><span class="at-pl"><i class="ti '+(op?'ti-minus':'ti-plus')+'"></i></span><b>'+title+'</b><span class="kal-note" style="margin-left:8px">'+sub+'</span><span style="margin-left:auto;display:inline-flex;gap:8px;align-items:center">'+(op?right:'')+'<span class="kal-note">'+(op?'zuklappen':'zum Aufklappen klicken')+'</span></span></div>'+(op?'<div style="margin-top:12px">'+body+'</div>':'')+'</div>';}
 function kalLastSes(){var L=[];kalSessEmps().forEach(function(e){(protocols[e.id]||[]).forEach(function(p){if(p.status==='geplant'||!p.date||p.date>today())return;if(KAL.chf[String(p.coachId||'')])return;L.push({e:e,p:p});});});return L.sort(function(a,b){return (b.p.date+(b.p.uhrzeit||'')).localeCompare(a.p.date+(a.p.uhrzeit||''));});}
@@ -14473,6 +14483,7 @@ function renderKalender(){var ma=document.getElementById('mainArea');if(!ma)retu
   h+='<div class="card"><div class="kal-bar">'+kalBar()+'</div><div class="kal-cw'+(KAL.pane?'':' nopane')+'"><div style="min-width:0">'+vw+'</div><aside class="kal-pane">'+kalPane()+'</aside></div>'+kalLegend()+'</div>';
   if(false)h+='<div class="card"><div class="card-title">'+(KAL.low==='req'?'Offene Anträge':'Zu planen')+'<span class="kal-note" style="font-weight:400;margin-left:6px">'+(KAL.low==='req'?'alle Hinweise auf einen Blick':'Zeile in den Kalender ziehen oder „Einplanen“')+'</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.low==='req'?'on':'')+'" onclick="KAL.low=\'req\';kalRerender()">Anträge · '+kalOpenReqs().length+'</button><button type="button" class="'+(KAL.low==='plan'?'on':'')+'" onclick="KAL.low=\'plan\';kalRerender()">Planen · '+kalTasks().length+'</button></span></span></div>'+(KAL.low==='req'?kalReqTable():kalTaskTable())+'</div>';
   h+=kalAccCard('accS','ti-history','Letzte Sessions',kalLastSesCount()+' im '+KAL_MON[+today().slice(5,7)-1],'',KAL.accS?kalLastSesHtml():'');
+  h+=kalAccCard('accW','ti-chart-line','Coach-Wirksamkeit','Ø KPI-Veränderung 14 Tage vor vs. nach Coachings mit Ziel-KPI','',KAL.accW?kalEffHtml():'');
   h+=kalAccCard('accK','ti-beach','Urlaubskonto '+today().slice(0,4),kalEmps().length+' Mitarbeiter · Frei, Flex Days, Krank'+(latCanSee()?', Verspätung':''),
     '<span class="dsh-seg" onclick="event.stopPropagation()"><button type="button" class="'+(KAL.sort==='rest'?'on':'')+'" onclick="KAL.sort=\'rest\';kalRerender()">Resturlaub</button><button type="button" class="'+(KAL.sort==='name'?'on':'')+'" onclick="KAL.sort=\'name\';kalRerender()">Name</button></span>',KAL.accK?kalKontoList():'');
   h+='</div>';
