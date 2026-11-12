@@ -652,6 +652,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-cw.fx .kal-mg{height:100%;grid-template-rows:auto;grid-auto-rows:minmax(0,1fr)}
 .kal-cw.fx .kal-mg .c{min-height:0;overflow:hidden}
 .kal-mg .c>.kal-ch{flex-shrink:0}
+.kal-vsg{font-weight:500}
+.kal-vsg b{font-size:12px;opacity:1;margin-right:2px}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -707,7 +709,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-mg .c.hl{background-color:#F3F0EA;background-image:repeating-linear-gradient(135deg,#E2DDD3 0 2px,transparent 2px 7px)}
 .kal-mg .dn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}.kal-mg .dn .tday{background:#F08566;color:#fff;border-radius:6px;padding:0 6px}
 .kal-mg .dn .kal-tag{margin-left:auto;padding:1px 7px;font-size:11px}.kal-mg .hn{font-size:11px;color:var(--text3)}
-.kal-ch{font-size:11.5px;border-radius:6px;padding:2px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.kal-ch{font-size:12.5px;border-radius:7px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .kal-ch[draggable=true]{cursor:grab}.kal-more{font-size:11px;color:var(--text3)}
 /* Jahr */
 .kal-yv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
@@ -14313,7 +14315,7 @@ function kalSuggest(d){if(kalCtx()==='coach'||!kalCanEdit())return [];var t=toda
 function kalSuggestChip(x){return '<div class="kal-ch kal-vs" draggable="true" data-ktask="'+esc(x.id)+'" onclick="event.stopPropagation();kalPlanTask(this.dataset.ktask)" data-ktip="'+esc('<b>'+x.l+'</b><br>Vorschlag · fällig '+kalF(x.due)+'<br>'+x.src+'<br>Klick: Woche öffnen · Ziehen: auf eine Uhrzeit')+'">'+esc(kalFirst(x.e.name))+' · '+esc(x.art==='Weekly'?'Weekly':'Review')+'</div>';}
 function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){return kalAdd(m,i);}),t=today();
   var h='<div class="kal-wv"><div class="hd" style="border-left:0"></div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(d===t?' td':'')+(kalWknd(d)?' we':'')+'">'+KAL_WD[kalP(d).getDay()].toUpperCase()+'<b>'+kalF(d)+'</b>'+(hn?'<small>'+esc(hn)+'</small>':'')+'</div>';}).join('');
-  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});kalSuggest(d).forEach(function(x){o.push(kalSuggestChip(x));});return kalWknd(d)?'<div class="ad we">'+o.slice(1).join('')+'</div>':'<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
+  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});var sg=kalSuggest(d);if(o.length-1+sg.length>3&&KAL.wex!==d){var by={};sg.forEach(function(x){var k=x.art==='Weekly'?'Weekly':'Performance Review';(by[k]=by[k]||[]).push(x);});Object.keys(by).forEach(function(k){var L=by[k];o.push(L.length===1?kalSuggestChip(L[0]):'<div class="kal-ch kal-vs kal-vsg" onclick="event.stopPropagation();KAL.wex=\''+d+'\';kalRerender()" data-ktip="'+esc('<b>'+L.length+' × '+k+' (Vorschlag)</b><br>'+L.map(function(x){return x.e.name;}).join('<br>')+'<br>Klick: einzeln anzeigen')+'"><b>'+L.length+'</b> '+(k==='Weekly'?'Weeklys':'Reviews')+'</div>');});}else{sg.forEach(function(x){o.push(kalSuggestChip(x));});if(KAL.wex===d&&sg.length>1)o.push('<div class="kal-more" style="cursor:pointer" onclick="event.stopPropagation();KAL.wex=null;kalRerender()">weniger anzeigen</div>');}return kalWknd(d)?'<div class="ad we">'+o.slice(1).join('')+'</div>':'<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
   var tm='<div class="times">';for(var hh=8;hh<20;hh++)tm+='<span style="top:'+((hh-8)*56+4)+'px">'+('0'+hh).slice(-2)+':00</span>';h+=tm+'</div>';
   D.forEach(function(d){var c=kalWknd(d)?'<div class="col we">':'<div class="col'+(kalHol(d,KAL.loc)?' hl':'')+'" data-kslot="'+d+'" data-kopen="'+d+'">';
     var day=kalSess(d).filter(function(o){return o.p.uhrzeit;}),cols=[];day.forEach(function(o){var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;if(en<=st)en=st+45;o._s=st;o._e=en;var ci=0;while(cols[ci]&&cols[ci]>st)ci++;cols[ci]=en;o._col=Math.min(ci,2);});
