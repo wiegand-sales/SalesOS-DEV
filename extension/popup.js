@@ -15,6 +15,9 @@
   };
   // Menue wie im Board: Zahlen | Planen, unten Hinweise und das eigene Kuerzel (Einstellungen)
   var TABS = [['heute', 'Heute'], ['verlauf', 'Verlauf'], ['kennzahlen', 'Kennzahlen'], ['provision', 'Provision'], null, ['termine', 'Termine'], ['urlaub', 'Urlaub'], 'spacer', ['hinweise', 'Hinweise'], 'me'];
+  // Seitenleiste: drei Seiten mit mehr Inhalt je Seite
+  var TABS_PANEL = [['pheute', 'Heute'], ['pmonat', 'Monat'], null, ['pplanen', 'Planen'], 'spacer', ['hinweise', 'Hinweise'], 'me'];
+  var LINE_H = 0, BAR_H = 0, PARTS = false;
   var HINT_DEFAULTS = { prognose: true, record: true, idle: false, antrag: true, termin: true };
   // Seitenleiste: gleiche Oberflaeche, Groesse folgt der Leiste (Breite zieht jeder selbst)
   var PANEL = /sidepanel\.html$/.test(location.pathname), ZOOM = 0.8, displayMode = 'popup';
@@ -67,7 +70,7 @@
     var bar = '<div class="bar"><div class="fill" style="width:' + (c.closers ? clamp(c.my / c.closers * 100) : 0) + '%"></div></div>';
     var h = banner('CR MY', b, c.today == null ? '–' : pct(c.today), '<span class="bNote">' + c.my + ' von ' + c.closers + ' Abschlüssen</span>', bar);
     var r = hoursRange(m), hrs = SOS.hourly(extra.snapshots, r[0], r[1]);
-    var W = 236, H = 44, n = hrs.length;
+    var W = 236, H = LINE_H || 44, n = hrs.length;
     function line(vals, col, dash) {
       var pts = [], mx = 0, mn = Infinity;
       vals.forEach(function (v) { if (v != null) { mx = Math.max(mx, v); mn = Math.min(mn, v); } });
@@ -113,7 +116,7 @@
   }
 
 
-  function roomForMore() { return PANEL && window.innerHeight / ZOOM > 700; }
+  function roomForMore() { return PANEL && !PARTS && window.innerHeight / ZOOM > 700; }
   function moreCard(title, right, body) { return '<div class="card" style="height:auto;flex-shrink:0"><div class="cHead">' + lab(title) + '<span class="xxs faint">' + right + '</span></div>' + body + '</div>'; }
   function moreFor(v, m) {
     if (!roomForMore()) return '';
@@ -154,7 +157,7 @@
     var r = hoursRange(m), hrs = SOS.hourly(extra.snapshots, r[0], r[1]);
     var p = m.dayPlan || {}, sollH = p.optTag > 0 && p.planned > 0 ? p.optTag / p.planned : null;
     var anyKnown = hrs.some(function (x) { return x.known; });
-    var c1 = card('<div class="cHead">' + lab('Optimierungen') + '<span class="xxs faint">' + (sollH ? '- - Soll' : '') + '</span></div>' + barsHtml(hrs, 'opt', 44, '#D3C8B6', P, sollH) + axis(r[0], r[1]), 'sb');
+    var c1 = card('<div class="cHead">' + lab('Optimierungen') + '<span class="xxs faint">' + (sollH ? '- - Soll' : '') + '</span></div>' + barsHtml(hrs, 'opt', BAR_H || 44, '#D3C8B6', P, sollH) + axis(r[0], r[1]), 'sb');
     var aktSum = m.todayDetail ? m.todayDetail.akt : null;
     var c2 = card('<div class="cHead">' + lab('Aktivitäten') + '<span class="xxs faint">' + n0(aktSum) + ' heute</span></div>' + barsHtml(hrs, 'akt', 58, '#E2DDD3', '#8A7F72', null) + axis(r[0], r[1]), 'sb');
     var g = m.goals, st = g ? strip('Monat', n0(g.month.done) + ' / ' + n0(g.month.goal), g.month.goal ? g.month.done / g.month.goal * 100 : 0,
@@ -348,22 +351,73 @@
       + '<div class="pl"><span>Version</span><b>' + esc(chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '') + '</b></div>', 'sb');
     var c1 = card(lab('Benachrichtige mich, wenn …') + sw, 'tight');
     var st = '<div class="strip row2"><div class="sTxt"><span class="lab">Hinweise</span><span class="sVal">' + on + ' von ' + all + ' an</span></div><button type="button" class="secondary sm" id="meLogout">Abmelden</button></div>';
-    return h + '<div class="tiles" style="grid-template-rows:126px 164px">' + c0 + c1 + '</div>' + st;
+    return h + '<div class="tiles" style="grid-template-rows:' + (PANEL ? '126px 1fr' : '126px 164px') + '">' + c0 + c1 + '</div>' + st;
   }
   function ini(n) { return String(n || '').split(' ').map(function (x) { return x[0] || ''; }).join('').slice(0, 2).toUpperCase(); }
 
-  var VIEWS = { heute: ['Hallo', vHeute], verlauf: ['Verlauf', vVerlauf], kennzahlen: ['Kennzahlen', vKennzahlen], provision: ['Provision', vProvision], termine: ['Termine', vTermine], urlaub: ['Urlaub', vUrlaub], hinweise: ['Hinweise', vHinweise], me: ['Einstellungen', vMe] };
+  // ── Seitenleiste: Inhalte aus den Einzelansichten zusammenstellen und die Hoehe ausfuellen ──
+  function partsOf(fn, m) {
+    PARTS = true; var html; try { html = fn(m); } finally { PARTS = false; }
+    var i = html.indexOf('<div class="tiles'), banner = i >= 0 ? html.slice(0, i) : html, rest = i >= 0 ? html.slice(i) : '';
+    var j = rest.indexOf('<div class="strip'), tiles = j >= 0 ? rest.slice(0, j) : rest, st = j >= 0 ? rest.slice(j) : '';
+    var inner = tiles.slice(tiles.indexOf('>') + 1, tiles.lastIndexOf('</div>'));
+    return { banner: banner, cards: inner.split('<div class="card').filter(function (x) { return x.trim(); }).map(function (x) { return '<div class="card' + x; }), strip: st };
+  }
+  function grow(html) { return '<div class="pg">' + html + '</div>'; }
+  function fixed(html, h) { return '<div style="height:' + h + 'px;flex-shrink:0">' + html + '</div>'; }
+  function panelAvail() { return Math.floor(window.innerHeight / ZOOM) - 28; }
+  function vPHeute(m) {
+    var free = panelAvail() - (128 + 150 + 44 + 44 + 5 * 10), each = Math.max(130, Math.floor(free / 2));
+    LINE_H = Math.max(44, each - 72); BAR_H = Math.max(44, each - 78);
+    var H = partsOf(vHeute, m), V = partsOf(vVerlauf, m);
+    LINE_H = BAR_H = 0;
+    var f = m.forecast, pr = f && f.opt != null ? strip('Prognose', '≈ ' + n0(f.opt) + (f.goal ? ' / ' + n0(f.goal) : ''), f.goal ? f.opt / f.goal * 100 : 0, f.perHour != null ? dec(f.perHour) + ' je Std.' : '') : strip('Prognose', '–', 0, 'ab 1 Stunde Arbeitszeit');
+    return H.banner + grow(H.cards[0]) + grow(V.cards[0]) + fixed(H.cards[1], 150) + H.strip + pr;
+  }
+  function vPMonat(m) {
+    var Pv = partsOf(vProvision, m), V = partsOf(vVerlauf, m), p = m.prov;
+    var rows = p.checks.map(function (c) {
+      var ratio = c.ziel ? (c.dir === 'lte' ? c.ziel / Math.max(c.ist, 0.01) : c.ist / c.ziel) : 1;
+      return '<div class="li"><span class="liT" style="color:var(--text)">' + KLABEL[c.label] + '</span><span class="' + (c.ok ? '' : 'bad') + '" style="font-weight:600">' + kfmt(c, c.ist) + '</span><span class="liR" style="width:58px;text-align:right">Ziel ' + kfmt(c, c.ziel) + '</span><span class="mbar"><i style="width:' + clamp(ratio * 100) + '%;background:' + (c.ok ? P : RED) + '"></i></span></div>';
+    }).join('');
+    var ok = p.checks.filter(function (c) { return c.ok; }).length;
+    var kpi = card('<div class="cHead">' + lab('Provisions-KPIs') + '<span class="xxs faint">' + ok + ' von ' + p.checks.length + ' erreicht</span></div>' + rows);
+    var hm = m.heim, week = hm ? card('<div class="cHead">' + lab('Diese Woche') + '<span class="xxs faint">Ziel ' + n0(hm.weekGoal) + ' · ' + n0(hm.weekDone) + ' erreicht</span></div>' + hm.days.map(function (x) {
+        var past = x.date <= m.today, okd = x.goal > 0 && x.done >= x.goal;
+        return '<div class="li"><span class="liD">' + wdm(x.date) + '</span><span class="liT">' + (x.goal ? (past ? n0(x.done) + ' von ' + n0(x.goal) : 'Ziel ' + n0(x.goal)) : 'frei') + '</span><span class="liR">' + (x.goal && past ? (okd ? 'erreicht' : x.date === m.today ? 'läuft' : '–') : '') + '</span></div>';
+      }).join('')) : card(lab('Diese Woche') + '<div class="empty">Keine Wochenziele hinterlegt.</div>');
+    return Pv.banner + fixed(kpi, 196) + fixed(Pv.cards[0], 140) + grow(week) + Pv.strip + V.strip.replace(/<span class="xxs faint">Der Verlauf.*$/, '');
+  }
+  function vPPlanen(m) {
+    var T = partsOf(vTermine, m), u = m.urlaub;
+    var ur;
+    if (u && u.ok) {
+      var k = u.konto, items = u.items.slice(0, 6).map(function (x) {
+        var pill = '<span class="pill' + (x.status === 'offen' ? ' open' : x.status === 'abgelehnt' ? ' no' : '') + '">' + (STATUS[x.status] || x.status) + '</span>';
+        return '<div class="li"><span class="liD">' + range(x) + '</span><span class="liT">' + esc(x.label) + ' · ' + nf(x.tage) + ' T.</span>' + pill + '</div>';
+      }).join('') || '<div class="empty">Nichts geplant oder beantragt.</div>';
+      ur = card('<div class="cHead">' + lab('Urlaub ' + u.year) + '<span class="xxs faint">noch ' + nf(k.frei) + ' Tage · Flex ' + nf(k.flex) + '/' + k.flexMax + '</span></div>' + items
+        + (m.feiertage && m.feiertage.length ? '<div class="lab" style="margin-top:8px">Nächste Feiertage</div>' + m.feiertage.map(function (d) { return '<div class="li"><span class="liD">' + wdm(d) + '</span><span class="liT">' + (/-12-24$/.test(d) ? 'Heiligabend' : /-12-31$/.test(d) ? 'Silvester' : 'Feiertag') + '</span></div>'; }).join('') : ''));
+    } else ur = card(lab('Urlaub') + '<div class="empty">Urlaubsdaten noch nicht freigegeben.</div>');
+    var nx = u && u.ok ? u.items.filter(function (x) { return x.status === 'genehmigt' && x.art !== 'krank'; })[0] : null;
+    var st = '<div class="strip row2"><div class="sTxt"><span class="lab">Nächster Urlaub</span><span class="sVal">' + (nx ? range(nx) : 'keiner geplant') + '</span></div><button type="button" class="primary sm" id="toAntrag">Beantragen</button></div>';
+    return T.banner + fixed(T.cards[0], 120) + fixed(T.cards[1], 136) + grow(ur) + T.strip + st;
+  }
+
+  var VIEWS = { heute: ['Hallo', vHeute], verlauf: ['Verlauf', vVerlauf], kennzahlen: ['Kennzahlen', vKennzahlen], provision: ['Provision', vProvision], termine: ['Termine', vTermine], urlaub: ['Urlaub', vUrlaub], hinweise: ['Hinweise', vHinweise], me: ['Einstellungen', vMe], pheute: ['Heute', vPHeute], pmonat: ['Monat', vPMonat], pplanen: ['Planen', vPPlanen] };
 
   function tabBtn(id, label, inner, extraCls) {
-    return '<button type="button" class="tab' + (id === tab ? ' on' : '') + (extraCls || '') + '" data-tab="' + id + '" aria-label="' + label + '"' + (id === tab ? ' aria-current="page"' : '') + '>' + inner + '</button>';
+    var cur = PANEL ? ({ urlaub: 'pplanen', termine: 'pplanen', heute: 'pheute', verlauf: 'pheute', kennzahlen: 'pmonat', provision: 'pmonat' }[tab] || tab) : tab;
+    return '<button type="button" class="tab' + (id === cur ? ' on' : '') + (extraCls || '') + '" data-tab="' + id + '" aria-label="' + label + '"' + (id === cur ? ' aria-current="page"' : '') + '>' + inner + '</button>';
   }
   function renderTabs() {
     var hasNew = extra.hints && model && extra.hints.date === model.today && extra.hints.items.length && (!extra.hintsSeen || extra.hintsSeen < extra.hints.items.length);
-    $('tabs').innerHTML = TABS.map(function (t) {
+    var act = PANEL ? ({ urlaub: 'pplanen', termine: 'pplanen', heute: 'pheute', verlauf: 'pheute', kennzahlen: 'pmonat', provision: 'pmonat' }[tab] || tab) : tab;
+    $('tabs').innerHTML = (PANEL ? TABS_PANEL : TABS).map(function (t) {
       if (!t) return '<div class="sep"></div>';
       if (t === 'spacer') return '<div class="spacer"></div>';
       if (t === 'me') return tabBtn('me', 'Einstellungen', '<span class="av">' + esc(model && model.emp ? ini(model.emp.name) : '') + '</span>', ' meBtn');
-      return tabBtn(t[0], t[1], '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[t[0]] + '</svg><span class="tlab">' + t[1] + '</span>'
+      return tabBtn(t[0], t[1], '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[{ pheute: 'heute', pmonat: 'kennzahlen', pplanen: 'termine' }[t[0]] || t[0]] + '</svg><span class="tlab">' + t[1] + '</span>'
         + (t[0] === 'hinweise' && hasNew && tab !== 'hinweise' ? '<span class="dot"></span>' : ''));
     }).join('');
   }
@@ -383,7 +437,7 @@
     render._retry = false;
     renderTabs(); renderSub(m);
     var v = VIEWS[tab];
-    try { $('view').innerHTML = v[1](m) + moreFor(tab, m); }
+    try { $('view').innerHTML = v[1](m) + (PANEL ? '' : moreFor(tab, m)); }
     catch (e) { console.error(e); $('view').innerHTML = '<p class="error">Diese Ansicht konnte nicht geladen werden.</p>'; }
     if (tab === 'hinweise') {
       var cnt = extra.hints && extra.hints.date === m.today ? extra.hints.items.length : 0;
@@ -403,6 +457,7 @@
       var ps = $('previewSel'); if (ps) ps.onchange = function () { $('view').innerHTML = '<div class="empty">Lade …</div>'; SOS.storageSet({ previewEmpId: this.value }).then(refresh); };
     }
     if (tab === 'urlaub') bindUrlaub(m);
+    if (tab === 'pplanen') { var ta = $('toAntrag'); if (ta) ta.onclick = function () { tab = 'urlaub'; uView = 'antrag'; form = null; aTab = 'antrag'; tWeek = 0; tCache = null; render(model); }; }
   }
   function bindUrlaub(m) {
     var b = $('toAntrag'); if (b) b.onclick = function () { uView = 'antrag'; form = null; aTab = 'antrag'; tWeek = 0; tCache = null; render(model); };
@@ -417,7 +472,7 @@
     if (aTab === 'team') {
       $('tPrev').onclick = function () { tWeek -= 2; render(model); }; $('tNext').onclick = function () { tWeek += 2; render(model); };
       $('toForm').onclick = function () { aTab = 'antrag'; render(model); };
-      $('fBack').onclick = function () { uView = 'konto'; form = null; aTab = 'antrag'; render(model); };
+      $('fBack').onclick = function () { uView = 'konto'; form = null; aTab = 'antrag'; if (PANEL) tab = 'pplanen'; render(model); };
       return;
     }
     function upd(k, v) { form[k] = v; if (k === 'von' && form.bis < form.von) form.bis = form.von; render(model); checkFrei(); }
@@ -426,11 +481,11 @@
     $('fNotiz').oninput = function () { form.notiz = this.value; };
     $('fHalb').onclick = function () { upd('halb', !form.halb); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-ht]'), function (x) { x.onclick = function () { upd('halbTeil', x.dataset.ht); }; });
-    $('fBack').onclick = function () { uView = 'konto'; form = null; render(model); };
+    $('fBack').onclick = function () { uView = 'konto'; form = null; if (PANEL) tab = 'pplanen'; render(model); };
     $('fSend').onclick = function () {
       var ev = SOS.evalAntrag(model, form); if (ev.blocked || model.preview) return;
       sending = true; render(model);
-      SOS.sendAntrag(model, form, ev).then(function () { sending = false; uView = 'konto'; form = null; return refresh(); })
+      SOS.sendAntrag(model, form, ev).then(function () { sending = false; uView = 'konto'; form = null; if (PANEL) tab = 'pplanen'; return refresh(); })
         .catch(function (e) { sending = false; render(model); var el = $('fErr'); if (el) { el.textContent = e.message; el.hidden = false; } });
     };
     if (!form.frei || form.frei.key !== form.von + form.bis) checkFrei();
@@ -472,11 +527,12 @@
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('.tab'); if (!b) return;
-    tab = b.dataset.tab; if (tab !== 'urlaub') { uView = 'konto'; form = null; } SOS.storageSet({ lastTab: tab }); render(model);
+    tab = b.dataset.tab; if (tab !== 'urlaub') { uView = 'konto'; form = null; } var sv = {}; sv[PANEL ? 'lastTabPanel' : 'lastTab'] = tab; SOS.storageSet(sv); render(model);
   });
 
-  SOS.storageGet(['model', 'session', 'lastTab']).then(function (st) {
-    if (st.lastTab && VIEWS[st.lastTab]) tab = st.lastTab;
+  SOS.storageGet(['model', 'session', 'lastTab', 'lastTabPanel']).then(function (st) {
+    if (PANEL) tab = st.lastTabPanel && VIEWS[st.lastTabPanel] ? st.lastTabPanel : 'pheute';
+    else if (st.lastTab && VIEWS[st.lastTab] && st.lastTab.charAt(0) !== 'p') tab = st.lastTab;
     if (!st.session) { render({ state: 'login' }); return; }
     $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>';
     loadExtra().then(function () { if (st.model && st.model.state === 'ok' && st.model.forecast && st.model.prov && st.model.termine && ('heim' in st.model)) render(st.model); refresh(); });
