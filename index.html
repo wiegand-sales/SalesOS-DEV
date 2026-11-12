@@ -627,6 +627,9 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .sf-seg{height:auto;flex-wrap:wrap;row-gap:2px;justify-self:start;max-width:100%}
 .sf-lbl{width:52px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--text2)}
 .sf-d{display:inline-block;width:6px;height:6px;border-radius:2px;background:#C9502F;margin-right:6px;vertical-align:1px}
+.kal-vzc{background:#fff;border:1px dashed #CFC6B5;color:var(--text2)}
+.kal-vzc .ti{font-size:11px}
+.ab-vz{font-size:11px;color:#8A7F72;display:block;text-align:center;line-height:16px}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -9813,6 +9816,7 @@ function workHoursForDate(emp,dateStr){
   var dv=wh[key]||DEFAULT_WORK_HOURS[key];
   if(!dv||!dv.von||!dv.bis)return 0;
   var mins=timeStrToMin(dv.bis)-timeStrToMin(dv.von)-(dv.pause||0);
+  if(typeof latMinOn==='function'&&emp&&emp.id)mins-=latMinOn(emp.id,dateStr); // Verspätung kürzt die Arbeitszeit
   return Math.max(0,mins/60);
 }
 // Heute: nur die seit Arbeitsbeginn (lt. Wochenarbeitszeit) verstrichene Zeit, max. die geplanten Tagesstunden
@@ -9821,7 +9825,7 @@ function elapsedWorkHoursTodayFor(emp){
   var wh=emp.workHours||DEFAULT_WORK_HOURS;
   var key=WEEKDAY_KEYS[new Date(today()+'T00:00:00').getDay()];
   var dv=wh[key]||DEFAULT_WORK_HOURS[key];
-  var startMin=(dv&&dv.von)?timeStrToMin(dv.von):510;
+  var startMin=((dv&&dv.von)?timeStrToMin(dv.von):510)+(typeof latMinOn==='function'&&emp&&emp.id?latMinOn(emp.id,today()):0);
   var now=new Date(),refTime=now;
   if(settings.ftpLastSync){
     var syncDate=new Date(settings.ftpLastSync);
@@ -14000,14 +14004,15 @@ try{puInit();}catch(e){console.warn('puInit',e);}
 // ── KALENDER: Abwesenheiten, Sessions, Anträge, Urlaubskonto ──
 // Daten: Tabelle absences (siehe sql/20_kalender_abwesenheiten.sql), Urlaubskonto in employees.urlaub (je Jahr),
 // Sessions aus protocols. Betrachter lesen über absences_team() (Krank/Ausgleich nur als „abwesend“).
-var absences=[]; // {id,employeeId,art,von,bis,halb,status,verschobenVon,notiz,eingereichtAm,eingereichtVon,entschiedenVon,entschiedenAm}
+var absences=[];
+var lateness=[]; // Verspätungen (art 'verspaetung'), getrennt gehalten: zählen nicht als Abwesenheit // {id,employeeId,art,von,bis,halb,status,verschobenVon,notiz,eingereichtAm,eingereichtVon,entschiedenVon,entschiedenAm}
 var KAL={hide:{},fOpen:false,cview:'woche',view:'monat',cur:null,loc:'MUC',pane:null,low:'req',sort:'rest',open:null,drag:null,snap:null,ut:null};
 var KAL_MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 var KAL_WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
-var KAL_ART={urlaub:'Urlaub',flex:'Flex Day',ausgleich:'Ausgleichstag',freistellung:'Freistellung',krank:'Krank',abwesend:'Abwesend'};
+var KAL_ART={urlaub:'Urlaub',flex:'Flex Day',ausgleich:'Ausgleichstag',freistellung:'Freistellung',krank:'Krank',abwesend:'Abwesend',verspaetung:'Verspätung'};
 var KAL_CLS={urlaub:'kal-u',flex:'kal-f',ausgleich:'kal-a',freistellung:'kal-fs2',krank:'kal-k',abwesend:'kal-x'};
 
-function kalMapRow(r){return {id:r.id||('t'+Math.random().toString(36).slice(2)),employeeId:r.employee_id,art:r.art,von:r.von,bis:r.bis,halb:!!r.halb,halbTeil:r.halb_teil||null,status:r.status||'genehmigt',
+function kalMapRow(r){return {id:r.id||('t'+Math.random().toString(36).slice(2)),employeeId:r.employee_id,art:r.art,minuten:r.minuten!=null?+r.minuten:null,von:r.von,bis:r.bis,halb:!!r.halb,halbTeil:r.halb_teil||null,status:r.status||'genehmigt',
   verschobenVon:r.verschoben_von||null,notiz:r.notiz||'',eingereichtAm:(r.eingereicht_am||'').slice(0,10)||today(),eingereichtVon:r.eingereicht_von||'',entschiedenVon:r.entschieden_von||'',entschiedenAm:r.entschieden_am||null,masked:!!r.masked};}
 function kalHalb(x){return x.halb?(x.halbTeil==='nm'?' ½ NM':' ½ VM'):'';}
 function kalIsViewer(){return currentUserRole==='viewer';}
@@ -14017,11 +14022,11 @@ function loadAbsencesFromSupabase(){
     var y=+today().slice(0,4);
     return sb.rpc('absences_team',{p_von:(y-1)+'-01-01',p_bis:(y+1)+'-12-31'}).then(function(res){
       if(res.error){console.warn('absences_team failed:',res.error);absences=[];return false;}
-      absences=(res.data||[]).map(function(r,i){var m=kalMapRow(r);m.id='v'+i;m.masked=true;return m;});return true;});
+      absences=(res.data||[]).map(function(r,i){var m=kalMapRow(r);m.id='v'+i;m.masked=true;return m;}).filter(function(x){return x.art!=='verspaetung';});lateness=[];return true;});
   }
   return selectAllPaginated('absences').then(function(res){
     if(res.error){console.warn('absences load failed (Tabelle angelegt?):',res.error);absences=[];return false;}
-    absences=(res.data||[]).map(kalMapRow);return true;});
+    var all=(res.data||[]).map(kalMapRow);lateness=all.filter(function(x){return x.art==='verspaetung';});absences=all.filter(function(x){return x.art!=='verspaetung';});return true;});
 }
 function kalErrText(res){var m=(res&&res.error&&res.error.message)||'';if(/halb_teil/i.test(m))return 'Die Spalte „halb_teil“ fehlt noch. Bitte 21_kalender_regeln.sql in Supabase ausführen.';if(/row-level security|permission denied|42501/i.test(m))return 'Keine Berechtigung: Abwesenheiten dürfen nur Admins und Coaches eintragen und ändern.';return 'Speichern fehlgeschlagen: '+m;}
 function kalActor(){return currentCoach?currentCoach.name:(currentAuthUser?resolveNonEmployeeName(currentAuthUser.email):'');}
@@ -14122,6 +14127,7 @@ function kalFlags(eid){var k=kalKonto(eid),f=[],m=+today().slice(5,7);
 
 // ── Hinweise für Anträge / Einträge ──
 function kalEval(r){var e=kalEmp(r.employeeId),H=[];if(!e)return {n:0,H:[{t:'err',h:'Bitte einen Mitarbeiter wählen.'}]};
+  if(r.art==='verspaetung'){if(!r.von)return {n:0,H:[]};if(!kalWorkday(e,r.von))return {n:0,H:[]};if(!(+r.minuten>0))return {n:0,H:[{t:'err',h:'Bitte die Minuten angeben.'}]};return {n:1,H:[]};}
   if(!r.von||!r.bis||r.bis<r.von)return {n:0,H:[{t:'err',h:'Bitte einen gültigen Zeitraum wählen.'}]};
   var x={employeeId:r.employeeId,von:r.von,bis:r.bis,halb:r.halb,eingereichtAm:r.eingereichtAm||today()},ds=kalDays(x),n=ds.length*(r.halb?0.5:1),loc=kalIsVlc(e)?'VLC':'MUC',k=kalKonto(r.employeeId,r.von.slice(0,4));
   if(!n){H.push({t:'err',h:'Im Zeitraum liegt kein Arbeitstag von '+esc(kalFirst(e.name))+' (Wochenende, Feiertag oder lt. Arbeitszeit frei).'});return {n:0,H:H};}
@@ -14262,7 +14268,7 @@ function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),fi
   var h='<div class="kal-mg">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(w){return '<div class="wh">'+w+'</div>';}).join('');
   while(d<=last||kalP(d).getDay()!==1){var hn=kalHol(d,KAL.loc),out=kalP(d).getMonth()!==mo;
     if(kalWknd(d)){h+='<div class="c we'+(out?' out':'')+'"><div class="dn">'+kalP(d).getDate()+'</div></div>';d=kalAdd(d,1);continue;}
-    var ch=[];kalEmps(kalCtx()==='coach'?'ALL':null).forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
+    var ch=[];kalEmps(kalCtx()==='coach'?'ALL':null).forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));if(latCanSee())latOn(e.id,d).forEach(function(l){ch.push('<div class="kal-ch kal-vzc" data-kedit="'+l.id+'" data-ktip="'+esc('<b>'+e.name+'</b><br>'+(l.minuten||0)+' Min. zu spät'+(l.notiz?'<br>'+l.notiz:''))+'"><i class="ti ti-clock"></i> '+esc(kalFirst(e.name))+' · '+(l.minuten||0)+'′</div>');});});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
     var fix=kalFixDay(d)?'<div class="kal-ch '+(d.slice(-2)==='24'?'kal-u':'kal-a')+'">alle · '+(d.slice(-2)==='24'?'Urlaubstag':'Ausgleichstag')+'</div>':'';
     h+='<div class="c'+(hn?' hl':'')+(out?' out':'')+'" data-kday="'+d+'" data-kopen="'+d+'"><div class="dn">'+(d===t?'<span class="tday">'+kalP(d).getDate()+'</span>':kalP(d).getDate())+kalFreeTag(d)+'</div>'+(hn?'<div class="hn">'+esc(hn)+'</div>':'')+fix+ch.slice(0,5).join('')+(ch.length>5?'<div class="kal-more">+'+(ch.length-5)+' weitere</div>':'')+'</div>';d=kalAdd(d,1);}
   return h+'</div>';}
@@ -14353,13 +14359,13 @@ function kalMonthBars(k){var mx=Math.max(6,Math.max.apply(null,k.mon.map(functio
     g+='<text x="'+(x+bw/2)+'" y="'+(H+16)+'" text-anchor="middle" font-size="11" fill="'+(i===cm?'#1d1c1a':'#7A7268')+'" font-weight="'+(i===cm?'700':'400')+'">'+MS[i]+'</text>';});
   return g+'</svg>';}
 function kalPersonCard(eid){var e=kalEmp(eid),k=kalKonto(eid),y=today().slice(0,4),c=kalCfg(e,y),ed=kalCanEdit(),t=today();
-  var all=absences.filter(function(x){return x.employeeId===eid&&x.status!=='abgelehnt'&&x.status!=='storniert';});
+  var all=absences.concat(latCanSee()?lateness:[]).filter(function(x){return x.employeeId===eid&&x.status!=='abgelehnt'&&x.status!=='storniert';});
   var fut=all.filter(function(x){return x.bis>=t;}).sort(function(a,b){return a.von<b.von?-1:1;}),past=all.filter(function(x){return x.bis<t;}).sort(function(a,b){return a.von<b.von?1:-1;});
   fut=fut.slice(0,10);past=past.slice(0,10-fut.length);
   var anteil='';if(e.endDate&&e.endDate.slice(0,4)===y){var mEnd=+e.endDate.slice(5,7)-(kalP(e.endDate).getDate()<new Date(+y,+e.endDate.slice(5,7),0).getDate()?1:0);if(e.endDate<=y+'-06-30')anteil='Austritt '+fd(e.endDate)+': anteilig '+kalNf(Math.round(c.anspruch*mEnd/12*2)/2)+' Tage (BUrlG)';else anteil='Austritt '+fd(e.endDate)+' nach dem 30.06.: voller Anspruch';}
-  function ent(x){var a=kalShowArt(x);return '<div class="row"'+(ed&&!x.masked?' data-kedit="'+x.id+'"':'')+'><i class="kal-sw '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'"></i>'+KAL_ART[a]+kalHalb(x)+(x.status==='offen'?' · offen':'')+'<span class="r">'+kalRange(x)+' · '+kalNf(kalAmt(x))+' T</span></div>';}
+  function ent(x){if(x.art==='verspaetung')return '<div class="row"'+(ed?' data-kedit="'+x.id+'"':'')+'><i class="ti ti-clock" style="font-size:12px;color:var(--text2);width:10px"></i>Verspätung<span class="r">'+kalF(x.von)+' · '+(x.minuten||0)+' Min.</span></div>';var a=kalShowArt(x);return '<div class="row"'+(ed&&!x.masked?' data-kedit="'+x.id+'"':'')+'><i class="kal-sw '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+'"></i>'+KAL_ART[a]+kalHalb(x)+(x.status==='offen'?' · offen':'')+'<span class="r">'+kalRange(x)+' · '+kalNf(kalAmt(x))+' T</span></div>';}
   var left='<div class="k4"><div class="hi"><small>Frei</small><b>'+kalNf(k.frei)+'</b></div><div><small>Genommen</small><b>'+kalNf(k.tk)+'</b></div><div><small>Geplant</small><b>'+kalNf(k.pl)+'</b></div><div><small>Beantragt</small><b>'+kalNf(k.be)+'</b></div></div>'
-    +'<div class="meta"><span>Flex Days</span><span class="kal-fx">'+Array.apply(null,{length:k.flexMax}).map(function(_,i){return '<i class="'+(i<k.flex?'':'u')+'"></i>';}).join('')+'</span><span>'+kalNf(k.flex)+' von '+k.flexMax+' übrig</span>'+(kalIsViewer()?'':'<span>Krank '+kalNf(k.kr)+'</span><span>Ausgleichstage '+kalNf(k.ag)+'</span>')+'</div>'
+    +'<div class="meta"><span>Flex Days</span><span class="kal-fx">'+Array.apply(null,{length:k.flexMax}).map(function(_,i){return '<i class="'+(i<k.flex?'':'u')+'"></i>';}).join('')+'</span><span>'+kalNf(k.flex)+' von '+k.flexMax+' übrig</span>'+(kalIsViewer()?'':'<span>Krank '+kalNf(k.kr)+'</span><span>Ausgleichstage '+kalNf(k.ag)+'</span>'+(function(){var st=latStats(eid,y+'-01-01',y+'-12-31');return '<span>Verspätungen '+st.n+'×'+(st.n?' · '+st.min+' Min.':'')+'</span>';})())+'</div>'
     +(ed?'<h4>Einstellungen '+y+'</h4><div class="set"><span>Urlaubsanspruch</span><input type="number" step="0.5" id="kalSetAns" value="'+c.anspruch+'"><span>davon Flex Days</span><input type="number" step="0.5" id="kalSetFlex" value="'+c.flex+'"><span>Übertrag aus '+(+y-1)+' (verfällt 31.03.)'+(c.uebVorschlag?'<br><span class="kal-note">Vorschlag: Rest aus '+(+y-1)+', mit Speichern übernehmen</span>':'')+'</span><input type="number" step="0.5" id="kalSetUeb" value="'+c.uebertrag+'"><span>Vor dem Kalender genommen</span><input type="number" step="0.5" id="kalSetVor" value="'+c.vorher+'"></div>'+(anteil?'<div class="kal-note" style="margin-top:8px">'+anteil+'</div>':'')
       +'<div class="kal-acts" style="justify-content:flex-end;margin-top:12px"><button class="btn" onclick="kalOpenForm(\''+eid+'\')">Eintragen</button><button class="btn btn-primary" onclick="kalSaveCfg(\''+eid+'\')">Speichern</button></div>':'');
   var right='<h4 style="margin-top:0">Geplant<span>'+fut.length+'</span></h4>'+(fut.length?fut.map(ent).join(''):'<div class="kal-note" style="padding:6px 0">Nichts geplant.</div>')
@@ -14367,15 +14373,15 @@ function kalPersonCard(eid){var e=kalEmp(eid),k=kalKonto(eid),y=today().slice(0,
   return '<div class="kal-pc"><div>'+left+'</div><div>'+right+'</div></div>';}
 function kalVzTz(e){var c=String(e.contract||'');if(/teil/i.test(c))return 'TZ';if(/voll/i.test(c))return 'VZ';return (+e.hours>=38||!e.hours)?'VZ':'TZ';}
 function kalKontoList(){var L=kalEmps().slice().sort(function(a,b){return KAL.sort==='name'?a.name.localeCompare(b.name):kalKonto(b.id).frei-kalKonto(a.id).frei;}),vw=kalIsViewer();
-  var cols='30px minmax(170px,1.3fr) minmax(200px,2fr) 60px 96px '+(vw?'':'60px 64px ')+'minmax(140px,1fr) 16px';
-  var h='<div class="kal-kt kal-kh" style="grid-template-columns:'+cols+'"><span></span><span>Mitarbeiter</span><span>Urlaub '+today().slice(0,4)+'</span><span class="r">Frei</span><span>Flex Days</span>'+(vw?'':'<span class="r">Krank</span><span class="r">Ausgl.</span>')+'<span>Hinweise</span><span></span></div>';
+  var cols='30px minmax(170px,1.3fr) minmax(200px,2fr) 60px 96px '+(vw?'':'60px 64px 84px ')+'minmax(140px,1fr) 16px',yy=today().slice(0,4);
+  var h='<div class="kal-kt kal-kh" style="grid-template-columns:'+cols+'"><span></span><span>Mitarbeiter</span><span>Urlaub '+today().slice(0,4)+'</span><span class="r">Frei</span><span>Flex Days</span>'+(vw?'':'<span class="r">Krank</span><span class="r">Ausgl.</span><span class="r">Verspät.</span>')+'<span>Hinweise</span><span></span></div>';
   h+=L.map(function(e){var k=kalKonto(e.id),T=k.ans+k.uebEff||1,f=kalFlags(e.id),op=KAL.open===e.id;
     function seg(v,c,cls){return v>0?'<i class="'+cls+'" style="width:'+(v/T*100)+'%;background:'+c+'">'+(v/T>0.06?kalNf(v):'')+'</i>':'';}
     return '<div class="kal-it'+(op?' open':'')+'"><div class="kal-kt kal-kr" style="grid-template-columns:'+cols+'" onclick="kalToggleAcc(\''+e.id+'\')" role="button" tabindex="0" aria-expanded="'+op+'">'
       +'<span class="kal-av">'+kalIni(e.name)+'</span><span class="nm">'+esc(e.name)+'<small>'+esc(e.role||'')+' · '+kalVzTz(e)+'</small></span>'
       +'<span><span class="kal-sb" data-ktip="Genommen '+kalNf(k.tk)+' · geplant '+kalNf(k.pl)+' · beantragt '+kalNf(k.be)+' · frei '+kalNf(k.frei)+'">'+seg(k.tk,'#8A7F72','t')+seg(k.pl,'#CDBB9E','p')+seg(k.be,'#E6D9C2','p kal-bh')+'</span></span>'
       +'<span class="r"><b>'+kalNf(k.frei)+'</b></span><span><span class="kal-fx">'+Array.apply(null,{length:k.flexMax}).map(function(_,i){return '<i class="'+(i<k.flex?'':'u')+'"></i>';}).join('')+'</span></span>'
-      +(vw?'':'<span class="r">'+kalNf(k.kr)+'</span><span class="r">'+kalNf(k.ag)+'</span>')
+      +(vw?'':'<span class="r">'+kalNf(k.kr)+'</span><span class="r">'+kalNf(k.ag)+'</span>'+(function(){var st=latStats(e.id,yy+'-01-01',yy+'-12-31');return '<span class="r"'+(st.n?' data-ktip="'+st.n+'× · '+st.min+' Min. in '+yy+'"':'')+'>'+(st.n?st.n+'×':'0')+'</span>';})())
       +'<span class="kal-tags" style="margin:0">'+(f.length?f.join(''):'<span class="kal-note">–</span>')+'</span><i class="ti ti-chevron-right chev"></i></div>'
       +(op?'<div class="kal-body">'+kalPersonCard(e.id)+'</div>':'')+'</div>';}).join('');
   return '<div class="kal-acc2">'+h+'</div>';}
@@ -14434,7 +14440,7 @@ function kalToggleAcc(id){KAL.open=KAL.open===id?null:id;kalRerender();}
 
 // ── Speichern ──
 function kalRowFrom(x){var r=kalRowBase(x);if(x.halb)r.halb_teil=x.halbTeil||'vm';return r;}
-function kalRowBase(x){return {employee_id:x.employeeId,art:x.art,von:x.von,bis:x.bis,halb:!!x.halb,status:x.status,verschoben_von:x.verschobenVon||null,notiz:x.notiz||null,eingereicht_von:x.eingereichtVon||null,entschieden_von:x.entschiedenVon||null,entschieden_am:x.entschiedenAm||null};}
+function kalRowBase(x){var r={employee_id:x.employeeId,art:x.art,von:x.von,bis:x.bis,halb:!!x.halb,status:x.status,verschoben_von:x.verschobenVon||null,notiz:x.notiz||null,eingereicht_von:x.eingereichtVon||null,entschieden_von:x.entschiedenVon||null,entschieden_am:x.entschiedenAm||null};if(x.art==='verspaetung')r.minuten=x.minuten||null;return r;}
 function kalDecide(id,ok){if(!kalCanEdit())return;var x=absences.find(function(a){return String(a.id)===String(id);});if(!x)return;
   var art=x.art;if(ok&&art==='urlaub'&&!x.verschobenVon&&kalVorlauf(x)<15)art='flex';
   var upd={status:ok?'genehmigt':'abgelehnt',art:art,entschieden_von:kalActor(),entschieden_am:new Date().toISOString()};
@@ -14448,6 +14454,20 @@ function kalSaveCfg(eid){var e=kalEmp(eid);if(!e||!kalCanEdit())return;var y=tod
   logActivity('kalender','updated','Urlaubskonto geändert',eid,e.name+' · '+y);
   sb.from('employees').update({urlaub:u}).eq('id',eid).then(function(res){if(res&&res.error)alert(/urlaub/i.test(res.error.message||'')?'Die Spalte „urlaub“ fehlt noch. Bitte 20_kalender_abwesenheiten.sql ausführen.':'Speichern fehlgeschlagen: '+res.error.message);});}
 
+
+// ── Verspätungen ──
+function latCanSee(){return typeof kalCanEdit==='function'&&kalCanEdit();}
+function latOn(eid,d){return lateness.filter(function(x){return String(x.employeeId)===String(eid)&&x.von===d;});}
+function latMinOn(eid,d){return latOn(eid,d).reduce(function(s,x){return s+(+x.minuten||0);},0);}
+function latStats(eid,from,to){var L=lateness.filter(function(x){return String(x.employeeId)===String(eid)&&x.von>=from&&x.von<=to;});return {n:L.length,min:L.reduce(function(s,x){return s+(+x.minuten||0);},0)};}
+function latHm(h){var m=Math.round(h*60);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+function latChecks(e,F){var tile=function(l,v,sub,c){return '<div class="ab-ck '+(c||'')+'"><small>'+l+'</small><b>'+v+'</b><em>'+sub+'</em></div>';};
+  if(!F.von||!e)return '<div class="ab-ck4">'+tile('Dieser Eintrag','–','Datum wählen','off')+tile('Arbeitszeit','–','','off')+tile('Zählt als','Verspätung','kein Urlaub, kein Antrag')+tile('Dieses Jahr','–','','off')+'</div>';
+  var m=+F.minuten||0,soll=(function(){var wh=e.workHours||DEFAULT_WORK_HOURS,dv=wh[WEEKDAY_KEYS[new Date(F.von+'T00:00:00').getDay()]]||DEFAULT_WORK_HOURS[WEEKDAY_KEYS[new Date(F.von+'T00:00:00').getDay()]];if(!dv||!dv.von||!dv.bis)return 0;return Math.max(0,(timeStrToMin(dv.bis)-timeStrToMin(dv.von)-(dv.pause||0))/60);})();
+  var other=latOn(e.id,F.von).filter(function(x){return String(x.id)!==String(F.id);}).reduce(function(s,x){return s+(+x.minuten||0);},0),ist=Math.max(0,soll-(m+other)/60);
+  var y=F.von.slice(0,4),st=latStats(e.id,y+'-01-01',y+'-12-31'),n=st.n+(F.id?0:1),tot=st.min-(F.id?(+((lateness.find(function(x){return String(x.id)===String(F.id);})||{}).minuten)||0):0)+m;
+  return '<div class="ab-ck4">'+tile('Dieser Eintrag',m?m+' Min.':'–',kalF(F.von))+tile('Arbeitszeit',soll?latHm(ist)+' Std.':'–',soll?'statt '+latHm(soll)+' · zählt für Opt./Std.':'an dem Tag kein Arbeitstag',soll?'':'w')
+    +tile('Zählt als','Verspätung','kein Urlaub, kein Antrag')+tile('Dieses Jahr',n+'×',(F.id?'':'danach · ')+tot+' Min. gesamt')+'</div>';}
 // ── Formular: Abwesenheit eintragen / bearbeiten ──
 var KF=null;
 // ── Ein Formular „Abwesenheit eintragen“ für Kalender (KF) und Mitarbeiterkarte (AB.f) ──
@@ -14456,17 +14476,29 @@ var ABS_TH='font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:u
 function absObj(c){return c==='kf'?KF:AB.f;}
 function absRedraw(c){if(c==='kf')kalDrawForm();else abRender();}
 function absSet(c,k,v){var F=absObj(c);if(!F)return;F[k]=v;
-  if(k==='art'&&v==='krank')F.status='genehmigt';
+  if(k==='art'&&(v==='krank'||v==='verspaetung'))F.status='genehmigt';
+  if(k==='art'&&v==='verspaetung'){F.halb=false;F.bis=F.von;if(!F.minuten)F.minuten=15;}
+  if(F.art==='verspaetung'&&k==='von')F.bis=F.von;
   if(k==='halb'&&v)F.bis=F.von;
   if(k==='von'){if(!F.bis||F.bis<F.von||F.halb)F.bis=F.von;}
   if(c==='ab'&&(k==='von'||k==='bis'))AB.fOpen=true;
   absRedraw(c);}
-function absSeg(c,k,arr,cur){return '<span class="dsh-seg">'+arr.map(function(o){return '<button type="button" class="'+(cur===o[0]?'on':'')+'" onclick="absSet(\''+c+'\',\''+k+'\','+(typeof o[0]==='boolean'?o[0]:'\''+o[0]+'\'')+')">'+o[1]+'</button>';}).join('')+'</span>';}
+function absSeg(c,k,arr,cur){return '<span class="dsh-seg">'+arr.map(function(o){return '<button type="button" class="'+(cur===o[0]?'on':'')+'" onclick="absSet(\''+c+'\',\''+k+'\','+(typeof o[0]==='boolean'||typeof o[0]==='number'?o[0]:'\''+o[0]+'\'')+')">'+o[1]+'</button>';}).join('')+'</span>';}
 function absFormHtml(c,e,F,ev,empHtml){var isU=F.art==='urlaub',vl=F.von&&e?kalWdBetween(e,F.eingereichtAm||today(),F.von):0;
+  var isV=F.art==='verspaetung',arts=[['urlaub','Urlaub'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']];if(latCanSee()||isV)arts.push(['verspaetung','Verspätung']);
   var h='<div style="'+ABS_TILE+'"><div style="'+ABS_TH+'">Was</div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-    +absSeg(c,'art',[['urlaub','Urlaub'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']],F.art)
-    +'<span style="margin-left:auto;display:inline-flex;gap:8px;flex-wrap:wrap">'+absSeg(c,'halb',[[false,'Ganzer Tag'],[true,'Halber Tag']],!!F.halb)
-    +(F.halb?absSeg(c,'halbTeil',[['vm','Vormittag'],['nm','Nachmittag']],F.halbTeil||'vm'):'')+'</span></div></div>';
+    +absSeg(c,'art',arts,F.art)
+    +(isV?'':'<span style="margin-left:auto;display:inline-flex;gap:8px;flex-wrap:wrap">'+absSeg(c,'halb',[[false,'Ganzer Tag'],[true,'Halber Tag']],!!F.halb)
+    +(F.halb?absSeg(c,'halbTeil',[['vm','Vormittag'],['nm','Nachmittag']],F.halbTeil||'vm'):'')+'</span>')+'</div></div>';
+  if(isV){
+    h+='<div style="'+ABS_TILE+'"><div style="'+ABS_TH+'">Wer &amp; Wann</div><div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.5fr);gap:8px;align-items:start">'
+      +'<div style="min-width:0"><label>Mitarbeiter</label>'+empHtml+'</div>'
+      +'<div><label>Datum</label><input type="date" value="'+(F.von||'')+'" onchange="absSet(\''+c+'\',\'von\',this.value)"></div>'
+      +'<div><label>Minuten zu spät</label><div style="display:flex;gap:6px;align-items:center">'+absSeg(c,'minuten',[[5,'5'],[15,'15'],[30,'30'],[60,'60']],+F.minuten||0)
+      +'<input type="number" min="1" max="600" value="'+(F.minuten||'')+'" style="width:80px" onchange="absSet(\''+c+'\',\'minuten\',+this.value||null)" aria-label="Minuten"></div></div></div>'
+      +'<input type="text" placeholder="Grund / Notiz (optional), z. B. Bahn ausgefallen" value="'+esc(F.notiz||'')+'" oninput="absObj(\''+c+'\').notiz=this.value" style="margin-top:8px"></div>';
+    h+='<div style="'+ABS_TILE+';margin-bottom:0"><div style="'+ABS_TH+'">Prüfung</div>'+latChecks(e,F)+(F.von&&e&&!kalWorkday(e,F.von)?'<div class="kal-hint err" style="margin-top:8px">An diesem Tag arbeitet '+esc(kalFirst(e.name))+' laut Arbeitszeit nicht.</div>':'')+'</div>';
+    return h;}
   h+='<div style="'+ABS_TILE+'"><div style="'+ABS_TH+'">Wer &amp; Wann</div><div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:start">'
     +'<div style="min-width:0"><label>Mitarbeiter</label>'+empHtml+'</div>'
     +'<div><label>Von</label><input type="date" value="'+(F.von||'')+'" onchange="absSet(\''+c+'\',\'von\',this.value)"></div>'
@@ -14490,7 +14522,7 @@ function kalEnsureModal(){if(document.getElementById('kalFormModal'))return;var 
    +'<div style="padding:4px 18px 14px 18px"><div id="kalFormFoot" style="display:flex;justify-content:flex-end;gap:8px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:12px;padding:8px"></div></div></div></div></div>';
   d.addEventListener('mousedown',function(ev){if(ev.target===d)kalCloseForm();});document.body.appendChild(d);}
 function kalOpenForm(eid,day,editId){if(!kalCanEdit())return;kalEnsureModal();
-  if(editId){var x=absences.find(function(a){return String(a.id)===String(editId);});if(!x)return;KF={id:x.id,employeeId:x.employeeId,art:x.art==='flex'?'urlaub':x.art,wasFlex:x.art==='flex',normal:x.art==='urlaub'&&x.status==='genehmigt',von:x.von,bis:x.bis,halb:x.halb,halbTeil:x.halbTeil||'vm',status:x.status,notiz:x.notiz,eingereichtAm:x.eingereichtAm,verschobenVon:x.verschobenVon};}
+  if(editId){var x=absences.find(function(a){return String(a.id)===String(editId);})||lateness.find(function(a){return String(a.id)===String(editId);});if(!x)return;KF={id:x.id,employeeId:x.employeeId,minuten:x.minuten,art:x.art==='flex'?'urlaub':x.art,wasFlex:x.art==='flex',normal:x.art==='urlaub'&&x.status==='genehmigt',von:x.von,bis:x.bis,halb:x.halb,halbTeil:x.halbTeil||'vm',status:x.status,notiz:x.notiz,eingereichtAm:x.eingereichtAm,verschobenVon:x.verschobenVon};}
   else{var L=kalEmps();KF={id:null,employeeId:eid||(KF&&KF.employeeId&&L.some(function(e){return e.id===KF.employeeId;})?KF.employeeId:(L[0]&&L[0].id)),art:'urlaub',von:day||today(),bis:day||today(),halb:false,halbTeil:'vm',status:'genehmigt',notiz:'',normal:false};}
   document.getElementById('kalFormTitle').textContent=KF.id?'Eintrag bearbeiten':'Abwesenheit eintragen';
   document.getElementById('kalFormModal').classList.remove('hidden');kalDrawForm();}
@@ -14501,7 +14533,14 @@ function kalDrawForm(){var b=document.getElementById('kalFormBody');if(!b||!KF)r
   var h=absFormHtml('kf',fe,KF,ev,empSel);
   var ft='<div style="display:flex;gap:8px;width:100%;justify-content:flex-end">'+(KF.id?'<button class="btn btn-danger" style="margin-right:auto" onclick="kalDelete()">Löschen</button>':'')+'<button class="btn" onclick="kalCloseForm()">Abbrechen</button><button class="btn btn-primary" onclick="kalSaveForm()"'+(ev.n?'':' disabled')+'>'+(KF.id?'Speichern':'Eintragen')+'</button></div>';
   b.innerHTML=h;var fo=document.getElementById('kalFormFoot');if(fo)fo.innerHTML=ft;}
-function kalSaveForm(){if(!KF)return;var ev=kalEval(KF);if(!ev.n)return;var art=KF.art,e=kalEmp(KF.employeeId);
+function latSaveForm(){var e=kalEmp(KF.employeeId),x={id:KF.id,employeeId:KF.employeeId,art:'verspaetung',von:KF.von,bis:KF.von,halb:false,halbTeil:null,status:'genehmigt',notiz:KF.notiz||'',minuten:+KF.minuten,verschobenVon:null,eingereichtAm:today(),eingereichtVon:kalActor(),entschiedenVon:kalActor(),entschiedenAm:new Date().toISOString()};
+  var row=kalRowFrom(x);kalCloseForm();
+  if(KF.id){var i=lateness.findIndex(function(a){return String(a.id)===String(KF.id);});if(i>=0)lateness[i]=x;sb.from('absences').update(row).eq('id',KF.id).then(function(res){if(res&&res.error)alert(latErr(res));});}
+  else{x.id='t'+Date.now();lateness.push(x);sb.from('absences').insert(row).select().single().then(function(res){if(res&&res.error){alert(latErr(res));lateness=lateness.filter(function(a){return a!==x;});kalRerender();return;}if(res&&res.data&&res.data.id)x.id=res.data.id;});}
+  logActivity('kalender',KF.id?'updated':'created',(KF.id?'Verspätung geändert: ':'Verspätung eingetragen: ')+x.minuten+' Min.',x.employeeId,(e?e.name:'')+' · '+kalF(x.von));
+  kalRerender();}
+function latErr(res){var m=(res&&res.error&&res.error.message)||'';if(/minuten|absences_art_check|check constraint/i.test(m))return 'Für Verspätungen fehlt noch die Datenbank-Erweiterung. Bitte 31_verspaetung.sql ausführen.';return kalErrText(res);}
+function kalSaveForm(){if(!KF)return;var ev=kalEval(KF);if(!ev.n)return;if(KF.art==='verspaetung'){latSaveForm();return;}var art=KF.art,e=kalEmp(KF.employeeId);
   if(art==='urlaub'&&!KF.normal&&!KF.verschobenVon&&kalWdBetween(e,KF.eingereichtAm||today(),KF.von)<15)art='flex';
   if(art==='krank')KF.status='genehmigt';
   var x={id:KF.id,employeeId:KF.employeeId,art:art,von:KF.von,bis:KF.halb?KF.von:KF.bis,halb:!!KF.halb,halbTeil:KF.halb?(KF.halbTeil||'vm'):null,status:KF.status,notiz:KF.notiz||'',verschobenVon:KF.verschobenVon||null,eingereichtAm:KF.eingereichtAm||today(),eingereichtVon:kalActor(),
@@ -14514,8 +14553,8 @@ function kalSaveForm(){if(!KF)return;var ev=kalEval(KF);if(!ev.n)return;var art=
       if(res&&res.data&&res.data.id)x.id=res.data.id;});}
   logActivity('kalender',KF.id?'updated':'created',(KF.id?'Abwesenheit geändert: ':'Abwesenheit eingetragen: ')+KAL_ART[art],x.employeeId,(e?e.name:'')+' · '+kalRange(x));
   kalRerender();}
-function kalDelete(){if(!KF||!KF.id)return;if(!confirm('Diesen Eintrag löschen? Das lässt sich nicht rückgängig machen.'))return;var id=KF.id,x=absences.find(function(a){return String(a.id)===String(id);}),e=x&&kalEmp(x.employeeId);
-  absences=absences.filter(function(a){return String(a.id)!==String(id);});kalCloseForm();kalRerender();
+function kalDelete(){if(!KF||!KF.id)return;if(!confirm('Diesen Eintrag löschen? Das lässt sich nicht rückgängig machen.'))return;var id=KF.id,x=absences.find(function(a){return String(a.id)===String(id);})||lateness.find(function(a){return String(a.id)===String(id);}),e=x&&kalEmp(x.employeeId);
+  absences=absences.filter(function(a){return String(a.id)!==String(id);});lateness=lateness.filter(function(a){return String(a.id)!==String(id);});kalCloseForm();kalRerender();
   if(x)logActivity('kalender','deleted','Abwesenheit gelöscht: '+KAL_ART[x.art],x.employeeId,(e?e.name:'')+' · '+kalRange(x));
   sb.from('absences').delete().eq('id',id).then(function(res){if(res&&res.error)alert(kalErrText(res));});}
 
@@ -14829,9 +14868,10 @@ function abStep(n){var d=new Date(+AB.mk.slice(0,4),+AB.mk.slice(5,7)-1+n,1);AB.
 function abPlan(e,mk){var n=0;ztDaysOfMonth(mk).forEach(function(d){if(!kalWorkday(e,d))return;var a=kalOn(e.id,d);if(!a||a.art==='krank')n++;});var x=(zielStore[mk]||{})[e.id]||{},opt=+x.optTag||0,mo=+x.margeOpt||0;return {t:n,z:n*opt*mo};}
 function abRender(){if(!AB.f)abNewForm();var e=kalEmp(AB.emp),b=document.getElementById('abBody');if(!e||!b)return;_kalOnIdx=null;var mk=AB.mk,y=mk.slice(0,4),k=kalKonto(e.id,y),mn=MONTH_NAMES_ZIEL[+mk.slice(5)-1],p=abPlan(e,mk);if(!AB.base)AB.base=p;
   var CARD='background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px rgba(40,32,15,0.06)';
-  var BK=[['URLAUB FREI',kalNf(k.frei),'von '+kalNf(k.ans+k.uebEff)+' Tagen'],['FLEX DAYS',kalNf(k.flex),'von '+k.flexMax+' übrig'],['KRANK '+y,kalNf(k.kr),'Tage'],['EINSATZTAGE',p.t,mn+' lt. Kalender'],['ZIEL MARGE',ztEur(p.z),mn]];
-  var h='<div id="abSecB" style="border-radius:14px;padding:16px 18px;margin-bottom:14px;min-height:148px;box-sizing:border-box;color:#fff;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)"><div style="font-size:11px;font-weight:600;letter-spacing:.09em;margin-bottom:10px">'+mn.toUpperCase()+' '+y+' · URLAUB UND ABWESENHEIT</div><div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">'
-    +BK.map(function(x,i){return '<div style="padding:0 14px;'+(i?'border-left:1px solid rgba(255,255,255,.25);':'padding-left:0;')+'min-width:0"><div style="font-size:11px;font-weight:600;letter-spacing:.09em">'+x[0]+'</div><div style="font-size:'+(i===4?'24':'32')+'px;font-weight:300;line-height:1.15;white-space:nowrap">'+x[1]+'</div><div style="font-size:12.5px;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x[2]+'</div></div>';}).join('')+'</div></div>';
+  var lst=latStats(e.id,mk+'-01',mk+'-31');
+  var BK=[['URLAUB FREI',kalNf(k.frei),'von '+kalNf(k.ans+k.uebEff)+' Tagen'],['FLEX DAYS',kalNf(k.flex),'von '+k.flexMax+' übrig'],['KRANK '+y,kalNf(k.kr),'Tage']].concat(latCanSee()?[['VERSPÄTET',lst.n+'×',lst.n?lst.min+' Min. im '+mn:'im '+mn]]:[]).concat([['EINSATZTAGE',p.t,mn+' lt. Kalender'],['ZIEL MARGE',ztEur(p.z),mn]]);
+  var h='<div id="abSecB" style="border-radius:14px;padding:16px 18px;margin-bottom:14px;min-height:148px;box-sizing:border-box;color:#fff;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)"><div style="font-size:11px;font-weight:600;letter-spacing:.09em;margin-bottom:10px">'+mn.toUpperCase()+' '+y+' · URLAUB UND ABWESENHEIT</div><div style="display:grid;grid-template-columns:repeat('+BK.length+',minmax(0,1fr))">'
+    +BK.map(function(x,i){return '<div style="padding:0 14px;'+(i?'border-left:1px solid rgba(255,255,255,.25);':'padding-left:0;')+'min-width:0"><div style="font-size:11px;font-weight:600;letter-spacing:.09em">'+x[0]+'</div><div style="font-size:'+(i===BK.length-1?'24':'32')+'px;font-weight:300;line-height:1.15;white-space:nowrap">'+x[1]+'</div><div style="font-size:12.5px;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x[2]+'</div></div>';}).join('')+'</div></div>';
   // Formular (feste Höhe: optionale Teile werden nur ausgeblendet, nicht entfernt)
   var F=AB.f,ev=F.von?kalEval(F):{n:0,H:[]},hid=function(c){return c?'':'visibility:hidden;';},ed=kalCanEdit();
   var seg=function(arr,cur,set){return '<span class="dsh-seg">'+arr.map(function(o){return '<button type="button" class="'+(cur===o[0]?'on':'')+'" onclick="'+set.replace('$',o[0])+';abRender()">'+o[1]+'</button>';}).join('')+'</span>';};
@@ -14845,7 +14885,7 @@ function abRender(){if(!AB.f)abNewForm();var e=kalEmp(AB.emp),b=document.getElem
   var selTo=F.halb?F.von:F.bis;
   var tl='<div class="ab-tl" style="grid-template-columns:130px repeat('+D.length+',minmax(14px,1fr))"><div class="nm hd"><b>'+mn+'</b></div>'+D.map(function(x){return '<div class="hd'+(kalWknd(x)||kalHol(x,loc)?' we':'')+'"><b>'+kalP(x).getDate()+'</b>'+KAL_WD[kalP(x).getDay()].slice(0,1)+'</div>';}).join('');
   T.forEach(function(t){var me=t.id===e.id;tl+='<div class="nm'+(me?' me':'')+'">'+esc(t.name)+'</div>'+D.map(function(x){if(kalWknd(x)||kalHol(x,loc))return '<div class="we"></div>';var a=kalOn(t.id,x),sel=me&&F.von&&x>=F.von&&x<=selTo;
-    return '<div class="'+(me?'me2 ab-pick':'')+(sel?' ab-sel':'')+'"'+(me&&ed?' onclick="abPick(\''+x+'\')"':'')+'>'+(a&&!a.fixed?'<span class="'+(KAL_CLS[kalShowArt(a)]||'')+(a.status==='offen'?' kal-op':'')+'" data-ktip="'+esc(kalTip(a))+'"></span>':'')+'</div>';}).join('');});
+    var lm=latCanSee()?latMinOn(t.id,x):0;return '<div class="'+(me?'me2 ab-pick':'')+(sel?' ab-sel':'')+'"'+(me&&ed?' onclick="abPick(\''+x+'\')"':'')+'>'+(a&&!a.fixed?'<span class="'+(KAL_CLS[kalShowArt(a)]||'')+(a.status==='offen'?' kal-op':'')+'" data-ktip="'+esc(kalTip(a))+'"></span>':'')+(lm&&!a?'<i class="ti ti-clock ab-vz" data-ktip="'+esc(t.name+' · '+lm+' Min. zu spät')+'"></i>':'')+'</div>';}).join('');});
   tl+='<div class="nm sum">frei</div>'+D.map(function(x){if(kalWknd(x)||kalHol(x,loc))return '<div class="we"></div>';var o=kalFree(x,loc,null);return '<div class="sum'+(kalFreeOver(x,o)?' w3':'')+'">'+(o.length||'')+'</div>';}).join('')+'</div>';
   h+='<div id="abSecT" style="'+CARD+';margin-bottom:4px"><div style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;margin-bottom:10px"><button class="kal-nav" onclick="abStep(-1)">‹</button>Team '+mn+' '+y+'<button class="kal-nav" onclick="abStep(1)">›</button><span class="kal-note" style="margin-left:auto;font-weight:400">'+esc(kalFirst(e.name))+'s Zeile: Tag anklicken = Zeitraum wählen, Eintrag anklicken = ändern · '+(loc==='VLC'?'Valencia':'Olching')+'</span></div><div style="overflow-x:auto">'+tl+'</div>'
     +'<div style="margin-top:10px;font-size:13px">Ziel '+mn+': <b>'+p.t+' T · '+ztEur(p.z)+'</b>'+(zielLocks[mk]?' <span class="kal-note">· Monat festgeschrieben, neue Abwesenheiten erscheinen bei „Wer lag genauer?“ als „Urlaub ungeplant“</span>':'')+'</div></div>';
@@ -14867,7 +14907,7 @@ function abPick(d){var e=kalEmp(AB.emp);var x=absences.find(function(a){return a
   if(x&&!(AB.f&&AB.f.pend)){if(x.masked)return;AB.f={id:x.id,employeeId:x.employeeId,art:x.art==='flex'?'urlaub':x.art,von:x.von,bis:x.bis,halb:!!x.halb,halbTeil:x.halbTeil||'vm',status:x.status==='offen'?'offen':'genehmigt',notiz:x.notiz||'',normal:false,eingereichtAm:x.eingereichtAm||today(),verschobenVon:x.verschobenVon||null,pend:false};abRender();return;}
   AB.fOpen=true;var F=AB.f;if(!F||F.id||!F.pend){abNewForm();F=AB.f;F.von=d;F.bis=d;F.pend=true;}else{if(d<F.von)F.von=d;else F.bis=d;F.pend=false;}if(F.halb)F.bis=F.von;abRender();}
 function abSave(){var F=AB.f;if(!F||!kalCanEdit())return;KF=Object.assign({},F);kalSaveForm();AB.f=null;AB.base=null;abRender();}
-function abDelete(){var F=AB.f;if(!F||!F.id)return;KF=Object.assign({},F);var n=absences.length;kalDelete();if(absences.length<n){AB.f=null;AB.base=null;}abRender();}
+function abDelete(){var F=AB.f;if(!F||!F.id)return;KF=Object.assign({},F);var n=absences.length+lateness.length;kalDelete();if(absences.length+lateness.length<n){AB.f=null;AB.base=null;}abRender();}
 function abDay(d){if(!kalCanEdit())return;var e=kalEmp(AB.emp);var x=absences.find(function(a){return a.employeeId===e.id&&a.status!=='abgelehnt'&&a.status!=='storniert'&&a.von<=d&&a.bis>=d&&kalDays(a).indexOf(d)>=0;});
   if(x){ // entfernen bzw. Zeitraum kürzen/teilen
     if(x.von===x.bis){absences=absences.filter(function(a){return a!==x;});sb.from('absences').delete().eq('id',x.id).then(function(r){if(r&&r.error)alert(kalErrText(r));});}
