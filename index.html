@@ -2225,6 +2225,19 @@ function perfKpiWin(emp,rows,key){if(!rows||!rows.length)return null;var S=funct
   if(key==='crMegaYes')return q>0?my/q*100:null;
   if(key==='optPerH'){var seen={},h=0;rows.forEach(function(p){if(!seen[p.date]){seen[p.date]=1;h+=(emp&&typeof workHoursForDate==='function')?(workHoursForDate(emp,p.date)||0):0;}});var o=rows.reduce(function(a,p){return a+(+p.optGesamt||((+p.convOEM||0)+(+p.ups_yes||0)+(+p.wka_gesamt_yes||0)));},0);return h>0?o/h:null;}
   var vals=rows.map(function(p){return p[key];}).filter(function(v){return v!==undefined&&v!==null;});return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:null;}
+// Wirkung einer Session auf eine KPI: Ø der letzten 3 Arbeitstage davor gegen Ø der nächsten 3 Arbeitstage danach (Sessiontag selbst zählt nicht)
+var IMPACT_DAYS=3;
+function perfImpact(emp,rows,date,key){var R=(rows||[]).filter(function(p){return p&&p.date;});
+  var b=R.filter(function(p){return p.date<date;}).sort(function(x,y){return y.date.localeCompare(x.date);}).slice(0,IMPACT_DAYS);
+  var a=R.filter(function(p){return p.date>date;}).sort(function(x,y){return x.date.localeCompare(y.date);}).slice(0,IMPACT_DAYS);
+  if(!b.length)return {state:'none'};if(a.length<IMPACT_DAYS)return {state:'wait',n:a.length};
+  var bv=perfKpiWin(emp,b,key),av=perfKpiWin(emp,a,key);if(bv==null||av==null)return {state:'none'};
+  var t=emp?empTargets(emp):{},dir=(t[key]&&t[key].dir)||'gte',d=(av-bv)*(dir==='lte'?-1:1);
+  var thr=/^cr/i.test(key)?1:key==='optPerH'?0.05:Math.max(Math.abs(bv)*0.03,0.01);
+  return {state:'ok',before:bv,after:av,raw:av-bv,delta:d,verdict:d>thr?'ja':d<-thr?'nein':'neutral'};}
+function impactWord(v){return v==='ja'?'hat geholfen':v==='nein'?'verschlechtert':'keine Veränderung';}
+function impactStyle(v){return v==='ja'?'background:#E6EFE9;border:1px solid transparent;color:#2f6b52':v==='nein'?'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A':'background:#fff;border:1px solid #E4E0D6;color:var(--text2)';}
+function impactNum(key,v){var u=/^cr/i.test(key)?' %-P.':'';return (v>0?'+':'')+(Math.abs(v)<10?v.toFixed(1):Math.round(v)).toString().replace('.',',')+u;}
 function computeCoachEffectiveness(){
   var byCoach={};
   employees.forEach(function(emp){
@@ -2239,15 +2252,11 @@ function computeCoachEffectiveness(){
     }
     (protocols[emp.id]||[]).forEach(function(s){
       if(s.status==='geplant'||!s.coachId||!s.focusMetric)return;
-      var before=avgWindow(s.date,14,0,s.focusMetric);
-      var after=avgWindow(s.date,0,14,s.focusMetric);
-      if(before===null||after===null)return;
-      var dir=(empT[s.focusMetric]&&empT[s.focusMetric].dir)||'gte';
-      var signedDelta=(after-before)*(dir==='lte'?-1:1);
-      if(!byCoach[s.coachId])byCoach[s.coachId]={deltas:[],n:0,positive:0};
-      byCoach[s.coachId].deltas.push(signedDelta);
+      var im=perfImpact(emp,fullPerf,s.date,s.focusMetric);if(im.state!=='ok')return;
+      if(!byCoach[s.coachId])byCoach[s.coachId]={deltas:[],n:0,positive:0,neutral:0,worse:0};
+      byCoach[s.coachId].deltas.push(im.delta);
       byCoach[s.coachId].n++;
-      if(signedDelta>0)byCoach[s.coachId].positive++;
+      if(im.verdict==='ja')byCoach[s.coachId].positive++;else if(im.verdict==='nein')byCoach[s.coachId].worse++;else byCoach[s.coachId].neutral++;
     });
   });
   var result=[];
@@ -2256,7 +2265,7 @@ function computeCoachEffectiveness(){
     if(!c)return;
     var d=byCoach[coachId];
     var avgDelta=d.deltas.reduce(function(a,b){return a+b;},0)/d.deltas.length;
-    result.push({coachId:coachId,name:c.name,n:d.n,avgDelta:avgDelta,positivePct:Math.round(d.positive/d.n*100)});
+    result.push({coachId:coachId,name:c.name,n:d.n,avgDelta:avgDelta,positivePct:Math.round(d.positive/d.n*100),helped:d.positive,neutral:d.neutral,worse:d.worse});
   });
   result.sort(function(a,b){return b.avgDelta-a.avgDelta;});
   return result;
@@ -3139,7 +3148,7 @@ function renderCoachingAnsicht(){
   if(coachFilterView==='overview'&&coachList.length>=2){
     var eff=computeCoachEffectiveness();
     h+='<div class="card" style="margin-bottom:22px">';
-    h+='<div class="card-title">Coach-Wirksamkeit <span style="font-weight:400;color:var(--text3);font-size:11px">· Ø KPI-Veränderung 14 Tage vor vs. nach Coachings mit Ziel-KPI</span></div>';
+    h+='<div class="card-title">Coach-Wirksamkeit <span style="font-weight:400;color:var(--text3);font-size:11px">· Ø 3 Arbeitstage vor gegen nach Coachings mit Ziel-KPI</span></div>';
     if(!eff.length){
       h+='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">Noch nicht genug Coachings mit Ziel-KPI vorhanden, um das zu berechnen.</div>';
     } else {
@@ -3159,7 +3168,7 @@ function renderCoachingAnsicht(){
           +'</div>';
       });
       h+='</div>';
-      h+='<div style="font-size:11px;color:var(--text3);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">Basiert nur auf Sessions, bei denen ein Ziel-KPI hinterlegt wurde. Kleine Fallzahlen bitte mit Vorsicht interpretieren.</div>';
+      h+='<div style="font-size:11px;color:var(--text3);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">Je Session: Ø der letzten 3 Arbeitstage davor gegen Ø der nächsten 3 Arbeitstage danach, für die erste Result-KPI. Sessions ohne 3 Tage danach zählen noch nicht. Kleine Fallzahlen mit Vorsicht lesen.</div>';
     }
     h+='</div>';
   }
@@ -8084,14 +8093,12 @@ function renderTab(){
         var _dur=sessionDuration(s.uhrzeit,s.endUhrzeit);
         var coach=s.coachId?employees.find(function(e){return e.id===s.coachId;}):null;
         var F=[['Start',s.start],['Stop',s.stop],['Continue',s.cont],['Notizen',s.notes]].map(function(f){return [f[0],(f[1]&&String(f[1]).trim())?String(f[1]).trim():''];});
-        // Wirkung (Ziel-KPI 14 Tage vor/nach)
+        // Wirkung (Ziel-KPI: Ø 3 Arbeitstage vor/nach)
         var imp='';
         if(s.focusMetric){
-          var before=_histImpactWindow(s.date,14,0,s.focusMetric),after=_histImpactWindow(s.date,0,14,s.focusMetric);
-          var delta=(before!==null&&after!==null)?(after-before):null;
-          if(delta===null)imp='<span style="'+CHIP+'background:#fff;border:1px solid #E4E0D6;color:var(--text2)">Ziel: '+esc(focusMetricLabel(s.focusMetric))+'</span>';
-          else{var dir=(empT[s.focusMetric]&&empT[s.focusMetric].dir)||'gte';var good=dir==='lte'?delta<0:delta>0;
-            imp='<span style="'+CHIP+(good?'background:#E6EFE9;border:1px solid transparent;color:#2f6b52':'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A')+'">'+esc(focusMetricLabel(s.focusMetric))+' '+(delta>0?'+':'')+delta.toFixed(1).replace('.',',')+'</span>';}
+          var im=planned?{state:'none'}:perfImpact(emp,_fullPerfHist,s.date,s.focusMetric);
+          if(im.state!=='ok')imp='<span style="'+CHIP+'background:#fff;border:1px solid #E4E0D6;color:var(--text2)">Ziel: '+esc(focusMetricLabel(s.focusMetric))+(im.state==='wait'?' · Ergebnis nach '+IMPACT_DAYS+' Arbeitstagen ('+im.n+'/'+IMPACT_DAYS+')':'')+'</span>';
+          else imp='<span style="'+CHIP+impactStyle(im.verdict)+'" title="Ø 3 Arbeitstage davor '+esc(String(Math.round(im.before*10)/10))+' · danach '+esc(String(Math.round(im.after*10)/10))+'">'+esc(focusMetricLabel(s.focusMetric))+' '+impactNum(s.focusMetric,im.raw)+' · '+impactWord(im.verdict)+'</span>';
         }
         html+='<div>';
         html+='<div onclick="toggleSessCard(\''+cid+'\')" style="display:flex;align-items:center;gap:12px;height:56px;padding:0 12px;border:1px solid '+(planned?'rgba(240,133,102,0.45)':'#E4E0D6')+';border-radius:10px;background:'+(planned?'#FDF0EB':'#EFECE5')+';cursor:pointer;user-select:none">';
@@ -8665,7 +8672,7 @@ function renderTab(){
           +'</div><div id="vnRestBody" style="display:none">'+restHtml+'</div>'
         ):'';
         panel.innerHTML='<div class="card">'
-          +'<div class="card-title"><i class="ti ti-arrows-diff"></i> Impact Coaching – '+m.l+' <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">(Ø 14 Tage vor vs. nach dem Coaching)</span></div>'
+          +'<div class="card-title"><i class="ti ti-arrows-diff"></i> Impact Coaching – '+m.l+' <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">(Ø 3 Arbeitstage vor gegen nach dem Coaching)</span></div>'
           +visibleRows+toggleHtml+'</div>';
       })();
       var scrollElAfterChart=document.getElementById('tabContent');
@@ -13358,12 +13365,8 @@ function openCoachingInfoModal(empId){
   }
   function sessionEffekt(p){
     if(p.status==='geplant'||!p.focusMetric||!fullPerf.length)return null;
-    var before=avgWindow(p.date,14,0,p.focusMetric);
-    var after=avgWindow(p.date,0,14,p.focusMetric);
-    if(before===null||after===null)return null;
-    var dir=(empT[p.focusMetric]&&empT[p.focusMetric].dir)||'gte';
-    var signedDelta=(after-before)*(dir==='lte'?-1:1);
-    return {delta:signedDelta,raw:after-before,metric:p.focusMetric,label:FOCUS_METRIC_LABELS[p.focusMetric]||p.focusMetric};
+    var im=perfImpact(emp,fullPerf,p.date,p.focusMetric);if(im.state!=='ok')return null;
+    return {delta:im.delta,raw:im.raw,verdict:im.verdict,metric:p.focusMetric,label:FOCUS_METRIC_LABELS[p.focusMetric]||focusMetricLabel(p.focusMetric)};
   }
   var alleEffekte=abgeschlossen.map(sessionEffekt).filter(function(e){return e!==null;});
   var effektPaare=abgeschlossen.map(function(p){return {p:p,eff:sessionEffekt(p)};}).filter(function(x){return x.eff!==null;});
@@ -13470,7 +13473,7 @@ function openCoachingInfoModal(empId){
       var coach=p.coachId?employees.find(function(e){return e.id===p.coachId;}):null;
       var eff=sessionEffekt(p);
       var right=(planned?pill('geplant','background:#fff;color:var(--text2);border:1px dashed #B4AC9C'):'')
-        +(eff?pill((eff.delta>=0?'+':'')+eff.delta.toFixed(1).replace('.',',')+' '+esc(eff.label),eff.delta>=0?'background:#E6EFE9;color:#2f6b52':'background:#F6E6E1;color:#9A3A2E'):'')
+        +(eff?pill(esc(eff.label)+' '+impactNum(eff.metric,eff.raw)+' · '+impactWord(eff.verdict),impactStyle(eff.verdict)):'')
         +(besteSession&&besteSession.p===p?pill('beste Session'):'');
       rows+=tlRow(dTxt,{html:'<i class="ti ti-'+(planned?'calendar-event':'users')+'"></i>',style:planned?'background:#fff;border:1px dashed #B4AC9C;color:var(--text)':'background:#fff;border:1px solid #E4E0D6;color:var(--text)'},esc(p.type||p.art||'Coaching'),(coach?'Coach '+esc(coach.name):'')+(p.focus?(coach?' · ':'')+esc(p.focus):''),right);
       var nextSession=null;
@@ -14517,8 +14520,8 @@ function kalEffHtml(){var eff=computeCoachEffectiveness(),h='';
   eff.forEach(function(x){var pct=Math.min(Math.abs(x.avgDelta)/maxAbs*100,100),col=x.avgDelta>0?'var(--teal-dark)':'var(--red)';
     h+='<div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:13px;font-weight:600">'+esc(x.name)+'</span><span style="font-size:13px;font-weight:700;color:'+col+'">'+(x.avgDelta>=0?'+':'')+x.avgDelta.toFixed(1)+' Ø-Punkte</span></div>'
       +'<div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>'
-      +'<div style="font-size:11px;color:var(--text3);margin-top:3px">'+x.n+' Coachings mit Ziel-KPI · '+x.positivePct+'% davon Richtung Ziel bewegt</div></div>';});
-  return h+'</div><div style="font-size:11px;color:var(--text3);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">Basiert nur auf Sessions, bei denen ein Ziel-KPI hinterlegt wurde. Kleine Fallzahlen bitte mit Vorsicht interpretieren.</div>';}
+      +'<div style="font-size:12px;margin-top:4px"><b style="color:#2f6b52">'+x.helped+' von '+x.n+' hat geholfen</b><span style="color:var(--text3)"> · '+x.neutral+' keine Veränderung · '+x.worse+' verschlechtert</span></div></div>';});
+  return h+'</div><div style="font-size:11px;color:var(--text3);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">Je Session: Ø der letzten 3 Arbeitstage davor gegen Ø der nächsten 3 Arbeitstage danach, für die erste Result-KPI. Sessions ohne 3 Tage danach zählen noch nicht. Kleine Fallzahlen mit Vorsicht lesen.</div>';}
 // Aufklapp-Karte unter dem Kalender (wie „Neue Session“: + / –)
 function kalAccCard(k,ic,title,sub,right,body){var op=!!KAL[k];return '<div class="card" style="padding:14px 16px"><div class="at-newh" style="cursor:pointer" onclick="KAL.'+k+'=!KAL.'+k+';kalRerender()"><span class="at-pl"><i class="ti '+(op?'ti-minus':'ti-plus')+'"></i></span><b>'+title+'</b><span class="kal-note" style="margin-left:8px">'+sub+'</span><span style="margin-left:auto;display:inline-flex;gap:8px;align-items:center">'+(op?right:'')+'<span class="kal-note">'+(op?'zuklappen':'zum Aufklappen klicken')+'</span></span></div>'+(op?'<div style="margin-top:12px">'+body+'</div>':'')+'</div>';}
 function kalLastSes(){var L=[];kalSessEmps().forEach(function(e){(protocols[e.id]||[]).forEach(function(p){if(p.status==='geplant'||!p.date||p.date>today())return;if(KAL.chf[String(p.coachId||'')])return;L.push({e:e,p:p});});});return L.sort(function(a,b){return (b.p.date+(b.p.uhrzeit||'')).localeCompare(a.p.date+(a.p.uhrzeit||''));});}
@@ -14535,7 +14538,7 @@ function renderKalender(){var ma=document.getElementById('mainArea');if(!ma)retu
   h+='<div class="card">'+kalBarFx()+'<div class="kal-cw fx'+(KAL.pane?'':' nopane')+'"><div style="min-width:0">'+vw+'</div><aside class="kal-pane">'+kalPane()+'</aside></div>'+kalLegend()+'</div>';
   if(false)h+='<div class="card"><div class="card-title">'+(KAL.low==='req'?'Offene Anträge':'Zu planen')+'<span class="kal-note" style="font-weight:400;margin-left:6px">'+(KAL.low==='req'?'alle Hinweise auf einen Blick':'Zeile in den Kalender ziehen oder „Einplanen“')+'</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.low==='req'?'on':'')+'" onclick="KAL.low=\'req\';kalRerender()">Anträge · '+kalOpenReqs().length+'</button><button type="button" class="'+(KAL.low==='plan'?'on':'')+'" onclick="KAL.low=\'plan\';kalRerender()">Planen · '+kalTasks().length+'</button></span></span></div>'+(KAL.low==='req'?kalReqTable():kalTaskTable())+'</div>';
   h+=kalAccCard('accS','ti-history','Letzte Sessions',kalLastSesCount()+' im '+KAL_MON[+today().slice(5,7)-1],'',KAL.accS?kalLastSesHtml():'');
-  h+=kalAccCard('accW','ti-chart-line','Coach-Wirksamkeit','Ø KPI-Veränderung 14 Tage vor vs. nach Coachings mit Ziel-KPI','',KAL.accW?kalEffHtml():'');
+  h+=kalAccCard('accW','ti-chart-line','Coach-Wirksamkeit','Ø 3 Arbeitstage vor gegen nach Coachings mit Ziel-KPI','',KAL.accW?kalEffHtml():'');
   h+=kalAccCard('accK','ti-beach','Urlaubskonto '+today().slice(0,4),kalEmps().length+' Mitarbeiter · Frei, Flex Days, Krank'+(latCanSee()?', Verspätung':''),
     '<span class="dsh-seg" onclick="event.stopPropagation()"><button type="button" class="'+(KAL.sort==='rest'?'on':'')+'" onclick="KAL.sort=\'rest\';kalRerender()">Resturlaub</button><button type="button" class="'+(KAL.sort==='name'?'on':'')+'" onclick="KAL.sort=\'name\';kalRerender()">Name</button></span>',KAL.accK?kalKontoList():'');
   h+='</div>';
@@ -15445,9 +15448,9 @@ function vzCoaching(e){var t=today(),from=kalAdd(t,-90),me=vzCoachCounts(e,from,
   var st=puSesStats(e),f1=function(v){return kalNf(Math.round(v*10)/10);};
   // Wirkung je Session-Art: Marge/Tag 14 Tage nach gegen 14 Tage vor der Session
   var P=performance[e.id]||[],mpd=function(a,b){var by={};P.forEach(function(r){if(r.date>=a&&r.date<=b)by[r.date]=(by[r.date]||0)+(r.margeGesamt||r.margin||0);});var d=Object.keys(by);return d.length?d.reduce(function(s,k){return s+by[k];},0)/d.length:null;};
-  var eff={};(protocols[e.id]||[]).forEach(function(p){if(!p.date||p.status==='geplant'||p.date<kalAdd(t,-180)||kalAdd(p.date,14)>t)return;var b=mpd(kalAdd(p.date,-14),kalAdd(p.date,-1)),a=mpd(p.date,kalAdd(p.date,14));if(b==null||a==null)return;var k=(p.type||'Session');(eff[k]=eff[k]||[]).push(a-b);});
+  var eff={};(protocols[e.id]||[]).forEach(function(p){if(!p.date||p.status==='geplant'||p.date<kalAdd(t,-180))return;var im=perfImpact(e,P,p.date,'margeGesamt');if(im.state!=='ok')return;var k=(p.type||'Session');(eff[k]=eff[k]||[]).push(im.raw);});
   var ek=Object.keys(eff).map(function(k){return [k,eff[k].reduce(function(s,v){return s+v;},0)/eff[k].length,eff[k].length];}).sort(function(a,b){return b[1]-a[1];});
-  var why=ek.length?'<b>Wirkung:</b> '+ek.slice(0,2).map(function(x){return 'nach '+esc(x[0])+(x[2]>1?'s':'')+' '+(x[1]>=0?'steigt':'sinkt')+' die Marge/Tag im Schnitt um <b>'+ztEur(Math.abs(x[1]))+'</b>';}).join(', ')+' (2 Wochen danach gegen davor).':'<b>Wirkung:</b> noch zu wenige Sessions mit Leistungsdaten davor und danach.';
+  var why=ek.length?'<b>Wirkung:</b> '+ek.slice(0,2).map(function(x){return 'nach '+esc(x[0])+(x[2]>1?'s':'')+' '+(x[1]>=0?'steigt':'sinkt')+' die Marge/Tag im Schnitt um <b>'+ztEur(Math.abs(x[1]))+'</b>';}).join(', ')+' (Ø 3 Arbeitstage danach gegen davor).':'<b>Wirkung:</b> noch zu wenige Sessions mit Leistungsdaten davor und danach.';
   var chart='<div class="vz-g2">'+vzRadar(VZ_TOP.map(function(x){return x[0];}),[{v:tc,c:'#C9A77E',o:.12,d:1},{v:me.c,c:'#F08566',o:.25}],mx)+'<div>'+vzBars([['Sessions 90 T',me.n,String(me.n)],['Ø Team',tn,f1(tn)],['Weeklys',me.wk,me.wk+'/12'],['Coachings',me.co,String(me.co)]],Math.max(me.n,tn,12,1))+'<div class="vz-leg"><span><i style="background:#F08566"></i>'+esc(kalFirst(e.name))+'</span><span><i class="d" style="border-color:#C9A77E"></i>Ø Team</span></div></div></div>';
   return vzCard('vzCoach','Coaching · Abdeckung im Team',esc(kalFirst(e.name))+' gegen Ø Team · Sessions je Thema, letzte 90 Tage','<span>Sessions 90 Tage</span><b>'+me.n+'</b><span>Ø Team '+f1(tn)+' · Weeklys '+me.wk+' von 12'+(st.last?' · letzte Session vor '+kalDiff(st.last.date,t)+' Tagen':'')+'</span>',chart,
     [['Lücke',gapI>=0?VZ_TOP[gapI][0]:'keine',gapI>=0?me.c[gapI]+' Sessions · Team Ø '+f1(tc[gapI]):'kein Thema unter dem Team',''],['Weeklys',me.wk+'/12','letzte 12 Wochen','Team '+f1(twk)],['Coachings',String(me.co),'90 Tage','Team '+f1(tco)],['Trainings',String(me.tr),'90 Tage','Team '+f1(ttr)]],why);}
