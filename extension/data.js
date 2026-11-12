@@ -193,13 +193,13 @@ var SOS = (function () {
     if (!session) return { state: 'login' };
     var st = await storageGet(['previewEmpId']);
     var own = await rest('employees?select=*&auth_user_id=eq.' + session.user.id, session);
-    // Coaches (SDC, SDM, reine Coaches; SDL nutzt die Erweiterung als Agent) bekommen wie Admins den Testmodus: Ansicht eines Agents waehlen
-    var ownRow = own[0], isCoachRow = !!ownRow && (ownRow.is_pure_coach === true || ownRow.role === 'SC' || ownRow.role === 'SDC' || ownRow.role === 'SDM');
+    // Coaches (SC, SDM, reine Coaches) bekommen wie Admins den Testmodus: Ansicht eines Agents waehlen
+    var ownRow = own[0], isCoachRow = !!ownRow && (ownRow.is_pure_coach === true || ownRow.role === 'SC' || ownRow.role === 'SDM');
     var emp = ownRow && !isCoachRow ? mapEmp(ownRow) : null, preview = false, choices = null;
     if (!emp) {
       // Kein Agent-Datensatz (Admin, Betrachter, Coach): Testmodus mit Auswahl
       var all = await rest('employees?select=id,name,role,active,is_pure_coach&order=name', session);
-      choices = all.filter(function (e) { return e.active !== false && e.is_pure_coach !== true && e.role !== 'SC' && e.role !== 'SDC' && e.role !== 'SDM'; }).map(function (e) { return { id: e.id, name: e.name }; });
+      choices = all.filter(function (e) { return e.active !== false && e.is_pure_coach !== true && e.role !== 'SC' && e.role !== 'SDM'; }).map(function (e) { return { id: e.id, name: e.name }; });
       var pid = st.previewEmpId && choices.some(function (c) { return c.id === st.previewEmpId; }) ? st.previewEmpId : (choices[0] && choices[0].id);
       if (!pid) return { state: 'noemp', email: session.user.email };
       var one = await rest('employees?select=*&id=eq.' + pid, session);
@@ -226,7 +226,8 @@ var SOS = (function () {
     model.coaching = coaching; model.timeline = buildTimeline(emp, res[0], bestHour); model.coachingImpact = coachingImpact(res[0], coaching);
     model.urlaub = buildUrlaub(emp, absRows, res[5] !== null);
     model.termine = buildTermine(emp, coaching);
-    model.ausgleich = buildAusgleich(emp, res[0]);
+    model.heim = buildHeim(emp, res[0], absRows);
+    model.feiertage = nextHolidays(emp, 3);
     model.rules = rules; model.empMeta = { role: emp.role, vlc: emp.role === 'VLC', startDate: emp.startDate };
     model.preview = preview; model.choices = choices; model.email = session.user.email; model.workHours = emp.workHours;
     model.state = 'ok'; model.loadedAt = new Date().toISOString();
@@ -512,8 +513,8 @@ var SOS = (function () {
     S.filter(function (s) { return s.status === 'geplant' && s.date >= t; }).forEach(function (s) {
       out.push({ date: s.date, time: (s.uhrzeit || '').slice(0, 5), art: s.art || 'Session', thema: s.focus || '', coach: s.coach_name || '', kind: /weekly/i.test(s.art || '') ? 'weekly' : /performance/i.test(s.art || '') ? 'perf' : 'coaching' });
     });
-    // Performance-Gespraeche nach 3, 5, 11 und 23 Monaten (feste Regel wie im Board)
-    if (emp.startDate) [3, 5, 11, 23].forEach(function (n) {
+    // Performance-Gespraeche nach 5, 11 und 23 Monaten (feste Regel wie im Board)
+    if (emp.startDate) [5, 11, 23].forEach(function (n) {
       var d = new Date(emp.startDate + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n); var due = d.toISOString().slice(0, 10);
       if (due < addDays(t, -30) || due > addDays(t, 60)) return;
       var covered = S.some(function (s) { return /performance/i.test(s.art || '') && s.date >= addDays(due, -30); });
@@ -524,15 +525,31 @@ var SOS = (function () {
     return { ok: !!(coaching && coaching.ok), items: out, last: last };
   }
 
-  // ── Ausgleichstag: 140 Optimierungen von Montag bis Donnerstag, dann ist Freitag frei ──
-  function buildAusgleich(emp, rows) {
+  // ── Heimgehen: 3,5 Optimierungen je Arbeitsstunde. Tagesziel erreicht → du darfst heim; Wochenziel (Summe Mo–Fr) erreicht → ebenso.
+  //    Vollzeit 8 Std. = 28 am Tag / 140 in der Woche; Teilzeit nach Arbeitsstunden (6 Std. = 21 / 105). Urlaub, Feiertage und freie Tage zählen nicht mit.
+  var OPT_PRO_STD = 3.5;
+  function buildHeim(emp, rows, absRows) {
     if (emp.role === 'VLC') return null;
     var t = today(), wd = new Date(t + 'T00:00:00Z').getUTCDay();
-    if (wd < 1 || wd > 5) return null;
-    var mo = addDays(t, -(wd - 1)), th = addDays(mo, 3), done = 0;
-    rows.forEach(function (r) { if (r.date >= mo && r.date <= th) done += (r.gesamt_optimierungen || ((r.oem_gesamt || 0) + (r.ups_yes || 0) + (r.wka_gesamt_yes || 0))); });
-    return { goal: 140, done: done, reached: done >= 140, left: Math.max(0, 140 - done), friday: addDays(mo, 4), open: t <= th, workLeft: [0, 1, 2, 3].map(function (i) { return addDays(mo, i); }).filter(function (d) { return d >= t && isWorkday(emp, d); }).length };
+    var mo = addDays(t, -((wd + 6) % 7)), byDate = {};
+    rows.forEach(function (r) { byDate[r.date] = (r.gesamt_optimierungen || ((r.oem_gesamt || 0) + (r.ups_yes || 0) + (r.wka_gesamt_yes || 0))); });
+    var days = [0, 1, 2, 3, 4].map(function (i) {
+      var d = addDays(mo, i), h = isWorkday(emp, d) ? workHoursForDate(emp, d) : 0;
+      var a = (absRows || []).filter(function (x) { return x.status === 'genehmigt' && x.von <= d && x.bis >= d; })[0];
+      if (a) h = a.halb ? h / 2 : 0;
+      return { date: d, hours: h, goal: Math.round(OPT_PRO_STD * h), done: byDate[d] || 0 };
+    });
+    var td = days.filter(function (x) { return x.date === t; })[0] || null;
+    var wGoal = Math.round(OPT_PRO_STD * days.reduce(function (a, x) { return a + x.hours; }, 0)), wDone = days.reduce(function (a, x) { return a + (x.date <= t ? x.done : 0); }, 0);
+    return { days: days, today: td, dayGoal: td ? td.goal : 0, dayDone: td ? td.done : 0, weekGoal: wGoal, weekDone: wDone,
+      dayReached: !!(td && td.goal > 0 && td.done >= td.goal), weekReached: wGoal > 0 && wDone >= wGoal };
   }
+  function nextHolidays(emp, n) {
+    var out = [], d = today();
+    for (var i = 0; i < 200 && out.length < n; i++) { d = addDays(d, 1); if (!isWeekend(d) && (isHoliday(emp, d) || isFixDay(d))) out.push(d); }
+    return out;
+  }
+
 
   return { teamKalender: teamKalender, workdayFor: workdayFor, evalAntrag: evalAntrag, teamFrei: teamFrei, sendAntrag: sendAntrag, zurueckziehen: zurueckziehen, load: load, login: login, logout: logout, getSession: getSession, hourly: hourly, storageGet: storageGet, storageSet: storageSet, config: C };
 })();

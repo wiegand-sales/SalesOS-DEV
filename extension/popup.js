@@ -90,7 +90,7 @@
     var legend = parts.map(function (p) { return '<div class="lg"><span class="d" style="background:' + p[2] + '"></span><span class="muted">' + p[0] + '</span><span style="text-align:right">' + n0(p[1].n) + '</span><span class="xxs faint" style="text-align:right">Ø ' + eur(p[1].avg) + '</span></div>'; }).join('');
     var c2 = card(lab('Optimierungen') + '<div class="donutWrap"><div class="donut"><svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="Aufteilung der Optimierungen">' + arcs + '</svg><div><b>' + n0(tot) + '</b><span class="xxs faint">Opt.</span></div></div><div style="flex:1;display:flex;flex-direction:column;gap:7px">' + legend + '</div></div>', 'sb');
     var more = '';
-    if (PANEL && window.innerHeight / ZOOM > 700) {
+    if (roomForMore()) {
       var tm = m.termine || { items: [] }, it = tm.items.slice(0, 3);
       more = '<div class="card" style="height:auto;flex-shrink:0">' + lab('Nächste Termine') + (it.map(function (x) { return '<div class="li"><span class="liD">' + wdm(x.date) + '</span><span class="liT">' + esc(x.art) + '</span><span class="liR">' + (x.due ? 'fällig' : esc(x.time || '')) + '</span></div>'; }).join('') || '<div class="empty">Nichts geplant.</div>') + '</div>';
       var u = m.urlaub; if (u && u.ok) more += '<div class="card" style="height:auto;flex-shrink:0"><div class="cHead">' + lab('Urlaub ' + u.year) + '<span class="xxs faint">noch ' + nf(u.konto.frei) + ' Tage frei</span></div>' + (u.items.slice(0, 2).map(function (x) { return '<div class="li"><span class="liD">' + range(x) + '</span><span class="liT">' + esc(x.label) + '</span><span class="pill' + (x.status === 'offen' ? ' open' : '') + '">' + (STATUS[x.status] || x.status) + '</span></div>'; }).join('') || '<div class="empty">Nichts geplant.</div>') + '</div>';
@@ -103,10 +103,43 @@
       + '<div class="sBar"><i style="width:' + clamp(pctv) + '%"></i></div></div>';
   }
   function stripHeute(m) {
-    var a = m.ausgleich, tl = m.timeline || {}, rec = tl.recordOptBeforeToday || 0, cur = m.optToday || 0;
-    if (a && a.open) return strip('Ausgleichstag', n0(a.done) + ' / ' + a.goal, a.done / a.goal * 100, a.reached ? 'erreicht, Freitag frei' : 'noch ' + n0(a.left) + ' bis Do');
-    if (a && a.reached) return strip('Ausgleichstag', n0(a.done) + ' / ' + a.goal, 100, 'erreicht');
+    var hm = m.heim, tl = m.timeline || {}, rec = tl.recordOptBeforeToday || 0, cur = m.optToday || 0;
+    if (hm && hm.dayGoal > 0) {
+      var right = hm.weekReached ? 'Woche geschafft · heim' : hm.dayReached ? 'du darfst heim' : 'noch ' + n0(hm.dayGoal - hm.dayDone) + ' · Woche ' + n0(hm.weekDone) + '/' + n0(hm.weekGoal);
+      return strip('Heimgehen', n0(hm.dayDone) + ' / ' + n0(hm.dayGoal), hm.dayDone / hm.dayGoal * 100, right);
+    }
     if (rec > 0) return strip('Rekord', n0(cur) + ' / ' + n0(rec), cur / rec * 100, cur > rec ? 'neuer Rekord' : 'noch ' + n0(rec - cur + 1) + ' bis zum Rekord');
+    return '';
+  }
+
+
+  function roomForMore() { return PANEL && window.innerHeight / ZOOM > 700; }
+  function moreCard(title, right, body) { return '<div class="card" style="height:auto;flex-shrink:0"><div class="cHead">' + lab(title) + '<span class="xxs faint">' + right + '</span></div>' + body + '</div>'; }
+  function moreFor(v, m) {
+    if (!roomForMore()) return '';
+    if (v === 'verlauf' && m.heim) {
+      return moreCard('Diese Woche', 'Ziel ' + n0(m.heim.weekGoal) + ' · ' + n0(m.heim.weekDone) + ' erreicht', m.heim.days.map(function (x) {
+        var past = x.date <= m.today, ok = x.goal > 0 && x.done >= x.goal;
+        return '<div class="li"><span class="liD">' + wdm(x.date) + '</span><span class="liT">' + (x.goal ? (past ? n0(x.done) + ' von ' + n0(x.goal) : 'Ziel ' + n0(x.goal)) : 'frei') + '</span><span class="liR">' + (x.goal && past ? (ok ? 'erreicht' : x.date === m.today ? 'läuft' : '–') : '') + '</span></div>';
+      }).join(''));
+    }
+    if (v === 'kennzahlen' && m.prov) {
+      var p = m.prov;
+      return moreCard('Provision ' + MONATE[+m.monthKey.slice(5, 7) - 1], 'vorläufig', '<div class="pl"><span>Regulär</span><b>' + eur(p.regulaer) + '</b></div><div class="pl"><span>Abzug</span><b style="color:' + RED + '">' + (p.abzug > 0.5 ? '−' + eur(p.abzug) : '0 €') + '</b></div><div class="pl sum"><span>Provision</span><b>' + eur(p.provision) + '</b></div>');
+    }
+    if (v === 'provision' && m.prov) {
+      return moreCard('Heute', 'gegen dein Ziel', m.prov.checks.map(function (c) {
+        var t = m.kpiToday[c.label], ok = t != null && (c.dir === 'lte' ? t <= c.ziel : t >= c.ziel);
+        return '<div class="li"><span class="liT" style="color:var(--text)">' + KLABEL[c.label] + '</span><span class="' + (t == null ? 'faint' : ok ? '' : 'bad') + '" style="font-weight:600">' + (t == null ? '–' : kfmt(c, t)) + '</span><span class="liR">Ziel ' + kfmt(c, c.ziel) + '</span></div>';
+      }).join(''));
+    }
+    if (v === 'termine') {
+      var done = ((m.coaching && m.coaching.sessions) || []).filter(function (x) { return x.status !== 'geplant' && x.date <= m.today; }).slice(0, 4);
+      return moreCard('Letzte Sessions', '', done.map(function (x) { return '<div class="li"><span class="liD">' + dm(x.date) + '</span><span class="liT">' + esc(x.art || 'Session') + (x.focus ? ' · ' + esc(x.focus) : '') + '</span><span class="liR">' + esc((x.coach_name || '').split(' ')[0]) + '</span></div>'; }).join('') || '<div class="empty">Noch keine Sessions.</div>');
+    }
+    if (v === 'urlaub' && uView !== 'antrag' && m.feiertage) {
+      return moreCard('Nächste freie Tage', 'Feiertage', m.feiertage.map(function (d) { return '<div class="li"><span class="liD">' + wdm(d) + '</span><span class="liT">' + (/-12-24$/.test(d) ? 'Heiligabend (Urlaubstag)' : /-12-31$/.test(d) ? 'Silvester (Ausgleichstag)' : 'Feiertag') + '</span></div>'; }).join('') || '<div class="empty">Keine in Sicht.</div>');
+    }
     return '';
   }
 
@@ -125,7 +158,7 @@
     var aktSum = m.todayDetail ? m.todayDetail.akt : null;
     var c2 = card('<div class="cHead">' + lab('Aktivitäten') + '<span class="xxs faint">' + n0(aktSum) + ' heute</span></div>' + barsHtml(hrs, 'akt', 58, '#E2DDD3', '#8A7F72', null) + axis(r[0], r[1]), 'sb');
     var g = m.goals, st = g ? strip('Monat', n0(g.month.done) + ' / ' + n0(g.month.goal), g.month.goal ? g.month.done / g.month.goal * 100 : 0,
-      'Woche ' + n0(g.week.done) + ' / ' + n0(g.week.goal) + (g.month.perDayRest != null && g.month.done < g.month.goal ? ' · ' + dec(g.month.perDayRest) + '/Tag' : ''))
+      'Woche ' + n0(g.week.done) + '/' + n0(g.week.goal) + (g.month.perDayRest != null && g.month.done < g.month.goal ? ' · ' + dec(g.month.perDayRest) + '/Tag' : ''))
       : '<div class="strip"><span class="xs muted">Für diesen Monat ist noch kein Ziel hinterlegt.</span></div>';
     return h + '<div class="tiles">' + c1 + c2 + '</div>' + st + (anyKnown ? '' : '<span class="xxs faint">Der Verlauf füllt sich, solange Chrome geöffnet ist.</span>');
   }
@@ -149,7 +182,7 @@
     var cells = p.checks.map(function (c) {
       var col = c.ok ? P : RED, t = m.kpiToday[c.label], ratio = c.ok ? 1 : c.ziel ? (c.dir === 'lte' ? c.ziel / Math.max(c.ist, 0.01) : c.ist / c.ziel) : 1;
       var sub = c.alt ? 'SY/MY ' + pct(c.alt.ist) : 'heute ' + (t == null ? '–' : kfmt(c, t));
-      return card('<div class="kpi"><div style="display:flex;flex-direction:column;gap:1px">' + lab(KLABEL[c.label]) + '<span class="val" style="color:' + col + '">' + kfmt(c, c.ist) + '</span><span class="xxs faint">' + sub + '</span></div>' + ring(ratio, col) + '</div>');
+      return card('<div class="kpi"><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;white-space:nowrap">' + lab(KLABEL[c.label]) + '<span class="val" style="color:' + col + '">' + kfmt(c, c.ist) + '</span><span class="xxs faint">' + sub + '</span></div>' + ring(ratio, col) + '</div>');
     }).join('');
     var tk = p.checks.filter(function (c) { var v = m.kpiToday[c.label]; return v != null; }), tok = tk.filter(function (c) { var v = m.kpiToday[c.label]; return c.dir === 'lte' ? v <= c.ziel : v >= c.ziel; }).length;
     var st = tk.length ? strip('Heute', tok + ' von ' + tk.length + ' über Ziel', tok / tk.length * 100, tok === tk.length ? 'alles im Ziel' : (tk.length - tok) + ' darunter') : strip('Heute', '–', 0, 'noch keine Werte');
@@ -346,11 +379,11 @@
       return;
     }
     // Daten aus einer aelteren Version (z. B. direkt nach einem Update): neu laden statt abstuerzen
-    if (!m.forecast || !m.crMy || !m.prov || !m.todayDetail || !m.termine) { $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>'; if (!render._retry) { render._retry = true; refresh(); } return; }
+    if (!m.forecast || !m.crMy || !m.prov || !m.todayDetail || !m.termine || !('heim' in m)) { $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>'; if (!render._retry) { render._retry = true; refresh(); } return; }
     render._retry = false;
     renderTabs(); renderSub(m);
     var v = VIEWS[tab];
-    try { $('view').innerHTML = v[1](m); }
+    try { $('view').innerHTML = v[1](m) + moreFor(tab, m); }
     catch (e) { console.error(e); $('view').innerHTML = '<p class="error">Diese Ansicht konnte nicht geladen werden.</p>'; }
     if (tab === 'hinweise') {
       var cnt = extra.hints && extra.hints.date === m.today ? extra.hints.items.length : 0;
@@ -446,6 +479,6 @@
     if (st.lastTab && VIEWS[st.lastTab]) tab = st.lastTab;
     if (!st.session) { render({ state: 'login' }); return; }
     $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>';
-    loadExtra().then(function () { if (st.model && st.model.state === 'ok' && st.model.forecast && st.model.prov && st.model.termine) render(st.model); refresh(); });
+    loadExtra().then(function () { if (st.model && st.model.state === 'ok' && st.model.forecast && st.model.prov && st.model.termine && ('heim' in st.model)) render(st.model); refresh(); });
   });
 })();
