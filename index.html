@@ -14450,14 +14450,44 @@ function kalSaveCfg(eid){var e=kalEmp(eid);if(!e||!kalCanEdit())return;var y=tod
 
 // ── Formular: Abwesenheit eintragen / bearbeiten ──
 var KF=null;
+// ── Ein Formular „Abwesenheit eintragen“ für Kalender (KF) und Mitarbeiterkarte (AB.f) ──
+var ABS_TILE='background:#EFECE5;border:1px solid #E4E0D6;border-radius:12px;padding:10px 12px 12px;margin-bottom:12px';
+var ABS_TH='font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:8px';
+function absObj(c){return c==='kf'?KF:AB.f;}
+function absRedraw(c){if(c==='kf')kalDrawForm();else abRender();}
+function absSet(c,k,v){var F=absObj(c);if(!F)return;F[k]=v;
+  if(k==='art'&&v==='krank')F.status='genehmigt';
+  if(k==='halb'&&v)F.bis=F.von;
+  if(k==='von'){if(!F.bis||F.bis<F.von||F.halb)F.bis=F.von;}
+  if(c==='ab'&&(k==='von'||k==='bis'))AB.fOpen=true;
+  absRedraw(c);}
+function absSeg(c,k,arr,cur){return '<span class="dsh-seg">'+arr.map(function(o){return '<button type="button" class="'+(cur===o[0]?'on':'')+'" onclick="absSet(\''+c+'\',\''+k+'\','+(typeof o[0]==='boolean'?o[0]:'\''+o[0]+'\'')+')">'+o[1]+'</button>';}).join('')+'</span>';}
+function absFormHtml(c,e,F,ev,empHtml){var isU=F.art==='urlaub',vl=F.von&&e?kalWdBetween(e,F.eingereichtAm||today(),F.von):0;
+  var h='<div style="'+ABS_TILE+'"><div style="'+ABS_TH+'">Was</div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+    +absSeg(c,'art',[['urlaub','Urlaub'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']],F.art)
+    +'<span style="margin-left:auto;display:inline-flex;gap:8px;flex-wrap:wrap">'+absSeg(c,'halb',[[false,'Ganzer Tag'],[true,'Halber Tag']],!!F.halb)
+    +(F.halb?absSeg(c,'halbTeil',[['vm','Vormittag'],['nm','Nachmittag']],F.halbTeil||'vm'):'')+'</span></div></div>';
+  h+='<div style="'+ABS_TILE+'"><div style="'+ABS_TH+'">Wer &amp; Wann</div><div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:start">'
+    +'<div style="min-width:0"><label>Mitarbeiter</label>'+empHtml+'</div>'
+    +'<div><label>Von</label><input type="date" value="'+(F.von||'')+'" onchange="absSet(\''+c+'\',\'von\',this.value)"></div>'
+    +'<div><label>Bis</label><input type="date" value="'+(F.halb?(F.von||''):(F.bis||''))+'"'+(F.halb?' disabled':'')+' onchange="absSet(\''+c+'\',\'bis\',this.value)"></div>'
+    +'<div style="'+(F.art==='krank'?'visibility:hidden':'')+'"><label>Status</label>'+absSeg(c,'status',[['genehmigt','Genehmigt'],['offen','Antrag']],F.status)+'</div></div>'
+    +'<input type="text" placeholder="Notiz (optional)" value="'+esc(F.notiz||'')+'" oninput="absObj(\''+c+'\').notiz=this.value" style="margin-top:8px"></div>';
+  var hints=(F.von?(ev.H||[]):[]).filter(function(x){return x.t!=='info'||/24\.12|Verschoben/.test(x.h);});
+  var flexRule=isU&&F.von&&!F.verschobenVon&&vl<15;
+  h+='<div style="'+ABS_TILE+';margin-bottom:0"><div style="'+ABS_TH+'">Prüfung</div>'+(e?abChecks(e,F,ev):'')
+    +hints.map(function(x){return '<div class="kal-hint '+x.t+'" style="margin-top:8px">'+x.h+'</div>';}).join('')
+    +(flexRule?'<label style="display:inline-flex;align-items:center;gap:6px;margin:8px 0 0;cursor:pointer;font-weight:400"><input type="checkbox" style="width:auto;margin:0"'+(F.normal?' checked':'')+' onchange="absSet(\''+c+'\',\'normal\',this.checked)"> trotzdem als normalen Urlaub zählen</label>':'')
+    +'</div>';
+  return h;}
+
 function kalEnsureModal(){if(document.getElementById('kalFormModal'))return;var d=document.createElement('div');d.className='modal-ov hidden';d.id='kalFormModal';
   var rb=function(id,ic,t){return '<button class="rl-btn" type="button" aria-label="'+t+'" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById(\''+id+'\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'start\'})"><i class="ti '+ic+'"></i><span class="rl-tip" style="left:48px">'+t+'</span></button>';};
   d.innerHTML='<div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">'
    +'<div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase" id="kalFormTitle">Abwesenheit eintragen</div><div id="kalFormSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" aria-label="Schließen" style="margin-left:auto;width:36px;height:36px;padding:0;justify-content:center" onclick="kalCloseForm()"><i class="ti ti-x"></i></button></div>'
-   +'<div style="display:flex;min-height:0;flex:1"><div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3">'
-   +rb('kfSecB','ti-star','Überblick')+'<span style="width:26px;height:1px;background:#E4E0D6;margin:4px 0"></span>'+rb('kfSec1','ti-user','Wer')+rb('kfSec2','ti-category','Was')+rb('kfSec3','ti-calendar','Wann')+rb('kfSec4','ti-checks','Prüfung')+'</div>'
-   +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0"><div id="kalFormBody" style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px"></div>'
-   +'<div style="padding:4px 18px 14px 14px"><div id="kalFormFoot" style="display:flex;justify-content:flex-end;gap:8px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:12px;padding:8px"></div></div></div></div></div>';
+   +'<div style="display:flex;min-height:0;flex:1">'
+   +'<div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0"><div id="kalFormBody" style="flex:1;overflow-y:auto;padding:6px 18px 12px 18px"></div>'
+   +'<div style="padding:4px 18px 14px 18px"><div id="kalFormFoot" style="display:flex;justify-content:flex-end;gap:8px;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:12px;padding:8px"></div></div></div></div></div>';
   d.addEventListener('mousedown',function(ev){if(ev.target===d)kalCloseForm();});document.body.appendChild(d);}
 function kalOpenForm(eid,day,editId){if(!kalCanEdit())return;kalEnsureModal();
   if(editId){var x=absences.find(function(a){return String(a.id)===String(editId);});if(!x)return;KF={id:x.id,employeeId:x.employeeId,art:x.art==='flex'?'urlaub':x.art,wasFlex:x.art==='flex',normal:x.art==='urlaub'&&x.status==='genehmigt',von:x.von,bis:x.bis,halb:x.halb,halbTeil:x.halbTeil||'vm',status:x.status,notiz:x.notiz,eingereichtAm:x.eingereichtAm,verschobenVon:x.verschobenVon};}
@@ -14467,17 +14497,8 @@ function kalOpenForm(eid,day,editId){if(!kalCanEdit())return;kalEnsureModal();
 function kalCloseForm(){var m=document.getElementById('kalFormModal');if(m)m.classList.add('hidden');}
 function kalDrawForm(){var b=document.getElementById('kalFormBody');if(!b||!KF)return;var L=kalEmps(KF.employeeId&&kalIsVlc(kalEmp(KF.employeeId))?'VLC':KAL.loc);if(L.every(function(e){return e.id!==KF.employeeId;})&&kalEmp(KF.employeeId))L=L.concat([kalEmp(KF.employeeId)]);
   var ev=kalEval(KF),fe=kalEmp(KF.employeeId),sub=document.getElementById('kalFormSub');if(sub)sub.textContent=fe?fe.name+(fe.role?' · '+fe.role:''):'—';
-  var h='';if(fe&&KF.von){var y=KF.von.slice(0,4),k=kalKonto(fe.id,y),loc=kalIsVlc(fe)?'VLC':'MUC',mx=0;kalDays({employeeId:fe.id,von:KF.von,bis:KF.halb?KF.von:(KF.bis||KF.von),halb:KF.halb}).forEach(function(d){var n=kalFree(d,loc,fe.id).length;if(n>mx)mx=n;});
-    var vl=kalWdBetween(fe,KF.eingereichtAm||today(),KF.von),isU=KF.art==='urlaub',flex=isU&&!KF.normal&&!KF.verschobenVon&&vl<15,BK=[['DIESER EINTRAG',kalNf(ev.n||0),'Arbeitstage'],['URLAUB FREI',kalNf(isU&&!flex&&!KF.id?k.frei-(ev.n||0):k.frei),(isU&&!flex&&!KF.id?'danach · ':'')+'von '+kalNf(k.ans+k.uebEff)],['FLEX DAYS',kalNf(flex&&!KF.id?k.flex-(ev.n||0):k.flex),(flex&&!KF.id?'danach · ':'')+'von '+k.flexMax],['VORLAUF',vl<0?'–':vl,'Arbeitstage'],['ANDERE FREI',mx,'am vollsten Tag']];
-    h+='<div id="kfSecB" style="border-radius:14px;padding:16px 18px;margin-bottom:14px;min-height:148px;box-sizing:border-box;color:#fff;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)"><div style="font-size:11px;font-weight:600;letter-spacing:.09em;margin-bottom:10px">'+(KAL_ART[KF.art]||'').toUpperCase()+' · '+esc(fe.name.toUpperCase())+'</div><div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">'
-      +BK.map(function(x,i){return '<div style="padding:0 12px;'+(i?'border-left:1px solid rgba(255,255,255,.25);':'padding-left:0;')+'min-width:0"><div style="font-size:10.5px;font-weight:600;letter-spacing:.08em;white-space:nowrap">'+x[0]+'</div><div style="font-size:30px;font-weight:300;line-height:1.15">'+x[1]+'</div><div style="font-size:12px;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x[2]+'</div></div>';}).join('')+'</div></div>';}
-  h+='<div class="kal-fs" id="kfSec1"><div class="h">1 · Wer</div><select onchange="KF.employeeId=this.value;kalDrawForm()">'+L.map(function(e){return '<option value="'+e.id+'"'+(e.id===KF.employeeId?' selected':'')+'>'+esc(e.name)+'</option>';}).join('')+'</select></div>';
-  h+='<div class="kal-fs" id="kfSec2"><div class="h">2 · Was</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="dsh-seg">'+[['urlaub','Urlaub'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']].map(function(o){return '<button type="button" class="'+(KF.art===o[0]?'on':'')+'" onclick="KF.art=\''+o[0]+'\';kalDrawForm()">'+o[1]+'</button>';}).join('')+'</div><label style="display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer"><input type="checkbox" style="width:auto;margin:0" '+(KF.halb?'checked':'')+' onchange="KF.halb=this.checked;if(KF.halb)KF.bis=KF.von;kalDrawForm()"> halber Tag</label>'+(KF.halb?'<div class="dsh-seg sm"><button type="button" class="'+(KF.halbTeil!=='nm'?'on':'')+'" onclick="KF.halbTeil=\'vm\';kalDrawForm()">Vormittag</button><button type="button" class="'+(KF.halbTeil==='nm'?'on':'')+'" onclick="KF.halbTeil=\'nm\';kalDrawForm()">Nachmittag</button></div>':'')+'</div>'
-    +(KF.art==='urlaub'?'<div class="kal-note" style="margin-top:8px">Flex Day wird nicht ausgewählt: Bei weniger als 15 Arbeitstagen Vorlauf zählt Urlaub automatisch als Flex Day.</div><label style="display:inline-flex;align-items:center;gap:6px;margin:8px 0 0;cursor:pointer;font-weight:400"><input type="checkbox" style="width:auto;margin:0" '+(KF.normal?'checked':'')+' onchange="KF.normal=this.checked;kalDrawForm()"> trotzdem als normalen Urlaub zählen</label>':'')+'</div>';
-  h+='<div class="kal-fs" id="kfSec3"><div class="h">3 · Wann</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input type="date" value="'+KF.von+'" style="width:170px" onchange="KF.von=this.value;if(KF.bis<KF.von||KF.halb)KF.bis=KF.von;kalDrawForm()"><span>bis</span><input type="date" value="'+KF.bis+'" style="width:170px" '+(KF.halb?'disabled':'')+' onchange="KF.bis=this.value;kalDrawForm()"></div>'
-    +(KF.art!=='krank'?'<div style="display:flex;gap:10px;align-items:center;margin-top:10px"><span class="kal-note">Status</span><div class="dsh-seg sm"><button type="button" class="'+(KF.status==='genehmigt'?'on':'')+'" onclick="KF.status=\'genehmigt\';kalDrawForm()">Genehmigt</button><button type="button" class="'+(KF.status==='offen'?'on':'')+'" onclick="KF.status=\'offen\';kalDrawForm()">Antrag (offen)</button></div></div>':'')
-    +'<div style="margin-top:10px"><input type="text" placeholder="Notiz (optional)" value="'+esc(KF.notiz||'')+'" oninput="KF.notiz=this.value"></div></div>';
-  h+='<div class="kal-fs" id="kfSec4"><div class="h">4 · Prüfung</div>'+ev.H.map(function(x){return '<div class="kal-hint '+x.t+'">'+x.h+'</div>';}).join('')+'</div>';
+  var empSel='<select onchange="absSet(\'kf\',\'employeeId\',this.value)">'+L.map(function(e){return '<option value="'+e.id+'"'+(e.id===KF.employeeId?' selected':'')+'>'+esc(e.name)+'</option>';}).join('')+'</select>';
+  var h=absFormHtml('kf',fe,KF,ev,empSel);
   var ft='<div style="display:flex;gap:8px;width:100%;justify-content:flex-end">'+(KF.id?'<button class="btn btn-danger" style="margin-right:auto" onclick="kalDelete()">Löschen</button>':'')+'<button class="btn" onclick="kalCloseForm()">Abbrechen</button><button class="btn btn-primary" onclick="kalSaveForm()"'+(ev.n?'':' disabled')+'>'+(KF.id?'Speichern':'Eintragen')+'</button></div>';
   b.innerHTML=h;var fo=document.getElementById('kalFormFoot');if(fo)fo.innerHTML=ft;}
 function kalSaveForm(){if(!KF)return;var ev=kalEval(KF);if(!ev.n)return;var art=KF.art,e=kalEmp(KF.employeeId);
@@ -14817,12 +14838,7 @@ function abRender(){if(!AB.f)abNewForm();var e=kalEmp(AB.emp),b=document.getElem
   var isU=F.art==='urlaub',vl=F.von?kalWdBetween(e,F.eingereichtAm||today(),F.von):0;
   var fo=!!(AB.fOpen||F.von||F.id);
   h+='<div id="abSecC" style="'+CARD+'"><div class="at-newh" onclick="AB.fOpen=!'+fo+';if(!AB.fOpen&&!AB.f.id&&!AB.f.von)AB.f=null;abRender()"><span class="at-pl"><i class="ti '+(fo?'ti-minus':'ti-plus')+'"></i></span><b>'+(F.id?'Abwesenheit ändern':'Abwesenheit eintragen')+'</b><span class="kal-note" style="margin-left:auto">'+(fo?(F.id?'aus der Team-Übersicht geladen · zuklappen':'zuklappen · oder unten im Team Tage anklicken'):'zum Aufklappen klicken · oder unten im Team Tage anklicken')+'</span></div><div style="margin-top:12px;'+(fo?'':'display:none')+'">'
-    +'<div class="ab-fr">'+seg([['urlaub','Urlaub'],['ausgleich','Ausgleichstag'],['freistellung','Freistellung'],['krank','Krank']],F.art,"AB.f.art='$';if(AB.f.art==='krank')AB.f.status='genehmigt'")
-    +'<label class="ab-cb"><input type="checkbox"'+(F.halb?' checked':'')+' onchange="AB.f.halb=this.checked;if(AB.f.halb)AB.f.bis=AB.f.von;abRender()"> halber Tag</label><span style="'+hid(F.halb)+'">'+seg([['vm','Vormittag'],['nm','Nachmittag']],F.halbTeil||'vm',"AB.f.halbTeil='$'")+'</span></div>'
-    +'<div class="ab-fr"><input type="date" value="'+(F.von||'')+'" style="width:160px" onchange="AB.f.von=this.value;if(!AB.f.bis||AB.f.bis<AB.f.von||AB.f.halb)AB.f.bis=AB.f.von;abRender()"><span>bis</span><input type="date" value="'+(F.halb?F.von:(F.bis||''))+'" style="width:160px"'+(F.halb?' disabled':'')+' onchange="AB.f.bis=this.value;abRender()">'
-    +'<span style="'+hid(F.art!=='krank')+'display:inline-flex;gap:8px;align-items:center"><span class="kal-note">Status</span>'+seg([['genehmigt','Genehmigt'],['offen','Antrag (offen)']],F.status,"AB.f.status='$'")+'</span></div>'
-    +'<div class="ab-fr"><input type="text" placeholder="Notiz (optional)" value="'+esc(F.notiz||'')+'" oninput="AB.f.notiz=this.value" style="flex:1"><label class="ab-cb" style="'+hid(isU)+'"><input type="checkbox"'+(F.normal?' checked':'')+' onchange="AB.f.normal=this.checked;abRender()"> trotzdem als normalen Urlaub zählen</label></div>'
-    +abChecks(e,F,ev)
+    +absFormHtml('ab',e,F,ev,'<input type="text" value="'+esc(e.name)+'" disabled style="background:#EFECE5;color:var(--text2)">')
     +'<div class="ab-fr" style="justify-content:flex-end;margin:12px 0 0"><button class="btn btn-danger" style="margin-right:auto;'+hid(F.id&&ed)+'" onclick="abDelete()">Löschen</button><button class="btn" onclick="AB.f=null;abRender()">Zurücksetzen</button><button class="btn btn-primary" onclick="abSave()"'+(ed&&ev.n?'':' disabled')+'>'+(F.id?'Speichern':'Eintragen')+'</button></div></div></div>';
   // Team (eigene Zeile anklickbar: Tage wählen oder Eintrag laden)
   var loc=kalIsVlc(e)?'VLC':'MUC',T=kalEmps(loc),D=ztDaysOfMonth(mk);T=[e].concat(T.filter(function(x){return x.id!==e.id;}));
