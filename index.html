@@ -2215,6 +2215,16 @@ function setCoachFilterView(v){coachFilterView='overview';if(v&&v!=='overview'&&
 // Coach-Wirksamkeit: für jede abgeschlossene Session mit Coach + Ziel-KPI wird die
 // Ø-Veränderung 14 Tage vor vs. nach der Session berechnet (in Zielrichtung normalisiert:
 // positiv = Bewegung Richtung Ziel, unabhängig davon ob das KPI "mind." oder "max." ist).
+// KPI über einen Zeitraum richtig berechnen (CR-Quoten aus den Summen, Opt./Std. über die Arbeitszeit, Rest als Tagesmittel)
+function perfKpiWin(emp,rows,key){if(!rows||!rows.length)return null;var S=function(f){return rows.reduce(function(a,p){return a+(+p[f]||0);},0);};
+  var oem=S('convOEM'),notS=S('notSuccessful'),tw=S('convTW'),yes=S('convYes'),sy=S('convSY'),my=S('convMY'),q=yes+sy+my;
+  if(key==='crOEM')return (oem+notS)>0?oem/(oem+notS)*100:null;
+  if(key==='crTeilweise')return (tw+q)>0?tw/(tw+q)*100:null;
+  if(key==='crYes')return q>0?yes/q*100:null;
+  if(key==='crSuperYes')return q>0?sy/q*100:null;
+  if(key==='crMegaYes')return q>0?my/q*100:null;
+  if(key==='optPerH'){var seen={},h=0;rows.forEach(function(p){if(!seen[p.date]){seen[p.date]=1;h+=(emp&&typeof workHoursForDate==='function')?(workHoursForDate(emp,p.date)||0):0;}});var o=rows.reduce(function(a,p){return a+(+p.optGesamt||((+p.convOEM||0)+(+p.ups_yes||0)+(+p.wka_gesamt_yes||0)));},0);return h>0?o/h:null;}
+  var vals=rows.map(function(p){return p[key];}).filter(function(v){return v!==undefined&&v!==null;});return vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:null;}
 function computeCoachEffectiveness(){
   var byCoach={};
   employees.forEach(function(emp){
@@ -2225,8 +2235,7 @@ function computeCoachEffectiveness(){
       var fromS=addDaysUTC(centerDate,-daysBefore);
       var toS=addDaysUTC(centerDate,daysAfter);
       var rows=fullPerf.filter(function(p){return p.date>=fromS&&p.date<toS;});
-      var vals=rows.map(function(p){return p[metricKey];}).filter(function(v){return v!==undefined&&v!==null;});
-      return vals.length?(vals.reduce(function(a,b){return a+b;},0)/vals.length):null;
+      return perfKpiWin(emp,rows,metricKey);
     }
     (protocols[emp.id]||[]).forEach(function(s){
       if(s.status==='geplant'||!s.coachId||!s.focusMetric)return;
@@ -8065,8 +8074,7 @@ function renderTab(){
       function _histImpactWindow(centerDate,daysBefore,daysAfter,fkey){
         var fromS=addDaysUTC(centerDate,-daysBefore),toS=addDaysUTC(centerDate,daysAfter);
         var rows=_fullPerfHist.filter(function(p){return p.date>=fromS&&p.date<toS;});
-        var vals=rows.map(function(p){return p[fkey];}).filter(function(v){return v!==undefined&&v!==null;});
-        return vals.length?(vals.reduce(function(a,b){return a+b;},0)/vals.length):null;
+        return perfKpiWin(emp,rows,fkey);
       }
       var CHIP='font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;white-space:nowrap;';
       html+='<div style="display:flex;flex-direction:column;gap:6px">';
@@ -13346,8 +13354,7 @@ function openCoachingInfoModal(empId){
     var fromS=addDaysUTC(centerDate,-daysBefore);
     var toS=addDaysUTC(centerDate,daysAfter);
     var rows=fullPerf.filter(function(p){return p.date>=fromS&&p.date<toS;});
-    var vals=rows.map(function(p){return p[metricKey];}).filter(function(v){return v!==undefined&&v!==null;});
-    return vals.length?(vals.reduce(function(a,b){return a+b;},0)/vals.length):null;
+    return perfKpiWin(emp,rows,metricKey);
   }
   function sessionEffekt(p){
     if(p.status==='geplant'||!p.focusMetric||!fullPerf.length)return null;
