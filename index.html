@@ -9795,7 +9795,7 @@ function openCommentModal(empId,editCommentId){
   if(!ex0)setTimeout(function(){var t=$('comment-text');if(t)t.focus();},50);
 }
 // ── PROVISION: komplett eigenstaendige Tabelle, unabhaengig von buildOverviewTab (keine geteilte Zustandsvariable) ──
-var provisionMode='year'; // 'month' | 'year' | 'custom'
+var provisionMode='month'; // Standard: aktueller Monat // 'month' | 'year' | 'custom'
 var provisionCustomMonth=today().slice(0,7);
 function setProvisionCustomMonth(val){provisionMode='custom';provisionCustomMonth=val;if(view==='provisionTeam')renderMain();else renderTab();}
 function setProvisionMode(m){provisionMode=m;if(view==='provisionTeam')renderMain();else renderTab();}
