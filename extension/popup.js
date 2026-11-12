@@ -313,9 +313,9 @@
       + (m.preview && m.choices ? '<div class="pl" style="align-items:center"><span>Vorschau als</span><select id="previewSel" class="prevSel">' + m.choices.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === m.emp.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></div>' : '')
       + '<div class="pl" style="align-items:center"><span>Anzeige</span><div class="seg sm2"><button type="button" data-dm="popup" class="' + (displayMode !== 'panel' ? 'on' : '') + '">Fenster</button><button type="button" data-dm="panel" class="' + (displayMode === 'panel' ? 'on' : '') + '">Seitenleiste</button></div></div>'
       + '<div class="pl"><span>Version</span><b>' + esc(chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '') + '</b></div>', 'sb');
-    var c1 = card(lab('Benachrichtige mich, wenn …') + sw);
+    var c1 = card(lab('Benachrichtige mich, wenn …') + sw, 'tight');
     var st = '<div class="strip row2"><div class="sTxt"><span class="lab">Hinweise</span><span class="sVal">' + on + ' von ' + all + ' an</span></div><button type="button" class="secondary sm" id="meLogout">Abmelden</button></div>';
-    return h + '<div class="tiles" style="grid-template-rows:134px 156px">' + c0 + c1 + '</div>' + st;
+    return h + '<div class="tiles" style="grid-template-rows:126px 164px">' + c0 + c1 + '</div>' + st;
   }
   function ini(n) { return String(n || '').split(' ').map(function (x) { return x[0] || ''; }).join('').slice(0, 2).toUpperCase(); }
 
