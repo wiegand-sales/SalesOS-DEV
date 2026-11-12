@@ -28,7 +28,7 @@
   function stand(m) { var ts = m.lastSync ? new Date(m.lastSync) : new Date(m.loadedAt); return 'Stand ' + ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2); }
   function lab(t) { return '<span class="lab">' + esc(t) + '</span>'; }
   function badge(t, good) { return '<span class="badge' + (good === false ? ' bad' : '') + '">' + esc(t) + '</span>'; }
-  function side(l, v) { return '<div class="bSide"><span>' + esc(l) + '</span><span>' + esc(v) + '</span></div>'; }
+  function side(l, v, sm) { return '<div class="bSide' + (sm ? ' sm' : '') + '"><span>' + esc(l) + '</span><span>' + esc(v) + '</span></div>'; }
   function banner(label, b, big, right, below, bigCls) {
     return '<div class="banner"><div class="bRow">' + lab(label) + (b || '') + '</div>'
       + '<div class="bMain"><span class="big' + (bigCls ? ' ' + bigCls : '') + '">' + esc(big) + '</span>' + (right || '') + '</div>'
@@ -197,7 +197,7 @@
     if (uView === 'antrag') return vAntrag(m);
     var k = u.konto, T = Math.max(1, k.gesamt);
     var bar = '<div class="split"><div style="flex:' + Math.max(k.tk, 0.01) + ' 1 0;background:#fff"></div><div style="flex:' + Math.max(k.pl, 0.01) + ' 1 0;background:rgba(255,255,255,0.7)"></div><div style="flex:' + Math.max(k.be, 0.01) + ' 1 0;background:rgba(255,255,255,0.45)"></div><div style="flex:' + Math.max(k.frei, 0.01) + ' 1 0;background:rgba(255,255,255,0.2)"></div></div>';
-    var h = banner('Urlaub ' + u.year, k.be > 0 ? badge(nf(k.be) + ' T. beantragt', true) : '', nf(k.frei) + ' Tage', side('Flex Days', 'noch ' + nf(k.flex) + ' von ' + k.flexMax), bar);
+    var h = banner('Urlaub ' + u.year, k.be > 0 ? badge(nf(k.be) + ' T. beantragt', true) : '', nf(k.frei) + ' Tage', side('Flex Days', 'noch ' + nf(k.flex) + ' von ' + k.flexMax, true), bar);
     var rows = u.items.slice(0, 3).map(function (x) {
       var pill = '<span class="pill' + (x.status === 'offen' ? ' open' : x.status === 'abgelehnt' ? ' no' : '') + '">' + (STATUS[x.status] || x.status) + '</span>';
       var del = x.status === 'offen' && !m.preview ? '<button type="button" class="x" data-del="' + esc(x.id) + '" title="Antrag zurückziehen" aria-label="Antrag zurückziehen"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : '';
