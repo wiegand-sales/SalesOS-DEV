@@ -7253,8 +7253,12 @@ function qaCallsDue(empId){
   var t=today(),d=new Date(+t.slice(0,4),+t.slice(5,7)-1,+t.slice(8,10));d.setDate(d.getDate()-((d.getDay()+6)%7));
   var cutoff=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var cnt=(callRatings[empId]||[]).filter(function(r){return r.date>=cutoff;}).length;
-  return {due:Math.max(0,target-cnt),cnt:cnt,target:target};
+  // Neu: Ziel je Bewerter (4/Woche insgesamt). Für den Agent zählt nur, ob er diese Woche zur Bewertung vorgesehen ist.
+  var open=qaOpenFor(empId);
+  return {due:open,cnt:cnt,target:cnt+open};
 }
+var _qaOpenC={at:0,m:null};
+function qaOpenFor(empId){if(typeof aufgAll!=='function')return 0;if(!_qaOpenC.m||Date.now()-_qaOpenC.at>1500){var m={};try{aufgAll().forEach(function(o){if(o.art==='QA-Bewertung')m[o.emp]=(m[o.emp]||0)+1;});}catch(e){}_qaOpenC={at:Date.now(),m:m};}return _qaOpenC.m[empId]||0;}
 
 // ── RENDER TAB ──
 function renderTab(){
@@ -15032,16 +15036,29 @@ function aufgAll(){var t=today(),out=[],_sk=aufgStaff().map(function(p){return p
   // 4) Sessions planen: Performance Reviews, Routinen, Weeklys nach Regeln (aus dem Kalender, beide Standorte)
   var sv=KAL.loc;['MUC','VLC'].forEach(function(l){KAL.loc=l;_kalTC.v=null;kalTasks().forEach(function(x){var grp=/^rt/.test(x.id)?'Routine · '+x.art:(x.art==='Weekly'?'Weeklys':null);
     add({key:'ses:'+x.id,art:x.art==='Performance Review'?'Performance Review':x.art,kind:grp?'routine':'auto',bundle:grp,t:x.e.name,s:x.src,due:x.art==='Weekly'?kalMon(x.due):x.due,born:kalAdd(x.due,-14),def:x.coachId?'emp:'+x.coachId:((x.art==='Weekly'&&aufgTeamLead(x.e))||aufgCoachOf(x.e)),act:'Session planen',go:function(){kalPlanTask(x.id);},emp:x.e.id,task:x});});});KAL.loc=sv;_kalTC.v=null;
-  // 5) QA-Bewertungen (weniger als 4 bewertete Calls in der laufenden Woche):
-  //    Team-Mitglieder → ihr Teamleiter; erster Beschäftigungsmonat → Kathrin; alle übrigen zufällig auf Dogoro und Niklas
-  //    (Kathrin kommt in den Zufallstopf, wenn sie diese Woche niemanden aus dem ersten Monat hat)
-  var qMo=kalMon(t),qFr=kalAdd(qMo,4),qWho={},qKat=aufgOwner('kathrin'),qMk=qMo.slice(0,7),qRest=[];
-  teamTargetList().filter(function(e){if(e.startDate&&e.startDate>t)return false;for(var i=0;i<5;i++){var d=kalAdd(qMo,i);if(kalWorkday(e,d)&&!kalOn(e.id,d))return true;}return false;})
-    .forEach(function(e){var tl=aufgTeamLead(e);if(tl){qWho[e.id]=tl;return;}if(qKat&&beschaeftigungsmonat(e,qMk)<=1){qWho[e.id]=qKat;return;}qRest.push(e);});
-  var qHatKat=Object.keys(qWho).some(function(k){return qWho[k]===qKat;}),qPool=aufgQaPool(qHatKat);
-  qRest.sort(function(a,b){return aufgQaHash(a.id+'|'+qMo)-aufgQaHash(b.id+'|'+qMo)||String(a.id).localeCompare(String(b.id));})
-    .forEach(function(e,i){qWho[e.id]=qPool[(i+aufgQaHash(qMo))%qPool.length];});
-  teamTargetList().forEach(function(e){if(typeof qaCallsDue!=='function'||!qWho[e.id])return;var q=qaCallsDue(e.id);if(q.due>0)add({key:'qa:'+e.id+':'+qMo,art:'QA-Bewertung',kind:'routine',bundle:'QA-Bewertungen',t:e.name,s:q.cnt+' von '+q.target+' Calls diese Woche bewertet',due:qFr,born:qMo,def:qWho[e.id],act:'Mitarbeiter öffnen',go:function(){selectedEmp=e.id;view='emp';activeTab='qa';renderSidebar();renderMain();},emp:e.id});});
+  // 5) QA-Bewertungen: jeder Bewerter bewertet 4 Calls pro Woche INSGESAMT (nicht 4 je Agent).
+  //    Vorgeschlagen werden die Agents mit den wenigsten Bewertungen (letzte 60 Tage, Stand Wochenbeginn), bei Gleichstand zufällig, stabil in der Woche.
+  //    SDL (Amir): nur sein Team · Kathrin: zuerst Agents im ersten Monat · Dogoro und Niklas: alle übrigen.
+  var qMo=kalMon(t),qFr=kalAdd(qMo,4),qMk=qMo.slice(0,7),QN=4,used={};
+  var qAg=teamTargetList().filter(function(e){if(e.startDate&&e.startDate>qFr)return false;for(var i=0;i<5;i++){var d=kalAdd(qMo,i);if(kalWorkday(e,d)&&!kalOn(e.id,d))return true;}return false;});
+  var qCnt=function(e){var f=kalAdd(qMo,-60);return (callRatings[e.id]||[]).filter(function(r){return r.date>=f&&r.date<qMo;}).length;};
+  var qOrd=function(L){return L.slice().sort(function(x,y){return qCnt(x)-qCnt(y)||aufgQaHash(x.id+'|'+qMo)-aufgQaHash(y.id+'|'+qMo);});};
+  var qPick=function(pool,n){var o=[];qOrd(pool.filter(function(e){return !used[e.id];})).forEach(function(e){if(o.length<n){o.push(e);used[e.id]=1;}});return o;};
+  var qTeamOf={};employees.forEach(function(l){if(l.role==='SDL'&&l.active!==false)(l.sdlTeam||[]).forEach(function(id){qTeamOf[String(id)]=l;});});
+  var qGen=qAg.filter(function(e){return !qTeamOf[String(e.id)];});
+  var qR=[];
+  employees.filter(function(l){return l.role==='SDL'&&l.active!==false;}).forEach(function(l){qR.push({key:'emp:'+l.id,name:l.name,pool:qAg.filter(function(e){return qTeamOf[String(e.id)]===l;})});});
+  var qK=aufgOwner('kathrin'),qKe=qK&&kalEmp(qK.slice(4));if(qK)qR.push({key:qK,name:qKe?qKe.name:'Kathrin',first:true,pool:qGen});
+  var qD=aufgOwner('dogoro'),qDe=qD&&kalEmp(qD.slice(4));if(qD)qR.push({key:qD,name:qDe?qDe.name:'Dogoro',pool:qGen});
+  var qNk=aufgNiklasKey(),qNe=typeof aufgNiklasEmp==='function'?aufgNiklasEmp():null;qR.push({key:qNk,name:qNe?qNe.name:'Niklas Hojdem',pool:qGen});
+  // Bewertungen dieser Woche je Bewerter (über „bewertet von“)
+  var qByR=function(name){var fn=String(name||'').toLowerCase().split(' ')[0],o=[];if(!fn)return o;Object.keys(callRatings).forEach(function(eid){(callRatings[eid]||[]).forEach(function(r){if(r.date>=qMo&&r.date<=kalAdd(qMo,6)&&String(r.bewertetVon||'').toLowerCase().indexOf(fn)===0)o.push(eid);});});return o;};
+  // Reihenfolge: SDL zuerst (eigener Pool), dann Kathrin (erster Monat), dann Dogoro und Niklas abwechselnd aus dem Rest
+  var qSel={};qR.forEach(function(r){if(r.first){var fm=r.pool.filter(function(e){return e.startDate&&beschaeftigungsmonat(e,qMk)<=1;});qSel[r.key]=qPick(fm,QN);}else if(r.pool!==qGen){var sp=qPick(r.pool,QN),so=qOrd(r.pool);for(var k=0;sp.length<QN&&so.length;k++)sp.push(so[k%so.length]);qSel[r.key]=sp;}});
+  if(qSel[qK]&&qSel[qK].length<QN)qSel[qK]=qSel[qK].concat(qPick(qGen,QN-qSel[qK].length));
+  var qRest=qR.filter(function(r){return !qSel[r.key];});for(var qi=0;qi<QN;qi++)qRest.forEach(function(r){qSel[r.key]=(qSel[r.key]||[]).concat(qPick(r.pool,1));});
+  qR.forEach(function(r){var done=qByR(r.name),open=Math.max(0,QN-done.length),dl,dl=done.slice(),L=(qSel[r.key]||[]).filter(function(e){var k=dl.indexOf(String(e.id));if(k>=0){dl.splice(k,1);return false;}return true;}).slice(0,open);
+    L.forEach(function(e,i){add({key:'qa:'+r.key+':'+qMo+':'+e.id+':'+i,art:'QA-Bewertung',kind:'routine',t:e.name,s:'Call bewerten · '+(done.length+i+1)+' von '+QN+' diese Woche'+(r.first&&e.startDate&&beschaeftigungsmonat(e,qMk)<=1?' · erster Monat':''),due:qFr,born:qMo,def:r.key,act:'Call bewerten',go:function(){openQaBewertungModal(e.id);},emp:e.id});});});
   // 6) Mitarbeiter fehlt? (ab 09:30 an Arbeitstagen: keine Aktivität, keine Abwesenheit)
   var KR=kalRules(),fz=KR.fehltZeit.split(':'),fMin=(+fz[0])*60+(+fz[1]),nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(KR.fehltAn&&hm>=Math.min(fMin,AUFG_FEHLT_MIN_OVR==null?fMin:AUFG_FEHLT_MIN_OVR)&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
     var act=0;(performance[e.id]||[]).forEach(function(r){if(r.date===t)act+=(r.gesamtAktivitaeten||0)+(r.oem_aktivitaeten||0)+(r.optGesamt||0);});if(act>0)return;
