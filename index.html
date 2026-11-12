@@ -14235,10 +14235,10 @@ function kalTasksCalc(){var out=[],t=today(),ref=kalRef(),wk=kalPeriod('woche',r
   kalEmps().forEach(function(e){
     if(e.startDate){[3,5,11,23].forEach(function(n){var s=kalP(e.startDate);s.setMonth(s.getMonth()+n);var due=kalI(s);
       if(due<kalAdd(t,-60)||due>kalAdd(t,14))return;
-      // Zwei Teile: 1) Entwicklungsbewertung (vor dem Gespräch), 2) Session. Erledigt erst, wenn beides da ist.
-      var ses=(protocols[e.id]||[]).some(function(p){return /Performance/i.test(p.type||'')&&p.date>=kalAdd(due,-30);});
-      var rev=(reviews[e.id]||[]).some(function(r){return r&&r.einwand!==undefined&&(r.date||'')>=kalAdd(due,-30);});
-      if(!(ses&&rev))out.push({id:'pg'+e.id+n,e:e,art:'Performance-Gespräch',part:rev?2:1,l:'Performance-Gespräch '+e.name,src:n+' Monate im Unternehmen'+(rev?' · Bewertung ✓, Gespräch offen':' · 1. Entwicklung bewerten, 2. Session'),due:due});});}});
+      // Zwei getrennte Aufgaben: „Entwicklung bewerten“ (aufgAll) und diese Session. Die Session zählt erst, wenn sie nicht vor der Bewertung liegt.
+      var rv=(reviews[e.id]||[]).filter(function(r){return r&&r.einwand!==undefined&&(r.date||'')>=kalAdd(due,-30);}).map(function(r){return r.date;}).sort().pop()||null;
+      var ses=(protocols[e.id]||[]).some(function(p){return /Performance/i.test(p.type||'')&&p.date>=kalAdd(due,-30)&&(!rv||p.date>=rv);});
+      if(!ses)out.push({id:'pg'+e.id+n,e:e,art:'Performance-Gespräch',l:'Performance-Gespräch '+e.name,src:n+' Monate im Unternehmen'+(rv?' · Bewertung ✓':' · Bewertung noch offen'),due:due});});}});
   // Routinen: feste Termine je Mitarbeiter
   R.routinen.forEach(function(rt){(rt.empIds||[]).forEach(function(id){var e=kalEmp(id);if(!e||kalEmps().indexOf(e)<0)return;var pd=kalPeriod(rt.rhythmus,ref),art=rt.art||'Weekly';
     var has=(protocols[e.id]||[]).some(function(p){return p.date>=pd.from&&p.date<=pd.to&&(p.type||'')===art;});if(art==='Weekly')covered[e.id]=1;
@@ -15013,6 +15013,11 @@ function aufgAll(){var t=today(),out=[],_sk=aufgStaff().map(function(p){return p
   var KR=kalRules(),fz=KR.fehltZeit.split(':'),fMin=(+fz[0])*60+(+fz[1]),nw=new Date(),hm=nw.getHours()*60+nw.getMinutes();if(KR.fehltAn&&hm>=Math.min(fMin,AUFG_FEHLT_MIN_OVR==null?fMin:AUFG_FEHLT_MIN_OVR)&&!kalWknd(t))teamTargetList().forEach(function(e){if(e.startDate&&e.startDate>t)return;if(!kalWorkday(e,t))return;var a=kalOn(e.id,t);if(a)return;
     var act=0;(performance[e.id]||[]).forEach(function(r){if(r.date===t)act+=(r.gesamtAktivitaeten||0)+(r.oem_aktivitaeten||0)+(r.optGesamt||0);});if(act>0)return;
     add({key:'fehlt:'+e.id+':'+t,art:'Mitarbeiter fehlt?',kind:'auto',t:e.name,s:'keine Aktivität bis '+KR.fehltZeit+' · keine Abwesenheit eingetragen',due:t,born:t,def:aufgDefault(e),act:'Abwesenheit eintragen',emp:e.id,go:function(){openAbsPopup(e.id,t.slice(0,7));abNewForm();AB.fOpen=true;AB.f.art='krank';AB.f.status='genehmigt';AB.f.von=t;AB.f.bis=t;abRender();}});});
+  // 5b) Entwicklung bewerten – eigene Aufgabe vor dem Performance-Gespräch
+  employees.forEach(function(e){if(e.active===false||!e.startDate||e.isPureCoach)return;[3,5,11,23].forEach(function(n){var s0=kalP(e.startDate);s0.setMonth(s0.getMonth()+n);var due=kalI(s0);
+    if(due<kalAdd(t,-60)||due>kalAdd(t,14))return;
+    var rev=(reviews[e.id]||[]).some(function(r){return r&&r.einwand!==undefined&&(r.date||'')>=kalAdd(due,-30);});
+    if(!rev)add({key:'pgr:'+e.id+':'+n,art:'Entwicklung bewerten',kind:'auto',t:e.name,s:n+' Monate · vor dem Performance-Gespräch',due:due,born:kalAdd(due,-14),def:aufgCoachOf(e),act:'Entwicklung bewerten',go:function(){openCoachingEval(e.id);},emp:e.id});});});
   // 6a) Ziele: zur Frist „Ziel prüfen“ (ohne Doppel, wenn noch eine alte freie Ziel-Aufgabe offen ist)
   var gl=kalAdd(t,7);employees.forEach(function(e){if(e.active===false)return;(goals[e.id]||[]).forEach(function(g){if(!g.targetDate||g.targetDate>gl||g.status==='erreicht'||g.status==='verfehlt')return;
     if((tasks[e.id]||[]).some(function(k){return !(k.done||k.status==='done')&&k.text==='Ziel: '+g.description;}))return;
@@ -15053,7 +15058,7 @@ function aufgCardHtml(c){var s=aufgState(c),items=c.items;
 function aufgKanban(C,S){if(AU.group==='d'||AU.group==='a')return aufgKanban2(C);return '<div class="au-kb" style="grid-template-columns:repeat('+S.length+',minmax(250px,1fr))">'+S.map(function(p){var X=C.filter(function(c){return c.assignee===p.key;}),od=X.some(function(c){return aufgState(c).c==='od';});
   return '<div class="au-col" data-acol="'+esc(p.key)+'"><div class="au-ch"><i style="background:'+(od?'#F08566':'#9a9a96')+'"></i>'+esc(p.name)+'<small>'+esc(p.sub)+'</small><span>'+X.length+'</span></div>'+(X.length?X.map(aufgCardHtml).join(''):'<div class="kal-note" style="text-align:center;padding:14px">Keine Aufgaben</div>')+'</div>';}).join('')+'</div>';}
 // Spalte in der Ansicht „Art“: alles außer Performance-Gespräch, Weekly und QA landet unter „Aufgaben“
-function aufgArtCol(c){var a=String(c.art||'');if(/Performance/.test(a))return 'Performance-Gespräche';if(/Weekly/.test(a))return 'Weekly';if(/QA/.test(a))return 'QA-Bewertungen';return 'Aufgaben';}
+function aufgArtCol(c){var a=String(c.art||'');if(/Performance|Entwicklung bewerten/.test(a))return 'Performance-Gespräche';if(/Weekly/.test(a))return 'Weekly';if(/QA/.test(a))return 'QA-Bewertungen';return 'Aufgaben';}
 function aufgKanban2(C){var cols;if(AU.group==='d'){var wk=kalAdd(kalMon(kalRef()),4);cols=[['Überfällig',function(c){return aufgState(c).c==='od';}],['Heute',function(c){return aufgState(c).c==='td';}],['Bis Freitag',function(c){var s=aufgState(c).c;return s!=='od'&&s!=='td'&&c.due<=wk;}],['Später',function(c){return c.due>wk;}]];}
   else{cols=['Performance-Gespräche','Weekly','QA-Bewertungen','Aufgaben'].map(function(a){return [a,function(c){return aufgArtCol(c)===a;}];});}
   return '<div class="au-kb" style="grid-template-columns:repeat('+cols.length+',minmax(250px,1fr))">'+cols.map(function(cl){var X=C.filter(cl[1]);return '<div class="au-col"><div class="au-ch"><i style="background:'+(cl[0]==='Überfällig'&&X.length?'#F08566':'#9a9a96')+'"></i>'+esc(cl[0])+'<span>'+X.length+'</span></div>'+(X.length?X.map(function(c){return aufgCardHtml(c).replace('<span class="au-tag">','<span class="au-tag">'+esc(kalFirst(aufgName(c.assignee)))+'</span><span class="au-tag">');}).join(''):'<div class="kal-note" style="text-align:center;padding:14px">Keine Aufgaben</div>')+'</div>';}).join('')+'</div>';}
@@ -15117,12 +15122,11 @@ var _aufgBT=0;function aufgBadgeLazy(){if(Date.now()-_aufgBT<2000)return;_aufgBT
 function aufgClick(key){var c=aufgFind(key);if(!c)return;if(c.items){aufgOpen(key);return;}aufgOpenEmp(key);}
 function aufgOpenEmp(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!o.emp)return;AU.hl=key;openAddTaskModal(o.emp);
   setTimeout(function(){var el=document.querySelector('#atOpen [data-akey="'+key.replace(/"/g,'')+'"]');if(el)el.scrollIntoView({block:'center'});},120);}
-function aufgActLabel(o){if(/^plan:/.test(o.key||''))return 'Session erfassen';if(o.art==='Ziel prüfen')return 'Ziel prüfen';if(o.art==='Performance-Gespräch'||o.art==='Performance Review')return o.task&&o.task.part===2?'Session erfassen':'Entwicklung bewerten';if(o.art==='Weekly')return 'Weekly erfassen';if(o.art==='QA-Bewertung')return 'Call bewerten';if(/^ses:/.test(o.key||''))return 'Session erfassen';return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
+function aufgActLabel(o){if(/^plan:/.test(o.key||''))return 'Session erfassen';if(o.art==='Ziel prüfen')return 'Ziel prüfen';if(o.art==='Entwicklung bewerten')return 'Entwicklung bewerten';if(o.art==='Performance-Gespräch'||o.art==='Performance Review')return 'Session erfassen';if(o.art==='Weekly')return 'Weekly erfassen';if(o.art==='QA-Bewertung')return 'Call bewerten';if(/^ses:/.test(o.key||''))return 'Session erfassen';return o.art==='Mitarbeiter fehlt?'?'Abwesenheit eintragen':o.art==='Urlaubsantrag'?'Genehmigen':o.art==='Ziel anpassen?'?'Ziel prüfen':o.art==='Ausgleichstag eintragen?'?'Eintragen':'Erledigt';}
 function aufgDone(key){var o=aufgAll().find(function(x){return x.key===key;});if(!o||!kalCanEdit())return;
   if(o.kind==='task'&&o.taskId){atToggle(o.taskId);return;}
   if(/^antrag:/.test(key)){kalDecide(key.slice(7),true);setTimeout(atRender,60);return;}
   if(/^ses:/.test(key)){var typ=o.task&&o.task.art||'Weekly';if(typ==='Performance Review')typ='Performance-Gespräch';
-    if(typ==='Performance-Gespräch'&&o.task&&o.task.part!==2){closeModal('addTaskModal');openCoachingEval(o.emp);return;}
     closeModal('addTaskModal');window._puOpenNew=true;openNeuesCoachingModal(o.emp);setTimeout(function(){puColOpen('ncSecNew');aufgPrefillSession(typ);if(typeof sfPreset==='function')sfPreset(typ,o.emp);},80);return;}
   if(/^qa:/.test(key)){closeModal('addTaskModal');window._puOpenNew=true;if(typeof openQaBewertungModal==='function')openQaBewertungModal(o.emp);return;}
   closeModal('addTaskModal');if(o.go)o.go();}
