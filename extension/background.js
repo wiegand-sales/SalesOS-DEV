@@ -22,14 +22,8 @@ async function refresh() {
   return model;
 }
 
-// Anzeige: 'popup' (Fenster unter dem Symbol, Standard) oder 'panel' (Seitenleiste)
-async function applyDisplayMode() {
-  var st = await chrome.storage.local.get(['displayMode']), panel = st.displayMode === 'panel';
-  try { await chrome.action.setPopup({ popup: panel ? '' : 'popup.html' }); } catch (e) {}
-  try { if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: panel }); } catch (e) {}
-}
-chrome.storage.onChanged.addListener(function (ch, area) { if (area === 'local' && ch.displayMode) applyDisplayMode(); });
-applyDisplayMode();
+// Seitenleiste vorerst nicht im Einsatz: immer das Fenster unter dem Symbol
+try { chrome.action.setPopup({ popup: 'popup.html' }); } catch (e) {}
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.alarms.create('sos-refresh', { periodInMinutes: SOS_CONFIG.refreshMinutes });

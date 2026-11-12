@@ -18,7 +18,7 @@ body { width: 354px; height: 520px; overflow: hidden; font-family: 'Urbanist', '
 .shell { display: flex; height: 520px; }
 /* Symbolleiste wie im Board (.sb-rail): schwebende Karte, nur Symbole, beginnt auf Hoehe des Banners */
 .rail { width: 56px; flex-shrink: 0; margin: 14px 0 14px 10px; background: var(--white); border: 1px solid var(--edge); border-radius: 16px; box-shadow: 0 14px 34px rgba(40,32,15,.10); display: flex; flex-direction: column; align-items: center; padding: 10px 0; position: relative; z-index: 5; }
-.logo { position: relative; width: 38px; height: 38px; border-radius: 11px; border: none; padding: 0; background: var(--coral); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; flex-shrink: 0; cursor: pointer; }
+.logo { position: relative; width: 38px; height: 38px; border-radius: 11px; border: none; padding: 0; background: var(--coral); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; flex-shrink: 0; }
 .logo:hover:not(:disabled) { background: var(--coral-h); }
 .logo:disabled { cursor: default; }
 .logo .tlab { position: absolute; left: 48px; top: 50%; margin-top: -14px; height: 28px; line-height: 18px; padding: 5px 10px; border-radius: 8px; background: #1d1c1a; color: #fff; font-size: 12.5px; font-weight: 700; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s; z-index: 20; }

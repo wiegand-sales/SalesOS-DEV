@@ -353,11 +353,10 @@
     var h = banner('Einstellungen', SOS.config.env === 'DEV' ? badge('Testsystem', true) : '', (m.emp.name || '').split(' ')[0], side('Daten', stand(m).replace('Stand ', '') + ' Uhr'), segs);
     var c0 = card('<div class="meHead"><span class="av big">' + esc(ini(m.emp.name)) + '</span><div><b>' + esc(m.emp.name) + '</b><span class="xs muted">' + esc(m.email || '') + '</span></div></div>'
       + (m.preview && m.choices ? '<div class="pl" style="align-items:center"><span>Vorschau als</span><select id="previewSel" class="prevSel">' + m.choices.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === m.emp.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></div>' : '')
-      + '<div class="pl" style="align-items:center"><span>Anzeige</span><div class="seg sm2"><button type="button" data-dm="popup" class="' + (displayMode !== 'panel' ? 'on' : '') + '">Fenster</button><button type="button" data-dm="panel" class="' + (displayMode === 'panel' ? 'on' : '') + '">Seitenleiste</button></div></div>'
       + '<div class="pl"><span>Version</span><b>' + esc(chrome.runtime && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '') + '</b></div>', 'sb');
     var c1 = card(lab('Benachrichtige mich, wenn …') + sw, 'tight');
     var st = '<div class="strip row2"><div class="sTxt"><span class="lab">Hinweise</span><span class="sVal">' + on + ' von ' + all + ' an</span></div><button type="button" class="secondary sm" id="meLogout">Abmelden</button></div>';
-    return h + '<div class="tiles" style="grid-template-rows:' + (PANEL ? '126px 1fr' : '126px 164px') + '">' + c0 + c1 + '</div>' + st;
+    return h + '<div class="tiles" style="grid-template-rows:' + (PANEL ? '126px 1fr' : '104px 186px') + '">' + c0 + c1 + '</div>' + st;
   }
   function ini(n) { return String(n || '').split(' ').map(function (x) { return x[0] || ''; }).join('').slice(0, 2).toUpperCase(); }
 
@@ -558,7 +557,7 @@
 
   SOS.storageGet(['model', 'session', 'lastTab', 'lastTabPanel']).then(function (st) {
     if (PANEL) tab = st.lastTabPanel && VIEWS[st.lastTabPanel] ? st.lastTabPanel : 'pheute';
-    else if (st.lastTab && VIEWS[st.lastTab] && st.lastTab.charAt(0) !== 'p') tab = st.lastTab;
+    else if (st.lastTab && VIEWS[st.lastTab] && !/^p(heute|monat|planen)$/.test(st.lastTab)) tab = st.lastTab;
     if (!st.session) { render({ state: 'login' }); return; }
     $('view').innerHTML = '<div class="empty">Lade deine Zahlen …</div>';
     loadExtra().then(function () { if (st.model && st.model.state === 'ok' && st.model.forecast && st.model.prov && st.model.termine && ('heim' in st.model)) render(st.model); refresh(); });

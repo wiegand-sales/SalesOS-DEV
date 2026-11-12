@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Sales OS – Deine Kennzahlen (DEV)",
   "short_name": "Sales OS",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Zeigt dir deine eigenen Kennzahlen und deine Provision aus Sales OS.",
   "action": {
     "default_popup": "popup.html",
@@ -26,13 +26,9 @@
   "permissions": [
     "storage",
     "alarms",
-    "notifications",
-    "sidePanel"
+    "notifications"
   ],
   "host_permissions": [
     "https://kjlkneodyvfqgaukdjvb.supabase.co/*"
-  ],
-  "side_panel": {
-    "default_path": "sidepanel.html"
-  }
+  ]
 }
