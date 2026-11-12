@@ -219,10 +219,13 @@ html.panel .shell { height: 100%; }
 html.panel #view { overflow-y: auto; scrollbar-width: thin; }
 .seg.sm2 { margin-left: 0; }
 .seg.sm2 button { height: 24px; padding: 0 9px; font-size: 11.5px; }
-/* Seitenleiste: Inhalt fuellt die volle Hoehe */
-html.panel #view > .pg { flex: 1 1 0; min-height: 130px; display: flex; }
-html.panel #view > .pg > .card { height: auto; flex: 1; }
-html.panel #view > .card { flex: 1 1 auto; height: auto !important; }
-html.panel #view > .tiles { flex: 1 1 auto; height: auto; min-height: 300px; }
+/* Seitenleiste: Bausteine in natuerlicher Hoehe, die Seite scrollt bei Bedarf */
+html.panel #view > .card { flex-shrink: 0; }
+html.panel #view > .card[style*="height:300px"] { height: auto !important; min-height: 300px; }
+.mini3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; flex-shrink: 0; }
+.mt { background: var(--white); border: 1px solid var(--edge); border-radius: 12px; padding: 9px 11px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 10px 24px rgba(40,32,15,0.06); min-width: 0; }
+.mt .lab { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mv { font-size: 17px; font-weight: 400; white-space: nowrap; }
+.mv small { font-size: 12.5px; color: var(--text3); }
 .mbar { width: 42px; height: 5px; border-radius: 3px; background: var(--sub); overflow: hidden; flex-shrink: 0; }
 .mbar i { display: block; height: 100%; border-radius: 3px; }
