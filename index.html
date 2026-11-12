@@ -632,6 +632,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .ab-vz{font-size:11px;color:#8A7F72;display:block;text-align:center;line-height:16px}
 .kal-pn{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:6px;background:#1d1c1a;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:0 4px;margin-left:4px}
 .kal-pn.z{background:#E4E0D6;color:var(--text2)}
+.kal-vs{background:transparent!important;border:1.5px dashed #C9B9A3!important;color:var(--text2)!important;cursor:pointer}
+.kal-vs b{font-weight:600;font-size:10px;opacity:.8}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -14287,9 +14289,13 @@ function kalSesChip(o){return '<div class="kal-ch kal-ses kal-sopen'+(kalSesPast
 function kalSesArt(t){if(!t)return '';return {'Einzelcoaching':'Coaching','Performance Review':'Performance','Performance-Gespräch':'Performance','KPI Review':'Weekly','1:1 Coaching':'Coaching'}[t]||t;}
 function kalFreeOver(d,o){var R=kalRules();if(R.freiBezug!=='team')return o.length>=R.freiGrenze;var c={};o.forEach(function(z){var t=kalTeamOf(z.e);c[t]=(c[t]||0)+1;});return Object.keys(c).some(function(t){return c[t]>=R.freiGrenze;});}
 function kalFreeTag(d){if(kalFixDay(d))return '';var o=kalFree(d,KAL.loc,null);return kalFreeOver(d,o)?'<span class="kal-tag warn" data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'">'+o.length+' frei</span>':'';}
+// Vorschläge: noch nicht geplante Weeklys / Performance Reviews gestrichelt am Fälligkeitstag (Überfälliges heute). Klick → Woche zum Einplanen, Ziehen auf eine Uhrzeit → Termin
+function kalSuggest(d){if(kalCtx()==='coach'||!kalCanEdit())return [];var t=today();if(d<t)return [];var hid=kalHid();
+  return kalTasks().filter(function(x){var dd=x.due<t?t:x.due;if(dd!==d)return false;if(!kalLocMatch(x.e))return false;var cat=/Weekly/i.test(x.art)?'Weekly':'Performance';return !hid[cat];});}
+function kalSuggestChip(x){return '<div class="kal-ch kal-vs" draggable="true" data-ktask="'+esc(x.id)+'" onclick="event.stopPropagation();kalPlanTask(this.dataset.ktask)" data-ktip="'+esc('<b>'+x.l+'</b><br>Vorschlag · fällig '+kalF(x.due)+'<br>'+x.src+'<br>Klick: Woche öffnen · Ziehen: auf eine Uhrzeit')+'">'+esc(kalFirst(x.e.name))+' · '+esc(x.art==='Weekly'?'Weekly':'Review')+'</div>';}
 function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){return kalAdd(m,i);}),t=today();
   var h='<div class="kal-wv"><div class="hd" style="border-left:0"></div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);return '<div class="hd'+(d===t?' td':'')+(kalWknd(d)?' we':'')+'">'+KAL_WD[kalP(d).getDay()].toUpperCase()+'<b>'+kalF(d)+'</b>'+(hn?'<small>'+esc(hn)+'</small>':'')+'</div>';}).join('');
-  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});return kalWknd(d)?'<div class="ad we">'+o.slice(1).join('')+'</div>':'<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
+  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});kalSuggest(d).forEach(function(x){o.push(kalSuggestChip(x));});return kalWknd(d)?'<div class="ad we">'+o.slice(1).join('')+'</div>':'<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
   var tm='<div class="times">';for(var hh=8;hh<20;hh++)tm+='<span style="top:'+((hh-8)*56+4)+'px">'+('0'+hh).slice(-2)+':00</span>';h+=tm+'</div>';
   D.forEach(function(d){var c=kalWknd(d)?'<div class="col we">':'<div class="col'+(kalHol(d,KAL.loc)?' hl':'')+'" data-kslot="'+d+'" data-kopen="'+d+'">';
     var day=kalSess(d).filter(function(o){return o.p.uhrzeit;}),cols=[];day.forEach(function(o){var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;if(en<=st)en=st+45;o._s=st;o._e=en;var ci=0;while(cols[ci]&&cols[ci]>st)ci++;cols[ci]=en;o._col=Math.min(ci,2);});
@@ -14302,7 +14308,7 @@ function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),fi
   var h='<div class="kal-mg">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(w){return '<div class="wh">'+w+'</div>';}).join('');
   while(d<=last||kalP(d).getDay()!==1){var hn=kalHol(d,KAL.loc),out=kalP(d).getMonth()!==mo;
     if(kalWknd(d)){h+='<div class="c we'+(out?' out':'')+'"><div class="dn">'+kalP(d).getDate()+'</div></div>';d=kalAdd(d,1);continue;}
-    var ch=[];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));if(latCanSee())latOn(e.id,d).forEach(function(l){ch.push('<div class="kal-ch kal-vzc" data-kedit="'+l.id+'" data-ktip="'+esc('<b>'+e.name+'</b><br>'+(l.minuten||0)+' Min. zu spät'+(l.notiz?'<br>'+l.notiz:''))+'"><i class="ti ti-clock"></i> '+esc(kalFirst(e.name))+' · '+(l.minuten||0)+'′</div>');});});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
+    var ch=[];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));if(latCanSee())latOn(e.id,d).forEach(function(l){ch.push('<div class="kal-ch kal-vzc" data-kedit="'+l.id+'" data-ktip="'+esc('<b>'+e.name+'</b><br>'+(l.minuten||0)+' Min. zu spät'+(l.notiz?'<br>'+l.notiz:''))+'"><i class="ti ti-clock"></i> '+esc(kalFirst(e.name))+' · '+(l.minuten||0)+'′</div>');});});kalSuggest(d).forEach(function(x){ch.push(kalSuggestChip(x));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
     var fix=kalFixDay(d)?'<div class="kal-ch '+(d.slice(-2)==='24'?'kal-u':'kal-a')+'">alle · '+(d.slice(-2)==='24'?'Urlaubstag':'Ausgleichstag')+'</div>':'';
     h+='<div class="c'+(hn?' hl':'')+(out?' out':'')+'" data-kday="'+d+'" data-kopen="'+d+'"><div class="dn">'+(d===t?'<span class="tday">'+kalP(d).getDate()+'</span>':kalP(d).getDate())+kalFreeTag(d)+'</div>'+(hn?'<div class="hn">'+esc(hn)+'</div>':'')+fix+ch.slice(0,5).join('')+(ch.length>5?'<div class="kal-more">+'+(ch.length-5)+' weitere</div>':'')+'</div>';d=kalAdd(d,1);}
   return h+'</div>';}
