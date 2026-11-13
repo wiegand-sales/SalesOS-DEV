@@ -9464,6 +9464,10 @@ function renderProvisionTeam(){
   h+='</div>';
   ma.innerHTML=h;
 }
+// Optionaler Zusatzbetrag je Mitarbeiter und Monat: wird ohne Abzug auf die Provision gerechnet (Einstellung provisionExtra)
+function provExtraGet(eid,mk){var x=(settings.provisionExtra||{})[mk]||{};return +x[String(eid)]||0;}
+function provExtraSet(eid,mk,v){if(currentUserRole!=='admin')return;var all=JSON.parse(JSON.stringify(settings.provisionExtra||{})),n=Math.max(0,Math.round(+String(v).replace(',','.')||0));all[mk]=all[mk]||{};if(n)all[mk][String(eid)]=n;else delete all[mk][String(eid)];settings.provisionExtra=all;
+  var e=kalEmp(eid);saveSettingJson('provisionExtra',all,'Provision Optional: '+(e?e.name:eid)+' · '+mk+' · €'+n);renderMain();}
 function buildProvisionTeamTable(){
   function stackCell(main,sub){
     var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
@@ -9554,13 +9558,13 @@ function buildProvisionTeamTable(){
     rows.forEach(function(g){allRows.push({emp:emp,g:g});});
   });
   allRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
-  var sumKrank=0,sumUrlaub=0,sumAus=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumGesamtAkt=0,sumTotalHoursAll=0,sumNotSOem=0;
+  var sumKrank=0,sumUrlaub=0,sumAus=0,sumExtra=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumGesamtAkt=0,sumTotalHoursAll=0,sumNotSOem=0;
 
   if(!allRows.length){
     h+='<div style="text-align:center;color:var(--text3);padding:24px"><i class="ti ti-file-upload" style="font-size:26px;display:block;margin-bottom:8px"></i>Keine Daten für diesen Zeitraum</div>';
   } else {
     h+='<div style="overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border2)"><table style="width:100%;border-collapse:collapse;table-layout:fixed"><thead><tr>';
-    ['Mitarbeiter','Monat','Aus. T.','Url. T.','Kra. T.','Akt./Std.','OEM','Upsells','WKA','Opt. Ges.','Opt./Std.','CR OEM','CR TW','CR SY/MY','CR MY','Anteil OEM','Marge Ges.','Abzug','Provision'].forEach(function(lbl,i){
+    ['Mitarbeiter','Monat','Aus. T.','Url. T.','Kra. T.','Akt./Std.','OEM','Upsells','WKA','Opt. Ges.','Opt./Std.','CR OEM','CR TW','CR SY/MY','CR MY','Anteil OEM','Marge Ges.','Abzug','Optional','Provision'].forEach(function(lbl,i){
       h+='<th style="background:#EFECE5;padding:9px 14px;text-align:'+(i<=1?'left':'right')+';font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border2);white-space:nowrap;width:'+(i===0?'150px':i===1?'130px':'80px')+'">'+lbl+'</th>';
     });
     h+='</tr></thead><tbody>';
@@ -9606,9 +9610,11 @@ function buildProvisionTeamTable(){
           +(calc.mindestleistungGreift?' · Mindestleistung unterschritten (§5)':'')
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
+      var extra=provExtraGet(emp.id,g.key);if(calc.provision!==null&&extra){provision='€'+Math.round(calc.provision+extra).toLocaleString('de-DE');}
+      sumExtra+=extra;
       sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumAus+=abwTage.aus;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;sumNotSOem+=notSOemVal;
       sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
-      sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0);
+      sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0)+(calc.provision!==null?extra:0);
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
       var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
@@ -9630,7 +9636,8 @@ function buildProvisionTeamTable(){
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(row.margeOEM||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeUpsell||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeWKA||0).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+stackCell(abzug,(abzugPct!==null?abzugPct+'%':null))+'</td>'
-        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
+        +'<td style="padding:8px 8px;border-bottom:1px solid var(--border);text-align:right">'+(currentUserRole==='admin'?'<input type="number" step="1" min="0" placeholder="0" value="'+(extra||'')+'" title="Zusatzbetrag in €, wird ohne Abzug auf die Provision gerechnet" style="width:100%;max-width:90px;height:30px;padding:0 6px;text-align:right;font-size:12.5px" data-e="'+esc(String(emp.id))+'" data-m="'+g.key+'" onchange="provExtraSet(this.dataset.e,this.dataset.m,this.value)">':stackCell(extra?'€'+Math.round(extra).toLocaleString('de-DE'):'—',null))+'</td>'
+        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+(extra?' data-ktip="'+esc('inkl. €'+Math.round(extra).toLocaleString('de-DE')+' Optional (ohne Abzug)')+'"':'')+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
         +'</tr>';
     });
     if(allRows.length>=1){
@@ -9664,6 +9671,7 @@ function buildProvisionTeamTable(){
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumAnteilOem+'%',sumOEM)+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell('€'+Math.round(sumMarge).toLocaleString('de-DE'),(sumOptGes>0?'€'+sumMargeProOpt.toFixed(0)+' Ø/Opt.':null))+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#ffb3b3">'+stackCell('−€'+Math.round(sumAbzug).toLocaleString('de-DE'),sumAbzugPct+'%')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumExtra?'€'+Math.round(sumExtra).toLocaleString('de-DE'):'—',null)+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:#F7B39A">'+stackCell('€'+Math.round(sumProvision).toLocaleString('de-DE'),sumProvisionPct+'%')+'</td>'
         +'</tr>';
       h+='<tr class="perf-avg-row" style="background:var(--s-tint-strong)">'
@@ -9680,11 +9688,11 @@ function buildProvisionTeamTable(){
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrOEM+'%',(sumOEM/n).toFixed(1))+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrTW+'%',(sumRawTw/n).toFixed(1))+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrSyMy+'%',((sumRawSy+sumRawMy)/n).toFixed(1))+'</td>'
-        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrSY+'%',(sumRawSy/n).toFixed(1))+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumCrMY+'%',(sumRawMy/n).toFixed(1))+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumAnteilOem+'%',(sumOEM/n).toFixed(1))+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell('€'+Math.round(sumMarge/n).toLocaleString('de-DE'),(sumOptGes>0?'€'+sumMargeProOpt.toFixed(0)+' Ø/Opt.':null))+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:var(--red)">'+stackCell('−€'+Math.round(sumAbzug/n).toLocaleString('de-DE'),sumAbzugPct+'%')+'</td>'
+        +'<td style="padding:13px 14px;text-align:right;font-weight:700">'+stackCell(sumExtra?'€'+Math.round(sumExtra/n).toLocaleString('de-DE'):'—',null)+'</td>'
         +'<td style="padding:13px 14px;text-align:right;font-weight:700;color:var(--teal-dark)">'+stackCell('€'+Math.round(sumProvision/n).toLocaleString('de-DE'),sumProvisionPct+'%')+'</td>'
         +'</tr>';
     }
