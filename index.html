@@ -1628,7 +1628,7 @@ function loadSalariesFromSupabase(){return sb.from('employee_salary').select('*'
   SALARY_TABLE=true;var by={};(res.data||[]).forEach(function(r){by[String(r.employee_id)]=r;});
   employees.forEach(function(e){var r=by[String(e.id)];var pv=e.provisionSettings||(e.provisionSettings={});delete pv.grundgehalt;delete pv.agSozialabgaben;
     if(r){if(r.grundgehalt!=null)pv.grundgehalt=+r.grundgehalt;if(r.ag_sozialabgaben!=null)pv.agSozialabgaben=+r.ag_sozialabgaben;}});
-  return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;});}
+  return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;}).then(function(){return typeof loadProvExtra==='function'?loadProvExtra():true;});}
 function esSdlToggle(v){var b=document.getElementById('es-sdl-team');if(b)b.style.display=v==='SDL'?'':'none';}
 function positionRole(p){ return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
@@ -9465,9 +9465,18 @@ function renderProvisionTeam(){
   ma.innerHTML=h;
 }
 // Optionaler Zusatzbetrag je Mitarbeiter und Monat: wird ohne Abzug auf die Provision gerechnet (Einstellung provisionExtra)
-function provExtraGet(eid,mk){var x=(settings.provisionExtra||{})[mk]||{};return +x[String(eid)]||0;}
-function provExtraSet(eid,mk,v){if(currentUserRole!=='admin')return;var all=JSON.parse(JSON.stringify(settings.provisionExtra||{})),n=Math.max(0,Math.round(+String(v).replace(',','.')||0));all[mk]=all[mk]||{};if(n)all[mk][String(eid)]=n;else delete all[mk][String(eid)];settings.provisionExtra=all;
-  var e=kalEmp(eid);saveSettingJson('provisionExtra',all,'Provision Optional: '+(e?e.name:eid)+' · '+mk+' · €'+n);renderMain();}
+// gespeichert in der Tabelle provision_extra (SQL 35); solange es die Tabelle nicht gibt, im Einstellungs-Block
+var PROV_EXTRA={},PROV_EXTRA_TABLE=false;
+function loadProvExtra(){return sb.from('provision_extra').select('employee_id,monat,betrag').then(function(res){
+  if(res&&res.error){PROV_EXTRA_TABLE=false;PROV_EXTRA=JSON.parse(JSON.stringify(settings.provisionExtra||{}));return true;}
+  PROV_EXTRA_TABLE=true;PROV_EXTRA={};(res.data||[]).forEach(function(r){(PROV_EXTRA[r.monat]=PROV_EXTRA[r.monat]||{})[String(r.employee_id)]=+r.betrag||0;});return true;}).catch(function(){PROV_EXTRA_TABLE=false;return true;});}
+function provExtraGet(eid,mk){var x=PROV_EXTRA[mk]||(PROV_EXTRA_TABLE?{}:((settings.provisionExtra||{})[mk]||{}));return +x[String(eid)]||0;}
+function provExtraSet(eid,mk,v){if(currentUserRole!=='admin')return;var n=Math.max(0,Math.round(+String(v).replace(',','.')||0)),e=kalEmp(eid),log='Provision Optional: '+(e?e.name:eid)+' · '+mk+' · €'+n;
+  (PROV_EXTRA[mk]=PROV_EXTRA[mk]||{});if(n)PROV_EXTRA[mk][String(eid)]=n;else delete PROV_EXTRA[mk][String(eid)];
+  if(PROV_EXTRA_TABLE){var q=n?sb.from('provision_extra').upsert({employee_id:eid,monat:mk,betrag:n,geaendert_von:qaCurrentName()||null,geaendert_am:new Date().toISOString()},{onConflict:'employee_id,monat'}):sb.from('provision_extra').delete().eq('employee_id',eid).eq('monat',mk);
+    q.then(function(r){if(r&&r.error)alert('Speichern fehlgeschlagen: '+r.error.message);else logActivity('employee','updated',log);});}
+  else{settings.provisionExtra=JSON.parse(JSON.stringify(PROV_EXTRA));saveSettingJson('provisionExtra',settings.provisionExtra,log);}
+  renderMain();}
 function buildProvisionTeamTable(){
   function stackCell(main,sub){
     var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
