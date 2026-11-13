@@ -9611,6 +9611,8 @@ function buildProvisionTeamTable(){
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
       var extra=provExtraGet(emp.id,g.key);if(calc.provision!==null&&extra){provision='€'+Math.round(calc.provision+extra).toLocaleString('de-DE');}
+      // Erklärung als schwarze Info-Box (wie überall im Board) statt Browser-Tooltip
+      if(provisionTitle){provisionTitle=provisionTitle.replace(' title="',' data-ktip="').split(' · ').join('<br>');if(extra)provisionTitle=provisionTitle.replace(/"$/,'<br>inkl. €'+Math.round(extra).toLocaleString('de-DE')+' Optional (ohne Abzug)"');}
       sumExtra+=extra;
       sumKrank+=abwTage.krank;sumUrlaub+=abwTage.urlaub;sumAus+=abwTage.aus;sumOEM+=convOEM;sumUps+=ups;sumWka+=wka;sumOptGes+=optGes;sumNotSOem+=notSOemVal;
       sumRawTw+=rawTw;sumRawYes+=rawYes;sumRawSy+=rawSy;sumRawMy+=rawMy;sumMarge+=marge;
@@ -9637,7 +9639,7 @@ function buildProvisionTeamTable(){
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(row.margeOEM||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeUpsell||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeWKA||0).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+stackCell(abzug,(abzugPct!==null?abzugPct+'%':null))+'</td>'
         +'<td style="padding:8px 8px;border-bottom:1px solid var(--border);text-align:right">'+(currentUserRole==='admin'?'<input type="number" step="1" min="0" placeholder="0" value="'+(extra||'')+'" title="Zusatzbetrag in €, wird ohne Abzug auf die Provision gerechnet" style="width:100%;max-width:90px;height:30px;padding:0 6px;text-align:right;font-size:12.5px" data-e="'+esc(String(emp.id))+'" data-m="'+g.key+'" onchange="provExtraSet(this.dataset.e,this.dataset.m,this.value)">':stackCell(extra?'€'+Math.round(extra).toLocaleString('de-DE'):'—',null))+'</td>'
-        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+(extra?' data-ktip="'+esc('inkl. €'+Math.round(extra).toLocaleString('de-DE')+' Optional (ohne Abzug)')+'"':'')+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
+        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
         +'</tr>';
     });
     if(allRows.length>=1){
