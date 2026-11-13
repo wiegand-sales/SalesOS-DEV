@@ -1507,7 +1507,7 @@ var provisionTeamDropdownOpen=false;
 var provisionTeamSearchQuery='';
 function toggleProvisionTeamDropdown(){provisionTeamDropdownOpen=!provisionTeamDropdownOpen;if(!provisionTeamDropdownOpen)provisionTeamSearchQuery='';renderProvisionTeam();}
 function toggleProvisionTeamEmpId(id){
-  var visIds=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e);}).map(function(e){return e.id;});
+  var visIds=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e)&&(currentUserRole==='admin'||!(e.role==='SDC'||e.role==='SDM'));}).map(function(e){return e.id;});
   if(!provisionTeamSelectedIds)provisionTeamSelectedIds=visIds.slice();
   var idx=provisionTeamSelectedIds.indexOf(id);
   if(idx>=0)provisionTeamSelectedIds.splice(idx,1);else provisionTeamSelectedIds.push(id);
@@ -9509,7 +9509,8 @@ function buildProvisionTeamTable(){
     }
     return {urlaub:urlaub,krank:krank};
   }
-  var visible=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e);});
+  // Coaches (SDC/SDM) mit eigener Provision sehen nur Admins
+  var visible=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e)&&(currentUserRole==='admin'||!(e.role==='SDC'||e.role==='SDM'));});
   var selectedEmps=provisionTeamSelectedIds?visible.filter(function(e){return provisionTeamSelectedIds.indexOf(e.id)>=0;}):visible;
   var isAll=!provisionTeamSelectedIds||provisionTeamSelectedIds.length===visible.length;
   var selLabel=isAll?'Alle Mitarbeiter':(selectedEmps.length===1?selectedEmps[0].name:selectedEmps.length+' Mitarbeiter ausgewählt');
