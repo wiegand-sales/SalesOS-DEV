@@ -9506,16 +9506,16 @@ function buildProvisionTeamTable(){
       +'</div>';
   }
   function fc(v,t,dir){if(t==null)return '';return(dir==='lte'?v<=t:v>=t)?'color:var(--text)':'color:var(--red);font-weight:700';}
-  // Tage wie in der SFP: Ein. T. = Tage mit Leistungsdaten (wirklich gearbeitet), Url./Kra. aus dem Kalender,
-  // Aus. T. = Rest (eingetragene Ausgleichs-/Freistellungstage und Tage ohne Daten und ohne Eintrag)
-  function provTage(emp,mk){var r={at:0,url:0,aus:0,fs:0,kra:0,ein:0,rest:0},d=mk+'-01',dd={};
+  // Jede Zahl aus ihrer Quelle: Ein. T. = Tage mit Leistungsdaten, Aus./Url./Kra. = Einträge im Kalender.
+  // Die Summe wird gegen die möglichen Arbeitstage geprüft – stimmt sie nicht, fehlt ein Eintrag oder es gibt eine Überschneidung.
+  function provTage(emp,mk){var r={at:0,url:0,aus:0,fs:0,kra:0,ein:0,leer:[],doppelt:[]},d=mk+'-01',dd={};
     (performance[emp.id]||[]).forEach(function(x){if((x.date||'').slice(0,7)===mk)dd[x.date]=1;});
-    while(d.slice(0,7)===mk){if((!emp.startDate||d>=emp.startDate)&&(!emp.endDate||d<=emp.endDate)&&kalWorkday(emp,d)){r.at++;var a=kalOn(emp.id,d),w=1;
-      if(a&&!a.fixed&&a.status!=='abgelehnt'&&a.status!=='storniert'){var f=a.halb?0.5:1,k=a.masked?(a.art==='urlaub'?'urlaub':'abwesend'):a.art;
-        if(dd[d]&&f===1)f=0; // gearbeitet trotz Eintrag: zählt als Einsatz
-        if(k==='urlaub'||k==='flex')r.url+=f;else if(k==='ausgleich')r.aus+=f;else if(k==='freistellung')r.fs+=f;else r.kra+=f;w=1-f;}
-      if(w>0){if(dd[d])r.ein+=w;else r.rest+=w;}}d=kalAdd(d,1);}
-    return r;}
+    while(d.slice(0,7)===mk){if((!emp.startDate||d>=emp.startDate)&&(!emp.endDate||d<=emp.endDate)&&kalWorkday(emp,d)){r.at++;var a=kalOn(emp.id,d),f=0;
+      if(a&&!a.fixed&&a.status!=='abgelehnt'&&a.status!=='storniert'){f=a.halb?0.5:1;var k=a.masked?(a.art==='urlaub'?'urlaub':'abwesend'):a.art;
+        if(k==='urlaub'||k==='flex')r.url+=f;else if(k==='ausgleich')r.aus+=f;else if(k==='freistellung')r.fs+=f;else r.kra+=f;}
+      var e=dd[d]?(f===0.5?0.5:1):0;r.ein+=e;
+      if(f+e<1)r.leer.push(d);else if(f+e>1)r.doppelt.push(d);}d=kalAdd(d,1);}
+    r.sum=r.ein+r.url+r.aus+r.fs+r.kra;return r;}
   function urlaubKrankTage(empId,monthKey){
     var rec=(zielStore[monthKey]||{})[empId];
     var urlaub=0,krank=0;
@@ -9610,7 +9610,7 @@ function buildProvisionTeamTable(){
       var crMY=(rawYes+rawSy+rawMy)>0?Math.round(rawMy/(rawYes+rawSy+rawMy)*100):0;
       var crSyMy=(rawYes+rawSy+rawMy)>0?Math.round((rawSy+rawMy)/(rawYes+rawSy+rawMy)*100):0;
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
-      var abwTage=urlaubKrankTage(emp.id,g.key),pt=provTage(emp,g.key);abwTage={krank:pt.kra,urlaub:pt.url,aus:pt.aus+pt.fs+pt.rest};
+      var abwTage=urlaubKrankTage(emp.id,g.key),pt=provTage(emp,g.key);abwTage={krank:pt.kra,urlaub:pt.url,aus:pt.aus+pt.fs};
       var monthDates=(performance[emp.id]||[]).filter(function(x){return (x.date||'').slice(0,7)===g.key;}).map(function(x){return x.date;});
       var rowTotalHours=totalWorkHoursForMonth(emp,g.key,monthDates);
       var gesamtAktivitaeten=row.gesamtAktivitaeten||row.oem_aktivitaeten||0;
@@ -9649,7 +9649,10 @@ function buildProvisionTeamTable(){
       var rowBg=ridx%2===1?'background:var(--s-tint);':'';
       h+='<tr class="perf-data-row" style="'+rowBg+'">'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="openPerfPopup(\''+emp.id+'\')" title="Popup öffnen">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
-        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+'<span data-ktip="'+esc(pt.at+' Arbeitstage = '+kalNf(pt.ein)+' Einsatz (Tage mit Daten) + '+kalNf(pt.aus+pt.fs+pt.rest)+' Ausgleich + '+kalNf(pt.url)+' Urlaub + '+kalNf(pt.kra)+' Krank'+((pt.fs||pt.rest)?'<br>Ausgleich: '+kalNf(pt.aus)+' eingetragen'+(pt.fs?', '+kalNf(pt.fs)+' Freistellung':'')+(pt.rest?', '+kalNf(pt.rest)+' ohne Daten und ohne Eintrag':''):''))+'">'+stackCellLeft(g.label,pt.at+' Arbeitstage')+'</span></td>'
+        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+(function(){var ok=pt.sum===pt.at,fm=function(L){return L.map(function(x){return kalF(x);}).join(', ');};
+          var tip='<b>'+kalNf(pt.sum)+' von '+pt.at+' Arbeitstagen belegt</b><br>'+kalNf(pt.ein)+' Einsatz (Tage mit Daten) + '+kalNf(pt.aus+pt.fs)+' Ausgleich'+(pt.fs?' (davon '+kalNf(pt.fs)+' Freistellung)':'')+' + '+kalNf(pt.url)+' Urlaub + '+kalNf(pt.kra)+' Krank'
+            +(pt.leer.length?'<br><br><b>Ohne Daten und ohne Eintrag:</b><br>'+fm(pt.leer):'')+(pt.doppelt.length?'<br><br><b>Daten und Abwesenheit am selben Tag:</b><br>'+fm(pt.doppelt):'');
+          return '<span data-ktip="'+esc(tip)+'">'+stackCellLeft(g.label,'<span style="'+(ok?'':'color:var(--red);font-weight:700')+'">'+kalNf(pt.sum)+' von '+pt.at+' Tagen'+(ok?'':' ⚠')+'</span>')+'</span>';})()+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(kalNf(abwTage.aus),null)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(kalNf(abwTage.urlaub),null)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(kalNf(abwTage.krank),null)+'</td>'
