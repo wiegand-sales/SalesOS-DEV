@@ -691,6 +691,10 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kx-ub{display:flex;height:8px;border-radius:4px;background:#ECE8E0;overflow:hidden;margin:3px 0 4px}
 .kx-ub i{display:block;height:100%}
 .kal-sabs{font-size:10px;font-weight:700;color:#A3361F;background:#FBE3DA;border-radius:4px;padding:0 4px;margin-left:4px}
+.kal-tl .sb2{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:22px;height:22px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;z-index:1;border:1.5px solid #F08566;background:#FDF0EB;color:#9A3F22}
+.kal-tl .sb2.past{border-color:#CFC6B5;background:#fff;color:var(--text2)}
+.kal-tl .sb2.over{top:auto;bottom:2px;transform:translateX(-50%);height:18px;min-width:18px;font-size:10px}
+.kal-tl .sb2:hover{box-shadow:0 2px 6px rgba(0,0,0,.15)}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -13792,8 +13796,8 @@ function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=n
     D.forEach(function(d,ix){var hn=kalHol(d,KAL.loc),x=kalOnV(e.id,d),inner='';
       if(x){var a=kalShowArt(x),pv=ix>0&&kalOnV(e.id,D[ix-1])===x,nx=ix<n-1&&kalOnV(e.id,D[ix+1])===x,dr=kalCanEdit()&&!x.fixed&&!x.masked;
         inner='<span class="blk '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+(x.halb?' h':'')+(!pv?' s':'')+(!nx?' e':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+(dr&&!pv?'<span class="kal-rz l" data-krz="von"></span>':'')+(dr&&!nx?'<span class="kal-rz r" data-krz="bis"></span>':'')+(!pv?(x.halb?'½':KAL_ART[a].slice(0,1)):'')+'</span>';}
-      var ss=kalSess(d,e.id);if(ss.length&&co){var o0=ss[0];inner+='<span class="sb kal-ses kal-sopen'+(ss.every(function(o){return kalSesPast(o.p);})?' past':'')+'" '+(kalCanEdit()?'draggable="true" data-kses="'+o0.p.id+'" data-kemp="'+o0.e.id+'"':'')+kalSesAttrs(o0)+' data-ktip="'+esc(ss.map(function(o){return kalSesTip(o);}).join(' · '))+'">'+(ss.length>1?ss.length:'')+'</span>';}
-      else if(ss.length)inner+='<span class="dot kal-ses'+(ss.every(function(o){return kalSesPast(o.p);})?' past':'')+'" data-ktip="'+esc(ss.map(function(o){return (o.p.uhrzeit||'')+' '+(o.p.type||'Session');}).join(' · '))+'"></span>';
+      // Sessions: gut sichtbarer, anklickbarer Baustein mit Kürzel der Art (C, W, P, O); mehrere am Tag = Anzahl
+      var ss=kalSess(d,e.id);if(ss.length){var o0=ss[0],lab=ss.length>1?ss.length:(kalSesArt(o0.p.type)||'S').slice(0,1);inner+='<span class="sb2 kal-ses kal-sopen'+(ss.every(function(o){return kalSesPast(o.p);})?' past':'')+(x?' over':'')+'" '+(kalCanEdit()?'draggable="true" data-kses="'+o0.p.id+'" data-kemp="'+o0.e.id+'"':'')+kalSesAttrs(o0)+' data-ktip="'+esc(ss.map(function(o){return kalSesTip(o);}).join('<br>'))+'">'+lab+'</span>';}
       h+='<div class="cell'+(kalWknd(d)||hn?' we':'')+(d===t?' td':'')+'" data-kday="'+d+'" data-kemp="'+e.id+'"'+(!kalWknd(d)?' data-kopen="'+d+'"':'')+'>'+inner+'</div>';});});
   if(co){h+='<div class="ft nm">Sessions</div>'+D.map(function(d){var c=0;TE.forEach(function(e){c+=kalSess(d,e.id).length;});return '<div class="ft'+(kalWknd(d)||kalHol(d,KAL.loc)?' we':'')+'">'+(c||'')+'</div>';}).join('');return h+'</div></div>';}
   h+='<div class="ft nm">Frei (ohne Krank)</div>'+D.map(function(d){if(kalWknd(d)||kalHol(d,KAL.loc)||kalFixDay(d))return '<div class="ft we">·</div>';var o=kalFree(d,KAL.loc,null);return '<div class="ft'+(kalFreeOver(d,o)?' w3':'')+'"'+(o.length?' data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'"':'')+'>'+(o.length||'')+'</div>';}).join('');
