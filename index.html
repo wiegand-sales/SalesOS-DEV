@@ -4186,7 +4186,8 @@ function empTargets(emp){
   // sofern kein manueller Mitarbeiter-Override (t[key]) gesetzt wurde
   var provKpi=null;
   if(emp&&emp.startDate){
-    var pv=typeof effectiveProvisionSettings!=='undefined'?effectiveProvisionSettings(emp):null;
+    // Ziele für Alerts/Coaching: immer der neueste Stand (die Provision selbst rechnet je Monat mit der gültigen Version)
+    var pv=typeof effectiveProvisionSettings!=='undefined'?effectiveProvisionSettings(emp,'9999-12'):null;
     if(pv){
       var bm=beschaeftigungsmonat(emp,today().slice(0,7));
       provKpi=provisionKpiSetFor(pv,bm);
