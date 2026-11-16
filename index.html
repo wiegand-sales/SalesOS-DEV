@@ -704,6 +704,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-wv .hd small.hp{color:#9A3F22}
 .kal-tl .hd.hp{background-image:repeating-linear-gradient(-45deg,transparent 0 5px,rgba(154,63,34,.12) 5px 7px)}
 .kal-yv b.hpy{outline:1px dashed #C9B9A3;outline-offset:-2px;border-radius:5px}
+.kal-tl .kal-nmc.kal-focus{background:#FBE3DA!important;transition:background .3s}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -9490,6 +9491,9 @@ function provExtraSet(eid,mk,v){if(currentUserRole!=='admin')return;var n=Math.m
     q.then(function(r){if(r&&r.error)alert('Speichern fehlgeschlagen: '+r.error.message);else logActivity('employee','updated',log);});}
   else{settings.provisionExtra=JSON.parse(JSON.stringify(PROV_EXTRA));saveSettingJson('provisionExtra',settings.provisionExtra,log);}
   renderMain();}
+// Aus der Provision in den Kalender: Team-Ansicht des Monats, nur Abwesenheiten, Zeile des Mitarbeiters markiert
+function provGoKal(eid,mk){var f=kalFilterCats();KAL.hide={};f.ses.forEach(function(o){KAL.hide[o[0]]=1;});KAL.loc='ALL';KAL.chf={};KAL.view='team';KAL.cur=mk+'-01';KAL.focusEmp=String(eid);selectKalender();
+  setTimeout(function(){var n=document.querySelector('.kal-tl .kal-nmc[data-eid="'+eid+'"]');if(n){n.scrollIntoView({block:'center',behavior:'smooth'});n.classList.add('kal-focus');setTimeout(function(){n.classList.remove('kal-focus');},2500);}},80);}
 function buildProvisionTeamTable(){
   function stackCell(main,sub){
     var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
@@ -9653,9 +9657,9 @@ function buildProvisionTeamTable(){
           var tip='<b>'+kalNf(pt.sum)+' von '+pt.at+' Arbeitstagen belegt</b><br>'+kalNf(pt.ein)+' Einsatz (Tage mit Daten) + '+kalNf(pt.aus+pt.fs)+' Ausgleich'+(pt.fs?' (davon '+kalNf(pt.fs)+' Freistellung)':'')+' + '+kalNf(pt.url)+' Urlaub + '+kalNf(pt.kra)+' Krank'
             +(pt.leer.length?'<br><br><b>Ohne Daten und ohne Eintrag:</b><br>'+fm(pt.leer):'')+(pt.doppelt.length?'<br><br><b>Daten und Abwesenheit am selben Tag:</b><br>'+fm(pt.doppelt):'');
           return '<span data-ktip="'+esc(tip)+'">'+stackCellLeft(g.label,'<span style="'+(ok?'':'color:var(--red);font-weight:700')+'">'+kalNf(pt.sum)+' von '+pt.at+' Tagen'+(ok?'':' ⚠')+'</span>')+'</span>';})()+'</td>'
-        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(kalNf(abwTage.aus),null)+'</td>'
-        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(kalNf(abwTage.urlaub),null)+'</td>'
-        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell(kalNf(abwTage.krank),null)+'</td>'
+        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;cursor:pointer" title="Im Kalender ansehen (Team, nur Abwesenheiten)" onclick="provGoKal(\''+emp.id+'\',\''+g.key+'\')">'+stackCell('<span style="text-decoration:underline dotted;text-underline-offset:3px">'+kalNf(abwTage.aus)+'</span>',null)+'</td>'
+        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;cursor:pointer" title="Im Kalender ansehen (Team, nur Abwesenheiten)" onclick="provGoKal(\''+emp.id+'\',\''+g.key+'\')">'+stackCell('<span style="text-decoration:underline dotted;text-underline-offset:3px">'+kalNf(abwTage.urlaub)+'</span>',null)+'</td>'
+        +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;cursor:pointer" title="Im Kalender ansehen (Team, nur Abwesenheiten)" onclick="provGoKal(\''+emp.id+'\',\''+g.key+'\')">'+stackCell('<span style="text-decoration:underline dotted;text-underline-offset:3px">'+kalNf(abwTage.krank)+'</span>',null)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600">'+stackCell(kalNf(pt.ein),'von '+pt.at)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;'+(gesamtAktivitaeten>0?fc(+aktPerHour_num.toFixed(1),rowKpiSet.aktivitaeten,'gte'):'')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Akt./Std. = Aktivitäten / Stunden\',\'Aktivitäten\','+gesamtAktivitaeten+',\'Stunden\','+rowTotalHours.toFixed(1)+',\'Akt./Std.\',\''+aktProStd+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(aktProStd,gesamtAktivitaeten)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);cursor:help" onmouseenter="showInfoTooltip(event,\'OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil\',\''+(optGes>0?Math.round(convOEM/optGes*100):0)+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell((optGes>0?convOEM:'—'),(optGes>0?Math.round(convOEM/optGes*100)+'%':'—'))+'</td>'
@@ -13817,7 +13821,7 @@ function kalHolPart(d){if(KAL.loc!=='ALL')return '';if(kalHol(d,'MUC'))return ''
 function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=new Date(y,mo+1,0).getDate(),D=[],t=today();for(var i=1;i<=n;i++)D.push(kalI(new Date(y,mo,i)));
   var h='<div class="kal-tlw"'+(kalCtx()==='coach'?' style="max-height:'+(kalEmps(KAL.loc).length*42+94)+'px"':'')+'><div class="kal-tl" style="grid-template-columns:210px repeat('+n+',minmax(28px,1fr))"><div class="hd nm">Mitarbeiter</div>'+D.map(function(d){var hn=kalHol(d,KAL.loc),hp=kalHolPart(d);return '<div class="hd'+(kalWknd(d)||hn?' we':'')+(hp?' hp':'')+(d===t?' td':'')+'"'+(hn||hp?' data-ktip="'+esc(hn||hp)+'"':'')+'><b>'+kalP(d).getDate()+'</b>'+KAL_WD[kalP(d).getDay()]+'</div>';}).join('');
   var co=kalCtx()==='coach',TE=co?kalEmps('MUC').concat(kalEmps('VLC')):kalEmps();
-  TE.forEach(function(e){h+='<div class="nm kal-nmc" onclick="event.stopPropagation();openEmpSetModal(\''+e.id+'\')" title="Mitarbeiterkarte · Einstellungen öffnen"><span class="kal-av">'+kalIni(e.name)+'</span>'+esc(e.name)+'<small>'+esc(e.role||'')+'</small></div>';
+  TE.forEach(function(e){h+='<div class="nm kal-nmc" data-eid="'+e.id+'" onclick="event.stopPropagation();openEmpSetModal(\''+e.id+'\')" title="Mitarbeiterkarte · Einstellungen öffnen"><span class="kal-av">'+kalIni(e.name)+'</span>'+esc(e.name)+'<small>'+esc(e.role||'')+'</small></div>';
     D.forEach(function(d,ix){var hn=kalHol(d,KAL.loc),x=kalOnV(e.id,d),inner='';
       if(x){var a=kalShowArt(x),pv=ix>0&&kalOnV(e.id,D[ix-1])===x,nx=ix<n-1&&kalOnV(e.id,D[ix+1])===x,dr=kalCanEdit()&&!x.fixed&&!x.masked;
         inner='<span class="blk '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+(x.halb?' h':'')+(!pv?' s':'')+(!nx?' e':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+(dr&&!pv?'<span class="kal-rz l" data-krz="von"></span>':'')+(dr&&!nx?'<span class="kal-rz r" data-krz="bis"></span>':'')+(!pv?(x.halb?'½':KAL_ART[a].slice(0,1)):'')+'</span>';}
