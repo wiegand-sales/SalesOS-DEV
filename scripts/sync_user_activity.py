@@ -283,9 +283,15 @@ def main():
     payload_rows = []
     not_found = set()
     skipped_zero_marge = 0
+    all_dates = set()      # alle Tage in der Datei (für die Anzeige „Datei enthält … bis …“)
+    total_rows = 0
     for row in reader:
         if not row or not row[0].strip():
             continue
+        total_rows += 1
+        _d = parse_de_date(row[COL["datum"]]) if len(row) > COL["datum"] else None
+        if _d:
+            all_dates.add(_d)
         raw_name = row[COL["mitarbeiter"]]
         role, clean_name = split_role_prefix(raw_name)
         if role in IGNORE_PREFIXES:
@@ -305,7 +311,12 @@ def main():
             continue
         payload_rows.append(payload)
 
+    date_from = min(all_dates) if all_dates else None
+    date_to = max(all_dates) if all_dates else None
+    log(f"Datei enthält {total_rows} Zeilen an {len(all_dates)} Tagen: {date_from} bis {date_to}.")
     log(f"{len(payload_rows)} Zeilen zuordenbar, {len(not_found)} Mitarbeiter nicht gefunden, {skipped_zero_marge} Zeile(n) mit Gesamtmarge 0€ übersprungen.")
+    ftp_range = {"von": date_from, "bis": date_to, "tage": len(all_dates), "zeilen": total_rows,
+                 "geschrieben": len(payload_rows), "uebersprungen0": skipped_zero_marge}
     if not_found:
         log("Nicht zugeordnet (bitte prüfen, ob diese Personen im System fehlen):")
         for n in sorted(not_found):
@@ -325,7 +336,8 @@ def main():
         f"{SUPABASE_URL}/rest/v1/settings?on_conflict=key",
         headers=HEADERS,
         json=[{"key": "ftpLastSync", "value": now_iso},
-              {"key": "ftpUnmatched", "value": json.dumps(sorted(not_found), ensure_ascii=False)}],
+              {"key": "ftpUnmatched", "value": json.dumps(sorted(not_found), ensure_ascii=False)},
+              {"key": "ftpRange", "value": json.dumps(ftp_range, ensure_ascii=False)}],
     )
     if r.ok:
         log(f"Zeitstempel aktualisiert: {now_iso}")
