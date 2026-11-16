@@ -1522,7 +1522,7 @@ function loadEmployeesFromSupabase(){
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
-        isPureCoach: e.is_pure_coach===true, boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
+        isPureCoach: e.is_pure_coach===true||e.role==='KAL', kalOnly: e.role==='KAL', boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
       };
     });
     return loadSalariesFromSupabase();
@@ -1650,7 +1650,7 @@ var settingsNavOpen=true;
 var userFilter='all', userSearch='', userShowAllAgents=false, loginInfo=null, loginInfoLoading=false, userMsg='';
 var BOARD_ROLE_LABEL={admin:'Admin',coach:'Coach',viewer:'Betrachter',agent:'Sales Agent'};
 // Coach im Board: gesetzte Board-Rolle geht vor (Coach = ja, Betrachter/Agent = nein), sonst wie bisher nach Position
-function isCoachEmp(e){ if(!e)return false; if(e.boardRole==='coach')return true; if(e.boardRole==='viewer'||e.boardRole==='agent')return false; return !!(e.isPureCoach||e.role==='SDC'||e.role==='SDM'||e.role==='SDL'); }
+function isCoachEmp(e){ if(!e||e.kalOnly)return false; if(e.boardRole==='coach')return true; if(e.boardRole==='viewer'||e.boardRole==='agent')return false; return !!(e.isPureCoach||e.role==='SDC'||e.role==='SDM'||e.role==='SDL'); }
 // SDL (Sales Department Lead): sieht Provision und Gehalt nur von sich und seinem Team (Stammdaten › Team)
 function isSdlUser(){return currentUserRole==='coach'&&!!currentCoach&&currentCoach.role==='SDL';}
 function canSeeSalary(emp){if(!emp||!isSdlUser())return true;var id=String(emp.id);return id===String(currentCoach.id)||(currentCoach.sdlTeam||[]).indexOf(id)>=0;}
@@ -1662,7 +1662,7 @@ function loadSalariesFromSupabase(){return sb.from('employee_salary').select('*'
     if(r){if(r.grundgehalt!=null)pv.grundgehalt=+r.grundgehalt;if(r.ag_sozialabgaben!=null)pv.agSozialabgaben=+r.ag_sozialabgaben;}});
   return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;}).then(function(){return typeof loadProvExtra==='function'?loadProvExtra():true;}).then(function(){return typeof loadProvClosed==='function'?loadProvClosed():true;});}
 function esSdlToggle(v){var b=document.getElementById('es-sdl-team');if(b)b.style.display=v==='SDL'?'':'none';}
-function positionRole(p){ return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
+function positionRole(p){ if(p.role==='KAL')return 'Nur Kalender'; return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
 function updateEmpBoardRole(sel){
   var emp=employees.find(function(e){return String(e.id)===String(sel.dataset.eid);});if(!emp)return;
@@ -10715,6 +10715,7 @@ function esBuildHtml(emp,asPopup,html){
           +'<option'+(emp.role==='SDM'?' selected':'')+'>SDM</option>'
           +'<option'+(emp.role==='SDC'?' selected':'')+'>SDC</option>'
           +'<option'+(emp.role==='SDL'?' selected':'')+(currentUserRole!=='admin'&&emp.role!=='SDL'?' disabled':'')+'>SDL</option>'
+          +'<option value="KAL"'+(emp.role==='KAL'?' selected':'')+(currentUserRole!=='admin'&&emp.role!=='KAL'?' disabled':'')+'>Nur Kalender</option>'
           +'<option value="__new__">+ Neue Position hinzufügen</option>'
           +'</select></div>';
         html+='<div><label>Phase</label><select id="es-phase">'
@@ -13684,6 +13685,9 @@ function kalWorkday(e,s){return !kalWknd(s)&&!kalHolE(e,s)&&!kalFixDay(s)&&workH
 function kalWdBetween(e,a,b){var n=0,d=kalAdd(a,1);while(d<b){if(kalWorkday(e,d))n++;d=kalAdd(d,1);}return n;}
 
 // ── Mitarbeiter je Standort ──
+// Wer im Kalender (Monat, Woche, Jahr, Team, Urlaubskonto, Formular) steht – Aufgaben, Weeklys, QA und „frei“-Zählung nutzen weiter kalEmps (nur Agenten)
+function kalPeople(loc){var A=kalEmps(loc),seen={};A.forEach(function(e){seen[e.id]=1;});var X=employees.filter(function(e){return e.active!==false&&!seen[e.id]&&kalLocMatch(e,loc)&&(e.kalOnly||e.role==='SDC'||e.role==='SDM'||(e.isPureCoach&&e.boardRole!=='viewer'));});
+  var ord=function(e){return e.kalOnly?2:(e.role==='SDC'||e.role==='SDM'||e.isPureCoach)?1:0;};return A.concat(X.sort(function(a,b){return ord(a)-ord(b)||a.name.localeCompare(b.name);}));}
 function kalLocMatch(e,loc){loc=loc||KAL.loc;if(loc==='ALL')return true;if(loc==='NONE')return false;return loc==='VLC'?kalIsVlc(e):!kalIsVlc(e);}
 function kalEmps(loc){return teamTargetList().filter(function(e){return kalLocMatch(e,loc);}).sort(function(a,b){return a.name.localeCompare(b.name);});}
 function kalEmp(id){return employees.find(function(e){return e.id===id;});}
@@ -13859,7 +13863,7 @@ function kalTasksCalc(){var out=[],t=today(),ref=kalRef(),wk=kalPeriod('woche',r
 function kalOpenReqs(){return absences.filter(function(x){var e=kalEmp(x.employeeId);return x.status==='offen'&&e&&kalLocMatch(e);}).sort(function(a,b){return a.von<b.von?-1:1;});}
 
 // ── Banner: oben 3, unten 6 Kennzahlen ──
-function kalBanner(){var t=today(),L=kalEmps(),wds=[],d=t;while(wds.length<10){if(!kalWknd(d)&&!kalHol(d,KAL.loc))wds.push(d);d=kalAdd(d,1);}
+function kalBanner(){var t=today(),L=kalPeople(),wds=[],d=t;while(wds.length<10){if(!kalWknd(d)&&!kalHol(d,KAL.loc))wds.push(d);d=kalAdd(d,1);}
   var abw=wds.map(function(x){return L.filter(function(e){return kalOn(e.id,x);}).length;});
   var mo=kalMon(kalRef()),wk=[0,1,2,3,4].map(function(i){return kalAdd(mo,i);}),nmo=kalAdd(mo,7),nwk=[0,1,2,3,4].map(function(i){return kalAdd(nmo,i);});
   var sesW=wk.map(function(x){return kalSess(x,null,true).length;}),sesN=sesW.reduce(function(a,b){return a+b;},0);
@@ -13895,7 +13899,7 @@ function kalSuggest(d){if(kalCtx()==='coach'||!kalCanEdit())return [];var t=toda
 function kalSuggestChip(x){return '<div class="kal-ch kal-vs" draggable="true" data-ktask="'+esc(x.id)+'" onclick="event.stopPropagation();kalPlanTask(this.dataset.ktask)" data-ktip="'+esc('<b>'+x.l+'</b><br>Vorschlag · fällig '+kalF(x.due)+'<br>'+x.src+'<br>Klick: Woche öffnen · Ziehen: auf eine Uhrzeit')+'">'+esc(kalFirst(x.e.name))+' · '+esc(x.art==='Weekly'?'Weekly':'Review')+'</div>';}
 function kalVWeek(){var m=kalMon(KAL.cur),D=[0,1,2,3,4,5,6].map(function(i){return kalAdd(m,i);}),t=today();
   var h='<div class="kal-wv"><div class="hd" style="border-left:0"></div>'+D.map(function(d){var hn=kalHol(d,KAL.loc);var hp=kalHolPart(d);return '<div class="hd'+(d===t?' td':'')+(kalWknd(d)?' we':'')+'">'+KAL_WD[kalP(d).getDay()].toUpperCase()+'<b>'+kalF(d)+'</b>'+(hp?'<small class="hp">'+esc(hp)+'</small>':'')+(hn?'<small>'+esc(hn)+'</small>':'')+'</div>';}).join('');
-  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});var sg=kalSuggest(d);if(o.length-1+sg.length>3&&KAL.wex!==d){var by={};sg.forEach(function(x){var k=x.art==='Weekly'?'Weekly':'Performance Review';(by[k]=by[k]||[]).push(x);});Object.keys(by).forEach(function(k){var L=by[k];o.push(L.length===1?kalSuggestChip(L[0]):'<div class="kal-ch kal-vs kal-vsg" onclick="event.stopPropagation();KAL.wex=\''+d+'\';kalRerender()" data-ktip="'+esc('<b>'+L.length+' × '+k+' (Vorschlag)</b><br>'+L.map(function(x){return x.e.name;}).join('<br>')+'<br>Klick: einzeln anzeigen')+'"><b>'+L.length+'</b> '+(k==='Weekly'?'Weeklys':'Reviews')+'</div>');});}else{sg.forEach(function(x){o.push(kalSuggestChip(x));});if(KAL.wex===d&&sg.length>1)o.push('<div class="kal-more" style="cursor:pointer" onclick="event.stopPropagation();KAL.wex=null;kalRerender()">weniger anzeigen</div>');}return kalWknd(d)?'<div class="ad we">'+o.slice(1).join('')+'</div>':'<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
+  h+='<div class="lab">ganztags</div>'+D.map(function(d){var o=[kalFreeTag(d)];kalPeople().forEach(function(e){var x=kalOnV(e.id,d);if(x)o.push(kalAbsChip(e,x,d));});kalSess(d).forEach(function(s){if(!s.p.uhrzeit)o.push(kalSesChip(s));});var sg=kalSuggest(d);if(o.length-1+sg.length>3&&KAL.wex!==d){var by={};sg.forEach(function(x){var k=x.art==='Weekly'?'Weekly':'Performance Review';(by[k]=by[k]||[]).push(x);});Object.keys(by).forEach(function(k){var L=by[k];o.push(L.length===1?kalSuggestChip(L[0]):'<div class="kal-ch kal-vs kal-vsg" onclick="event.stopPropagation();KAL.wex=\''+d+'\';kalRerender()" data-ktip="'+esc('<b>'+L.length+' × '+k+' (Vorschlag)</b><br>'+L.map(function(x){return x.e.name;}).join('<br>')+'<br>Klick: einzeln anzeigen')+'"><b>'+L.length+'</b> '+(k==='Weekly'?'Weeklys':'Reviews')+'</div>');});}else{sg.forEach(function(x){o.push(kalSuggestChip(x));});if(KAL.wex===d&&sg.length>1)o.push('<div class="kal-more" style="cursor:pointer" onclick="event.stopPropagation();KAL.wex=null;kalRerender()">weniger anzeigen</div>');}return kalWknd(d)?'<div class="ad we">'+o.slice(1).join('')+'</div>':'<div class="ad" data-kday="'+d+'">'+o.join('')+'</div>';}).join('');
   var tm='<div class="times">';for(var hh=8;hh<20;hh++)tm+='<span style="top:'+((hh-8)*56+4)+'px">'+('0'+hh).slice(-2)+':00</span>';h+=tm+'</div>';
   D.forEach(function(d){var c=kalWknd(d)?'<div class="col we">':'<div class="col'+(kalHol(d,KAL.loc)?' hl':'')+'" data-kslot="'+d+'" data-kopen="'+d+'">';
     var day=kalSess(d).filter(function(o){return o.p.uhrzeit;}),cols=[];day.forEach(function(o){var st=timeStrToMin(o.p.uhrzeit),en=o.p.endUhrzeit?timeStrToMin(o.p.endUhrzeit):st+45;if(en<=st)en=st+45;o._s=st;o._e=en;var ci=0;while(cols[ci]&&cols[ci]>st)ci++;cols[ci]=en;o._col=Math.min(ci,2);});
@@ -13909,11 +13913,11 @@ function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),fi
   var h='<div class="kal-mg">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(w){return '<div class="wh">'+w+'</div>';}).join('');
   while(d<=last||kalP(d).getDay()!==1){var hn=kalHol(d,KAL.loc),hp=kalHolPart(d),out=kalP(d).getMonth()!==mo;
     if(kalWknd(d)){h+='<div class="c we'+(out?' out':'')+'"><div class="dn">'+kalP(d).getDate()+'</div></div>';d=kalAdd(d,1);continue;}
-    var ch=[];kalEmps().forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));if(latCanSee())latOn(e.id,d).forEach(function(l){ch.push('<div class="kal-ch kal-vzc" data-kedit="'+l.id+'" data-ktip="'+esc('<b>'+e.name+'</b><br>'+(l.minuten||0)+' Min. zu spät'+(l.notiz?'<br>'+l.notiz:''))+'"><i class="ti ti-clock"></i> '+esc(kalFirst(e.name))+' · '+(l.minuten||0)+'′</div>');});});kalSuggest(d).forEach(function(x){ch.push(kalSuggestChip(x));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
+    var ch=[];kalPeople().forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));if(latCanSee())latOn(e.id,d).forEach(function(l){ch.push('<div class="kal-ch kal-vzc" data-kedit="'+l.id+'" data-ktip="'+esc('<b>'+e.name+'</b><br>'+(l.minuten||0)+' Min. zu spät'+(l.notiz?'<br>'+l.notiz:''))+'"><i class="ti ti-clock"></i> '+esc(kalFirst(e.name))+' · '+(l.minuten||0)+'′</div>');});});kalSuggest(d).forEach(function(x){ch.push(kalSuggestChip(x));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
     var fix=kalFixDay(d)?'<div class="kal-ch '+(d.slice(-2)==='24'?'kal-u':'kal-a')+'">alle · '+(d.slice(-2)==='24'?'Urlaubstag':'Ausgleichstag')+'</div>':'';
     h+='<div class="c'+(hn?' hl':'')+(out?' out':'')+'" data-kday="'+d+'" data-kopen="'+d+'"><div class="dn">'+(d===t?'<span class="tday">'+kalP(d).getDate()+'</span>':kalP(d).getDate())+kalFreeTag(d)+(view==='kalender'&&ch.length>kalMgCut(ch.length)?'<span class="kal-more" style="margin-left:auto;font-weight:600">+'+(ch.length-kalMgCut(ch.length))+'</span>':'')+'</div>'+(hn?'<div class="hn">'+esc(hn)+'</div>':'')+(hp?'<div class="hn hp">'+esc(hp)+'</div>':'')+fix+ch.slice(0,kalMgCut(ch.length)).join('')+(view!=='kalender'&&ch.length>kalMgCut(ch.length)?'<div class="kal-more">+'+(ch.length-kalMgCut(ch.length))+' weitere</div>':'')+'</div>';d=kalAdd(d,1);}
   return h+'</div>';}
-function kalVYear(){if(kalCtx()==='coach')return kalVYearCoach();var y=+KAL.cur.slice(0,4),t=today(),h='<div class="kal-yv">',L=kalEmps();
+function kalVYear(){if(kalCtx()==='coach')return kalVYearCoach();var y=+KAL.cur.slice(0,4),t=today(),h='<div class="kal-yv">',L=kalPeople();
   for(var m=0;m<12;m++){var f=new Date(y,m,1),n=new Date(y,m+1,0).getDate(),g=['M','D','M','D','F','S','S'].map(function(w){return '<i>'+w+'</i>';}).join(''),tot=0;
     for(var k=0;k<(f.getDay()+6)%7;k++)g+='<b class="e"></b>';
     for(var dd=1;dd<=n;dd++){var d=kalI(new Date(y,m,dd));if(kalWknd(d)){g+='<b class="we">'+dd+'</b>';continue;}var hn=kalHol(d,KAL.loc);if(hn){g+='<b class="hd" data-ktip="'+esc(hn)+'">'+dd+'</b>';continue;}var hpY=kalHolPart(d);if(hpY){g+='<b class="hpy" data-ktip="'+esc(hpY)+'">'+dd+'</b>';continue;}
@@ -13937,9 +13941,9 @@ function kalNoWorkTip(e,d){return esc(e.name)+' arbeitet '+['sonntags','montags'
 // Feiertag nur für einen Teil des Teams (bei „alle Standorte“: spanische Feiertage, an denen Olching arbeitet)
 function kalHolPart(d){if(KAL.loc!=='ALL')return '';if(kalHol(d,'MUC'))return '';var v=kalHol(d,'VLC');return v?'Valencia: '+v:'';}
 function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=new Date(y,mo+1,0).getDate(),D=[],t=today();for(var i=1;i<=n;i++)D.push(kalI(new Date(y,mo,i)));
-  var h='<div class="kal-tlw"'+(kalCtx()==='coach'?' style="max-height:'+(kalEmps(KAL.loc).length*42+94)+'px"':'')+'><div class="kal-tl" style="grid-template-columns:210px repeat('+n+',minmax(28px,1fr))"><div class="hd nm">Mitarbeiter</div>'+D.map(function(d){var hn=kalHol(d,KAL.loc),hp=kalHolPart(d);return '<div class="hd'+(kalWknd(d)||hn?' we':'')+(hp?' hp':'')+(d===t?' td':'')+'"'+(hn||hp?' data-ktip="'+esc(hn||hp)+'"':'')+'><b>'+kalP(d).getDate()+'</b>'+KAL_WD[kalP(d).getDay()]+'</div>';}).join('');
-  var co=kalCtx()==='coach',TE=co?kalEmps('MUC').concat(kalEmps('VLC')):kalEmps();
-  TE.forEach(function(e){h+='<div class="nm kal-nmc" data-eid="'+e.id+'" onclick="event.stopPropagation();openEmpSetModal(\''+e.id+'\')" title="Mitarbeiterkarte · Einstellungen öffnen"><span class="kal-av">'+kalIni(e.name)+'</span>'+esc(e.name)+'<small>'+esc(e.role||'')+'</small></div>';
+  var h='<div class="kal-tlw"'+(kalCtx()==='coach'?' style="max-height:'+(kalPeople(KAL.loc).length*42+94)+'px"':'')+'><div class="kal-tl" style="grid-template-columns:210px repeat('+n+',minmax(28px,1fr))"><div class="hd nm">Mitarbeiter</div>'+D.map(function(d){var hn=kalHol(d,KAL.loc),hp=kalHolPart(d);return '<div class="hd'+(kalWknd(d)||hn?' we':'')+(hp?' hp':'')+(d===t?' td':'')+'"'+(hn||hp?' data-ktip="'+esc(hn||hp)+'"':'')+'><b>'+kalP(d).getDate()+'</b>'+KAL_WD[kalP(d).getDay()]+'</div>';}).join('');
+  var co=kalCtx()==='coach',TE=co?kalPeople('MUC').concat(kalPeople('VLC')):kalPeople();
+  TE.forEach(function(e){h+='<div class="nm kal-nmc" data-eid="'+e.id+'" onclick="event.stopPropagation();openEmpSetModal(\''+e.id+'\')" title="Mitarbeiterkarte · Einstellungen öffnen"><span class="kal-av">'+kalIni(e.name)+'</span>'+esc(e.name)+'<small>'+esc(e.role==='KAL'?'Büro':(e.role||''))+'</small></div>';
     D.forEach(function(d,ix){var hn=kalHol(d,KAL.loc),x=kalOnV(e.id,d),inner='';
       if(x){var a=kalShowArt(x),pv=ix>0&&kalOnV(e.id,D[ix-1])===x,nx=ix<n-1&&kalOnV(e.id,D[ix+1])===x,dr=kalCanEdit()&&!x.fixed&&!x.masked;
         inner='<span class="blk '+KAL_CLS[a]+(x.status==='offen'?' kal-op':'')+(x.halb?' h':'')+(!pv?' s':'')+(!nx?' e':'')+'" '+(dr?'draggable="true" data-kabs="'+x.id+'" data-kfrom="'+d+'"':'')+(x.fixed||x.masked?'':' data-kedit="'+x.id+'"')+' data-ktip="'+esc(kalTip(x))+'">'+(dr&&!pv?'<span class="kal-rz l" data-krz="von"></span>':'')+(dr&&!nx?'<span class="kal-rz r" data-krz="bis"></span>':'')+(!pv?(x.halb?'½':KAL_ART[a].slice(0,1)):'')+'</span>';}
@@ -14097,7 +14101,7 @@ function kalSwHtml(){var r=kalSwRange(),L=kalSwData(r[0],r[1]),ok=L.filter(funct
   if(L.length>15)h+='<div style="padding:10px 14px"><button class="btn btn-sm" onclick="KAL.swAll=!KAL.swAll;kalRerender()">'+(KAL.swAll?'weniger anzeigen':'alle '+L.length+' anzeigen')+'</button></div>';
   return h;}
 // ── Urlaubskonto im selben Aufbau ──
-function kalUkHtml(){var y=today().slice(0,4),E=kalEmps().slice().sort(function(a,b){return KAL.sort==='name'?a.name.localeCompare(b.name):kalKonto(b.id).frei-kalKonto(a.id).frei;}),vw=kalIsViewer(),ls=latCanSee();
+function kalUkHtml(){var y=today().slice(0,4),E=kalPeople().slice().sort(function(a,b){return KAL.sort==='name'?a.name.localeCompare(b.name):kalKonto(b.id).frei-kalKonto(a.id).frei;}),vw=kalIsViewer(),ls=latCanSee();
   var K=E.map(function(e){return {e:e,k:kalKonto(e.id)};}),sum=function(f){return K.reduce(function(a,x){return a+(+x.k[f]||0);},0);};
   // Diagramm: Abwesenheitstage je Monat nach Art
   var M=[];for(var i=0;i<12;i++)M.push({u:0,f:0,a:0,fr:0,k:0});var ids={};E.forEach(function(e){ids[e.id]=1;});
@@ -14129,7 +14133,7 @@ function renderKalender(){var ma=document.getElementById('mainArea');if(!ma)retu
   if(false)h+='<div class="card"><div class="card-title">'+(KAL.low==='req'?'Offene Anträge':'Zu planen')+'<span class="kal-note" style="font-weight:400;margin-left:6px">'+(KAL.low==='req'?'alle Hinweise auf einen Blick':'Zeile in den Kalender ziehen oder „Einplanen“')+'</span><span class="dsh-tr"><span class="dsh-seg"><button type="button" class="'+(KAL.low==='req'?'on':'')+'" onclick="KAL.low=\'req\';kalRerender()">Anträge · '+kalOpenReqs().length+'</button><button type="button" class="'+(KAL.low==='plan'?'on':'')+'" onclick="KAL.low=\'plan\';kalRerender()">Planen · '+kalTasks().length+'</button></span></span></div>'+(KAL.low==='req'?kalReqTable():kalTaskTable())+'</div>';
   h+=kalAccCard('accS','ti-chart-bar','Sessions und Wirkung',(kalSwData(kalSwRange()[0],kalSwRange()[1]).length)+' Sessions · Ergebnis je Session (Ø 3 Arbeitstage vor gegen nach)',
     '<span class="dsh-seg" onclick="event.stopPropagation()">'+[['woche','Woche'],['monat','Monat'],['90','90 Tage']].map(function(o){return '<button type="button" class="'+(KAL.swr===o[0]?'on':'')+'" onclick="KAL.swr=\''+o[0]+'\';kalRerender()">'+o[1]+'</button>';}).join('')+'</span>',KAL.accS?kalSwHtml():'');
-  h+=kalAccCard('accK','ti-beach','Urlaubskonto',kalEmps().length+' Mitarbeiter · Frei, Flex Days, Krank'+(latCanSee()?', Verspätung':''),
+  h+=kalAccCard('accK','ti-beach','Urlaubskonto',kalPeople().length+' Personen · Frei, Flex Days, Krank'+(latCanSee()?', Verspätung':''),
     '<span class="dsh-seg" onclick="event.stopPropagation()"><button type="button" class="'+(KAL.sort==='rest'?'on':'')+'" onclick="KAL.sort=\'rest\';kalRerender()">Resturlaub</button><button type="button" class="'+(KAL.sort==='name'?'on':'')+'" onclick="KAL.sort=\'name\';kalRerender()">Name</button></span>',KAL.accK?kalUkHtml():'');
   h+='</div>';
   var oc=ma.querySelector('.content'),st=oc?oc.scrollTop:0;ma.innerHTML=h;var nc=ma.querySelector('.content');if(nc&&st)nc.scrollTop=st;
@@ -14228,11 +14232,11 @@ function kalEnsureModal(){if(document.getElementById('kalFormModal'))return;var 
   d.addEventListener('mousedown',function(ev){if(ev.target===d)kalCloseForm();});document.body.appendChild(d);}
 function kalOpenForm(eid,day,editId){if(!kalCanEdit())return;kalEnsureModal();
   if(editId){var x=absences.find(function(a){return String(a.id)===String(editId);})||lateness.find(function(a){return String(a.id)===String(editId);});if(!x)return;KF={id:x.id,employeeId:x.employeeId,minuten:x.minuten,art:x.art==='flex'?'urlaub':x.art,wasFlex:x.art==='flex',normal:x.art==='urlaub'&&x.status==='genehmigt',von:x.von,bis:x.bis,halb:x.halb,halbTeil:x.halbTeil||'vm',status:x.status,notiz:x.notiz,eingereichtAm:x.eingereichtAm,verschobenVon:x.verschobenVon};}
-  else{var L=kalEmps();KF={id:null,employeeId:eid||(KF&&KF.employeeId&&L.some(function(e){return e.id===KF.employeeId;})?KF.employeeId:(L[0]&&L[0].id)),art:'urlaub',von:day||today(),bis:day||today(),halb:false,halbTeil:'vm',status:'genehmigt',notiz:'',normal:false};}
+  else{var L=kalPeople();KF={id:null,employeeId:eid||(KF&&KF.employeeId&&L.some(function(e){return e.id===KF.employeeId;})?KF.employeeId:(L[0]&&L[0].id)),art:'urlaub',von:day||today(),bis:day||today(),halb:false,halbTeil:'vm',status:'genehmigt',notiz:'',normal:false};}
   document.getElementById('kalFormTitle').textContent=KF.id?'Eintrag bearbeiten':'Abwesenheit eintragen';
   document.getElementById('kalFormModal').classList.remove('hidden');kalDrawForm();}
 function kalCloseForm(){var m=document.getElementById('kalFormModal');if(m)m.classList.add('hidden');}
-function kalDrawForm(){var b=document.getElementById('kalFormBody');if(!b||!KF)return;var L=kalEmps(KF.employeeId&&kalIsVlc(kalEmp(KF.employeeId))?'VLC':KAL.loc);if(L.every(function(e){return e.id!==KF.employeeId;})&&kalEmp(KF.employeeId))L=L.concat([kalEmp(KF.employeeId)]);
+function kalDrawForm(){var b=document.getElementById('kalFormBody');if(!b||!KF)return;var L=kalPeople(KF.employeeId&&kalIsVlc(kalEmp(KF.employeeId))?'VLC':KAL.loc);if(L.every(function(e){return e.id!==KF.employeeId;})&&kalEmp(KF.employeeId))L=L.concat([kalEmp(KF.employeeId)]);
   var ev=kalEval(KF),fe=kalEmp(KF.employeeId),sub=document.getElementById('kalFormSub');if(sub)sub.textContent=fe?fe.name+(fe.role?' · '+fe.role:''):'—';
   var empSel='<select onchange="absSet(\'kf\',\'employeeId\',this.value)">'+L.map(function(e){return '<option value="'+e.id+'"'+(e.id===KF.employeeId?' selected':'')+'>'+esc(e.name)+'</option>';}).join('')+'</select>';
   var h=absFormHtml('kf',fe,KF,ev,empSel);
@@ -14590,7 +14594,7 @@ function abRender(){if(!AB.f)abNewForm();var e=kalEmp(AB.emp),b=document.getElem
     +absFormHtml('ab',e,F,ev,'<input type="text" value="'+esc(e.name)+'" disabled style="background:#EFECE5;color:var(--text2)">')
     +'<div class="ab-fr" style="justify-content:flex-end;margin:12px 0 0"><button class="btn btn-danger" style="margin-right:auto;'+hid(F.id&&ed)+'" onclick="abDelete()">Löschen</button><button class="btn" onclick="AB.f=null;abRender()">Zurücksetzen</button><button class="btn btn-primary" onclick="abSave()"'+(ed&&ev.n?'':' disabled')+'>'+(F.id?'Speichern':'Eintragen')+'</button></div></div></div>';
   // Team (eigene Zeile anklickbar: Tage wählen oder Eintrag laden)
-  var loc=kalIsVlc(e)?'VLC':'MUC',T=kalEmps(loc),D=ztDaysOfMonth(mk);T=[e].concat(T.filter(function(x){return x.id!==e.id;}));
+  var loc=kalIsVlc(e)?'VLC':'MUC',T=kalPeople(loc),D=ztDaysOfMonth(mk);T=[e].concat(T.filter(function(x){return x.id!==e.id;}));
   var selTo=F.halb?F.von:F.bis;
   var tl='<div class="ab-tl" style="grid-template-columns:130px repeat('+D.length+',minmax(14px,1fr))"><div class="nm hd"><b>'+mn+'</b></div>'+D.map(function(x){return '<div class="hd'+(kalWknd(x)||kalHol(x,loc)?' we':'')+'"><b>'+kalP(x).getDate()+'</b>'+KAL_WD[kalP(x).getDay()].slice(0,1)+'</div>';}).join('');
   T.forEach(function(t){var me=t.id===e.id;tl+='<div class="nm'+(me?' me':'')+'">'+esc(t.name)+'</div>'+D.map(function(x){if(kalWknd(x)||kalHol(x,loc))return '<div class="we"></div>';var a=kalOn(t.id,x),sel=me&&F.von&&x>=F.von&&x<=selTo;
