@@ -709,6 +709,18 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 tr[draggable=true]{cursor:grab}
 .pk-over{outline:2px dashed #F08566;outline-offset:-2px;background:#FDF0EB}
 .pk-badge{font-size:10px;font-weight:700;background:#FBE3DA;color:#A3361F;border-radius:5px;padding:1px 5px;margin-left:6px}
+.pv-ab-box{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FDF0EB;border:1px solid rgba(240,133,102,.45);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}
+.pv-ab-box select{width:auto;min-width:200px;height:34px}
+.pv-ab-hint{display:block;font-size:11.5px;color:var(--text3);margin-top:2px}
+.pv-vers{background:#F7F5F0;border:1px solid #E4E0D6;border-radius:10px;padding:8px 10px;margin-bottom:12px}
+.pv-vers-h{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+.pv-vers-r{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 8px;border-radius:8px;font-size:12.5px}
+.pv-vers-r .p{font-weight:700}.pv-vers-r .m{color:var(--text3);font-size:11.5px;white-space:nowrap}
+.pv-vers-r.cur{background:#fff;border:1px solid #E4E0D6}
+.pv-close{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:10px;padding:8px 12px;margin-bottom:10px}
+.pv-close .lock{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:#1d1c1a;color:#fff;border-radius:8px;padding:4px 10px}
+.pv-open-tag{font-size:11px;font-weight:700;background:#FBE3DA;color:#A3361F;border-radius:6px;padding:2px 8px}
+tr.pv-frozen td:first-child{box-shadow:inset 3px 0 0 #1d1c1a}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -1646,7 +1658,7 @@ function loadSalariesFromSupabase(){return sb.from('employee_salary').select('*'
   SALARY_TABLE=true;var by={};(res.data||[]).forEach(function(r){by[String(r.employee_id)]=r;});
   employees.forEach(function(e){var r=by[String(e.id)];var pv=e.provisionSettings||(e.provisionSettings={});delete pv.grundgehalt;delete pv.agSozialabgaben;
     if(r){if(r.grundgehalt!=null)pv.grundgehalt=+r.grundgehalt;if(r.ag_sozialabgaben!=null)pv.agSozialabgaben=+r.ag_sozialabgaben;}});
-  return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;}).then(function(){return typeof loadProvExtra==='function'?loadProvExtra():true;});}
+  return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;}).then(function(){return typeof loadProvExtra==='function'?loadProvExtra():true;}).then(function(){return typeof loadProvClosed==='function'?loadProvClosed():true;});}
 function esSdlToggle(v){var b=document.getElementById('es-sdl-team');if(b)b.style.display=v==='SDL'?'':'none';}
 function positionRole(p){ return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
@@ -9407,7 +9419,11 @@ var VLC_PROVISION_DEFAULTS={
   monat3plus:{optH:2.5,syMy:70,crOem:60,tw:15,my:20,oemAnteil:80},
   stufen:{optH:{aus1:80,grenze:null,aus2:null},syMy:{aus1:75,grenze:65,aus2:50},crOem:{aus1:75,grenze:55,aus2:0}}
 };
-function effectiveProvisionSettings(emp){
+// Versionen: provisionSettings.versionen = [{ab:'YYYY-MM', s:{…Einstellungen…}, am, von}]. Jeder Monat rechnet mit der Version, die in ihm galt.
+function provVersionFor(emp,mk){var ps=emp&&emp.provisionSettings;if(!ps||!Array.isArray(ps.versionen)||!ps.versionen.length)return null;mk=mk||today().slice(0,7);
+  var best=null;ps.versionen.forEach(function(v){if(v&&v.ab&&v.ab<=mk&&(!best||v.ab>best.ab))best=v;});return best;}
+function effectiveProvisionSettings(emp,monthKey){
+  var _v=provVersionFor(emp,monthKey);if(_v){emp=Object.assign({},emp,{provisionSettings:Object.assign({},_v.s||{})});}
   var pv=Object.assign({},PROVISION_DEFAULTS,(emp&&emp.provisionSettings)||{});
   ['monat1','monat2','monat3plus'].forEach(function(mk){
     pv[mk]=Object.assign({},PROVISION_DEFAULTS[mk],(emp&&emp.provisionSettings&&emp.provisionSettings[mk])||{});
@@ -9462,7 +9478,7 @@ function calculateVlcProvision(emp,monthKey,row,dayCount,pv){
   return {basis:basis,umsatz:0,regulaer:basis,abzug:basis-provision,provision:provision,fehlendeKpis:fehlend,mindestleistungGreift:false,beschaeftigungsmonat:bm,vlc:true,auszahlungPct:faktor,optPerH:optPerH,qualifizierendeOpt:qualifizierendeOpt,bonusProOpt:v.bonusProOpt||0};
 }
 function calculateProvision(emp,monthKey,row,dayCount){
-  var pv=effectiveProvisionSettings(emp);
+  var pv=effectiveProvisionSettings(emp,monthKey);
   if(isVlcProvision(emp))return calculateVlcProvision(emp,monthKey,row,dayCount,pv);
   var convTW=row.convTW||0, convYes=row.convYes||0, convSY=row.convSY||0, convMY=row.convMY||0;
   var ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
@@ -9550,6 +9566,26 @@ function provExtraSet(eid,mk,v){if(currentUserRole!=='admin')return;var n=Math.m
 // Aus der Provision in den Kalender: Team-Ansicht des Monats, nur Abwesenheiten, Zeile des Mitarbeiters markiert
 function provGoKal(eid,mk){var f=kalFilterCats();KAL.hide={};f.ses.forEach(function(o){KAL.hide[o[0]]=1;});KAL.loc='ALL';KAL.chf={};KAL.view='team';KAL.cur=mk+'-01';KAL.focusEmp=String(eid);selectKalender();
   setTimeout(function(){var n=document.querySelector('.kal-tl .kal-nmc[data-eid="'+eid+'"]');if(n){n.scrollIntoView({block:'center',behavior:'smooth'});n.classList.add('kal-focus');setTimeout(function(){n.classList.remove('kal-focus');},2500);}},80);}
+// ── Monatsabschluss der Provision (Tabellen provision_monat / provision_abschluss, SQL 37)
+var PROV_CLOSED={},PROV_CLOSED_TABLE=false;
+function loadProvClosed(){return sb.from('provision_monat').select('*').then(function(res){if(res&&res.error){PROV_CLOSED_TABLE=false;return true;}PROV_CLOSED_TABLE=true;PROV_CLOSED={};
+  (res.data||[]).forEach(function(m){PROV_CLOSED[m.monat]={von:m.abgeschlossen_von||'',am:(m.abgeschlossen_am||'').slice(0,10),rows:{}};});
+  return sb.from('provision_abschluss').select('monat,employee_id,werte').then(function(r2){(r2&&r2.data||[]).forEach(function(x){if(PROV_CLOSED[x.monat])PROV_CLOSED[x.monat].rows[String(x.employee_id)]=typeof x.werte==='string'?JSON.parse(x.werte):x.werte;});return true;});}).catch(function(){PROV_CLOSED_TABLE=false;return true;});}
+function provCloseMonth(mk){if(currentUserRole!=='admin')return;var ml=KAL_MON[+mk.slice(5,7)-1]+' '+mk.slice(0,4);
+  // Werte aller Mitarbeiter mit Daten in diesem Monat einsammeln (gleiche Berechnung wie die Tabelle)
+  var sv={m:provisionMode,c:provisionCustomMonth,sel:provisionTeamSelectedIds};provisionMode='custom';provisionCustomMonth=mk;provisionTeamSelectedIds=null;window._provSnap={};
+  try{buildProvisionTeamTable();}finally{var snap=window._provSnap;window._provSnap=null;provisionMode=sv.m;provisionCustomMonth=sv.c;provisionTeamSelectedIds=sv.sel;}
+  var ids=Object.keys(snap),warn=ids.filter(function(id){var p=snap[id].pt;return p&&p.sum!==p.at;}).map(function(id){var e=kalEmp(id);return e?e.name:id;});
+  if(!ids.length){alert('Für '+ml+' gibt es keine Provisionsdaten.');return;}
+  if(!confirm(ml+' abschließen?\n\n'+ids.length+' Mitarbeiter werden mit den aktuellen Werten eingefroren. Danach ändern Datenkorrekturen und geänderte Einstellungen diesen Monat nicht mehr.'+(warn.length?'\n\nAchtung, Tage stimmen noch nicht (x von X ⚠) bei: '+warn.join(', '):'')+'\n\nWurde der Monat mit der SFP abgeglichen?'))return;
+  var who=(typeof qaCurrentName==='function'&&qaCurrentName())||'';
+  sb.from('provision_monat').upsert({monat:mk,abgeschlossen_von:who,abgeschlossen_am:new Date().toISOString()},{onConflict:'monat'}).then(function(r){if(r&&r.error){alert('Abschluss fehlgeschlagen: '+r.error.message);return;}
+    var rows=ids.map(function(id){return {monat:mk,employee_id:id,werte:snap[id]};});
+    sb.from('provision_abschluss').upsert(rows,{onConflict:'monat,employee_id'}).then(function(r2){if(r2&&r2.error){alert('Abschluss fehlgeschlagen: '+r2.error.message);return;}
+      PROV_CLOSED[mk]={von:who,am:today(),rows:snap};logActivity('employee','updated','Provision '+ml+' abgeschlossen ('+ids.length+' Mitarbeiter)');renderMain();});});}
+function provReopenMonth(mk){if(currentUserRole!=='admin')return;var ml=KAL_MON[+mk.slice(5,7)-1]+' '+mk.slice(0,4);
+  if(!confirm(ml+' wieder öffnen?\n\nDie eingefrorenen Werte werden gelöscht, der Monat rechnet wieder mit den aktuellen Daten und Einstellungen.'))return;
+  sb.from('provision_monat').delete().eq('monat',mk).then(function(r){if(r&&r.error){alert('Öffnen fehlgeschlagen: '+r.error.message);return;}delete PROV_CLOSED[mk];logActivity('employee','updated','Provision '+ml+' wieder geöffnet');renderMain();});}
 function buildProvisionTeamTable(){
   function stackCell(main,sub){
     var hasSubValue=(sub!==null&&sub!==undefined&&sub!=='');
@@ -9636,6 +9672,10 @@ function buildProvisionTeamTable(){
   h+='</div>';
   h+='<input type="month" value="'+provisionCustomMonth+'" onchange="setProvisionCustomMonth(this.value)" style="height:34px;width:128px;padding:0 8px;border:1px solid '+(provisionMode==='custom'?'#F08566':'var(--border2)')+';border-radius:var(--r-md);font-size:11.5px;font-family:inherit;color:var(--text);background:#fff;cursor:pointer">';
   h+='</div></div>';
+  // Monatsabschluss (nur bei einem einzelnen Monat)
+  (function(){if(provisionMode==='year'||!PROV_CLOSED_TABLE)return;var mk=provisionMode==='month'?curMk:provisionCustomMonth,cl=PROV_CLOSED[mk],ad=currentUserRole==='admin',ml=KAL_MON[+mk.slice(5,7)-1]+' '+mk.slice(0,4);
+    if(cl)h+='<div class="pv-close on"><span class="lock"><i class="ti ti-lock"></i> '+ml+' abgeschlossen'+(cl.am?' am '+esc(cl.am.slice(8,10)+'.'+cl.am.slice(5,7)+'.'+cl.am.slice(0,4)):'')+(cl.von?' · '+esc(cl.von):'')+'</span><span class="kal-note">Eingefrorene Werte: spätere Datenkorrekturen oder geänderte Einstellungen wirken nicht mehr.</span>'+(ad?'<button class="btn btn-sm" style="margin-left:auto" onclick="provReopenMonth(\''+mk+'\')"><i class="ti ti-lock-open"></i> Wieder öffnen</button>':'')+'</div>';
+    else h+='<div class="pv-close"><span class="pv-open-tag">offen · rechnet live</span><span class="kal-note">'+ml+' wird mit den aktuellen Daten und Einstellungen berechnet.</span>'+(ad?'<button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="provCloseMonth(\''+mk+'\')"><i class="ti ti-lock"></i> Monat abschließen</button>':'')+'</div>';})();
 
   // Alle Zeilen aller ausgewaehlten Mitarbeiter zusammenstellen (Mitarbeiter + Monat je Zeile)
   var allRows=[];
@@ -9643,7 +9683,10 @@ function buildProvisionTeamTable(){
     var rowsAll=(performance[emp.id]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
     var grouped=groupPerfRows(rowsAll,'month');
     var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):(provisionMode==='custom'?grouped.filter(function(g){return g.key===provisionCustomMonth;}):grouped);
-    rows.forEach(function(g){allRows.push({emp:emp,g:g});});
+    rows.forEach(function(g){if(PROV_CLOSED[g.key])return;allRows.push({emp:emp,g:g});});
+    // abgeschlossene Monate: eingefrorene Werte statt Live-Daten
+    Object.keys(PROV_CLOSED).forEach(function(mk){if(mk.slice(0,4)!==yr)return;if(provisionMode==='month'&&mk!==curMk)return;if(provisionMode==='custom'&&mk!==provisionCustomMonth)return;
+      var fz=PROV_CLOSED[mk].rows[String(emp.id)];if(fz)allRows.push({emp:emp,g:{key:mk,label:fz.label,count:fz.count,row:fz.row},frozen:fz});});
   });
   allRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
   var sumKrank=0,sumUrlaub=0,sumAus=0,sumEin=0,sumAt=0,sumExtra=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumGesamtAkt=0,sumTotalHoursAll=0,sumNotSOem=0;
@@ -9670,18 +9713,18 @@ function buildProvisionTeamTable(){
       var crMY=(rawYes+rawSy+rawMy)>0?Math.round(rawMy/(rawYes+rawSy+rawMy)*100):0;
       var crSyMy=(rawYes+rawSy+rawMy)>0?Math.round((rawSy+rawMy)/(rawYes+rawSy+rawMy)*100):0;
       var anteilOem=optGes>0?Math.round(convOEM/optGes*100):0;
-      var abwTage=urlaubKrankTage(emp.id,g.key),pt=provTage(emp,g.key);abwTage={krank:pt.kra,urlaub:pt.url,aus:pt.aus+pt.fs};
+      var abwTage=urlaubKrankTage(emp.id,g.key),pt=provTage(emp,g.key);if(item.frozen&&item.frozen.pt)pt=item.frozen.pt;abwTage={krank:pt.kra,urlaub:pt.url,aus:pt.aus+pt.fs};
       var monthDates=(performance[emp.id]||[]).filter(function(x){return (x.date||'').slice(0,7)===g.key;}).map(function(x){return x.date;});
-      var rowTotalHours=totalWorkHoursForMonth(emp,g.key,monthDates);
+      var rowTotalHours=totalWorkHoursForMonth(emp,g.key,monthDates);if(item.frozen)rowTotalHours=item.frozen.hours||0;
       var gesamtAktivitaeten=row.gesamtAktivitaeten||row.oem_aktivitaeten||0;
       var aktPerHour_num=rowTotalHours>0?gesamtAktivitaeten/rowTotalHours:0;
       var aktProStd=aktPerHour_num.toFixed(1);
       var optPerH_num=rowTotalHours>0?optGes/rowTotalHours:0;
       var optProStd=optPerH_num.toFixed(1);
-      var calc=calculateProvision(emp,g.key,row,g.count);
-      var rowPv=effectiveProvisionSettings(emp);
+      var calc=calculateProvision(emp,g.key,row,g.count);if(item.frozen&&item.frozen.calc)calc=item.frozen.calc;
+      var rowPv=effectiveProvisionSettings(emp,g.key);
       var rowBm=beschaeftigungsmonat(emp,g.key);
-      var rowKpiSet=provisionRowKpiSet(emp,rowPv,rowBm);
+      var rowKpiSet=provisionRowKpiSet(emp,rowPv,rowBm);if(item.frozen&&item.frozen.kpiSet)rowKpiSet=item.frozen.kpiSet;
       var abzug, provision, provisionTitle='', abzugPct=null, provisionPct=null;
       if(calc.provision===null){
         abzug='—';provision='<span style="font-size:10.5px;color:var(--text3);font-weight:400">Keine Vereinbarung</span>';
@@ -9698,7 +9741,8 @@ function buildProvisionTeamTable(){
           +(calc.mindestleistungGreift?' · Mindestleistung unterschritten (§5)':'')
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
-      var extra=provExtraGet(emp.id,g.key);if(calc.provision!==null&&extra){provision='€'+Math.round(calc.provision+extra).toLocaleString('de-DE');}
+      var extra=item.frozen?(+item.frozen.extra||0):provExtraGet(emp.id,g.key);
+      if(window._provSnap&&!item.frozen)window._provSnap[String(emp.id)]={label:g.label,count:g.count,row:row,pt:pt,hours:rowTotalHours,calc:calc,kpiSet:rowKpiSet,extra:extra};if(calc.provision!==null&&extra){provision='€'+Math.round(calc.provision+extra).toLocaleString('de-DE');}
       // Erklärung als schwarze Info-Box (wie überall im Board) statt Browser-Tooltip
       if(provisionTitle){provisionTitle=provisionTitle.replace(' title="',' data-ktip="').split(' · ').join('<br>');if(extra)provisionTitle=provisionTitle.replace(/"$/,'<br>inkl. €'+Math.round(extra).toLocaleString('de-DE')+' Optional (ohne Abzug)"');}
       sumExtra+=extra;
@@ -9707,7 +9751,7 @@ function buildProvisionTeamTable(){
       sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0)+(calc.provision!==null?extra:0);
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
       var rowBg=ridx%2===1?'background:var(--s-tint);':'';
-      h+='<tr class="perf-data-row" style="'+rowBg+'">'
+      h+='<tr class="perf-data-row'+(item.frozen?' pv-frozen':'')+'" style="'+rowBg+'">'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="openPerfPopup(\''+emp.id+'\')" title="Popup öffnen">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+(function(){var ok=pt.sum===pt.at,fm=function(L){return L.map(function(x){return kalF(x);}).join(', ');};
           var tip='<b>'+kalNf(pt.sum)+' von '+pt.at+' Arbeitstagen belegt</b><br>'+kalNf(pt.ein)+' Einsatz (Tage mit Daten) + '+kalNf(pt.aus+pt.fs)+' Ausgleich'+(pt.fs?' (davon '+kalNf(pt.fs)+' Freistellung)':'')+' + '+kalNf(pt.url)+' Urlaub + '+kalNf(pt.kra)+' Krank'
@@ -9730,7 +9774,7 @@ function buildProvisionTeamTable(){
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);border-right:2px solid var(--border2);background:var(--s-tint);text-align:right;'+fc(anteilOem,rowKpiSet.oemAnteil,'gte')+';cursor:help" onmouseenter="showInfoTooltip(event,\'Anteil OEM = Opt.OEM / Opt.Ges.\',\'Opt.OEM\','+convOEM+',\'Opt.Ges.\','+optGes+',\'Anteil OEM\',\''+anteilOem+'%\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell(anteilOem+'%',convOEM)+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--text);cursor:help" onmouseenter="showBreakdownTooltip(event,\'Marge Ges. Aufschlüsselung\',\'€'+Math.round(row.margeOEM||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeUpsell||0).toLocaleString('de-DE')+'\',\'€'+Math.round(row.margeWKA||0).toLocaleString('de-DE')+'\')" onmousemove="positionCrTooltip(event)" onmouseleave="hideCrTooltip()">'+stackCell('€'+Math.round(marge).toLocaleString('de-DE'),(optGes>0?'€'+(marge/optGes).toFixed(0)+' Ø/Opt.':null))+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)"'+provisionTitle+'>'+stackCell(abzug,(abzugPct!==null?abzugPct+'%':null))+'</td>'
-        +'<td style="padding:8px 8px;border-bottom:1px solid var(--border);text-align:right">'+(currentUserRole==='admin'?'<input type="number" step="1" min="0" placeholder="0" value="'+(extra||'')+'" title="Zusatzbetrag in €, wird ohne Abzug auf die Provision gerechnet" style="width:100%;max-width:90px;height:30px;padding:0 6px;text-align:right;font-size:12.5px" data-e="'+esc(String(emp.id))+'" data-m="'+g.key+'" onchange="provExtraSet(this.dataset.e,this.dataset.m,this.value)">':stackCell(extra?'€'+Math.round(extra).toLocaleString('de-DE'):'—',null))+'</td>'
+        +'<td style="padding:8px 8px;border-bottom:1px solid var(--border);text-align:right">'+(currentUserRole==='admin'&&!item.frozen?'<input type="number" step="1" min="0" placeholder="0" value="'+(extra||'')+'" title="Zusatzbetrag in €, wird ohne Abzug auf die Provision gerechnet" style="width:100%;max-width:90px;height:30px;padding:0 6px;text-align:right;font-size:12.5px" data-e="'+esc(String(emp.id))+'" data-m="'+g.key+'" onchange="provExtraSet(this.dataset.e,this.dataset.m,this.value)">':stackCell(extra?'€'+Math.round(extra).toLocaleString('de-DE'):'—',null))+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
         +'</tr>';
     });
@@ -9876,7 +9920,7 @@ function buildProvisionTable(empId){
       var optPerH_num=rowTotalHours>0?optGes/rowTotalHours:0;
       var optProStd=optPerH_num.toFixed(1);
       var calc=calculateProvision(emp,g.key,row,g.count);
-      var rowPv=effectiveProvisionSettings(emp);
+      var rowPv=effectiveProvisionSettings(emp,g.key);
       var rowBm=beschaeftigungsmonat(emp,g.key);
       var rowKpiSet=provisionRowKpiSet(emp,rowPv,rowBm);
       var abzug, provision, provisionTitle='', abzugPct=null, provisionPct=null;
@@ -10598,6 +10642,19 @@ function atPlanSession(){var g=function(id){return document.getElementById(id);}
   ['taskText','taskDesc','taskDue'].forEach(function(id){if(g(id))g(id).value='';});
   atRender();if(typeof atToast==='function')atToast('Geplant: '+lbl+', '+kalF(day)+' '+uz,null);}
 var _savingNewEmp=false;
+// Verlauf der Provisions-Einstellungen eines Mitarbeiters
+function provVersionDiff(a,b){a=effectiveProvisionSettings({provisionSettings:a||{}});b=effectiveProvisionSettings({provisionSettings:b||{}});var out=[],ka=(a.kpis&&a.kpis.length?a.kpis:PROV_KPI_DEFAULT),kb=(b.kpis&&b.kpis.length?b.kpis:PROV_KPI_DEFAULT),lab=function(k){var c=provKpiCat(k);return c?c.lbl:k;};
+  var add=kb.filter(function(k){return ka.indexOf(k)<0;}),rem=ka.filter(function(k){return kb.indexOf(k)<0;});
+  if(add.length||rem.length)out.push('KPIs: '+(add.length?'+'+add.map(lab).join(', +'):'')+(add.length&&rem.length?' · ':'')+(rem.length?'−'+rem.map(lab).join(', −'):''));
+  var n=0;['monat1','monat2','monat3plus'].forEach(function(m){var x=a[m]||{},y=b[m]||{};Object.keys(Object.assign({},x,y)).forEach(function(k){if(String(x[k]==null?'':x[k])!==String(y[k]==null?'':y[k]))n++;});});
+  if(n)out.push(n+' Zielwert'+(n===1?'':'e')+' geändert');
+  ['basisProOpt','divOEM','divUpsell','divWka','reduktionProKpi','mindestprovision','mindestleistungOptH'].forEach(function(k){if(String(a[k]==null?'':a[k])!==String(b[k]==null?'':b[k]))out.push(k.replace('div','Teiler ').replace('basisProOpt','Basis/Opt.').replace('reduktionProKpi','Abzug je KPI').replace('mindestprovision','Mindestprovision').replace('mindestleistungOptH','Mindestleistung'));});
+  return out.join(' · ')||'unverändert';}
+function provVersionListHtml(emp){var ps=emp&&emp.provisionSettings,V=(ps&&Array.isArray(ps.versionen))?ps.versionen.slice().sort(function(a,b){return b.ab.localeCompare(a.ab);}):[];if(!V.length)return '';
+  var cur=today().slice(0,7),f=function(m){return m==='2000-01'?'Beginn':m.slice(5,7)+'/'+m.slice(0,4);};
+  return '<div class="pv-vers"><div class="pv-vers-h">Versionen der Provisions-Einstellungen</div>'+V.map(function(v,i){var bis=i>0?V[i-1].ab:null,akt=v.ab<=cur&&(!bis||bis>cur),fut=v.ab>cur;
+    var dl=i<V.length-1?provVersionDiff(V[i+1].s,v.s):'Ausgangsstand';
+    return '<div class="pv-vers-r'+(akt?' cur':'')+'"><span class="p">'+(v.ab==='2000-01'?'bis '+(bis?f(kalAdd(bis+'-01',-1).slice(0,7)):'heute'):'ab '+f(v.ab))+(bis&&v.ab!=='2000-01'?' – '+f(kalAdd(bis+'-01',-1).slice(0,7)):'')+'</span><span>'+esc(dl)+'</span><span class="m">'+(akt?'<b>aktuell</b>':fut?'geplant':'')+(v.von?' · '+esc(v.von):'')+(v.am?' · '+esc(v.am.slice(8,10)+'.'+v.am.slice(5,7)+'.'):'')+'</span></div>';}).join('')+'</div>';}
 function esBuildHtml(emp,asPopup,html){
   html=html||'';
     var t=empTargets(emp);
@@ -10630,7 +10687,7 @@ function esBuildHtml(emp,asPopup,html){
         var _esOuter=html; html=''; var SEG={};
         function cut(k){SEG[k]=(SEG[k]||'')+html; html='';}
         var isVlcModel=(emp.role==='VLC');
-        var vpv=effectiveProvisionSettings(emp).vlc;
+        var vpv=effectiveProvisionSettings(emp,'9999-12').vlc;
         var esWeekTotal=0, esWorkDaysTxt='';
         var esBm=emp.startDate?beschaeftigungsmonat(emp,today().slice(0,7)):null;
         var esCurIdx=esBm?Math.min(esBm,3)-1:-1;
@@ -10719,6 +10776,9 @@ function esBuildHtml(emp,asPopup,html){
           +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+(emp.notes||'')+'</textarea></div>';
 
         cut('person');
+        (function(){var mk=today().slice(0,7),nx=kalAdd(kalAdd(mk+'-28',4).slice(0,7)+'-01',0).slice(0,7),f=function(m){return m.slice(5,7)+'/'+m.slice(0,4);};
+          html+='<div class="pv-ab-box"><div><b>Änderungen gelten ab</b><span class="pv-ab-hint">Vergangene Monate rechnen weiter mit der Version, die damals galt.</span></div>'
+            +'<select id="pv-ab"><option value="'+nx+'" selected>nächstem Monat ('+f(nx)+')</option><option value="'+mk+'">laufendem Monat ('+f(mk)+')</option></select></div>'+provVersionListHtml(emp);})();
 
         function stripField(lbl,id,def,unit,step){
           return '<div style="padding:4px 16px;border-right:1px solid rgba(255,255,255,0.14)">'
@@ -10803,7 +10863,7 @@ function esBuildHtml(emp,asPopup,html){
           tbl+='</tbody></table></div>';
           return tbl;
         }
-        var _pk=effectiveProvisionSettings(emp).kpis,_rows=function(L){return L.map(function(k){var c=provKpiCat(k);return {lbl:provKpiLabel(c),f:k,unit:c.unit,step:c.step};});};
+        var _pk=effectiveProvisionSettings(emp,'9999-12').kpis,_rows=function(L){return L.map(function(k){var c=provKpiCat(k);return {lbl:provKpiLabel(c),f:k,unit:c.unit,step:c.step};});};
         html+='<input type="hidden" id="pv-kpis" value="'+esc(JSON.stringify(_pk))+'"><p style="font-size:11.5px;color:var(--text3);margin:0 0 8px">Kennzahlen am Griff ⋮⋮ zwischen „Provisionsrelevant“ und „Ergänzend“ ziehen. Je verfehlter provisionsrelevanter KPI greift der Abzug.</p>';
         html+=buildKpiTable(_rows(_pk),PROVISION_DEFAULTS.monat1,PROVISION_DEFAULTS.monat2,PROVISION_DEFAULTS.monat3plus,'prov');
 
@@ -10880,8 +10940,8 @@ function esBuildHtml(emp,asPopup,html){
           {n:2,t:'Vertrag',sum:'Beginn '+esD(emp.startDate)+' · Gültig ab '+esD(pv.gueltigAb)+' · '+(emp.endDate?'Ende '+esD(emp.endDate):'unbefristet')+(esBm?' · Beschäftigungsmonat '+esBm:''),body:SEG.vertrag},
           {n:3,t:'Arbeitszeit',sum:(esWorkDaysTxt?esWorkDaysTxt+' · ':'')+esN(esWeekTotal,1)+' Std. pro Woche',body:SEG.zeit},
           {n:4,t:deOnly('Provision')+vlcOnly('Bonus'),sum:deOnly((canSeeSalary(emp)?esN(pvNum('grundgehalt',2800))+' € Grundgehalt':'Gehalt nicht sichtbar')+' · '+esN(pvNum('basisProOpt',1),2)+' €/Opt. · −'+esN(pvNum('reduktionProKpi',20))+' % je KPI · Mindestprov. '+esN(pvNum('mindestprovision',20))+' %')+vlcOnly(esN(vpv.serviceRate)+' € Service Rate · '+esN(vpv.bonusProOpt,2)+' €/Opt. · Stufen '+stufenUniq.join('/')+' % · Extra Pay folgt'),body:SEG.prov},
-          {n:5,t:'Provisionsrelevante KPIs',sum:deOnly('<span id="pk-count-prov">'+effectiveProvisionSettings(emp).kpis.length+' Kennzahlen</span>')+vlcOnly('3 Kennzahlen')+(mLabel?' · aktuell „'+mLabel+'“':''),body:SEG.kpi},
-          {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('<span id="pk-count-erg">'+(PROV_KPI_CAT.length-effectiveProvisionSettings(emp).kpis.length)+' Kennzahlen</span>')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
+          {n:5,t:'Provisionsrelevante KPIs',sum:deOnly('<span id="pk-count-prov">'+effectiveProvisionSettings(emp,'9999-12').kpis.length+' Kennzahlen</span>')+vlcOnly('3 Kennzahlen')+(mLabel?' · aktuell „'+mLabel+'“':''),body:SEG.kpi},
+          {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('<span id="pk-count-erg">'+(PROV_KPI_CAT.length-effectiveProvisionSettings(emp,'9999-12').kpis.length)+' Kennzahlen</span>')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
         ];
         if(asPopup==='panels'){
           // Popup-Bereich „Einstellungen“: die sechs Abschnitte als getönte Flächen in einer Kachel
@@ -12566,6 +12626,11 @@ function saveProvisionSettings(empId){
   (function(){var h=document.getElementById('pv-kpis');var L=null;try{L=h?JSON.parse(h.value):null;}catch(e){}if(L&&L.length&&JSON.stringify(L)!==JSON.stringify(PROV_KPI_DEFAULT))settings.kpis=L;else if(!h&&oldSettings.kpis)settings.kpis=oldSettings.kpis;})();
   var salaryVisible=canSeeSalary(emp);
   if(!salaryVisible){settings.grundgehalt=oldSettings.grundgehalt;settings.agSozialabgaben=oldSettings.agSozialabgaben;if(settings.grundgehalt==null)delete settings.grundgehalt;if(settings.agSozialabgaben==null)delete settings.agSozialabgaben;}
+  (function(){var ab=document.getElementById('pv-ab');ab=ab?ab.value:null;var core=function(o){var c=JSON.parse(JSON.stringify(o||{}));delete c.versionen;delete c.grundgehalt;delete c.agSozialabgaben;return c;};
+    var oc=core(oldSettings),nc=core(settings),norm=function(o){return JSON.stringify(o,Object.keys(o).sort());},vers=(oldSettings.versionen||[]).slice();
+    var same=JSON.stringify(effectiveProvisionSettings({provisionSettings:oc}))===JSON.stringify(effectiveProvisionSettings({provisionSettings:nc}));
+    if(!same&&ab){var who=(typeof qaCurrentName==='function'&&qaCurrentName())||'';if(!vers.length)vers.push({ab:'2000-01',s:oc,am:today(),von:''});vers=vers.filter(function(v){return v.ab<ab;});vers.push({ab:ab,s:nc,am:today(),von:who});}
+    if(vers.length)settings.versionen=vers;})();
   emp.provisionSettings=settings;
   // Aenderungshistorie fuer Provisionseinstellungen
   var actorNamePv=null;
