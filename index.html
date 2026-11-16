@@ -9026,7 +9026,7 @@ function buildIntegrationsHtml(){
   var st=ageMin===null?sStatus('Noch kein Sync','off'):ageMin<=90?sStatus('Läuft','ok'):ageMin<=360?sStatus('Verzögert','warn'):sStatus('Gestoppt','bad');
   var ago=ageMin===null?'–':ageMin<60?'vor '+ageMin+' Min.':ageMin<1440?'vor '+Math.round(ageMin/60)+' Std.':last.toLocaleDateString('de-DE');
   var sfp=sCard('ti-refresh','SFP-Daten (FTP)','Performance-Daten aus dem SFP, automatisch per SFTP-Datei',st,
-    sKvTable(sKv('Letzter Sync',last?last.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · '+ago:'–')+sKv('Rhythmus','alle 15 Minuten (cron-job.org)')+sKv('Datei',esc(settings.ftpFile||'user_activity.csv')))
+    sKvTable(sKv('Letzter Sync',last?last.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · '+ago:'–')+(function(){var fr=settings.ftpRange;if(!fr||!fr.von)return sKv('Zeitraum in der Datei','– (wird beim nächsten Sync ermittelt)');var f=function(d){return d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4);};return sKv('Zeitraum in der Datei',f(fr.von)+' – '+f(fr.bis)+' · '+fr.tage+' Tage')+sKv('Zeilen im letzten Sync',fr.zeilen+' in der Datei · '+fr.geschrieben+' geschrieben · '+fr.uebersprungen0+' mit 0 € übersprungen');})()+sKv('Rhythmus','alle 15 Minuten (cron-job.org)')+sKv('Datei',esc(settings.ftpFile||'user_activity.csv')))
     +'<details><summary style="font-size:12.5px;font-weight:600;color:var(--purple);cursor:pointer">Verbindung bearbeiten</summary><div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px">'
     +'<div><label for="ftpHost">SFTP-Host</label><input id="ftpHost" value="'+esc(settings.ftpHost||'')+'"></div><div><label for="ftpPort">Port</label><input id="ftpPort" value="'+esc(settings.ftpPort||'22')+'"></div>'
     +'<div><label for="ftpUser">Benutzername</label><input id="ftpUser" value="'+esc(settings.ftpUser||'')+'"></div><div><label for="ftpFile">Dateiname</label><input id="ftpFile" value="'+esc(settings.ftpFile||'')+'"></div></div>'
@@ -11593,7 +11593,7 @@ function loadSettingsFromSupabase(){
       if(r.key==='ftpLastSync')settings.ftpLastSync=r.value||'';
       if(r.key==='tokenExpiry')settings.tokenExpiry=r.value||'';
       if(r.key==='extensionUrl')settings.extensionUrl=r.value||'';
-      if(r.key==='rolePermissions'||r.key==='kalenderRules'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
+      if(r.key==='rolePermissions'||r.key==='kalenderRules'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'||r.key==='ftpRange'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
     return true;
