@@ -695,6 +695,8 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-tl .sb2.past{border-color:#CFC6B5;background:#fff;color:var(--text2)}
 .kal-tl .sb2.over{top:auto;bottom:2px;transform:translateX(-50%);height:18px;min-width:18px;font-size:10px}
 .kal-tl .sb2:hover{box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.kal-rz.r::after,.kal-rz.l::after{content:'';position:absolute;top:25%;bottom:25%;left:50%;width:2px;margin-left:-1px;border-radius:1px;background:rgba(255,255,255,.75);opacity:0;transition:opacity .15s}
+.blk:hover .kal-rz.r::after,.blk:hover .kal-rz.l::after{opacity:1}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -910,7 +912,7 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .kal-hint{padding:9px 12px;border-radius:10px;background:#F7F5F0;font-size:13px;line-height:1.45;margin-bottom:6px}
 .kal-hint.warn{background:#FBE3DA;color:#6E2C17}.kal-hint.err{background:#1d1c1a;color:#fff}
 .kal-rz{position:absolute;z-index:4}.kal-rz.t,.kal-rz.b{left:0;right:0;height:7px;cursor:ns-resize}.kal-rz.t{top:0}.kal-rz.b{bottom:0}
-.kal-rz.l,.kal-rz.r{top:0;bottom:0;width:7px;cursor:ew-resize}.kal-rz.l{left:0}.kal-rz.r{right:0}
+.kal-rz.l,.kal-rz.r{top:0;bottom:0;width:12px;cursor:ew-resize}.kal-rz.l{left:0}.kal-rz.r{right:0}
 .kal-sopen:hover .kal-rz.t,.kal-sopen:hover .kal-rz.b{background:rgba(240,133,102,.35)}.kal-ch:hover .kal-rz,.blk:hover .kal-rz{background:rgba(29,28,26,.18)}
 .kal-undo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d1c1a;color:#fff;border-radius:12px;padding:11px 12px 11px 18px;display:none;align-items:center;gap:16px;z-index:300;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .kal-undo.on{display:flex}.kal-undo button{background:#fff;color:#1d1c1a;border:0;border-radius:8px;height:30px;padding:0 12px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -14156,7 +14158,9 @@ document.addEventListener('click',function(ev){if(KAL.rzDone){KAL.rzDone=false;e
   if(kalCtx()==='coach')kalPlusGo('ses',o.dataset.kopen,o.dataset.kemp||null,hh);else kalPlusGo('abs',o.dataset.kopen,o.dataset.kemp||null,null);});
 // ── Länge ändern wie in Outlook: Session oben/unten (Uhrzeit), Abwesenheit links/rechts (Datum) ──
 function kalMinStr(m){return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+m%60).slice(-2);}
-document.addEventListener('mousedown',function(ev){var g=ev.target&&ev.target.closest&&ev.target.closest('[data-krz]');if(!g||(view!=='kalender'&&view!=='coaching')||!kalCanEdit())return;
+document.addEventListener('mousedown',function(ev){var g=ev.target&&ev.target.closest&&ev.target.closest('[data-krz]');
+  if(!g&&ev.target&&ev.target.closest){var bk=ev.target.closest('.blk[data-kabs],.kal-ch[data-kabs]');if(bk){var rc=bk.getBoundingClientRect();var cS=bk.classList.contains('s'),cE=bk.classList.contains('e'),zw=bk.classList.contains('blk')?(cS&&cE?rc.width/3:rc.width/2):Math.min(22,rc.width/3);if(ev.clientX>rc.right-zw&&(cE||!bk.classList.contains('blk')))g=bk.querySelector('.kal-rz.r');else if(ev.clientX<rc.left+zw&&(cS||!bk.classList.contains('blk')))g=bk.querySelector('.kal-rz.l');}}
+  if(!g||(view!=='kalender'&&view!=='coaching')||!kalCanEdit())return;
   ev.preventDefault();ev.stopPropagation();var tp=document.getElementById('kalTip');if(tp)tp.style.display='none';var edge=g.dataset.krz,host=g.parentElement;
   if(edge==='s'||edge==='e'){var p=(protocols[host.dataset.eid]||[]).find(function(q){return String(q.id)===String(host.dataset.sid);});if(!p)return;
     var st=timeStrToMin(p.uhrzeit),en=p.endUhrzeit?timeStrToMin(p.endUhrzeit):st+45;KAL.rz={k:'ses',edge:edge,host:host,col:host.parentElement,p:p,eid:host.dataset.eid,st:st,en:en,old:{u:p.uhrzeit,e:p.endUhrzeit}};}
