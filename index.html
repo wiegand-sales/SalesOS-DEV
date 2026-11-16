@@ -8184,7 +8184,7 @@ function dshKD(k){return DSH_KPIS.filter(function(x){return x.k===k;})[0];}
 function dshSetKpi(k){dshKpi=k;dshKpiOpen=false;renderDashboard();}
 function dshToggleKpi(){dshKpiOpen=!dshKpiOpen;renderDashboard();}
 document.addEventListener('mousedown',function(e){if(dshKpiOpen&&!(e.target.closest&&e.target.closest('.dsh-kpick'))){dshKpiOpen=false;if(view==='dashboard')renderDashboard();}});
-function dshHours(list,from,to){var h=0;list.forEach(function(e){var seen={};(performance[e.id]||[]).forEach(function(x){if(x.date>=from&&x.date<=to&&!seen[x.date]){seen[x.date]=1;h+=workHoursForDate(e,x.date)||0;}});});return h;}
+function dshHours(list,from,to){var h=0;list.forEach(function(e){var seen={};(performance[e.id]||[]).forEach(function(x){if(x.date>=from&&x.date<=to&&!seen[x.date]){seen[x.date]=1;h+=workHoursForDate(e,x.date)||0;}});h+=krankExtraHours(e,from,to,seen);});return h;}
 function dshKVal(k,list,s,from,to){
   switch(k){
     case 'akt':return s.akt;
@@ -9306,16 +9306,25 @@ function elapsedWorkHoursTodayFor(emp){
   elapsed=Math.max(elapsed,0.5);
   return planned>0?Math.min(elapsed,planned):elapsed;
 }
-// Summe der Arbeitsstunden ueber die tatsaechlichen Datentage (Performance-Tabelle)
+// Kranktage ohne Leistungsdaten zählen mit 50 % der Tagesstunden zur Arbeitszeit (wie in der SFP).
+// workHoursForDate liefert an Kranktagen bereits die halben Stunden.
+function krankExtraHours(emp,from,to,seen){if(!emp||!from||!to||typeof kalOn!=='function')return 0;var t=today(),h=0,d=from;if(to>t)to=t;
+  while(d<=to){if(!seen[d]){var a=kalOn(emp.id,d);if(a&&!a.masked&&a.art==='krank'&&a.status!=='abgelehnt'&&a.status!=='storniert'&&kalWorkday(emp,d))h+=workHoursForDate(emp,d)||0;}d=kalAdd(d,1);}return h;}
+function krankRangeOf(dates){var L=(dates||[]).slice().sort();return L.length?[L[0],L[L.length-1]]:null;}
+// Summe der Arbeitsstunden ueber die tatsaechlichen Datentage (Performance-Tabelle) + halbe Stunden für Kranktage dazwischen
 function perfHoursForDates(emp,dates){
-  var t=today(),sum=0;
-  (dates||[]).forEach(function(ds){sum+=(ds===t)?elapsedWorkHoursTodayFor(emp):workHoursForDate(emp,ds);});
+  var t=today(),sum=0,seen={};
+  (dates||[]).forEach(function(ds){seen[ds]=1;sum+=(ds===t)?elapsedWorkHoursTodayFor(emp):workHoursForDate(emp,ds);});
+  var r=krankRangeOf(dates);if(r){var mf=r[0].slice(0,7),ml=r[1].slice(0,7),from=mf===ml&&dates.length>7?mf+'-01':r[0],to=mf===ml&&dates.length>7?kalAdd(kalAdd(ml+'-28',4).slice(0,7)+'-01',-1):r[1];sum+=krankExtraHours(emp,from,to,seen);}
   return sum;
 }
 function totalWorkHoursForMonth(emp,monthKey,dateList){
   // dateList: Array der tatsaechlichen Datums-Strings (YYYY-MM-DD) mit Performance-Daten in diesem Monat
-  var sum=0;
-  (dateList||[]).forEach(function(ds){sum+=workHoursForDate(emp,ds);});
+  var sum=0,seen={};
+  (dateList||[]).forEach(function(ds){seen[ds]=1;sum+=workHoursForDate(emp,ds);});
+  // Kranktage des Monats (bzw. der Monate der Liste) ohne Daten: halbe Tagesstunden
+  var months={};if(monthKey)months[monthKey]=1;else (dateList||[]).forEach(function(ds){months[ds.slice(0,7)]=1;});
+  Object.keys(months).forEach(function(mk){sum+=krankExtraHours(emp,mk+'-01',kalAdd(kalAdd(mk+'-28',4).slice(0,7)+'-01',-1),seen);});
   return sum;
 }
 function beschaeftigungsmonat(emp,monthKey){
