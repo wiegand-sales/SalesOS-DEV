@@ -1554,7 +1554,7 @@ var provisionTeamDropdownOpen=false;
 var provisionTeamSearchQuery='';
 function toggleProvisionTeamDropdown(){provisionTeamDropdownOpen=!provisionTeamDropdownOpen;if(!provisionTeamDropdownOpen)provisionTeamSearchQuery='';renderProvisionTeam();}
 function toggleProvisionTeamEmpId(id){
-  var visIds=employees.filter(function(e){return provFlag(e)&&canSeeSalary(e)&&(currentUserRole==='admin'||isAgentEmp(e));}).map(function(e){return e.id;});
+  var visIds=employees.filter(function(e){return provFlag(e)&&canSeeSalary(e)&&(currentUserRole==='admin'||isAgentEmp(e)||canSeeArea('provCoaches'));}).map(function(e){return e.id;});
   if(!provisionTeamSelectedIds)provisionTeamSelectedIds=visIds.slice();
   var idx=provisionTeamSelectedIds.indexOf(id);
   if(idx>=0)provisionTeamSelectedIds.splice(idx,1);else provisionTeamSelectedIds.push(id);
@@ -8768,6 +8768,7 @@ var PERM_ROWS=[
   {key:'performance',label:'Dashboard & Performance-Tabelle',group:'Bereiche',fixed:true},
   {key:'ziel',label:'Zielvereinbarung & Ziele',group:'Bereiche',tables:['zielvereinbarung','goals','kpi_targets','employee_kpi_targets'],nav:['nav-team-ziel']},
   {key:'provision',label:'Provision & Gehälter',group:'Bereiche',seeOnly:true,nav:['nav-team-provision'],tabs:['provision']},
+  {key:'provCoaches',label:'Provision: auch Coaches sehen',group:'Bereiche',seeOnly:true},
   {key:'coaching',label:'Coaching-Sessions & Aufgaben',group:'Bereiche',tables:['protocols','tasks'],tabs:['session','tasks']},
   {key:'qa',label:'QA-Bewertungen',group:'Bereiche',tables:['call_ratings','call_rating_scores'],tabs:['call-performance']},
   {key:'dev',label:'Development / Halbjahresgespräch',group:'Bereiche',tables:['reviews','review_kpis'],tabs:['coaching-eval']},
@@ -8776,8 +8777,8 @@ var PERM_ROWS=[
   {key:'histEdit',label:'Bewertungen & Kommentare nachträglich ändern oder löschen',group:'Verwaltung',editOrNone:true},
   {key:'settings',label:'Einstellungen',group:'Verwaltung',adminOnly:true}
 ];
-var PERM_DEFAULT={coach:{performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
-                  viewer:{performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
+var PERM_DEFAULT={coach:{provCoaches:'-',performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
+                  viewer:{provCoaches:'-',performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
 function rolePerms(){ var s=settings.rolePermissions||{}; return {coach:Object.assign({},PERM_DEFAULT.coach,s.coach||{}),viewer:Object.assign({},PERM_DEFAULT.viewer,s.viewer||{})}; }
 function permFor(key,role){
   role=role||currentUserRole;
@@ -8831,7 +8832,7 @@ function permToggle(role,key,col){
   setPerm(role,key,nv);
 }
 function buildRolesHtml(){
-  var GROUPS=[['Auswertungen',['performance','ziel','provision','activity']],['Mitarbeiter',['coaching','qa','dev']],['Verwaltung',['stammdaten','histEdit']]];
+  var GROUPS=[['Auswertungen',['performance','ziel','provision','provCoaches','activity']],['Mitarbeiter',['coaching','qa','dev']],['Verwaltung',['stammdaten','histEdit']]];
   var cnt={admin:0,coach:0,viewer:0,agent:0,none:0},K={'Admin':'admin','Coach':'coach','Betrachter':'viewer','Sales Agent':'agent','Kein Zugang':'none'};
   allPersons().forEach(function(p){if(p.kind==='emp'&&p.active===false)return;var r=K[personRole(p)];if(r)cnt[r]++;});
   function box(state,avail,lock,onclick,title){
@@ -8862,7 +8863,7 @@ function buildRolesHtml(){
     g[1].forEach(function(k){
       var row=PERM_ROWS.find(function(r){return r.key===k;});if(!row)return;
       var c=permFor(k,'coach'),v=permFor(k,'viewer'),lock=!!row.fixed;
-      var desc={performance:'Startseite, Banner, Diagramm, Tabelle',ziel:'Zielplanung, Zielvereinbarung, Ziele im Popup',provision:'Provisionen und Gehälter',activity:'wer hat wann was geändert',coaching:'Sessions erfassen und planen, Aufgaben',qa:'Calls bewerten',dev:'Mitarbeiterentwicklung, Kommentare',stammdaten:'Mitarbeiter anlegen, Person, Vertrag, Provisionsvereinbarung',histEdit:'Bewertungen, Calls, Kommentare'}[k]||'';
+      var desc={performance:'Startseite, Banner, Diagramm, Tabelle',ziel:'Zielplanung, Zielvereinbarung, Ziele im Popup',provision:'Provisionen und Gehälter',provCoaches:'Provision von Coaches/SDM in der Übersicht – sonst nur Sales Agents',activity:'wer hat wann was geändert',coaching:'Sessions erfassen und planen, Aufgaben',qa:'Calls bewerten',dev:'Mitarbeiterentwicklung, Kommentare',stammdaten:'Mitarbeiter anlegen, Person, Vertrag, Provisionsvereinbarung',histEdit:'Bewertungen, Calls, Kommentare'}[k]||'';
       var label=row.key==='histEdit'?'Nachträglich ändern oder löschen':row.label;
       var cS=row.editOrNone?box(0,false):box(c!=='-',true,lock,"permToggle('coach','"+k+"','S')",lock?'fest vorgegeben':'');
       var cE=(row.seeOnly||row.fixed)?box(0,false):box(c==='E',true,false,"permToggle('coach','"+k+"','E')");
@@ -9686,7 +9687,7 @@ function buildProvisionTeamTable(){
     return {urlaub:urlaub,krank:krank};
   }
   // Coaches (SDC/SDM) mit eigener Provision sehen nur Admins
-  var visible=employees.filter(function(e){return provFlag(e)&&canSeeSalary(e)&&(currentUserRole==='admin'||isAgentEmp(e));});
+  var visible=employees.filter(function(e){return provFlag(e)&&canSeeSalary(e)&&(currentUserRole==='admin'||isAgentEmp(e)||canSeeArea('provCoaches'));});
   var selectedEmps=provisionTeamSelectedIds?visible.filter(function(e){return provisionTeamSelectedIds.indexOf(e.id)>=0;}):visible;
   var isAll=!provisionTeamSelectedIds||provisionTeamSelectedIds.length===visible.length;
   var selLabel=isAll?'Alle Mitarbeiter':(selectedEmps.length===1?selectedEmps[0].name:selectedEmps.length+' Mitarbeiter ausgewählt');
