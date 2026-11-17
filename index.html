@@ -1532,7 +1532,7 @@ function loadEmployeesFromSupabase(){
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
-        isPureCoach: e.is_pure_coach===true||e.role==='KAL', kalOnly: e.role==='KAL', imKalender: e.im_kalender==null?null:!!e.im_kalender, inProvision: e.in_provision==null?null:!!e.in_provision, boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
+        isPureCoach: e.is_pure_coach===true||e.role==='KAL', kalOnly: e.role==='KAL', funktion: e.funktion||null, stufe: e.stufe||null, standort: e.standort||null, imKalender: e.im_kalender==null?null:!!e.im_kalender, inProvision: e.in_provision==null?null:!!e.in_provision, boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
       };
     });
     return loadSalariesFromSupabase();
@@ -1671,6 +1671,17 @@ function loadSalariesFromSupabase(){return sb.from('employee_salary').select('*'
   employees.forEach(function(e){var r=by[String(e.id)];var pv=e.provisionSettings||(e.provisionSettings={});delete pv.grundgehalt;delete pv.agSozialabgaben;
     if(r){if(r.grundgehalt!=null)pv.grundgehalt=+r.grundgehalt;if(r.ag_sozialabgaben!=null)pv.agSozialabgaben=+r.ag_sozialabgaben;}});
   return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;}).then(function(){return typeof loadProvExtra==='function'?loadProvExtra():true;}).then(function(){return typeof loadProvClosed==='function'?loadProvClosed():true;});}
+// ── Person: Funktion · Stufe · Standort (SQL 42). Das alte Feld role wird daraus abgeleitet, damit alles Bestehende weiterläuft.
+var PERSON_FN=[['agent','Sales Agent'],['sdl','SDL'],['coach','Coach'],['salesops','Sales Ops'],['am','Account Management'],['leitung','Leitung']];
+function personFn(e){if(!e)return 'agent';if(e.funktion)return e.funktion;var r=e.role;return r==='SDL'?'sdl':(r==='SDC'||r==='SDM')?'coach':r==='KAL'?'am':'agent';}
+function personStufe(e){if(!e)return '';if(e.stufe)return e.stufe;return (e.role==='SR'||e.role==='SE'||e.role==='SDC'||e.role==='SDM')?e.role:'';}
+function personOrt(e){if(!e)return 'MUC';if(e.standort)return e.standort;return e.role==='VLC'?'VLC':'MUC';}
+function personFnLabel(e){var f=personFn(e),l=(PERSON_FN.filter(function(x){return x[0]===f;})[0]||['',''])[1],st=personStufe(e);return l+(st&&(f==='agent'||f==='coach')?' · '+st:'');}
+function personRoleCode(fn,stufe,ort){if(fn==='agent')return ort==='VLC'?'VLC':(stufe==='SE'?'SE':'SR');if(fn==='sdl')return 'SDL';if(fn==='coach')return stufe==='SDM'?'SDM':'SDC';return 'KAL';}
+function esPersonSync(){var f=document.getElementById('es-fn'),st=document.getElementById('es-stufe'),o=document.getElementById('es-ort'),r=document.getElementById('es-role');if(!f||!r)return;
+  var fn=f.value,wrap=document.getElementById('es-stufe-wrap');if(st){var opts=fn==='agent'?[['SR','SR'],['SE','SE']]:fn==='coach'?[['SDC','SDC'],['SDM','SDM']]:[];var cur=st.value;st.innerHTML=opts.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===cur?' selected':'')+'>'+x[1]+'</option>';}).join('');if(wrap)wrap.style.display=opts.length?'':'none';}
+  var code=personRoleCode(fn,st?st.value:'',o?o.value:'MUC');if(![].some.call(r.options,function(x){return x.value===code;})){var op=document.createElement('option');op.value=code;op.text=code;r.add(op);}r.value=code;
+  if(typeof esSdlToggle==='function')esSdlToggle(code);if(typeof toggleProvisionModel==='function')toggleProvisionModel(code);}
 function esSdlToggle(v){var b=document.getElementById('es-sdl-team');if(b)b.style.display=v==='SDL'?'':'none';}
 function positionRole(p){ if(p.role==='KAL')return 'Betrachter'; return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
@@ -1770,12 +1781,13 @@ function buildUserOverviewHtml(){
     var accCell=r==='Sales Agent'?'<span style="font-size:12.5px;color:var(--text2)" title="Sales Agents kommen nicht ins Board, sie sehen ihre Zahlen in der Erweiterung">'+ZG[r]+'</span>'
       :'<a href="#" onclick="selectSettingsSub(\'roles\');return false" title="Was diese Rolle darf, legst du unter Rollen &amp; Rechte fest" style="font-size:12.5px;color:'+acc[1]+';text-decoration:none;white-space:nowrap">'+ZG[r]+' ›</a>';
     return '<tr style="'+bg+'"><td style="'+TD+'"><div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:6px;background:#F3ECE8;color:var(--purple);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+esc(ini)+'</span><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">'+esc(p.name)+'</span><span style="font-size:11.5px;color:var(--text3)">'+esc(p.kind==='app'?(p.role==='admin'?'Admin':'Betrachter'):p.sub)+'</span></div></div></td>'
-      +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+'</td><td style="'+TD+'">'+lastCell+'</td>'
+      +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+(lastCell&&lg?'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+lastCell.replace(/<[^>]+>/g,'')+'</div>':'')+'</td>'
+      +'<td style="'+TD+';font-size:12.5px">'+(function(){var e=personEmp(p);return e?esc(personFnLabel(e))+'<div style="font-size:11.5px;color:var(--text3)">'+(personOrt(e)==='VLC'?'Valencia':'Olching')+'</div>':'<span style="color:var(--text3)">–</span>';})()+'</td>'
       +'<td style="'+TD+';text-align:center">'+personSwitch(p,'kal')+'</td><td style="'+TD+';text-align:center">'+personSwitch(p,'prov')+'</td>'
       +'<td style="'+TD+'">'+accCell+'</td><td style="'+TD+';text-align:right;white-space:nowrap"><div style="display:inline-flex;gap:6px">'+actions+'</div></td></tr>';
   }
   function table(list){
-    return '<div class="std-wrap"><table class="std-table" style="min-width:1080px"><colgroup><col style="width:17%"><col style="width:18%"><col style="width:15%"><col style="width:9%"><col style="width:10%"><col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:7%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Letzter Login</th><th scope="col" style="'+TH+';text-align:center">Im Urlaubskalender</th><th scope="col" style="'+TH+';text-align:center">In Provision</th><th scope="col" style="'+TH+'">Zugriff</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
+    return '<div class="std-wrap"><table class="std-table" style="min-width:1080px"><colgroup><col style="width:17%"><col style="width:18%"><col style="width:15%"><col style="width:9%"><col style="width:10%"><col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:7%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Funktion · Standort</th><th scope="col" style="'+TH+';text-align:center">Im Urlaubskalender</th><th scope="col" style="'+TH+';text-align:center">In Provision</th><th scope="col" style="'+TH+'">Zugriff</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
   }
   var match=function(p){ return (!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.email||'').toLowerCase().indexOf(q)>=0) && (userFilter==='all'||personRole(p)===userFilter); };
   var order={'Admin':0,'Coach':1,'Betrachter':2};
@@ -10733,7 +10745,11 @@ function esBuildHtml(emp,asPopup,html){
 
         html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
         html+='<div><label>Vollständiger Name</label><input type="text" id="es-name" value="'+esc(emp.name)+'"></div>';
-        html+='<div><label>Position</label>'
+        (function(){var ad=currentUserRole==='admin'||(asPopup&&asPopup!=='panels'),dis=ad?'':' disabled title="Nur Admins"',fn=personFn(emp),st=personStufe(emp),ort=personOrt(emp);
+          html+='<div><label>Funktion</label><select id="es-fn"'+dis+' onchange="esPersonSync()">'+PERSON_FN.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===fn?' selected':'')+(x[0]==='sdl'&&currentUserRole!=='admin'&&fn!=='sdl'?' disabled':'')+'>'+x[1]+'</option>';}).join('')+'</select></div>';
+          html+='<div id="es-stufe-wrap"'+((fn==='agent'||fn==='coach')?'':' style="display:none"')+'><label>Stufe</label><select id="es-stufe"'+dis+' onchange="esPersonSync()">'+(fn==='coach'?['SDC','SDM']:['SR','SE']).map(function(x){return '<option'+(x===st?' selected':'')+'>'+x+'</option>';}).join('')+'</select></div>';
+          html+='<div><label>Standort</label><select id="es-ort"'+dis+' onchange="esPersonSync()"><option value="MUC"'+(ort==='MUC'?' selected':'')+'>Olching</option><option value="VLC"'+(ort==='VLC'?' selected':'')+'>Valencia</option></select></div>';})();
+        html+='<div style="display:none"><label>Position</label>'
           +'<select id="es-role"'+(currentUserRole!=='admin'&&(!asPopup||asPopup==='panels')?' disabled title="Position ändern nur Admins"':'')+' onchange="esSdlToggle(this.value);var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}toggleProvisionModel(this.value);">'
           +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
           +'<option'+(emp.role==='SE'?' selected':'')+'>SE</option>'
@@ -11075,6 +11091,7 @@ function saveNewEmpFull(){
   if(!name){alert('Bitte einen Namen eingeben.');var n=document.getElementById('es-name');if(n)n.focus();return;}
   var role=v('es-role')||'SE',phase=v('es-phase')||'Onboarding',contract=v('es-contract')||'full';
   var startDate=v('es-start')||null;
+  var _fn=v('es-fn'),_st=v('es-stufe'),_or=v('es-ort');if(_fn)role=personRoleCode(_fn,_st,_or);
   var payload={name:name,role:role,phase:phase,start_date:startDate,team:'Deutschland',contract:contract,hours:40,active:phase!=='Inaktiv',
     color_index:_aeNew?_aeNew.color:employees.length%COLORS.length};
   _savingNewEmpFull=true;
@@ -12409,6 +12426,7 @@ function saveEmpEinstellungen(){
   var oldSnapshot={name:emp.name,role:emp.role,phase:emp.phase,contract:emp.contract,hours:emp.hours,startDate:emp.startDate,endDate:emp.endDate,email:emp.email};
   emp.name=document.getElementById('es-name').value.trim()||emp.name;
   emp.role=document.getElementById('es-role').value;
+  (function(){var f=document.getElementById('es-fn'),st=document.getElementById('es-stufe'),o=document.getElementById('es-ort');if(f){emp.funktion=f.value;emp.stufe=(f.value==='agent'||f.value==='coach')&&st?st.value:null;emp.standort=o?o.value:'MUC';}})();
   var oldSdlTeam=JSON.stringify(emp.sdlTeam||[]);
   if(emp.role==='SDL'){var cbs=document.querySelectorAll('#es-sdl-team .es-sdl-cb');if(cbs.length||document.getElementById('es-sdl-team'))emp.sdlTeam=Array.prototype.filter.call(cbs,function(c){return c.checked;}).map(function(c){return String(c.value);});}
   else emp.sdlTeam=[];
@@ -12452,7 +12470,9 @@ function saveEmpEinstellungen(){
     contract:emp.contract,hours:emp.hours,notes:emp.notes||null,color_index:emp.color,email:emp.email||null,work_hours:emp.workHours||null
   };
   if(sdlTeamChanged)empUpd.sdl_team=emp.sdlTeam||[];
+  if(emp.funktion){empUpd.funktion=emp.funktion;empUpd.stufe=emp.stufe;empUpd.standort=emp.standort;}
   sb.from('employees').update(empUpd).eq('id',emp.id).then(function(res){
+    if(res&&res.error&&/funktion|stufe|standort/.test(res.error.message||'')){delete empUpd.funktion;delete empUpd.stufe;delete empUpd.standort;return sb.from('employees').update(empUpd).eq('id',emp.id);}return res;}).then(function(res){
     _savingEmpEinstellungen=false;
     if(res.error){alert('Fehler beim Speichern in Supabase: '+res.error.message+'\n\nDie Änderung ist lokal sichtbar, aber NICHT gespeichert -- bitte nochmal versuchen.');return;}
     var stammChanges=[];
@@ -13713,7 +13733,7 @@ function kalWdBetween(e,a,b){var n=0,d=kalAdd(a,1);while(d<b){if(kalWorkday(e,d)
 // ── Mitarbeiter je Standort ──
 // Wer im Kalender (Monat, Woche, Jahr, Team, Urlaubskonto, Formular) steht – Aufgaben, Weeklys, QA und „frei“-Zählung nutzen weiter kalEmps (nur Agenten)
 // Anzeige der Position im Kalender (Personen ohne Board-Zugang als „Büro“)
-function kalRoleLbl(e){return !e?'':e.role==='KAL'?'Büro':(e.role||'');}
+function kalRoleLbl(e){if(!e)return '';var f=personFn(e);return f==='am'?'AM':f==='salesops'?'Ops':f==='leitung'?'Leitung':(e.role||'');}
 function kalPeople(loc){var A=kalEmps(loc).filter(kalFlag),seen={};kalEmps(loc).forEach(function(e){seen[e.id]=1;});var X=employees.filter(function(e){return !seen[e.id]&&kalLocMatch(e,loc)&&kalFlag(e);});
   var ord=function(e){return e.kalOnly?2:(e.role==='SDC'||e.role==='SDM'||e.isPureCoach)?1:0;};return A.concat(X.sort(function(a,b){return ord(a)-ord(b)||a.name.localeCompare(b.name);}));}
 function kalLocMatch(e,loc){loc=loc||KAL.loc;if(loc==='ALL')return true;if(loc==='NONE')return false;return loc==='VLC'?kalIsVlc(e):!kalIsVlc(e);}
