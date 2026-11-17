@@ -9720,13 +9720,15 @@ function buildProvisionTeamTable(){
   var selectedEmps=provisionTeamSelectedIds?visible.filter(function(e){return provisionTeamSelectedIds.indexOf(e.id)>=0;}):visible;
   var isAll=!provisionTeamSelectedIds||provisionTeamSelectedIds.length===visible.length;
   var selLabel=isAll?'Alle Mitarbeiter':(selectedEmps.length===1?selectedEmps[0].name:selectedEmps.length+' Mitarbeiter ausgewählt');
+  // Mitarbeiterkarte: dieselbe Tabelle, nur für diese Person
+  if(window._provOnly){selectedEmps=employees.filter(function(e){return String(e.id)===window._provOnly&&canSeeSalary(e);});selLabel=selectedEmps.length?selectedEmps[0].name:'';isAll=false;}
   var yr=today().slice(0,4), curMk=today().slice(0,7);
 
   var h='<div class="card">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
   h+='<div class="card-title" style="margin:0"><i class="ti ti-cash"></i> Provision <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+selLabel+'</span></div>';
   h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
-  h+='<div style="position:relative" id="provisionTeamEmpDropdownWrap">';
+  h+='<div style="position:relative'+(window._provOnly?';display:none':'')+'" id="provisionTeamEmpDropdownWrap">';
   h+='<button class="btn btn-sm" style="height:34px;padding:0 12px;font-weight:500" onclick="toggleProvisionTeamDropdown()"><i class="ti ti-users"></i> '+selLabel+' <i class="ti ti-chevron-down" style="font-size:11px"></i></button>';
   if(provisionTeamDropdownOpen){
     h+='<div style="position:absolute;top:38px;left:0;z-index:20;background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;box-shadow:0 10px 24px rgba(40,32,15,0.14);width:260px;padding:10px 4px;display:flex;flex-direction:column">';
@@ -9940,6 +9942,12 @@ function buildProvisionTeamTable(){
   return h;
 }
 function buildProvisionTable(empId){
+  var _e=employees.find(function(e){return String(e.id)===String(empId);});
+  if(_e&&!canSeeSalary(_e))return '<div class="card"><div class="kal-note">Provision ist für dich nur bei deinem Team sichtbar.</div></div>';
+  if(_e&&!provFlag(_e))return '<div class="card"><div class="kal-note">Diese Person ist nicht provisionsrelevant (Einstellungen › Personen).</div></div>';
+  window._provOnly=String(empId);try{return buildProvisionTeamTable();}finally{window._provOnly=null;}
+}
+function buildProvisionTableAlt(empId){
   if(!canSeeSalary(employees.find(function(e){return String(e.id)===String(empId);})))return '<div class="card"><div class="kal-note">Provision ist für dich nur bei deinem Team sichtbar.</div></div>';
   var emp=employees.find(function(e){return e.id===empId;});
   if(!emp)return '<div class="card">Mitarbeiter nicht gefunden</div>';
