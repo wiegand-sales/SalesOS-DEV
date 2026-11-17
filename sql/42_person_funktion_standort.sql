@@ -3,7 +3,7 @@
 -- die alte Position (role) berechnet das Board daraus und schreibt sie nur noch passend mit.
 -- Übernahme des heutigen Stands (überschreibt nur leere Felder):
 --   Board-Rolle Betrachter → keine Funktion (nur Betrachter)   · SR/SE → Sales Agent (Stufe SR/SE, MUC)
---   VLC → Sales Agent, Standort VLC (Stufe offen)              · SDL → SDL
+--   VLC → Sales Agent, Stufe SR, Standort VLC                  · SDL → SDL
 --   SDC/SDM → Coach (Stufe SDC/SDM)                             · KAL → Peter Rode „Leitung“, Niklas Hojdem „Sales Ops“, sonst „Account Management“
 -- Außerdem: Funktion, Stufe und Standort dürfen – wie Position, Team und Board-Rolle – nur Admins ändern.
 -- In DEV und Live ausführen, mehrfach unbedenklich.
@@ -24,8 +24,11 @@ update public.employees set
      when role = 'KAL' and lower(name) like 'niklas hojdem%' then 'salesops'
      when role = 'KAL' then 'am'
      else 'agent' end),
-  stufe = coalesce(stufe, case when board_role = 'viewer' then null when role in ('SR','SE','SDC','SDM') then role when role = 'SC' then 'SDC' end),
+  stufe = coalesce(stufe, case when board_role = 'viewer' then null when role in ('SR','SE','SDC','SDM') then role when role = 'SC' then 'SDC' when role = 'VLC' then 'SR' end),
   standort = coalesce(standort, case when role = 'VLC' then 'VLC' else 'MUC' end);
+
+-- Valencia-Agenten sind SR (auch falls die Datei vorher schon einmal lief)
+update public.employees set stufe = 'SR' where funktion = 'agent' and standort = 'VLC' and stufe is null;
 
 -- Schutz: nur Admins ändern Funktion, Stufe, Standort
 create or replace function public.guard_person_fields() returns trigger language plpgsql security definer set search_path = public as $$
