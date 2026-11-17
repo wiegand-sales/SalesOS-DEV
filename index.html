@@ -741,6 +741,11 @@ tr.pv-frozen td:first-child{box-shadow:inset 3px 0 0 #1d1c1a}
 .pp-chip{display:inline-flex;align-items:center;gap:4px;background:#FDF0EB;border:1px solid rgba(240,133,102,.45);color:#9A3F22;border-radius:999px;padding:2px 4px 2px 10px;font-weight:600}
 .pp-chip button{border:0;background:transparent;color:#9A3F22;cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
 .pp-box select{width:auto;height:28px;font-size:12px;padding:0 8px}
+.at-b2{padding:12px 14px}
+.at-tt{min-width:0}.at-tt b{font-size:14px}.at-tt small{display:block;margin-top:2px;color:var(--text3);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.at-ar{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.at-ar .btn{width:auto;height:34px;white-space:nowrap}
+.at-ar .at-selw{display:flex;align-items:center;gap:6px;min-width:150px}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -14953,9 +14958,9 @@ function aufgEmpHtml(eid){var L=aufgAll().filter(function(o){return String(o.emp
   if(!L.length)return {n:0,h:'<div class="kal-note">Keine offenen Aufgaben.</div>'};
   return {n:L.length,h:L.map(function(o){var s=aufgState(o),km=aufgKomm.find(function(k){return k.key===o.key;}),tag=o.kind==='task'?'Task':o.bundle?'Routine':'automatisch',k=esc(o.key).replace(/'/g,"\\'");
     return '<div class="at-tk'+(AU.hl===o.key?' hl':'')+'" data-akey="'+esc(o.key)+'"><div class="au-st '+s.c+'"><i class="ti '+(s.c==='od'?'ti-alarm':'ti-clock')+'"></i>'+s.l+'<span class="r">'+aufgFmt(o.due)+'</span></div>'
-      +'<div class="at-b"><div style="min-width:0"><b>'+esc(o.kind==='task'?o.t:o.art)+'</b><span class="au-tag" style="margin-left:6px">'+tag+'</span><small>'+esc(o.kind==='task'?(o.s||'').replace(/^[^·]*·?\s*/,''):o.s||'')+'</small></div>'
-      +'<div class="at-selw"><span>Zuständig</span><select onchange="aufgAssign(\''+k+'\',this.value);atRender()"'+(ed?'':' disabled')+'>'+S.map(function(p){return '<option value="'+esc(p.key)+'"'+(p.key===o.assignee?' selected':'')+'>'+esc(kalFirst(p.name))+'</option>';}).join('')+(S.some(function(p){return p.key===o.assignee;})?'':'<option selected>'+esc(kalFirst(aufgName(o.assignee)))+'</option>')+'</select></div>'
-      +'<div style="display:flex;gap:8px">'+(ed&&o.quit?'<button class="btn" title="Aufgabe abschließen, ohne etwas zu ändern" onclick="aufgQuit(\''+k+'\',\''+o.quit+'\')"><i class="ti ti-check"></i> '+o.quit+'</button>':'')+(ed?'<button class="btn btn-primary" onclick="aufgDone(\''+k+'\')">'+aufgActLabel(o)+'</button>':'')+'</div></div>'
+      +'<div class="at-b2"><div class="at-tt"><b>'+esc(o.kind==='task'?o.t:o.art)+'</b><span class="au-tag" style="margin-left:6px">'+tag+'</span><small>'+esc(o.kind==='task'?(o.s||'').replace(/^[^·]*·?\s*/,''):o.s||'')+'</small></div>'
+      +'<div class="at-ar"><div class="at-selw"><span>Zuständig</span><select onchange="aufgAssign(\''+k+'\',this.value);atRender()"'+(ed?'':' disabled')+'>'+S.map(function(p){return '<option value="'+esc(p.key)+'"'+(p.key===o.assignee?' selected':'')+'>'+esc(kalFirst(p.name))+'</option>';}).join('')+(S.some(function(p){return p.key===o.assignee;})?'':'<option selected>'+esc(kalFirst(aufgName(o.assignee)))+'</option>')+'</select></div>'
+      +'<span style="flex:1"></span>'+(ed&&o.quit?'<button class="btn" title="Aufgabe abschließen, ohne etwas zu erfassen" onclick="aufgQuit(\''+k+'\',\''+o.quit+'\')"><i class="ti ti-check"></i> '+o.quit+'</button>':'')+(ed?'<button class="btn btn-primary" onclick="aufgDone(\''+k+'\')">'+aufgActLabel(o)+'</button>':'')+'</div></div>'
       +'<div class="at-km">'+(km?'<span><b>'+new Date(km.am).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'</b> '+esc(aufgKommText(km.text))+' <span class="kal-note">· '+esc(km.von||'')+'</span></span>':'')+(ed?'<input type="text" placeholder="Kommentar schreiben …" onkeydown="if(event.key===\'Enter\'&&this.value.trim()){aufgKommAt(\''+k+'\',this.value);this.value=\'\';}">':'')+'</div></div>';}).join('')};}
 function aufgKommAt(key,txt){var row={key:key,text:txt.trim(),von:kalActor()};aufgKomm.unshift(Object.assign({am:new Date().toISOString()},row));
   sb.from('aufgaben_kommentare').insert(row).then(function(r){if(r&&r.error)alert(/aufgaben_kommentare/i.test(r.error.message||'')?'Die Tabelle „aufgaben_kommentare“ fehlt noch. Bitte 26_aufgaben.sql ausführen.':kalErrText(r));});atRender();}
