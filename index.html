@@ -1669,7 +1669,7 @@ function loadSalariesFromSupabase(){return sb.from('employee_salary').select('*'
     if(r){if(r.grundgehalt!=null)pv.grundgehalt=+r.grundgehalt;if(r.ag_sozialabgaben!=null)pv.agSozialabgaben=+r.ag_sozialabgaben;}});
   return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;}).then(function(){return typeof loadProvExtra==='function'?loadProvExtra():true;}).then(function(){return typeof loadProvClosed==='function'?loadProvClosed():true;});}
 function esSdlToggle(v){var b=document.getElementById('es-sdl-team');if(b)b.style.display=v==='SDL'?'':'none';}
-function positionRole(p){ if(p.role==='KAL')return 'Nur Kalender'; return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
+function positionRole(p){ if(p.role==='KAL')return 'Betrachter'; return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
 function updateEmpBoardRole(sel){
   var emp=employees.find(function(e){return String(e.id)===String(sel.dataset.eid);});if(!emp)return;
@@ -1688,7 +1688,7 @@ function updateEmpBoardRole(sel){
 }
 function allPersons(){
   var list=appUsers.map(function(u){return {kind:'app',id:u.id,name:u.name,email:u.email,role:u.role,authUserId:u.authUserId,sub:''};});
-  employees.forEach(function(e){ list.push({kind:'emp',id:e.id,name:e.name,email:e.email||'',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole||null,active:e.active,authUserId:e.auth_user_id||null,sub:(e.role||'')+(e.active===false?' · inaktiv':'')}); });
+  employees.forEach(function(e){ if(e.role==='KAL'&&appUsers.some(function(u){return String(u.name||'').trim().toLowerCase()===String(e.name||'').trim().toLowerCase();}))return; list.push({kind:'emp',id:e.id,name:e.name,email:e.email||'',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole||null,active:e.active,authUserId:e.auth_user_id||null,sub:(e.role||'')+(e.active===false?' · inaktiv':'')}); });
   return list;
 }
 function loadLoginInfo(){
@@ -8794,7 +8794,7 @@ function permToggle(role,key,col){
 function buildRolesHtml(){
   var GROUPS=[['Auswertungen',['performance','ziel','provision','activity']],['Mitarbeiter',['coaching','qa','dev']],['Verwaltung',['stammdaten','histEdit']]];
   var cnt={coach:0,viewer:0};
-  employees.forEach(function(e){if(e.active===false)return;var r=personRole({kind:'emp',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole});if(r==='Coach')cnt.coach++;if(r==='Betrachter')cnt.viewer++;});
+  employees.forEach(function(e){if(e.active===false||e.role==='KAL')return;var r=personRole({kind:'emp',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole});if(r==='Coach')cnt.coach++;if(r==='Betrachter')cnt.viewer++;});
   (typeof appUsers!=='undefined'?appUsers:[]).forEach(function(u){if(u.role==='viewer')cnt.viewer++;});
   function box(state,avail,lock,onclick,title){
     if(!avail)return '<span style="display:inline-block;width:20px;height:20px"></span>';
