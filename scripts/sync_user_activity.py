@@ -255,6 +255,28 @@ def row_to_payload(row, employee_id):
     }
 
 
+def delete_zero_days(zero_days):
+    """Tage, die in der Datei jetzt 0 € Marge haben (z. B. alles storniert), aus performance entfernen –
+    sonst bliebe der alte Stand mit Marge stehen."""
+    removed = 0
+    for emp_id, days in zero_days.items():
+        days = sorted(days)
+        for i in range(0, len(days), 50):
+            chunk = days[i:i + 50]
+            r = requests.delete(
+                f"{SUPABASE_URL}/rest/v1/performance?employee_id=eq.{emp_id}&date=in.({','.join(chunk)})",
+                headers={**HEADERS, "Prefer": "return=representation"},
+            )
+            if not r.ok:
+                log(f"FEHLER beim Löschen von 0-€-Tagen ({emp_id}): {r.status_code} {r.text[:300]}")
+                continue
+            try:
+                removed += len(r.json())
+            except Exception:
+                pass
+    return removed
+
+
 def upsert_batch(rows, batch_size=300):
     total = 0
     for i in range(0, len(rows), batch_size):
@@ -283,6 +305,7 @@ def main():
     payload_rows = []
     not_found = set()
     skipped_zero_marge = 0
+    zero_days = {}         # employee_id -> Tage mit 0 € Marge in der Datei
     all_dates = set()      # alle Tage in der Datei (für die Anzeige „Datei enthält … bis …“)
     total_rows = 0
     for row in reader:
@@ -308,6 +331,7 @@ def main():
         # werden nicht importiert - gleiche Regel wie beim manuellen CSV-Import in der App
         if not payload["gesamt_margenerhoehung"]:
             skipped_zero_marge += 1
+            zero_days.setdefault(emp_id, set()).add(date)   # stand der Tag schon mit Marge in der DB (z. B. vor Storno), wird er gelöscht
             continue
         payload_rows.append(payload)
 
@@ -328,6 +352,11 @@ def main():
 
     written = upsert_batch(payload_rows)
     log(f"Fertig. {written} Zeilen erfolgreich synchronisiert.")
+
+    removed = delete_zero_days(zero_days)
+    if removed:
+        log(f"{removed} Tag(e) mit inzwischen 0 € Marge aus der Datenbank entfernt (Storno/Widerruf).")
+    ftp_range["geloescht0"] = removed
 
     # Zeitstempel für die "zuletzt synchronisiert"-Anzeige in der App zurückschreiben
     import datetime
