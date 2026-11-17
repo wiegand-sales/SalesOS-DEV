@@ -1128,7 +1128,7 @@ tr.pv-empty td{background:repeating-linear-gradient(-45deg,transparent 0 6px,rgb
 <div class="modal-ov hidden" id="perfPopModal"><div class="modal" style="padding:0;display:flex;flex-direction:column;background:#EEEDE9;overflow:hidden">
   <div style="display:flex;align-items:center;padding:14px 16px 6px"><div style="min-width:0"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">Performance</div><div id="ppHdSub" style="font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div><button class="btn" type="button" style="margin-left:auto;width:34px;height:34px;padding:0;justify-content:center" onclick="closeModal('perfPopModal')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>
   <div style="display:flex;min-height:0;flex:1">
-    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Wichtigste KPIs" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecB');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-star"></i><span class="rl-tip" style="left:48px">Wichtigste KPIs</span></button><button class="rl-btn" type="button" aria-label="Verlauf" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecV');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-chart-bar"></i><span class="rl-tip" style="left:48px">Verlauf</span></button><button class="rl-btn" type="button" aria-label="Marge" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecM');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-currency-euro"></i><span class="rl-tip" style="left:48px">Marge</span></button><button class="rl-btn" type="button" aria-label="KPIs" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecK');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-table"></i><span class="rl-tip" style="left:48px">KPIs</span></button></div>
+    <div style="width:56px;flex-shrink:0;align-self:stretch;margin:6px 0 14px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:#F7F5F0;border:1px solid #E4E0D6;border-radius:14px;box-shadow:0 10px 24px rgba(40,32,15,.10);position:relative;z-index:3"><button class="rl-btn on" type="button" aria-label="Wichtigste KPIs" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecB');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-star"></i><span class="rl-tip" style="left:48px">Wichtigste KPIs</span></button><button class="rl-btn" type="button" aria-label="Verlauf" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecV');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-chart-bar"></i><span class="rl-tip" style="left:48px">Verlauf</span></button><button class="rl-btn" type="button" aria-label="Marge" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecM');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-currency-euro"></i><span class="rl-tip" style="left:48px">Marge</span></button><button class="rl-btn" type="button" aria-label="KPIs" style="width:38px;height:38px;font-size:18px" onclick="var el=document.getElementById('ppSecK');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-table"></i><span class="rl-tip" style="left:48px">KPIs</span></button><button class="rl-btn" id="ppRailP" type="button" aria-label="Provision" style="width:38px;height:38px;font-size:18px;display:none" onclick="var el=document.getElementById('ppSecP');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-cash"></i><span class="rl-tip" style="left:48px">Provision</span></button></div>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
       <div id="ppBody" style="flex:1;overflow-y:auto;padding:6px 18px 12px 14px"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;padding:4px 18px 14px"><button class="btn btn-primary" type="button" style="height:36px;width:auto" onclick="var e=_puEmp||selectedEmp;closeModal('perfPopModal');selectedEmp=e;view='emp';activeTab='performance';renderSidebar();renderMain();"><i class="ti ti-arrow-right"></i> Zur KPI Performance</button><button class="btn" type="button" style="height:36px;width:auto" onclick="closeModal('perfPopModal')">Schließen</button></div>
@@ -9369,8 +9369,8 @@ function openCommentModal(empId,editCommentId){
 // ── PROVISION: komplett eigenstaendige Tabelle, unabhaengig von buildOverviewTab (keine geteilte Zustandsvariable) ──
 var provisionMode='month'; // Standard: aktueller Monat // 'month' | 'year' | 'custom'
 var provisionCustomMonth=today().slice(0,7);
-function setProvisionCustomMonth(val){provisionMode='custom';provisionCustomMonth=val;if(view==='provisionTeam')renderMain();else renderTab();}
-function setProvisionMode(m){provisionMode=m;if(view==='provisionTeam')renderMain();else renderTab();}
+function setProvisionCustomMonth(val){provisionMode='custom';provisionCustomMonth=val;if(document.getElementById('ppSecP'))ppRenderProv();if(view==='provisionTeam')renderMain();else renderTab();}
+function setProvisionMode(m){provisionMode=m;if(document.getElementById('ppSecP'))ppRenderProv();if(view==='provisionTeam')renderMain();else renderTab();}
 // ── Provisionsberechnung nach der Provisionsvereinbarung (§2-§5) ──
 var WEEKDAY_KEYS=['so','mo','di','mi','do','fr','sa']; // JS getDay(): 0=So,1=Mo,...6=Sa
 var DEFAULT_WORK_HOURS={
@@ -9645,7 +9645,7 @@ function provExtraSet(eid,mk,v){if(currentUserRole!=='admin')return;var n=Math.m
   if(PROV_EXTRA_TABLE){var q=n?sb.from('provision_extra').upsert({employee_id:eid,monat:mk,betrag:n,geaendert_von:qaCurrentName()||null,geaendert_am:new Date().toISOString()},{onConflict:'employee_id,monat'}):sb.from('provision_extra').delete().eq('employee_id',eid).eq('monat',mk);
     q.then(function(r){if(r&&r.error)alert('Speichern fehlgeschlagen: '+r.error.message);else logActivity('employee','updated',log);});}
   else{settings.provisionExtra=JSON.parse(JSON.stringify(PROV_EXTRA));saveSettingJson('provisionExtra',settings.provisionExtra,log);}
-  renderMain();}
+  renderMain();if(document.getElementById('ppSecP'))ppRenderProv();}
 // Aus der Provision in den Kalender: Team-Ansicht des Monats, nur Abwesenheiten, Zeile des Mitarbeiters markiert
 function provGoKal(eid,mk){var f=kalFilterCats();KAL.hide={};f.ses.forEach(function(o){KAL.hide[o[0]]=1;});KAL.loc='ALL';KAL.chf={};KAL.view='team';KAL.cur=mk+'-01';KAL.focusEmp=String(eid);selectKalender();
   setTimeout(function(){var n=document.querySelector('.kal-tl .kal-nmc[data-eid="'+eid+'"]');if(n){n.scrollIntoView({block:'center',behavior:'smooth'});n.classList.add('kal-focus');setTimeout(function(){n.classList.remove('kal-focus');},2500);}},80);}
@@ -11402,6 +11402,9 @@ function ppRenderChart(){
 }
 function ppSetMetric(k){_ppMetric=k;ppRenderChart();}
 function ppSetPeriod(k){_ppPeriod=k;ppRenderChart();}
+// Provision im Mitarbeiter-Popup (gleiche Tabelle wie die Übersicht, nur diese Person)
+function ppProvAllowed(emp){return !!emp&&(currentUserRole==='admin'||canSeeArea('provision'))&&canSeeSalary(emp)&&provFlag(emp)&&(currentUserRole==='admin'||isAgentEmp(emp)||canSeeArea('provCoaches'));}
+function ppRenderProv(){var el=document.getElementById('ppSecP');if(!el||!_ppEmp)return;el.innerHTML=buildProvisionTable(_ppEmp);}
 function openPerfPopup(empId){
   var emp=employees.find(function(e){return String(e.id)===String(empId);});if(!emp)return;
   _ppEmp=emp.id;
@@ -11452,7 +11455,9 @@ function openPerfPopup(empId){
   });
   tb+='</table></div>';
   var body=document.getElementById('ppBody');
-  body.innerHTML=ban+verl+mg+tb;
+  var pvOk=ppProvAllowed(emp);var rp=document.getElementById('ppRailP');if(rp)rp.style.display=pvOk?'':'none';
+  body.innerHTML=ban+verl+mg+tb+(pvOk?'<div id="ppSecP" style="margin-top:14px"></div>':'');
+  if(pvOk)ppRenderProv();
   ppRenderChart();
   body.scrollTop=0;
   openModal('perfPopModal');
