@@ -1663,9 +1663,9 @@ function setActivityFilterDays(d){activityFilterDays=d;renderActivity();}
 var settingsNavOpen=true;
 // ── Benutzer & Rechte: eine gemeinsame Liste fuer alle Personen ──
 var userFilter='all', userSearch='', userShowAllAgents=false, loginInfo=null, loginInfoLoading=false, userMsg='';
-var BOARD_ROLE_LABEL={admin:'Admin',coach:'Coach',viewer:'Betrachter',agent:'Sales Agent'};
+var BOARD_ROLE_LABEL={admin:'Admin',coach:'Coach',viewer:'Betrachter',agent:'Sales Agent',none:'Kein Zugang'};
 // Coach im Board: gesetzte Board-Rolle geht vor (Coach = ja, Betrachter/Agent = nein), sonst wie bisher nach Position
-function isCoachEmp(e){ if(!e||e.kalOnly)return false; if(e.boardRole==='coach')return true; if(e.boardRole==='viewer'||e.boardRole==='agent')return false; return !!(e.isPureCoach||e.role==='SDC'||e.role==='SDM'||e.role==='SDL'); }
+function isCoachEmp(e){ if(!e||e.kalOnly)return false; if(e.boardRole==='coach')return true; if(e.boardRole==='viewer'||e.boardRole==='agent'||e.boardRole==='none')return false; return !!(e.isPureCoach||e.role==='SDC'||e.role==='SDM'||e.role==='SDL'); }
 // SDL (Sales Department Lead): sieht Provision und Gehalt nur von sich und seinem Team (Stammdaten › Team)
 function isSdlUser(){return currentUserRole==='coach'&&!!currentCoach&&currentCoach.role==='SDL';}
 function canSeeSalary(emp){if(!emp||!isSdlUser())return true;var id=String(emp.id);return id===String(currentCoach.id)||(currentCoach.sdlTeam||[]).indexOf(id)>=0;}
@@ -1688,7 +1688,7 @@ function esPersonSync(){var f=document.getElementById('es-fn'),st=document.getEl
   var code=personRoleCode(fn,st?st.value:'',o?o.value:'MUC');if(![].some.call(r.options,function(x){return x.value===code;})){var op=document.createElement('option');op.value=code;op.text=code;r.add(op);}r.value=code;
   if(typeof esSdlToggle==='function')esSdlToggle(code);if(typeof toggleProvisionModel==='function')toggleProvisionModel(code);}
 function esSdlToggle(v){var b=document.getElementById('es-sdl-team');if(b)b.style.display=v==='SDL'?'':'none';}
-function positionRole(p){ if(p.role==='KAL')return 'Betrachter'; return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
+function positionRole(p){ if(p.role==='KAL')return 'Kein Zugang'; return (p.isPureCoach||p.role==='SDC'||p.role==='SDM'||p.role==='SDL')?'Coach':'Sales Agent'; }
 function personRole(p){ if(p.kind==='app') return p.role==='admin'?'Admin':'Betrachter'; if(p.boardRole&&BOARD_ROLE_LABEL[p.boardRole]) return BOARD_ROLE_LABEL[p.boardRole]; return positionRole(p); }
 function updateEmpBoardRole(sel){
   var emp=employees.find(function(e){return String(e.id)===String(sel.dataset.eid);});if(!emp)return;
@@ -1747,14 +1747,14 @@ function setUserFilter(f){userFilter=f;renderMain();}
 function setUserSearch(v){userSearch=v;renderMain();var el=document.getElementById('userSearch');if(el){el.focus();el.setSelectionRange(v.length,v.length);}}
 function buildUserOverviewHtml(){
   if(loginInfo===null) loadLoginInfo();
-  var RC={'Admin':['var(--purple)','rgba(29,28,26,0.10)'],'Coach':['#F08566','rgba(245,154,91,0.14)'],'Betrachter':['#6b5a12','rgba(214,180,60,0.20)'],'Sales Agent':['var(--text2)','rgba(0,0,0,0.06)']};
-  var ACC={'Admin':['Bearbeiten','var(--purple)'],'Coach':['Bearbeiten','var(--purple)'],'Betrachter':['Nur ansehen','#6b5a12'],'Sales Agent':['Nur Erweiterung','var(--text2)']};
+  var RC={'Admin':['var(--purple)','rgba(29,28,26,0.10)'],'Coach':['#F08566','rgba(245,154,91,0.14)'],'Betrachter':['#6b5a12','rgba(214,180,60,0.20)'],'Sales Agent':['var(--text2)','rgba(0,0,0,0.06)'],'Kein Zugang':['var(--text3)','rgba(0,0,0,0.04)']};
+  var ACC={'Admin':['Bearbeiten','var(--purple)'],'Coach':['Bearbeiten','var(--purple)'],'Betrachter':['Nur ansehen','#6b5a12'],'Sales Agent':['Nur Erweiterung','var(--text2)'],'Kein Zugang':['Kein Zugang','var(--text3)']};
   var persons=allPersons(), q=userSearch.trim().toLowerCase();
-  var counts={all:0,Admin:0,Coach:0,Betrachter:0,'Sales Agent':0};
+  var counts={all:0,Admin:0,Coach:0,Betrachter:0,'Sales Agent':0,'Kein Zugang':0};
   persons.forEach(function(p){ if(p.kind==='emp'&&p.active===false&&personRole(p)==='Sales Agent')return; counts.all++; counts[personRole(p)]++; });
   function chip(key,label){ return '<button class="'+(userFilter===key?'active':'')+'" onclick="setUserFilter(\''+key+'\')">'+label+'&nbsp;<span style="opacity:.7">'+counts[key]+'</span></button>'; }
   var h='';
-  var _tb='<div class="chart-toggle">'+chip('all','Alle')+chip('Admin','Admin')+chip('Coach','Coach')+chip('Betrachter','Betrachter')+chip('Sales Agent','Sales Agents')+'</div>'
+  var _tb='<div class="chart-toggle">'+chip('all','Alle')+chip('Admin','Admin')+chip('Coach','Coach')+chip('Betrachter','Betrachter')+chip('Sales Agent','Sales Agents')+chip('Kein Zugang','Kein Zugang')+'</div>'
     +'<div style="display:flex;gap:8px;align-items:center"><input id="userSearch" value="'+esc(userSearch)+'" oninput="setUserSearch(this.value)" placeholder="Name oder E-Mail suchen" aria-label="Suchen" style="width:230px;height:34px">'
     +'<button class="btn btn-primary" style="width:auto;height:34px" onclick="openModal(\'addAppUserModal\')"><i class="ti ti-plus"></i> Admin / Betrachter</button></div>';
   if(userMsg) h+='<div class="card" style="margin-bottom:16px;padding:12px 16px;font-size:13px;line-height:1.5">'+userMsg+' <button class="btn sbtn" style="margin-left:8px" onclick="userMsg=\'\';renderMain()">Ausblenden</button></div>';
@@ -1764,13 +1764,13 @@ function buildUserOverviewHtml(){
   function row(p,i){
     var r=personRole(p), rc=RC[r], acc=ACC[r], lg=loginOf(p);
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
-    var roleCell=(p.kind==='emp'&&p.role==='KAL'&&!p.boardRole)?'<span style="font-size:12.5px;color:var(--text3)">kein Board-Zugang</span>':p.kind==='app'
+    var roleCell=p.kind==='app'
       ?'<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select></span></span>'
       :(function(){var pr=positionRole(p),set=!!p.boardRole;
         return '<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-eid="'+p.id+'" onchange="updateEmpBoardRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px;'+(set?'border-color:rgba(240,133,102,0.7);background:#FDF0EB':'')+'">'
           +'<option value=""'+(set?'':' selected')+'>'+(set?'Automatisch ('+pr+')':pr)+'</option>'
-          +['admin','coach','viewer','agent'].map(function(k){return '<option value="'+k+'"'+(p.boardRole===k?' selected':'')+'>'+BOARD_ROLE_LABEL[k]+'</option>';}).join('')
-          +'</select></span><span style="font-size:11.5px;white-space:nowrap;color:'+(set?'#B5513A':'var(--text3)')+'">'+(set?'gesetzt · Position '+esc(p.role||'–'):'aus Position')+'</span></span>';})();
+          +['admin','coach','viewer','agent','none'].map(function(k){return '<option value="'+k+'"'+(p.boardRole===k?' selected':'')+'>'+BOARD_ROLE_LABEL[k]+'</option>';}).join('')
+          +'</select></span><span style="font-size:11.5px;white-space:nowrap;color:'+(set?'#B5513A':'var(--text3)')+'">'+(set?'gesetzt'+(p.role&&p.role!=='KAL'?' · Position '+esc(p.role):''):'aus Funktion')+'</span></span>';})();
     var target=p.kind==='app'?'app':'emp';
     var lgCell=lg===null?'<span style="font-size:12px;color:var(--text3)">…</span>'
       :lg?'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px"><span style="width:8px;height:8px;border-radius:4px;background:var(--purple)"></span>Aktiv</span>'
@@ -1784,8 +1784,8 @@ function buildUserOverviewHtml(){
     else actions+='<button class="btn sbtn" title="Mitarbeiter öffnen" aria-label="Mitarbeiter öffnen" onclick="selectEmp(\''+p.id+'\')"><i class="ti ti-arrow-right"></i></button>';
     var bg='';
     var lastCell=(lg&&lg.last_sign_in_at)?(function(){var d=new Date(lg.last_sign_in_at);return '<span style="font-size:12.5px;color:var(--text2);white-space:nowrap">'+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear()+' · '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+'</span>';})():'<span style="font-size:12.5px;color:var(--text3)">–</span>';
-    var ZG={'Admin':'Alles','Coach':'Laut Rollen &amp; Rechte','Betrachter':'Nur ansehen','Sales Agent':'Nur Erweiterung'};
-    var accCell=r==='Sales Agent'?'<span style="font-size:12.5px;color:var(--text2)" title="Sales Agents kommen nicht ins Board, sie sehen ihre Zahlen in der Erweiterung">'+ZG[r]+'</span>'
+    var ZG={'Admin':'Alles','Coach':'Laut Rollen &amp; Rechte','Betrachter':'Nur ansehen','Sales Agent':'Nur Erweiterung','Kein Zugang':'Kein Zugang'};
+    var accCell=(r==='Sales Agent'||r==='Kein Zugang')?'<span style="font-size:12.5px;color:var(--text2)" title="Sales Agents kommen nicht ins Board, sie sehen ihre Zahlen in der Erweiterung">'+ZG[r]+'</span>'
       :'<a href="#" onclick="selectSettingsSub(\'roles\');return false" title="Was diese Rolle darf, legst du unter Rollen &amp; Rechte fest" style="font-size:12.5px;color:'+acc[1]+';text-decoration:none;white-space:nowrap">'+ZG[r]+' ›</a>';
     return '<tr style="'+bg+'"><td style="'+TD+'"><div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:6px;background:#F3ECE8;color:var(--purple);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+esc(ini)+'</span><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">'+esc(p.name)+'</span><span style="font-size:11.5px;color:var(--text3)">'+esc(p.kind==='app'?(p.role==='admin'?'Admin':'Betrachter'):p.sub)+'</span></div></div></td>'
       +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+(lastCell&&lg?'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+lastCell.replace(/<[^>]+>/g,'')+'</div>':'')+'</td>'
@@ -1797,7 +1797,7 @@ function buildUserOverviewHtml(){
     return '<div class="std-wrap"><table class="std-table" style="min-width:1080px"><colgroup><col style="width:17%"><col style="width:18%"><col style="width:15%"><col style="width:9%"><col style="width:10%"><col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:7%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Funktion · Standort</th><th scope="col" style="'+TH+';text-align:center">Im Urlaubskalender</th><th scope="col" style="'+TH+';text-align:center">In Provision</th><th scope="col" style="'+TH+'">Zugriff</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
   }
   var match=function(p){ return (!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.email||'').toLowerCase().indexOf(q)>=0) && (userFilter==='all'||personRole(p)===userFilter); };
-  var order={'Admin':0,'Coach':1,'Betrachter':2};
+  var order={'Admin':0,'Coach':1,'Betrachter':2,'Kein Zugang':3};
   var team=persons.filter(function(p){return personRole(p)!=='Sales Agent'&&match(p);}).sort(function(a,b){return order[personRole(a)]-order[personRole(b)]||a.name.localeCompare(b.name);});
   var agents=persons.filter(function(p){return personRole(p)==='Sales Agent'&&p.active!==false&&match(p);}).sort(function(a,b){return a.name.localeCompare(b.name);});
   // Eine Tabelle für alle: Filter, Suche und Knopf stehen im Kopf der Box
@@ -8832,9 +8832,8 @@ function permToggle(role,key,col){
 }
 function buildRolesHtml(){
   var GROUPS=[['Auswertungen',['performance','ziel','provision','activity']],['Mitarbeiter',['coaching','qa','dev']],['Verwaltung',['stammdaten','histEdit']]];
-  var cnt={coach:0,viewer:0};
-  employees.forEach(function(e){if(e.active===false||e.role==='KAL')return;var r=personRole({kind:'emp',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole});if(r==='Coach')cnt.coach++;if(r==='Betrachter')cnt.viewer++;});
-  (typeof appUsers!=='undefined'?appUsers:[]).forEach(function(u){if(u.role==='viewer')cnt.viewer++;});
+  var cnt={admin:0,coach:0,viewer:0,agent:0,none:0},K={'Admin':'admin','Coach':'coach','Betrachter':'viewer','Sales Agent':'agent','Kein Zugang':'none'};
+  allPersons().forEach(function(p){if(p.kind==='emp'&&p.active===false)return;var r=K[personRole(p)];if(r)cnt[r]++;});
   function box(state,avail,lock,onclick,title){
     if(!avail)return '<span style="display:inline-block;width:20px;height:20px"></span>';
     var on=!!state;
@@ -8849,14 +8848,17 @@ function buildRolesHtml(){
   var BL='border-left:1px solid #E4E0D6;';
   var h='<div class="card"><div style="font-weight:700;font-size:14px;color:var(--text)">Was darf welche Rolle?</div>'
     +'<div style="font-size:12.5px;color:var(--text3);margin:2px 0 12px">'+eye()+' sehen · '+pen()+' anlegen und ändern. Häkchen anklicken – gilt sofort für alle Personen mit dieser Rolle. Betrachter können nie speichern, darum nur „Sehen“.</div>'
-    +'<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;padding:8px 12px;margin-bottom:12px"><span><b style="color:var(--text)">Admin</b> darf immer alles</span><span><b style="color:var(--text)">Sales Agent</b> nur eigene Zahlen in der Erweiterung</span><span><b style="color:var(--text)">Einstellungen</b> (Benutzer, Rollen, Wizards, Integrationen, Daten) nur Admins</span></div>'
+    +'<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);background:#EFECE5;border:1px solid #E4E0D6;border-radius:10px;padding:8px 12px;margin-bottom:12px"><span><b style="color:var(--text)">Admin, Sales Agent, Kein Zugang</b> sind fest vorgegeben</span><span><b style="color:var(--text)">Kein Zugang</b>: kein Login, z. B. Account Management – erscheint trotzdem im Urlaubskalender, wenn dort eingeschaltet</span><span><b style="color:var(--text)">Einstellungen</b> (Benutzer, Rollen, Wizards, Integrationen, Daten) nur Admins</span></div>'
     +'<div class="std-wrap"><table style="width:100%;border-collapse:collapse;border:1px solid #E4E0D6;border-radius:10px;overflow:hidden">'
-    +'<thead><tr style="background:#EFECE5"><th scope="col" style="text-align:left;padding:9px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);width:56%">Recht</th>'
+    +'<thead><tr style="background:#EFECE5"><th scope="col" style="text-align:left;padding:9px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);width:40%">Recht</th>'
+    +'<th scope="colgroup" colspan="2" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Admin <span style="font-weight:600;color:var(--text3)">· '+cnt.admin+'</span></th>'
     +'<th scope="colgroup" colspan="2" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Coach <span style="font-weight:600;color:var(--text3)">· '+cnt.coach+'</span></th>'
-    +'<th scope="col" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Betrachter <span style="font-weight:600;color:var(--text3)">· '+cnt.viewer+'</span></th></tr>'
-    +'<tr style="background:#EFECE5"><th></th><th style="'+BL+'padding:4px">'+eye()+'</th><th style="padding:4px">'+pen()+'</th><th style="'+BL+'padding:4px">'+eye()+'</th></tr></thead><tbody>';
+    +'<th scope="col" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Betrachter <span style="font-weight:600;color:var(--text3)">· '+cnt.viewer+'</span></th>'
+    +'<th scope="col" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Sales Agent <span style="font-weight:600;color:var(--text3)">· '+cnt.agent+'</span></th>'
+    +'<th scope="col" style="'+BL+'padding:9px 8px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text)">Kein Zugang <span style="font-weight:600;color:var(--text3)">· '+cnt.none+'</span></th></tr>'
+    +'<tr style="background:#EFECE5"><th></th><th style="'+BL+'padding:4px">'+eye()+'</th><th style="padding:4px">'+pen()+'</th><th style="'+BL+'padding:4px">'+eye()+'</th><th style="padding:4px">'+pen()+'</th><th style="'+BL+'padding:4px">'+eye()+'</th><th style="'+BL+'padding:4px;font-size:11px;color:var(--text3);font-weight:500">Erweiterung</th><th style="'+BL+'padding:4px"></th></tr></thead><tbody>';
   GROUPS.forEach(function(g){
-    h+='<tr><td colspan="4" style="height:32px;background:#EFECE5;padding:0 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)">'+g[0]+'</td></tr>';
+    h+='<tr><td colspan="8" style="height:32px;background:#EFECE5;padding:0 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)">'+g[0]+'</td></tr>';
     g[1].forEach(function(k){
       var row=PERM_ROWS.find(function(r){return r.key===k;});if(!row)return;
       var c=permFor(k,'coach'),v=permFor(k,'viewer'),lock=!!row.fixed;
@@ -8866,11 +8868,13 @@ function buildRolesHtml(){
       var cE=(row.seeOnly||row.fixed)?box(0,false):box(c==='E',true,false,"permToggle('coach','"+k+"','E')");
       var vS=row.editOrNone?box(0,false):box(v!=='-',true,lock,"permToggle('viewer','"+k+"','S')",lock?'fest vorgegeben':'');
       h+='<tr><td style="'+TD+';text-align:left;padding-left:12px;font-size:13px;color:var(--text)">'+esc(label)+(desc?' <span style="font-size:11.5px;color:var(--text3)">· '+esc(desc)+'</span>':'')+'</td>'
-        +'<td style="'+TD+';'+BL+'">'+cS+'</td><td style="'+TD+'">'+cE+'</td><td style="'+TD+';'+BL+'">'+vS+'</td></tr>';
+        +'<td style="'+TD+';'+BL+'">'+box(1,!row.editOrNone,true,'','Admin darf immer alles')+'</td><td style="'+TD+'">'+box(1,!(row.seeOnly),true,'','Admin darf immer alles')+'</td>'
+        +'<td style="'+TD+';'+BL+'">'+cS+'</td><td style="'+TD+'">'+cE+'</td><td style="'+TD+';'+BL+'">'+vS+'</td>'
+        +'<td style="'+TD+';'+BL+';color:var(--text3)">–</td><td style="'+TD+';'+BL+';color:var(--text3)">–</td></tr>';
     });
   });
   h+='</tbody></table></div>'
-    +'<div style="font-size:12.5px;line-height:1.55;color:var(--text2);background:var(--s-sub);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 13px;margin-top:12px"><b style="color:var(--text)">So wird es durchgesetzt:</b> Board und Datenbank prüfen dieselben Rechte: Betrachter können nichts speichern, Coaches nur, wo „ändern“ angehakt ist – auch wer sich direkt mit der Datenbank verbindet. Ohne Häkchen bei „sehen“ wird der Bereich in Menü und Mitarbeiterprofil ausgeblendet. Sales Agents kommen nicht ins Board und sehen in der Erweiterung nur ihre eigenen Zahlen.</div></div>';
+    +'<div style="font-size:12.5px;line-height:1.55;color:var(--text2);background:var(--s-sub);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 13px;margin-top:12px"><b style="color:var(--text)">So wird es durchgesetzt:</b> Board und Datenbank prüfen dieselben Rechte: Betrachter können nichts speichern, Coaches nur, wo „ändern“ angehakt ist – auch wer sich direkt mit der Datenbank verbindet. Ohne Häkchen bei „sehen“ wird der Bereich in Menü und Mitarbeiterprofil ausgeblendet. Sales Agents kommen nicht ins Board und sehen in der Erweiterung nur ihre eigenen Zahlen. „Kein Zugang“ hat weder Board noch Erweiterung.</div></div>';
   return h;
 }
 // ══ Wizards ══════════════════════════════════════════════════════════════════
@@ -10757,7 +10761,7 @@ function esBuildHtml(emp,asPopup,html){
           html+='<div><label>Funktion</label><select id="es-fn"'+dis+' onchange="esPersonSync()">'+PERSON_FN.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===fn?' selected':'')+(x[0]==='sdl'&&currentUserRole!=='admin'&&fn!=='sdl'?' disabled':'')+'>'+x[1]+'</option>';}).join('')+'</select></div>';
           html+='<div id="es-stufe-wrap"'+((fn==='agent'||fn==='coach')?'':' style="display:none"')+'><label>Stufe</label><select id="es-stufe"'+dis+' onchange="esPersonSync()">'+(fn==='coach'?['SDC','SDM']:['SR','SE']).map(function(x){return '<option'+(x===st?' selected':'')+'>'+x+'</option>';}).join('')+'</select></div>';
           html+='<div><label>Standort</label><select id="es-ort"'+dis+' onchange="esPersonSync()"><option value="MUC"'+(ort==='MUC'?' selected':'')+'>MUC</option><option value="VLC"'+(ort==='VLC'?' selected':'')+'>VLC</option></select></div>';
-          if(emp.id&&currentUserRole==='admin'){var br=emp.boardRole||'',pr=positionRole(emp);html+='<div><label>Zugang zum Board</label><select data-eid="'+emp.id+'" onchange="updateEmpBoardRole(this)"><option value=""'+(br?'':' selected')+'>Automatisch ('+pr+')</option>'+['admin','coach','viewer','agent'].map(function(k){return '<option value="'+k+'"'+(br===k?' selected':'')+'>'+BOARD_ROLE_LABEL[k]+'</option>';}).join('')+'</select></div>';}})();
+          if(emp.id&&currentUserRole==='admin'){var br=emp.boardRole||'',pr=positionRole(emp);html+='<div><label>Zugang zum Board</label><select data-eid="'+emp.id+'" onchange="updateEmpBoardRole(this)"><option value=""'+(br?'':' selected')+'>Automatisch ('+pr+')</option>'+['admin','coach','viewer','agent','none'].map(function(k){return '<option value="'+k+'"'+(br===k?' selected':'')+'>'+BOARD_ROLE_LABEL[k]+'</option>';}).join('')+'</select></div>';}})();
         html+='<div style="display:none"><label>Position</label>'
           +'<select id="es-role"'+(currentUserRole!=='admin'&&(!asPopup||asPopup==='panels')?' disabled title="Position ändern nur Admins"':'')+' onchange="esSdlToggle(this.value);var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}toggleProvisionModel(this.value);">'
           +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
