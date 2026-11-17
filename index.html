@@ -736,6 +736,11 @@ tr.pv-frozen td:first-child{box-shadow:inset 3px 0 0 #1d1c1a}
 .pa-grid{display:inline-grid;grid-template-columns:repeat(3,34px);gap:6px;justify-content:end}
 .pa-grid .btn.sbtn{width:34px;padding:0;justify-content:center}
 .pa-slot{display:block;width:34px}
+.pp-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text2)}
+.pp-lbl{font-weight:600}.pp-none{color:var(--text3)}
+.pp-chip{display:inline-flex;align-items:center;gap:4px;background:#FDF0EB;border:1px solid rgba(240,133,102,.45);color:#9A3F22;border-radius:999px;padding:2px 4px 2px 10px;font-weight:600}
+.pp-chip button{border:0;background:transparent;color:#9A3F22;cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
+.pp-box select{width:auto;height:28px;font-size:12px;padding:0 8px}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -7841,7 +7846,7 @@ function renderTab(){
   
   // ── EMP SETTINGS TAB ──
   if(activeTab==='emp-settings'){
-    html=esBuildHtml(emp,false,html);
+    html=esBuildHtml(emp,false,html);setTimeout(function(){provLockForm(document.getElementById('mainArea'));},0);
     if(true){
       // ── Zugang zur Sales-OS-Erweiterung (nur Admins, nur fuer Agents) ──
       if(currentUserRole==='admin' && !(emp.isPureCoach||emp.role==='SDC'||emp.role==='SDM')){
@@ -8769,6 +8774,11 @@ var PERM_ROWS=[
   {key:'ziel',label:'Zielvereinbarung & Ziele',group:'Bereiche',tables:['zielvereinbarung','goals','kpi_targets','employee_kpi_targets'],nav:['nav-team-ziel']},
   {key:'provision',label:'Provision & Gehälter',group:'Bereiche',seeOnly:true,nav:['nav-team-provision'],tabs:['provision']},
   {key:'provCoaches',label:'Provision: auch Coaches sehen',group:'Bereiche',seeOnly:true},
+  {key:'salary',label:'Gehälter sehen',group:'Bereiche',seeOnly:true},
+  {key:'kalEdit',label:'Abwesenheiten eintragen & genehmigen',group:'Kalender',editOrNone:true,tables:['absences']},
+  {key:'kalGrund',label:'Grund der Abwesenheit sehen',group:'Kalender',fixedRole:{coach:'S',viewer:'-'}},
+  {key:'kalLate',label:'Verspätungen sehen',group:'Kalender',fixedRole:{coach:'S',viewer:'-'}},
+  {key:'provEdit',label:'Provisionsvereinbarung ändern',group:'Verwaltung',editOrNone:true,persons:true},
   {key:'coaching',label:'Coaching-Sessions & Aufgaben',group:'Bereiche',tables:['protocols','tasks'],tabs:['session','tasks']},
   {key:'qa',label:'QA-Bewertungen',group:'Bereiche',tables:['call_ratings','call_rating_scores'],tabs:['call-performance']},
   {key:'dev',label:'Development / Halbjahresgespräch',group:'Bereiche',tables:['reviews','review_kpis'],tabs:['coaching-eval']},
@@ -8777,8 +8787,8 @@ var PERM_ROWS=[
   {key:'histEdit',label:'Bewertungen & Kommentare nachträglich ändern oder löschen',group:'Verwaltung',editOrNone:true},
   {key:'settings',label:'Einstellungen',group:'Verwaltung',adminOnly:true}
 ];
-var PERM_DEFAULT={coach:{provCoaches:'-',performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
-                  viewer:{provCoaches:'-',performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
+var PERM_DEFAULT={coach:{salary:'S',kalEdit:'E',provEdit:'-',provCoaches:'-',performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
+                  viewer:{salary:'S',kalEdit:'-',provEdit:'-',provCoaches:'-',performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
 function rolePerms(){ var s=settings.rolePermissions||{}; return {coach:Object.assign({},PERM_DEFAULT.coach,s.coach||{}),viewer:Object.assign({},PERM_DEFAULT.viewer,s.viewer||{})}; }
 function permFor(key,role){
   role=role||currentUserRole;
@@ -8787,6 +8797,8 @@ function permFor(key,role){
   var row=PERM_ROWS.find(function(r){return r.key===key;});
   if(row&&row.adminOnly)return '-';
   if(row&&row.fixed)return 'S';
+  if(row&&row.fixedRole)return row.fixedRole[role]||'-';
+  if(row&&row.persons&&role===currentUserRole&&permPersonHas(key))return 'E';
   var v=rolePerms()[role][key]||'-';
   if(row&&row.editOrNone&&v!=='E')return '-';
   if(row&&row.editOrNone&&role==='viewer')return '-';
@@ -8794,6 +8806,15 @@ function permFor(key,role){
   if(row&&row.seeOnly&&v==='E')v='S';
   return v;
 }
+// Rechte für einzelne Personen zusätzlich zur Rolle (settings.permPersons = {key:['emp:<id>'|'app:<id>', …]})
+function permMyKey(){if(typeof currentCoach!=='undefined'&&currentCoach)return 'emp:'+currentCoach.id;var em=(typeof currentAuthUser!=='undefined'&&currentAuthUser&&currentAuthUser.email||'').toLowerCase();var u=(typeof appUsers!=='undefined'?appUsers:[]).find(function(x){return String(x.email||'').toLowerCase()===em;});return u?'app:'+u.id:'';}
+function permPersonHas(key){var L=((settings.permPersons||{})[key])||[],k=permMyKey();return !!k&&L.indexOf(k)>=0;}
+function permPersonsSet(key,pk,on){if(currentUserRole!=='admin')return;var all=JSON.parse(JSON.stringify(settings.permPersons||{})),L=all[key]||[];L=L.filter(function(x){return x!==pk;});if(on)L.push(pk);all[key]=L;settings.permPersons=all;
+  var p=allPersons().find(function(x){return x.kind+':'+x.id===pk;});saveSettingJson('permPersons',all,'Recht „'+((PERM_ROWS.find(function(r){return r.key===key;})||{}).label||key)+'“ '+(on?'gegeben':'entzogen')+': '+(p?p.name:pk));renderMain();}
+function permPersonsHtml(key){var L=((settings.permPersons||{})[key])||[],P=allPersons().filter(function(p){var r=personRole(p);return (r==='Coach'||r==='Betrachter')&&(p.kind==='app'||p.active!==false);}).sort(function(a,b){return a.name.localeCompare(b.name);});
+  var chips=L.map(function(pk){var p=P.find(function(x){return x.kind+':'+x.id===pk;})||allPersons().find(function(x){return x.kind+':'+x.id===pk;});return '<span class="pp-chip">'+esc(p?p.name:pk)+'<button type="button" aria-label="entfernen" onclick="permPersonsSet(\''+key+'\',\''+pk+'\',false)">×</button></span>';}).join('');
+  var opts=P.filter(function(p){return L.indexOf(p.kind+':'+p.id)<0;}).map(function(p){return '<option value="'+p.kind+':'+p.id+'">'+esc(p.name)+' · '+personRole(p)+'</option>';}).join('');
+  return '<div class="pp-box"><span class="pp-lbl">Zusätzlich erlaubt für:</span>'+(chips||'<span class="pp-none">niemand</span>')+(opts?'<select onchange="if(this.value)permPersonsSet(\''+key+'\',this.value,true)"><option value="">+ Person</option>'+opts+'</select>':'')+'</div>';}
 function canSeeArea(key){return permFor(key)!=='-';}
 function canEditTable(table){
   if(currentUserRole!=='coach')return true;
@@ -8832,7 +8853,7 @@ function permToggle(role,key,col){
   setPerm(role,key,nv);
 }
 function buildRolesHtml(){
-  var GROUPS=[['Auswertungen',['performance','ziel','provision','provCoaches','activity']],['Mitarbeiter',['coaching','qa','dev']],['Verwaltung',['stammdaten','histEdit']]];
+  var GROUPS=[['Auswertungen',['performance','ziel','provision','provCoaches','salary','activity']],['Mitarbeiter',['coaching','qa','dev']],['Kalender',['kalEdit','kalGrund','kalLate']],['Verwaltung',['stammdaten','provEdit','histEdit']]];
   var cnt={admin:0,coach:0,viewer:0,agent:0,none:0},K={'Admin':'admin','Coach':'coach','Betrachter':'viewer','Sales Agent':'agent','Kein Zugang':'none'};
   allPersons().forEach(function(p){if(p.kind==='emp'&&p.active===false)return;var r=K[personRole(p)];if(r)cnt[r]++;});
   function box(state,avail,lock,onclick,title){
@@ -8863,15 +8884,17 @@ function buildRolesHtml(){
     g[1].forEach(function(k){
       var row=PERM_ROWS.find(function(r){return r.key===k;});if(!row)return;
       var c=permFor(k,'coach'),v=permFor(k,'viewer'),lock=!!row.fixed;
-      var desc={performance:'Startseite, Banner, Diagramm, Tabelle',ziel:'Zielplanung, Zielvereinbarung, Ziele im Popup',provision:'Provisionen und Gehälter',provCoaches:'Provision von Coaches/SDM in der Übersicht – sonst nur Sales Agents',activity:'wer hat wann was geändert',coaching:'Sessions erfassen und planen, Aufgaben',qa:'Calls bewerten',dev:'Mitarbeiterentwicklung, Kommentare',stammdaten:'Mitarbeiter anlegen, Person, Vertrag, Provisionsvereinbarung',histEdit:'Bewertungen, Calls, Kommentare'}[k]||'';
+      var desc={performance:'Startseite, Banner, Diagramm, Tabelle',ziel:'Zielplanung, Zielvereinbarung, Ziele im Popup',provision:'Provisionen und Gehälter',provCoaches:'Provision von Coaches/SDM in der Übersicht – sonst nur Sales Agents',salary:'Grundgehalt und Gehaltsdaten',kalEdit:'Urlaub, Krank, Verspätung eintragen, Anträge entscheiden',kalGrund:'sonst nur „abwesend“ – fest durch die Datenbank',kalLate:'fest durch die Datenbank',provEdit:'KPIs, Teiler, Mindestprovision – zusätzlich für einzelne Personen freigebbar',activity:'wer hat wann was geändert',coaching:'Sessions erfassen und planen, Aufgaben',qa:'Calls bewerten',dev:'Mitarbeiterentwicklung, Kommentare',stammdaten:'Mitarbeiter anlegen, Person, Vertrag, Provisionsvereinbarung',histEdit:'Bewertungen, Calls, Kommentare'}[k]||'';
       var label=row.key==='histEdit'?'Nachträglich ändern oder löschen':row.label;
+      lock=lock||!!row.fixedRole;
       var cS=row.editOrNone?box(0,false):box(c!=='-',true,lock,"permToggle('coach','"+k+"','S')",lock?'fest vorgegeben':'');
       var cE=(row.seeOnly||row.fixed)?box(0,false):box(c==='E',true,false,"permToggle('coach','"+k+"','E')");
       var vS=row.editOrNone?box(0,false):box(v!=='-',true,lock,"permToggle('viewer','"+k+"','S')",lock?'fest vorgegeben':'');
       h+='<tr><td style="'+TD+';text-align:left;padding-left:12px;font-size:13px;color:var(--text)">'+esc(label)+(desc?' <span style="font-size:11.5px;color:var(--text3)">· '+esc(desc)+'</span>':'')+'</td>'
         +'<td style="'+TD+';'+BL+'">'+box(1,!row.editOrNone,true,'','Admin darf immer alles')+'</td><td style="'+TD+'">'+box(1,!(row.seeOnly),true,'','Admin darf immer alles')+'</td>'
         +'<td style="'+TD+';'+BL+'">'+cS+'</td><td style="'+TD+'">'+cE+'</td><td style="'+TD+';'+BL+'">'+vS+'</td>'
-        +'<td style="'+TD+';'+BL+';color:var(--text3)">–</td><td style="'+TD+';'+BL+';color:var(--text3)">–</td></tr>';
+        +'<td style="'+TD+';'+BL+';color:var(--text3)">–</td><td style="'+TD+';'+BL+';color:var(--text3)">–</td></tr>'
+        +(row.persons?'<tr><td colspan="8" style="padding:6px 12px 10px;border-bottom:1px solid #eae7e0">'+permPersonsHtml(k)+'</td></tr>':'');
     });
   });
   h+='</tbody></table></div>'
@@ -10858,7 +10881,7 @@ function esBuildHtml(emp,asPopup,html){
         }
         html+='<div class="pv-de-block" style="'+(isVlcModel?'display:none':'')+'">';
         html+='<div style="background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:16px">';
-        if(canSeeSalary(emp)){
+        if(canSeeSalary(emp)&&(currentUserRole==='admin'||canSeeArea('salary'))){
         html+=stripField('Grundgehalt/Mon.','pv-grundgehalt',2800,'€',10);
         html+=stripField('AG-Sozialabgaben','pv-agSozialabgaben',21,'%',1);
         } else {
@@ -11486,7 +11509,7 @@ function openEmpSetModal(empId){
   // Felder-IDs eindeutig halten: offene Stammdaten im Hauptbereich vorübergehend ausblenden
   var ex=document.getElementById('es-name');
   if(ex&&!body.contains(ex)){var ma=document.getElementById('mainArea');if(ma){ma.innerHTML='';_esHidMain=true;}}
-  body.innerHTML=esBuildHtml(emp,'panels','');
+  body.innerHTML=esBuildHtml(emp,'panels','');provLockForm(body);
   var sub=document.getElementById('esHdSub');if(sub)sub.textContent=emp.name+(emp.role?' · '+emp.role:'');
   espRenderHist();
   openModal('empSetModal');
@@ -11762,7 +11785,7 @@ function loadSettingsFromSupabase(){
       if(r.key==='ftpLastSync')settings.ftpLastSync=r.value||'';
       if(r.key==='tokenExpiry')settings.tokenExpiry=r.value||'';
       if(r.key==='extensionUrl')settings.extensionUrl=r.value||'';
-      if(r.key==='rolePermissions'||r.key==='kalenderRules'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'||r.key==='ftpRange'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
+      if(r.key==='rolePermissions'||r.key==='kalenderRules'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'||r.key==='ftpRange'||r.key==='permPersons'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
     return true;
@@ -12666,8 +12689,12 @@ function toggleProvisionModel(role){
   document.querySelectorAll('.pv-de-block').forEach(function(el){el.style.display=vlc?'none':'';});
   document.querySelectorAll('.pv-vlc-block').forEach(function(el){el.style.display=vlc?'':'none';});
 }
+function provCanEdit(){return currentUserRole==='admin'||permFor('provEdit')==='E';}
+// Formular: ohne Recht „Provisionsvereinbarung ändern“ nur ansehen
+function provLockForm(root){if(provCanEdit()||!root)return;root.querySelectorAll('[id^="pv-"]').forEach(function(el){if('disabled' in el)el.disabled=true;});root.querySelectorAll('tr[data-kpi]').forEach(function(tr){tr.removeAttribute('draggable');});var b=root.querySelector('.pv-ab-box');if(b)b.outerHTML='<div class="pv-ab-box"><div><b>Nur ansehen</b><span class="pv-ab-hint">Provisionsvereinbarungen ändern dürfen Admins und Personen, denen das Recht gegeben wurde (Rollen &amp; Rechte).</span></div></div>';}
 function saveProvisionSettings(empId){
   if(_savingProvisionSettings)return;
+  if(!provCanEdit())return;
   var emp=employees.find(function(e){return e.id===empId;});
   if(!emp)return;
   var oldSettings=JSON.parse(JSON.stringify(emp.provisionSettings||{}));
@@ -13685,7 +13712,7 @@ function kalMapRow(r){return {id:r.id||('t'+Math.random().toString(36).slice(2))
   verschobenVon:r.verschoben_von||null,notiz:r.notiz||'',eingereichtAm:(r.eingereicht_am||'').slice(0,10)||today(),eingereichtVon:r.eingereicht_von||'',entschiedenVon:r.entschieden_von||'',entschiedenAm:r.entschieden_am||null,masked:!!r.masked};}
 function kalHalb(x){return x.halb?(x.halbTeil==='nm'?' ½ NM':' ½ VM'):'';}
 function kalIsViewer(){return currentUserRole==='viewer';}
-function kalCanEdit(){return !kalIsViewer();}
+function kalCanEdit(){return currentUserRole==='admin'||(!kalIsViewer()&&permFor('kalEdit')==='E');}
 function loadAbsencesFromSupabase(){
   if(kalIsViewer()){
     var y=+today().slice(0,4);
@@ -14227,7 +14254,7 @@ function kalSaveCfg(eid){var e=kalEmp(eid);if(!e||!kalCanEdit())return;var y=tod
 
 
 // ── Verspätungen ──
-function latCanSee(){return typeof kalCanEdit==='function'&&kalCanEdit();}
+function latCanSee(){return currentUserRole==='admin'||(!kalIsViewer()&&permFor('kalLate')!=='-');}
 function latOn(eid,d){return lateness.filter(function(x){return String(x.employeeId)===String(eid)&&x.von===d;});}
 function latMinOn(eid,d){return latOn(eid,d).reduce(function(s,x){return s+(+x.minuten||0);},0);}
 function latStats(eid,from,to){var L=lateness.filter(function(x){return String(x.employeeId)===String(eid)&&x.von>=from&&x.von<=to;});return {n:L.length,min:L.reduce(function(s,x){return s+(+x.minuten||0);},0)};}
