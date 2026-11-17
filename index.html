@@ -9795,15 +9795,8 @@ function buildProvisionTeamTable(){
     });
     h+='</tr></thead><tbody>';
     allRows.forEach(function(item,ridx){
-      var emp=item.emp, g=item.g, row=g.row;
-      if(item.empty){var ptE=provTage(emp,g.key),okE=ptE.sum===ptE.at;
-        h+='<tr class="pv-empty"><td style="padding:11px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="openPerfPopup(\''+emp.id+'\')">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
-          +'<td style="padding:11px 10px;border-bottom:1px solid var(--border);white-space:nowrap" data-ktip="'+esc('<b>'+kalNf(ptE.sum)+' von '+ptE.at+' Arbeitstagen belegt</b><br>'+kalNf(ptE.aus+ptE.fs)+' Ausgleich + '+kalNf(ptE.url)+' Urlaub + '+kalNf(ptE.kra)+' Krank'+(ptE.leer.length?'<br><br><b>Ohne Daten und ohne Eintrag:</b><br>'+ptE.leer.map(function(x){return kalF(x);}).join(', '):''))+'">'+stackCellLeft(g.label,'<span style="'+(okE?'':'color:var(--red);font-weight:700')+'">'+kalNf(ptE.sum)+' von '+ptE.at+' Tagen'+(okE?'':' ⚠')+'</span>')+'</td>'
-          +['aus','url','kra'].map(function(k){var v=k==='aus'?ptE.aus+ptE.fs:ptE[k];return '<td style="padding:11px 10px;border-bottom:1px solid var(--border);text-align:right;cursor:pointer" onclick="provGoKal(\''+emp.id+'\',\''+g.key+'\')">'+stackCell(kalNf(v),null)+'</td>';}).join('')
-          +'<td style="padding:11px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell('0','von '+ptE.at)+'</td>'
-          +'<td colspan="14" style="padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text3);font-style:italic">keine Leistungsdaten in diesem Monat</td>'
-          +'<td style="padding:11px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text3)">€0</td></tr>';
-        return;}
+      var emp=item.emp, g=item.g, row=g.row, _h0=h.length;
+
       var convOEM=row.convOEM||0, ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
       var optGes=row.optGesamt||(convOEM+ups+wka)||0;
       var marge=row.margeGesamt||row.margin||0;
@@ -9827,7 +9820,7 @@ function buildProvisionTeamTable(){
       var calc=calculateProvision(emp,g.key,row,g.count);if(item.frozen&&item.frozen.calc)calc=item.frozen.calc;
       var rowPv=effectiveProvisionSettings(emp,g.key);
       var rowBm=beschaeftigungsmonat(emp,g.key);
-      var rowKpiSet=provisionRowKpiSet(emp,rowPv,rowBm);if(item.frozen&&item.frozen.kpiSet)rowKpiSet=item.frozen.kpiSet;
+      var rowKpiSet=provisionRowKpiSet(emp,rowPv,rowBm);if(item.frozen&&item.frozen.kpiSet)rowKpiSet=item.frozen.kpiSet;if(item.empty){rowKpiSet={};}
       var _fc=provFocus(emp,g.key);
       var abzug, provision, provisionTitle='', abzugPct=null, provisionPct=null;
       if(calc.provision===null){
@@ -9855,7 +9848,7 @@ function buildProvisionTeamTable(){
       sumAbzug+=(calc.abzug||0);sumProvision+=(calc.provision||0)+(calc.provision!==null?extra:0);
       sumGesamtAkt+=gesamtAktivitaeten;sumTotalHoursAll+=rowTotalHours;
       var rowBg=ridx%2===1?'background:var(--s-tint);':'';
-      h+='<tr class="perf-data-row'+(item.frozen?' pv-frozen':'')+'" style="'+rowBg+'">'
+      h+='<tr class="perf-data-row'+(item.frozen?' pv-frozen':'')+(item.empty?' pv-empty':'')+'" style="'+rowBg+'">'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="openPerfPopup(\''+emp.id+'\')" title="Popup öffnen">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap">'+(function(){var ok=pt.sum===pt.at,fm=function(L){return L.map(function(x){return kalF(x);}).join(', ');};
           var tip='<b>'+kalNf(pt.sum)+' von '+pt.at+' Arbeitstagen belegt</b><br>'+kalNf(pt.ein)+' Einsatz (Tage mit Daten) + '+kalNf(pt.aus+pt.fs)+' Ausgleich'+(pt.fs?' (davon '+kalNf(pt.fs)+' Freistellung)':'')+' + '+kalNf(pt.url)+' Urlaub + '+kalNf(pt.kra)+' Krank'
@@ -9881,6 +9874,7 @@ function buildProvisionTeamTable(){
         +'<td style="padding:8px 8px;border-bottom:1px solid var(--border);text-align:right">'+(currentUserRole==='admin'&&!item.frozen?'<input type="number" step="1" min="0" placeholder="0" value="'+(extra||'')+'" title="Zusatzbetrag in €, wird ohne Abzug auf die Provision gerechnet" style="width:100%;max-width:90px;height:30px;padding:0 6px;text-align:right;font-size:12.5px" data-e="'+esc(String(emp.id))+'" data-m="'+g.key+'" onchange="provExtraSet(this.dataset.e,this.dataset.m,this.value)">':stackCell(extra?'€'+Math.round(extra).toLocaleString('de-DE'):'—',null))+'</td>'
         +'<td style="padding:13px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-dark)"'+provisionTitle+'>'+stackCell(provision,(provisionPct!==null?provisionPct+'%':null))+'</td>'
         +'</tr>';
+      if(item.empty)h=h.slice(0,_h0)+h.slice(_h0).replace(/>—</g,'>0<');
     });
     if(allRows.length>=1){
       var n=allRows.filter(function(r){return !r.empty;}).length||1;
