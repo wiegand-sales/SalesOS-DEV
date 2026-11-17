@@ -27,6 +27,9 @@ update public.employees set
   stufe = coalesce(stufe, case when board_role = 'viewer' then null when role in ('SR','SE','SDC','SDM') then role when role = 'SC' then 'SDC' when role = 'VLC' then 'SR' end),
   standort = coalesce(standort, case when role = 'VLC' then 'VLC' else 'MUC' end);
 
+-- Joey de Klijn ist kein Sales Coach mehr, nur noch Betrachter
+update public.employees set funktion = 'none', stufe = null, board_role = 'viewer' where lower(trim(name)) = 'joey de klijn';
+
 -- Valencia-Agenten sind SR (auch falls die Datei vorher schon einmal lief)
 update public.employees set stufe = 'SR' where funktion = 'agent' and standort = 'VLC' and stufe is null;
 
