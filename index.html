@@ -730,6 +730,9 @@ tr.pv-frozen td:first-child{box-shadow:inset 3px 0 0 #1d1c1a}
 .kal-tl .kg-col.we:not(.kg-row),.ab-tl .kg-col.we:not(.kg-row){background-color:#EEE3DB!important}
 .kal-tl .hd.kg-col,.ab-tl .hd.kg-col{background-color:#FBE3DA!important}.kal-tl .hd.kg-col b,.ab-tl .hd.kg-col b{color:#9A3F22}
 .kal-tl .kg-x,.ab-tl .kg-x{background-color:#FBE3DA!important;outline:1.5px solid #F08566;outline-offset:-1.5px}
+.psw{width:34px;height:20px;border-radius:999px;background:#D8D2C6;position:relative;border:0;cursor:pointer;padding:0;vertical-align:middle;transition:background .15s}
+.psw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s}
+.psw.on{background:#F08566}.psw.on::after{left:16px}.psw.lock{opacity:.45;cursor:default}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -1529,7 +1532,7 @@ function loadEmployeesFromSupabase(){
         color: e.color_index, startDate: e.start_date, endDate: e.end_date || null,
         team: e.team, contract: e.contract, hours: e.hours, active: e.active,
         auth_user_id: e.auth_user_id || null, notes: e.notes || '',
-        isPureCoach: e.is_pure_coach===true||e.role==='KAL', kalOnly: e.role==='KAL', boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
+        isPureCoach: e.is_pure_coach===true||e.role==='KAL', kalOnly: e.role==='KAL', imKalender: e.im_kalender==null?null:!!e.im_kalender, inProvision: e.in_provision==null?null:!!e.in_provision, boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
       };
     });
     return loadSalariesFromSupabase();
@@ -1546,7 +1549,7 @@ var provisionTeamDropdownOpen=false;
 var provisionTeamSearchQuery='';
 function toggleProvisionTeamDropdown(){provisionTeamDropdownOpen=!provisionTeamDropdownOpen;if(!provisionTeamDropdownOpen)provisionTeamSearchQuery='';renderProvisionTeam();}
 function toggleProvisionTeamEmpId(id){
-  var visIds=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e)&&(currentUserRole==='admin'||!(e.role==='SDC'||e.role==='SDM'));}).map(function(e){return e.id;});
+  var visIds=employees.filter(function(e){return provFlag(e)&&canSeeSalary(e)&&(currentUserRole==='admin'||isAgentEmp(e));}).map(function(e){return e.id;});
   if(!provisionTeamSelectedIds)provisionTeamSelectedIds=visIds.slice();
   var idx=provisionTeamSelectedIds.indexOf(id);
   if(idx>=0)provisionTeamSelectedIds.splice(idx,1);else provisionTeamSelectedIds.push(id);
@@ -1686,6 +1689,21 @@ function updateEmpBoardRole(sel){
     logActivity('employee','role_changed','Board-Rolle geändert: '+(old?BOARD_ROLE_LABEL[old]:'aus Position')+' → '+(v?BOARD_ROLE_LABEL[v]:'aus Position'),emp.id,emp.name);
   });
 }
+// ── Schalter je Person: „Im Urlaubskalender“ / „In Provision“ (Spalten im_kalender / in_provision, leer = Standard nach Position)
+function isAgentEmp(e){return !!e&&!e.isPureCoach&&e.role!=='SDC'&&e.role!=='SDM'&&e.role!=='KAL';}
+function kalFlag(e){if(!e||e.active===false)return false;if(isAgentEmp(e))return true;if(e.imKalender!=null)return e.imKalender;return !!(e.kalOnly||e.role==='SDC'||e.role==='SDM'||(e.isPureCoach&&e.boardRole!=='viewer'));}
+function provFlag(e){if(!e||e.active===false)return false;if(isAgentEmp(e))return true;if(e.inProvision!=null)return e.inProvision;return e.role==='SDC'||e.role==='SDM';}
+function personEmp(p){if(!p)return null;if(p.kind==='emp')return kalEmp(p.id);var n=String(p.name||'').trim().toLowerCase();return employees.find(function(e){return String(e.name||'').trim().toLowerCase()===n;})||null;}
+function personSwitch(p,flag){var e=personEmp(p),ag=e&&isAgentEmp(e),on=e?(flag==='kal'?kalFlag(e):provFlag(e)):false,lock=ag||currentUserRole!=='admin'||(flag==='prov'&&!e);
+  return '<button type="button" class="psw'+(on?' on':'')+(lock?' lock':'')+'" role="switch" aria-checked="'+on+'" title="'+(ag?'Bei Sales Agents immer an':flag==='prov'&&!e?'Erst im Urlaubskalender anlegen':flag==='kal'?'Im Urlaubskalender anzeigen':'In der Provisionsübersicht anzeigen')+'"'+(lock?' disabled':' onclick="personToggle(\''+p.kind+'\',\''+p.id+'\',\''+flag+'\')"')+'></button>';}
+function personToggle(kind,id,flag){if(currentUserRole!=='admin')return;var p=allPersons().find(function(x){return x.kind===kind&&String(x.id)===String(id);});if(!p)return;var e=personEmp(p);
+  var col=flag==='kal'?'im_kalender':'in_provision',key=flag==='kal'?'imKalender':'inProvision';
+  if(!e){if(flag!=='kal')return;var pay={name:p.name,role:'KAL',phase:'Aktiv',team:'Deutschland',contract:'full',hours:40,active:true,color_index:0,im_kalender:true};
+    sb.from('employees').insert(pay).select().single().then(function(res){if(res.error){alert(/im_kalender/.test(res.error.message||'')?'Bitte zuerst 40_personen_schalter.sql ausführen.':'Fehler: '+res.error.message);return;}
+      logActivity('employee','created',p.name+' in den Urlaubskalender aufgenommen');location.reload();});return;}
+  var nv=!(flag==='kal'?kalFlag(e):provFlag(e)),old=e[key];e[key]=nv;renderMain();var upd={};upd[col]=nv;
+  sb.from('employees').update(upd).eq('id',e.id).then(function(res){if(res&&res.error){e[key]=old;renderMain();alert(/im_kalender|in_provision/.test(res.error.message||'')?'Bitte zuerst 40_personen_schalter.sql ausführen.':'Fehler beim Speichern: '+res.error.message);return;}
+    logActivity('employee','updated',e.name+': '+(flag==='kal'?'Urlaubskalender':'Provision')+' '+(nv?'an':'aus'),e.id,e.name);});}
 function allPersons(){
   var list=appUsers.map(function(u){return {kind:'app',id:u.id,name:u.name,email:u.email,role:u.role,authUserId:u.authUserId,sub:''};});
   employees.forEach(function(e){ if(e.role==='KAL'&&appUsers.some(function(u){return String(u.name||'').trim().toLowerCase()===String(e.name||'').trim().toLowerCase();}))return; list.push({kind:'emp',id:e.id,name:e.name,email:e.email||'',role:e.role,isPureCoach:e.isPureCoach,boardRole:e.boardRole||null,active:e.active,authUserId:e.auth_user_id||null,sub:(e.role||'')+(e.active===false?' · inaktiv':'')}); });
@@ -1730,7 +1748,7 @@ function buildUserOverviewHtml(){
   function row(p,i){
     var r=personRole(p), rc=RC[r], acc=ACC[r], lg=loginOf(p);
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
-    var roleCell=p.kind==='app'
+    var roleCell=(p.kind==='emp'&&p.role==='KAL')?'<span style="font-size:12.5px;color:var(--text3)">kein Board-Zugang</span>':p.kind==='app'
       ?'<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select></span></span>'
       :(function(){var pr=positionRole(p),set=!!p.boardRole;
         return '<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-eid="'+p.id+'" onchange="updateEmpBoardRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px;'+(set?'border-color:rgba(240,133,102,0.7);background:#FDF0EB':'')+'">'
@@ -1753,10 +1771,11 @@ function buildUserOverviewHtml(){
       :'<a href="#" onclick="selectSettingsSub(\'roles\');return false" title="Was diese Rolle darf, legst du unter Rollen &amp; Rechte fest" style="font-size:12.5px;color:'+acc[1]+';text-decoration:none;white-space:nowrap">'+ZG[r]+' ›</a>';
     return '<tr style="'+bg+'"><td style="'+TD+'"><div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:6px;background:#F3ECE8;color:var(--purple);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+esc(ini)+'</span><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">'+esc(p.name)+'</span><span style="font-size:11.5px;color:var(--text3)">'+esc(p.kind==='app'?(p.role==='admin'?'Admin':'Betrachter'):p.sub)+'</span></div></div></td>'
       +'<td style="'+TD+'">'+roleCell+'</td><td style="'+TD+';font-size:12.5px;color:var(--text2)">'+esc(p.email||'–')+'</td><td style="'+TD+'">'+lgCell+'</td><td style="'+TD+'">'+lastCell+'</td>'
+      +'<td style="'+TD+';text-align:center">'+personSwitch(p,'kal')+'</td><td style="'+TD+';text-align:center">'+personSwitch(p,'prov')+'</td>'
       +'<td style="'+TD+'">'+accCell+'</td><td style="'+TD+';text-align:right;white-space:nowrap"><div style="display:inline-flex;gap:6px">'+actions+'</div></td></tr>';
   }
   function table(list){
-    return '<div class="std-wrap"><table class="std-table" style="min-width:900px"><colgroup><col style="width:18%"><col style="width:20%"><col style="width:18%"><col style="width:11%"><col style="width:12%"><col style="width:12%"><col style="width:9%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Letzter Login</th><th scope="col" style="'+TH+'">Zugriff</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
+    return '<div class="std-wrap"><table class="std-table" style="min-width:1080px"><colgroup><col style="width:17%"><col style="width:18%"><col style="width:15%"><col style="width:9%"><col style="width:10%"><col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:7%"></colgroup><thead><tr style="background:#EFECE5"><th scope="col" style="'+TH+'">Name</th><th scope="col" style="'+TH+'">Rolle</th><th scope="col" style="'+TH+'">E-Mail</th><th scope="col" style="'+TH+'">Login</th><th scope="col" style="'+TH+'">Letzter Login</th><th scope="col" style="'+TH+';text-align:center">Im Urlaubskalender</th><th scope="col" style="'+TH+';text-align:center">In Provision</th><th scope="col" style="'+TH+'">Zugriff</th><th scope="col" style="'+TH+'"></th></tr></thead><tbody>'+list.map(row).join('')+'</tbody></table></div>';
   }
   var match=function(p){ return (!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.email||'').toLowerCase().indexOf(q)>=0) && (userFilter==='all'||personRole(p)===userFilter); };
   var order={'Admin':0,'Coach':1,'Betrachter':2};
@@ -9643,7 +9662,7 @@ function buildProvisionTeamTable(){
     return {urlaub:urlaub,krank:krank};
   }
   // Coaches (SDC/SDM) mit eigener Provision sehen nur Admins
-  var visible=employees.filter(function(e){return !e.isPureCoach&&e.active!==false&&canSeeSalary(e)&&(currentUserRole==='admin'||!(e.role==='SDC'||e.role==='SDM'));});
+  var visible=employees.filter(function(e){return provFlag(e)&&canSeeSalary(e)&&(currentUserRole==='admin'||isAgentEmp(e));});
   var selectedEmps=provisionTeamSelectedIds?visible.filter(function(e){return provisionTeamSelectedIds.indexOf(e.id)>=0;}):visible;
   var isAll=!provisionTeamSelectedIds||provisionTeamSelectedIds.length===visible.length;
   var selLabel=isAll?'Alle Mitarbeiter':(selectedEmps.length===1?selectedEmps[0].name:selectedEmps.length+' Mitarbeiter ausgewählt');
@@ -10722,7 +10741,7 @@ function esBuildHtml(emp,asPopup,html){
           +'<option'+(emp.role==='SDM'?' selected':'')+'>SDM</option>'
           +'<option'+(emp.role==='SDC'?' selected':'')+'>SDC</option>'
           +'<option'+(emp.role==='SDL'?' selected':'')+(currentUserRole!=='admin'&&emp.role!=='SDL'?' disabled':'')+'>SDL</option>'
-          +'<option value="KAL"'+(emp.role==='KAL'?' selected':'')+(currentUserRole!=='admin'&&emp.role!=='KAL'?' disabled':'')+'>Nur Kalender</option>'
+          +(emp.role==='KAL'?'<option value="KAL" selected>Ohne Board (nur Kalender)</option>':'')
           +'<option value="__new__">+ Neue Position hinzufügen</option>'
           +'</select></div>';
         html+='<div><label>Phase</label><select id="es-phase">'
@@ -13693,7 +13712,7 @@ function kalWdBetween(e,a,b){var n=0,d=kalAdd(a,1);while(d<b){if(kalWorkday(e,d)
 
 // ── Mitarbeiter je Standort ──
 // Wer im Kalender (Monat, Woche, Jahr, Team, Urlaubskonto, Formular) steht – Aufgaben, Weeklys, QA und „frei“-Zählung nutzen weiter kalEmps (nur Agenten)
-function kalPeople(loc){var A=kalEmps(loc),seen={};A.forEach(function(e){seen[e.id]=1;});var X=employees.filter(function(e){return e.active!==false&&!seen[e.id]&&kalLocMatch(e,loc)&&(e.kalOnly||e.role==='SDC'||e.role==='SDM'||(e.isPureCoach&&e.boardRole!=='viewer'));});
+function kalPeople(loc){var A=kalEmps(loc).filter(kalFlag),seen={};kalEmps(loc).forEach(function(e){seen[e.id]=1;});var X=employees.filter(function(e){return !seen[e.id]&&kalLocMatch(e,loc)&&kalFlag(e);});
   var ord=function(e){return e.kalOnly?2:(e.role==='SDC'||e.role==='SDM'||e.isPureCoach)?1:0;};return A.concat(X.sort(function(a,b){return ord(a)-ord(b)||a.name.localeCompare(b.name);}));}
 function kalLocMatch(e,loc){loc=loc||KAL.loc;if(loc==='ALL')return true;if(loc==='NONE')return false;return loc==='VLC'?kalIsVlc(e):!kalIsVlc(e);}
 function kalEmps(loc){return teamTargetList().filter(function(e){return kalLocMatch(e,loc);}).sort(function(a,b){return a.name.localeCompare(b.name);});}
