@@ -1,7 +1,7 @@
 -- 42_person_funktion_standort.sql
 -- Neuordnung Personen, Schritt 1: je Person Funktion, Stufe und Standort als eigene Felder.
 -- Das bisherige Feld „role“ (Position) bleibt und wird vom Board automatisch passend gesetzt, damit alles weiterläuft.
--- Übernahme des heutigen Stands: SR/SE → Sales Agent (Stufe SR/SE, Olching) · VLC → Sales Agent, Valencia ·
+-- Übernahme des heutigen Stands: SR/SE → Sales Agent (Stufe SR/SE, MUC) · VLC → Sales Agent, Standort VLC ·
 -- SDL → SDL · SDC/SDM → Coach (Stufe SDC/SDM) · KAL → Peter Rode „Leitung“, Niklas Hojdem „Sales Ops“, sonst „Account Management“.
 -- In DEV und Live ausführen, mehrfach unbedenklich (überschreibt nur leere Felder).
 alter table public.employees add column if not exists funktion text;
