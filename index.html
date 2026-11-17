@@ -746,6 +746,7 @@ tr.pv-frozen td:first-child{box-shadow:inset 3px 0 0 #1d1c1a}
 .at-ar{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .at-ar .btn{width:auto;height:34px;white-space:nowrap}
 .at-ar .at-selw{display:flex;align-items:center;gap:6px;min-width:150px}
+tr.pv-empty td{background:repeating-linear-gradient(-45deg,transparent 0 6px,rgba(120,110,95,.05) 6px 8px)}
 </style>
 <style id="kal-css">
 /* ── KALENDER ── */
@@ -9779,7 +9780,10 @@ function buildProvisionTeamTable(){
     Object.keys(PROV_CLOSED).forEach(function(mk){if(mk.slice(0,4)!==yr)return;if(provisionMode==='month'&&mk!==curMk)return;if(provisionMode==='custom'&&mk!==provisionCustomMonth)return;
       var fz=PROV_CLOSED[mk].rows[String(emp.id)];if(fz)allRows.push({emp:emp,g:{key:mk,label:fz.label,count:fz.count,row:fz.row},frozen:fz});});
   });
-  allRows.sort(function(a,b){return a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
+  if(provisionMode!=='year'){var _mk=provisionMode==='month'?curMk:provisionCustomMonth,_f=_mk+'-01',_l=kalAdd(kalAdd(_mk+'-28',4).slice(0,7)+'-01',-1);
+    selectedEmps.forEach(function(emp){if(allRows.some(function(r){return r.emp.id===emp.id&&r.g.key===_mk;}))return;if((emp.endDate&&emp.endDate<_f)||(emp.startDate&&emp.startDate>_l))return;
+      allRows.push({emp:emp,g:{key:_mk,label:KAL_MON[+_mk.slice(5,7)-1]+' '+_mk.slice(0,4),count:0,row:{}},empty:true});});}
+  allRows.sort(function(a,b){return (a.empty?1:0)-(b.empty?1:0)||a.emp.name.localeCompare(b.emp.name)||b.g.key.localeCompare(a.g.key);});
   var sumKrank=0,sumUrlaub=0,sumAus=0,sumEin=0,sumAt=0,sumExtra=0,sumOEM=0,sumUps=0,sumWka=0,sumOptGes=0,sumRawTw=0,sumRawYes=0,sumRawSy=0,sumRawMy=0,sumMarge=0,sumAbzug=0,sumProvision=0,sumGesamtAkt=0,sumTotalHoursAll=0,sumNotSOem=0;
 
   if(!allRows.length){
@@ -9792,6 +9796,14 @@ function buildProvisionTeamTable(){
     h+='</tr></thead><tbody>';
     allRows.forEach(function(item,ridx){
       var emp=item.emp, g=item.g, row=g.row;
+      if(item.empty){var ptE=provTage(emp,g.key),okE=ptE.sum===ptE.at;
+        h+='<tr class="pv-empty"><td style="padding:11px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;cursor:pointer" onclick="openPerfPopup(\''+emp.id+'\')">'+esc(emp.name)+'<div style="font-size:11px;color:var(--text3);font-weight:400">'+emp.role+'</div></td>'
+          +'<td style="padding:11px 10px;border-bottom:1px solid var(--border);white-space:nowrap" data-ktip="'+esc('<b>'+kalNf(ptE.sum)+' von '+ptE.at+' Arbeitstagen belegt</b><br>'+kalNf(ptE.aus+ptE.fs)+' Ausgleich + '+kalNf(ptE.url)+' Urlaub + '+kalNf(ptE.kra)+' Krank'+(ptE.leer.length?'<br><br><b>Ohne Daten und ohne Eintrag:</b><br>'+ptE.leer.map(function(x){return kalF(x);}).join(', '):''))+'">'+stackCellLeft(g.label,'<span style="'+(okE?'':'color:var(--red);font-weight:700')+'">'+kalNf(ptE.sum)+' von '+ptE.at+' Tagen'+(okE?'':' ⚠')+'</span>')+'</td>'
+          +['aus','url','kra'].map(function(k){var v=k==='aus'?ptE.aus+ptE.fs:ptE[k];return '<td style="padding:11px 10px;border-bottom:1px solid var(--border);text-align:right;cursor:pointer" onclick="provGoKal(\''+emp.id+'\',\''+g.key+'\')">'+stackCell(kalNf(v),null)+'</td>';}).join('')
+          +'<td style="padding:11px 10px;border-bottom:1px solid var(--border);text-align:right">'+stackCell('0','von '+ptE.at)+'</td>'
+          +'<td colspan="14" style="padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text3);font-style:italic">keine Leistungsdaten in diesem Monat</td>'
+          +'<td style="padding:11px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text3)">€0</td></tr>';
+        return;}
       var convOEM=row.convOEM||0, ups=row.ups_yes||0, wka=row.wka_gesamt_yes||0;
       var optGes=row.optGesamt||(convOEM+ups+wka)||0;
       var marge=row.margeGesamt||row.margin||0;
@@ -9834,7 +9846,7 @@ function buildProvisionTeamTable(){
           +(calc.fehlendeKpis.length?' · Nicht erfüllte KPIs: '+calc.fehlendeKpis.join(', '):' · Alle KPIs erfüllt')+'"';
       }
       var extra=item.frozen?(+item.frozen.extra||0):provExtraGet(emp.id,g.key);
-      if(window._provSnap&&!item.frozen)window._provSnap[String(emp.id)]={label:g.label,count:g.count,row:row,pt:pt,hours:rowTotalHours,calc:calc,kpiSet:rowKpiSet,extra:extra};if(calc.provision!==null&&extra){provision='€'+Math.round(calc.provision+extra).toLocaleString('de-DE');}
+      if(window._provSnap&&!item.frozen&&!item.empty)window._provSnap[String(emp.id)]={label:g.label,count:g.count,row:row,pt:pt,hours:rowTotalHours,calc:calc,kpiSet:rowKpiSet,extra:extra};if(calc.provision!==null&&extra){provision='€'+Math.round(calc.provision+extra).toLocaleString('de-DE');}
       // Erklärung als schwarze Info-Box (wie überall im Board) statt Browser-Tooltip
       if(provisionTitle){provisionTitle=provisionTitle.replace(' title="',' data-ktip="').split(' · ').join('<br>');if(extra)provisionTitle=provisionTitle.replace(/"$/,'<br>inkl. €'+Math.round(extra).toLocaleString('de-DE')+' Optional (ohne Abzug)"');}
       sumExtra+=extra;
@@ -9871,7 +9883,7 @@ function buildProvisionTeamTable(){
         +'</tr>';
     });
     if(allRows.length>=1){
-      var n=allRows.length;
+      var n=allRows.filter(function(r){return !r.empty;}).length||1;
       var sumCrOEM=(sumOEM+sumNotSOem)>0?Math.round(sumOEM/(sumOEM+sumNotSOem)*100):0;
       var sumCrTW=(sumRawTw+sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawTw/(sumRawTw+sumRawYes+sumRawSy+sumRawMy)*100):0;
       var sumCrSY=(sumRawYes+sumRawSy+sumRawMy)>0?Math.round(sumRawSy/(sumRawYes+sumRawSy+sumRawMy)*100):0;
