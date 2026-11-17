@@ -1535,6 +1535,8 @@ function loadEmployeesFromSupabase(){
         isPureCoach: e.is_pure_coach===true||e.role==='KAL', kalOnly: e.role==='KAL', funktion: e.funktion||null, stufe: e.stufe||null, standort: e.standort||null, imKalender: e.im_kalender==null?null:!!e.im_kalender, inProvision: e.in_provision==null?null:!!e.in_provision, boardRole: e.board_role||null, provisionSettings: e.provision_settings || {}, email: e.email || '', workHours: e.work_hours || null, urlaub: e.urlaub || {}
       };
     });
+    // Funktion · Stufe · Standort sind die Wahrheit (SQL 42); die alte Position wird daraus berechnet
+    employees.forEach(function(e){if(!e.funktion)return;e.role=personRoleCode(e.funktion,e.stufe,e.standort||'MUC');e.kalOnly=e.role==='KAL';if(e.kalOnly)e.isPureCoach=true;});
     return loadSalariesFromSupabase();
   });
 }
@@ -1672,7 +1674,7 @@ function loadSalariesFromSupabase(){return sb.from('employee_salary').select('*'
     if(r){if(r.grundgehalt!=null)pv.grundgehalt=+r.grundgehalt;if(r.ag_sozialabgaben!=null)pv.agSozialabgaben=+r.ag_sozialabgaben;}});
   return true;}).catch(function(e){SALARY_TABLE=false;console.warn('employee_salary',e);return true;}).then(function(){return typeof loadProvExtra==='function'?loadProvExtra():true;}).then(function(){return typeof loadProvClosed==='function'?loadProvClosed():true;});}
 // ── Person: Funktion · Stufe · Standort (SQL 42). Das alte Feld role wird daraus abgeleitet, damit alles Bestehende weiterläuft.
-var PERSON_FN=[['agent','Sales Agent'],['sdl','SDL'],['coach','Coach'],['salesops','Sales Ops'],['am','Account Management'],['leitung','Leitung']];
+var PERSON_FN=[['agent','Sales Agent'],['sdl','SDL'],['coach','Coach'],['salesops','Sales Ops'],['am','Account Management'],['leitung','Leitung'],['none','keine (nur Betrachter)']];
 function personFn(e){if(!e)return 'agent';if(e.funktion)return e.funktion;var r=e.role;return r==='SDL'?'sdl':(r==='SDC'||r==='SDM')?'coach':r==='KAL'?'am':'agent';}
 function personStufe(e){if(!e)return '';if(e.stufe)return e.stufe;return (e.role==='SR'||e.role==='SE'||e.role==='SDC'||e.role==='SDM')?e.role:'';}
 function personOrt(e){if(!e)return 'MUC';if(e.standort)return e.standort;return e.role==='VLC'?'VLC':'MUC';}
@@ -1702,7 +1704,7 @@ function updateEmpBoardRole(sel){
 }
 // ── Schalter je Person: „Im Urlaubskalender“ / „In Provision“ (Spalten im_kalender / in_provision, leer = Standard nach Position)
 function isAgentEmp(e){return !!e&&!e.isPureCoach&&e.role!=='SDC'&&e.role!=='SDM'&&e.role!=='KAL';}
-function kalFlag(e){if(!e||e.active===false)return false;if(isAgentEmp(e))return true;if(e.imKalender!=null)return e.imKalender;return !!(e.kalOnly||e.role==='SDC'||e.role==='SDM'||(e.isPureCoach&&e.boardRole!=='viewer'));}
+function kalFlag(e){if(!e||e.active===false)return false;if(isAgentEmp(e))return true;if(e.imKalender!=null)return e.imKalender;if(e.funktion==='none'||e.boardRole==='viewer')return false;return !!(e.kalOnly||e.role==='SDC'||e.role==='SDM'||(e.isPureCoach&&e.boardRole!=='viewer'));}
 function provFlag(e){if(!e||e.active===false)return false;if(isAgentEmp(e))return true;if(e.inProvision!=null)return e.inProvision;return e.role==='SDC'||e.role==='SDM';}
 function personEmp(p){if(!p)return null;if(p.kind==='emp')return kalEmp(p.id);var n=String(p.name||'').trim().toLowerCase();return employees.find(function(e){return String(e.name||'').trim().toLowerCase()===n;})||null;}
 function personSwitch(p,flag){var e=personEmp(p),ag=e&&isAgentEmp(e),on=e?(flag==='kal'?kalFlag(e):provFlag(e)):false,lock=ag||currentUserRole!=='admin'||(flag==='prov'&&!e);
@@ -1759,7 +1761,7 @@ function buildUserOverviewHtml(){
   function row(p,i){
     var r=personRole(p), rc=RC[r], acc=ACC[r], lg=loginOf(p);
     var ini=(p.name||'?').split(' ').map(function(w){return w[0];}).slice(0,2).join('');
-    var roleCell=(p.kind==='emp'&&p.role==='KAL')?'<span style="font-size:12.5px;color:var(--text3)">kein Board-Zugang</span>':p.kind==='app'
+    var roleCell=(p.kind==='emp'&&p.role==='KAL'&&!p.boardRole)?'<span style="font-size:12.5px;color:var(--text3)">kein Board-Zugang</span>':p.kind==='app'
       ?'<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-uid="'+p.id+'" onchange="updateAppUserRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px"><option value="admin"'+(p.role==='admin'?' selected':'')+'>Admin</option><option value="viewer"'+(p.role==='viewer'?' selected':'')+'>Betrachter</option></select></span></span>'
       :(function(){var pr=positionRole(p),set=!!p.boardRole;
         return '<span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;width:150px"><select data-eid="'+p.id+'" onchange="updateEmpBoardRole(this)" aria-label="Rolle von '+esc(p.name)+'" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px;'+(set?'border-color:rgba(240,133,102,0.7);background:#FDF0EB':'')+'">'
@@ -10748,7 +10750,8 @@ function esBuildHtml(emp,asPopup,html){
         (function(){var ad=currentUserRole==='admin'||(asPopup&&asPopup!=='panels'),dis=ad?'':' disabled title="Nur Admins"',fn=personFn(emp),st=personStufe(emp),ort=personOrt(emp);
           html+='<div><label>Funktion</label><select id="es-fn"'+dis+' onchange="esPersonSync()">'+PERSON_FN.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===fn?' selected':'')+(x[0]==='sdl'&&currentUserRole!=='admin'&&fn!=='sdl'?' disabled':'')+'>'+x[1]+'</option>';}).join('')+'</select></div>';
           html+='<div id="es-stufe-wrap"'+((fn==='agent'||fn==='coach')?'':' style="display:none"')+'><label>Stufe</label><select id="es-stufe"'+dis+' onchange="esPersonSync()">'+(fn==='coach'?['SDC','SDM']:['SR','SE']).map(function(x){return '<option'+(x===st?' selected':'')+'>'+x+'</option>';}).join('')+'</select></div>';
-          html+='<div><label>Standort</label><select id="es-ort"'+dis+' onchange="esPersonSync()"><option value="MUC"'+(ort==='MUC'?' selected':'')+'>MUC</option><option value="VLC"'+(ort==='VLC'?' selected':'')+'>VLC</option></select></div>';})();
+          html+='<div><label>Standort</label><select id="es-ort"'+dis+' onchange="esPersonSync()"><option value="MUC"'+(ort==='MUC'?' selected':'')+'>MUC</option><option value="VLC"'+(ort==='VLC'?' selected':'')+'>VLC</option></select></div>';
+          if(emp.id&&currentUserRole==='admin'){var br=emp.boardRole||'',pr=positionRole(emp);html+='<div><label>Zugang zum Board</label><select data-eid="'+emp.id+'" onchange="updateEmpBoardRole(this)"><option value=""'+(br?'':' selected')+'>Automatisch ('+pr+')</option>'+['admin','coach','viewer','agent'].map(function(k){return '<option value="'+k+'"'+(br===k?' selected':'')+'>'+BOARD_ROLE_LABEL[k]+'</option>';}).join('')+'</select></div>';}})();
         html+='<div style="display:none"><label>Position</label>'
           +'<select id="es-role"'+(currentUserRole!=='admin'&&(!asPopup||asPopup==='panels')?' disabled title="Position ändern nur Admins"':'')+' onchange="esSdlToggle(this.value);var cv=this.value;if(cv===\'__new__\'){var nv=prompt(\'Neue Position eingeben:\');if(nv&&nv.trim()){var opt=document.createElement(\'option\');opt.value=nv.trim();opt.text=nv.trim();this.add(opt);this.value=nv.trim();}}toggleProvisionModel(this.value);">'
           +'<option'+(emp.role==='SR'?' selected':'')+'>SR</option>'
@@ -13733,7 +13736,7 @@ function kalWdBetween(e,a,b){var n=0,d=kalAdd(a,1);while(d<b){if(kalWorkday(e,d)
 // ── Mitarbeiter je Standort ──
 // Wer im Kalender (Monat, Woche, Jahr, Team, Urlaubskonto, Formular) steht – Aufgaben, Weeklys, QA und „frei“-Zählung nutzen weiter kalEmps (nur Agenten)
 // Anzeige der Position im Kalender (Personen ohne Board-Zugang als „Büro“)
-function kalRoleLbl(e){if(!e)return '';var f=personFn(e);return f==='am'?'AM':f==='salesops'?'Ops':f==='leitung'?'Leitung':(e.role||'');}
+function kalRoleLbl(e){if(!e)return '';var f=personFn(e);return f==='am'?'AM':f==='salesops'?'Ops':f==='leitung'?'Leitung':f==='none'?'–':(e.role||'');}
 function kalPeople(loc){var A=kalEmps(loc).filter(kalFlag),seen={};kalEmps(loc).forEach(function(e){seen[e.id]=1;});var X=employees.filter(function(e){return !seen[e.id]&&kalLocMatch(e,loc)&&kalFlag(e);});
   var ord=function(e){return e.kalOnly?2:(e.role==='SDC'||e.role==='SDM'||e.isPureCoach)?1:0;};return A.concat(X.sort(function(a,b){return ord(a)-ord(b)||a.name.localeCompare(b.name);}));}
 function kalLocMatch(e,loc){loc=loc||KAL.loc;if(loc==='ALL')return true;if(loc==='NONE')return false;return loc==='VLC'?kalIsVlc(e):!kalIsVlc(e);}
