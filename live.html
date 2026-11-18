@@ -38,7 +38,7 @@ body.embed .tv{border-radius:22px}
 .kr.crr{height:46px}
 .kr.crr .v span.k-okb,.kr.crr .v span.k-midb,.kr.crr .v span.k-nob,.kr.crr .v span.k-none{font-size:20px;padding:6px 0;border-radius:8px}
 .k-okb{background:#E2603C;color:#fff}.k-midb{background:#FBD5C6;color:#9A3F22}.k-nob{background:#C9C2B4;color:#3a3833}.k-none{background:#EFECE5;color:#B4AC9C}
-.ch{flex:1;min-height:0;position:relative;display:grid;grid-template-columns:120px minmax(0,1fr);margin-top:64px}
+.ch{flex:1;min-height:0;position:relative;display:grid;grid-template-columns:120px minmax(0,1fr);margin-top:80px}
 .ch .yl{position:relative}
 .ch .yl span{position:absolute;right:14px;transform:translateY(50%);font-size:17px;font-weight:600;color:#8a8478}
 .ch .pl{position:relative}
@@ -195,9 +195,9 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
         var endMin=tmin(vzDef.bis)||1020,n=0;
         for(var hr=hh+1;hr*60<=endMin&&n<2;hr++){n++;var sv=OPH*elapsedAt(vz,t,hr*60);h+='<div class="sollF" style="bottom:'+Y(sv).toFixed(2)+'%"><span>'+pad(hr)+':00 · '+Math.round(sv)+'</span></div>';}
       }
-      h+='<div class="bars">'+rows.map(function(r){
+      h+='<div class="bars">'+rows.map(function(r,ri){var showN=rows.length<=6||ri<3||ri>=rows.length-3;
         var seg=[[r.my,'#E2603C'],[r.oemRest,'#F7B39A'],[r.ups,'#E6DED0'],[r.wka,'#C9C2B4']];
-        return '<div class="c">'+(r.opt>0?'<b>'+r.opt+'</b>':'')+'<span class="st" style="height:'+Y(r.opt).toFixed(2)+'%">'+seg.map(function(s){return s[0]>0?'<i style="height:'+(s[0]/r.opt*100).toFixed(2)+'%;background:'+s[1]+'"></i>':'';}).join('')+'</span></div>';
+        return '<div class="c">'+(r.opt>0&&showN?'<b>'+r.opt+'</b>':'')+'<span class="st" style="height:'+Y(r.opt).toFixed(2)+'%">'+seg.map(function(s){return s[0]>0?'<i style="height:'+(s[0]/r.opt*100).toFixed(2)+'%;background:'+s[1]+'"></i>':'';}).join('')+'</span></div>';
       }).join('')+'</div></div></div>';
       // Fuß: Marge und Ø je Optimierung
       h+='<div class="kr" style="margin-top:8px"><span class="l">MARGE</span><div class="v">'+rows.map(function(r){var hot=r.marge>=2000;return '<span style="color:'+(hot?'#C23B66':'#3a3833')+'">'+(r.marge?eurK(r.marge):'–')+(hot?' 🎉':'')+'</span>';}).join('')+'</div></div>';
