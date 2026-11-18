@@ -480,7 +480,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
         var endMin=tmin(vzDef.bis)||1020,n=0;
         for(var hr=hh+1;hr*60<=endMin&&n<2;hr++){n++;var sv=OPH*elapsedAt(vz,t,hr*60);h+='<div class="sollF" style="bottom:'+Y(sv).toFixed(2)+'%"><span>'+pad(hr)+':00 · '+Math.round(sv)+'</span></div>';}
       }
-      h+='<div class="bars">'+rows.map(function(r,ri){var showN=rows.length<=6||ri<3||ri>=rows.length-3;
+      h+='<div class="bars">'+rows.map(function(r,ri){var showN=true;
         var seg=[[r.my,'#E2603C'],[r.oemRest,'#F7B39A'],[r.ups,'#E6DED0'],[r.wka,'#C9C2B4']];
         return '<div class="c">'+(r.opt>0&&showN?'<b>'+r.opt+'</b>':'')+'<span class="st" style="height:'+Y(r.opt).toFixed(2)+'%">'+seg.map(function(s){return s[0]>0?'<i style="height:'+(s[0]/r.opt*100).toFixed(2)+'%;background:'+s[1]+'"></i>':'';}).join('')+'</span></div>';
       }).join('')+'</div></div></div>';
