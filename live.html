@@ -48,7 +48,7 @@ body.embed .tv{border-radius:22px}
 .bars .c b{font-size:24px;font-weight:700;margin-bottom:4px}
 .bars .st{width:72%;display:flex;flex-direction:column-reverse;border-radius:10px 10px 2px 2px;overflow:hidden;transition:height .8s}
 .bars .st i{display:block;flex-shrink:0}
-.sollN{position:absolute;left:0;right:0;border-top:4px solid #D9541E;z-index:2}
+.sollN{position:absolute;left:0;right:0;border-top:4px dashed #D9541E;z-index:2}
 .sollN span{position:absolute;left:-112px;top:-14px;background:#D9541E;color:#fff;font-size:14px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap}
 .sollF{position:absolute;left:0;right:0;border-top:2px dashed rgba(217,84,30,.4);z-index:1}
 .sollF span{position:absolute;right:0;top:-22px;font-size:13px;font-weight:700;color:rgba(217,84,30,.8)}
@@ -94,7 +94,8 @@ body.embed .tv{border-radius:22px}
 #t3 .blk .pl{font-size:100px;font-weight:200;line-height:1;margin-top:12px}#t3 .blk .op{font-size:24px;font-weight:600}
 #t3 .p1{background:linear-gradient(160deg,#E9773F 0%,#DE5A5E 55%,#C23B66 100%);color:#fff}#t3 .p2{background:#E6E1D7;color:#3a3833}#t3 .p3{background:#EFECE5;color:#3a3833}
 /* Tagesbester bei Marge, CR OEM und CR MY: Zelle im Banner-Verlauf mit Krone */
-.kr .v span.best{background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)!important;color:#fff!important;border-radius:8px;box-shadow:0 6px 16px rgba(194,59,102,.35);overflow:visible}
+.kr .v span.best{position:relative;background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)!important;color:#fff!important;border-radius:8px;box-shadow:0 6px 16px rgba(194,59,102,.35);overflow:visible}
+.kr .v span.best::after{content:'👑';position:absolute;right:-12px;top:-21px;font-size:28px;line-height:1;transform:rotate(22deg);filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));pointer-events:none}
 /* Margen-Champion: Figur läuft herein, schiebt das Podest weg und jubelt */
 #t3 .st3{transition:none}
 #t3 .man{position:absolute;bottom:0;width:150px;height:300px;z-index:5}
@@ -461,7 +462,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
       var bO=null,bM=null,bG=null;rows.forEach(function(r){var o=r.oemD>=5?r.oem/r.oemD:null,m=r.ysm>=5?r.my/r.ysm:null;
         if(o!=null&&(!bO||o>bO.v))bO={id:r.e.id,v:o};if(m!=null&&(!bM||m>bM.v))bM={id:r.e.id,v:m};if(r.marge>0&&(!bG||r.marge>bG.v))bG={id:r.e.id,v:r.marge};});
       BEST={o:bO&&bO.id,m:bM&&bM.id,g:bG&&bG.id};
-      function bestify(html,on){return on?html.replace('<span class="','<span class="best ').replace(' %</span>',' % 👑</span>'):html;}
+      function bestify(html,on){return on?html.replace('<span class="','<span class="best '):html;}
       function crBox(v,z,n){if(v==null)return '<span class="k-none">–</span>';var x=Math.round(v),c=x>=z?'k-okb':x>=z-n?'k-midb':'k-nob';return '<span class="'+c+'">'+x+' %</span>';}
       h+='<div class="kr crr"><span class="l">CR OEM <small>≥'+ZOEM+' %</small></span><div class="v">'+rows.map(function(r){return bestify(crBox(r.oemD>0?r.oem/r.oemD*100:null,ZOEM,NOEM),BEST.o===r.e.id);}).join('')+'</div></div>';
       h+='<div class="kr crr"><span class="l">CR MY <small>≥'+ZMY+' %</small></span><div class="v">'+rows.map(function(r){return bestify(crBox(r.ysm>0?r.my/r.ysm*100:null,ZMY,NMY),BEST.m===r.e.id);}).join('')+'</div></div>';
@@ -484,7 +485,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
         return '<div class="c">'+(r.opt>0&&showN?'<b>'+r.opt+'</b>':'')+'<span class="st" style="height:'+Y(r.opt).toFixed(2)+'%">'+seg.map(function(s){return s[0]>0?'<i style="height:'+(s[0]/r.opt*100).toFixed(2)+'%;background:'+s[1]+'"></i>':'';}).join('')+'</span></div>';
       }).join('')+'</div></div></div>';
       // Fuß: Marge und Ø je Optimierung
-      h+='<div class="kr" style="margin-top:8px"><span class="l">MARGE</span><div class="v">'+rows.map(function(r){var hot=r.marge>=2000,bb=BEST.g===r.e.id;return bb?'<span class="best">'+eurK(r.marge)+' 👑</span>':'<span style="color:'+(hot?'#C23B66':'#3a3833')+'">'+(r.marge?eurK(r.marge):'–')+(hot?' 🎉':'')+'</span>';}).join('')+'</div></div>';
+      h+='<div class="kr" style="margin-top:8px"><span class="l">MARGE</span><div class="v">'+rows.map(function(r){var hot=r.marge>=2000,bb=BEST.g===r.e.id;return bb?'<span class="best">'+eurK(r.marge)+'</span>':'<span style="color:'+(hot?'#C23B66':'#3a3833')+'">'+(r.marge?eurK(r.marge):'–')+(hot?' 🎉':'')+'</span>';}).join('')+'</div></div>';
       h+='<div class="kr"><span class="l">Ø / OPT.</span><div class="v">'+rows.map(function(r){return '<span style="color:#8a8478;font-weight:600">'+(r.opt?eur(r.marge/r.opt):'–')+'</span>';}).join('')+'</div></div>';
     }
     var alt=netErr||(lastOk&&Date.now()-lastOk>5*60000);
