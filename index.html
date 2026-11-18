@@ -4491,7 +4491,7 @@ function selectCoachingActivity(){view='activity';wiegandNavOpen=true;bannerView
 
 // ── Live-Ansicht für die Fernseher (live.html mit geheimem Schlüssel, ohne Anmeldung) ──
 var LIVE={ort:'',msg:''};
-function liveCfg(){var c=settings.liveConfig||{};return {crOEM:c.crOEM!=null&&c.crOEM!==''?+c.crOEM:55,crMY:c.crMY!=null&&c.crMY!==''?+c.crMY:20,optProStd:c.optProStd?+c.optProStd:3.5,knappOEM:c.knappOEM!=null&&c.knappOEM!==''?+c.knappOEM:5,knappMY:c.knappMY!=null&&c.knappMY!==''?+c.knappMY:3};}
+function liveCfg(){var c=settings.liveConfig||{};return {crOEM:c.crOEM!=null&&c.crOEM!==''?+c.crOEM:55,crMY:c.crMY!=null&&c.crMY!==''?+c.crMY:20,optProStd:c.optProStd?+c.optProStd:3.5,knappOEM:c.knappOEM!=null&&c.knappOEM!==''?+c.knappOEM:5,knappMY:c.knappMY!=null&&c.knappMY!==''?+c.knappMY:3,theme:c.theme==='hell'?'hell':'schwarz'};}
 function liveBase(){return location.href.split('#')[0].split('?')[0].replace(/index\.html$/,'').replace(/\/?$/,'/')+'live.html';}
 function liveUrl(embed){var k=settings.liveKey||'';if(!k)return '';return liveBase()+'?k='+encodeURIComponent(k)+(LIVE.ort?'&s='+LIVE.ort:'')+(embed?'&embed=1':'');}
 function liveSetOrt(o){LIVE.ort=o;LIVE.msg='';renderLive();}
@@ -4507,8 +4507,12 @@ function liveNewKey(){if(currentUserRole!=='admin')return;
     settings.liveKey=k;LIVE.msg='Neue Adresse erzeugt. Bitte auf den Fernsehern neu öffnen.';
     if(typeof logActivity==='function'){try{logActivity('employee','updated','Live-Ansicht: neue Adresse erzeugt');}catch(e){}}
     renderLive();});}
+function liveSetTheme(t){if(currentUserRole!=='admin')return;var c=Object.assign({},settings.liveConfig||{},{theme:t});
+  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
+    settings.liveConfig=c;LIVE.msg='Darstellung „'+(t==='hell'?'Hell':'Schwarz')+'“ gespeichert. Die Fernseher wechseln innerhalb einer Minute.';renderLive();});}
 function liveSaveCfg(){if(currentUserRole!=='admin')return;var g=function(id){var el=document.getElementById(id);return el?el.value.replace(',','.'):'';};
-  var c={crOEM:g('liveCrOem'),crMY:g('liveCrMy'),knappOEM:g('liveKnOem'),knappMY:g('liveKnMy'),optProStd:g('liveOph')};
+  var c={theme:liveCfg().theme,crOEM:g('liveCrOem'),crMY:g('liveCrMy'),knappOEM:g('liveKnOem'),knappMY:g('liveKnMy'),optProStd:g('liveOph')};
   Object.keys(c).forEach(function(k){c[k]=c[k]===''?null:+c[k];if(c[k]!=null&&isNaN(c[k]))c[k]=null;});
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
@@ -4519,7 +4523,7 @@ function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;
   var fld=function(l,h){return '<label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text3)">'+l+h+'</label>';};
   var h='<div class="content">'+buildGlobalBannerHtml(gbVisible());
   h+='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-device-tv"></i> Live-Ansicht</div><span class="kal-note">So sieht es auf dem Fernseher aus · aktualisiert sich jede Minute</span>'
-    +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="kal-note">Standort</span><span class="dsh-seg">'
+    +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="kal-note">Darstellung</span><span class="dsh-seg">'+[['schwarz','Schwarz'],['hell','Hell']].map(function(o){return '<button type="button" class="'+(c.theme===o[0]?'on':'')+'"'+(adm?' onclick="liveSetTheme(\''+o[0]+'\')"':' disabled')+'>'+o[1]+'</button>';}).join('')+'</span><span class="kal-note" style="margin-left:10px">Standort</span><span class="dsh-seg">'
     +[['','Alle'],['MUC','Olching'],['VLC','Valencia']].map(function(o){return '<button type="button" class="'+(LIVE.ort===o[0]?'on':'')+'" onclick="liveSetOrt(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</span></span></div>';
   if(k){h+='<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#EEEDE9;border:1px solid var(--border)"><iframe src="'+esc(liveUrl(true))+'" title="Live-Ansicht" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>';}
   else{h+='<div class="kal-note" style="padding:30px;text-align:center">Noch keine Adresse vorhanden. '+(adm?'Bitte unten „Adresse erzeugen“ klicken (vorher 45_live_ansicht.sql in Supabase ausführen).':'Ein Admin muss die Adresse zuerst erzeugen.')+'</div>';}
