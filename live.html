@@ -464,6 +464,15 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     }
   }
 
+  // Vorführ-Modus (?demo=1): alle 2 Minuten eine andere Animation bzw. Karte, sonst normaler Betrieb
+  if(Q.get('demo')==='1'){
+    var DSTEPS=['aufstieg','ziel','marge','auftrag','zahlen','team','top3','donnerstag','freitag'],di=0;
+    function demoNext(){if(!D)return;if(CEL_ON){setTimeout(demoNext,5000);return;}var st=DSTEPS[di%DSTEPS.length];di++;
+      if(st==='zahlen'){if(LASTBV)LASTBV=LASTBV.map(function(x){return [x[0]==null?null:x[0]*0.85,x[1]];});if(LASTCR){var n=0;Object.keys(LASTCR).forEach(function(k){if(n<6){LASTCR[k]='x';n++;}});}render(false,true);return;}
+      if(st==='aufstieg')TESTFAKE=false;
+      TEST=st;render(false,true);}
+    setTimeout(function(){demoNext();setInterval(demoNext,120000);},20000);
+  }
   load();
   setInterval(load,60000);
   setInterval(function(){if(D)render(false);},30000); // Soll-Linie läuft mit der Uhr
