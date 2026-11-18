@@ -93,6 +93,30 @@ body.embed .tv{border-radius:22px}
 #t3 .blk{width:100%;margin-top:10px;border-radius:18px 18px 0 0;display:flex;flex-direction:column;align-items:center;height:0;overflow:hidden;transition:height .8s cubic-bezier(.2,1.1,.4,1)}
 #t3 .blk .pl{font-size:100px;font-weight:200;line-height:1;margin-top:12px}#t3 .blk .op{font-size:24px;font-weight:600}
 #t3 .p1{background:linear-gradient(160deg,#E9773F 0%,#DE5A5E 55%,#C23B66 100%);color:#fff}#t3 .p2{background:#E6E1D7;color:#3a3833}#t3 .p3{background:#EFECE5;color:#3a3833}
+/* Wochenziel-Karten (Do 12:20, Fr 09:00) */
+#wk{position:absolute;z-index:61;background:#F7F5F0;border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;color:#1d1c1a;padding:40px 56px;box-sizing:border-box;
+  opacity:0;transform:translateY(30px) scale(.97);transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.4,1)}
+#wk.on{opacity:1;transform:none}
+#wk .k{font-size:22px;font-weight:700;letter-spacing:.22em;color:#8a8478;text-align:center}
+#wk .t{font-size:58px;font-weight:300;text-align:center;margin-top:4px;line-height:1.1}
+#wk .t b{font-weight:600;background:linear-gradient(90deg,#E9773F,#C23B66);-webkit-background-clip:text;background-clip:text;color:transparent}
+#wk .s{font-size:21px;color:#6b665c;text-align:center;margin-top:8px}
+#wk table{width:100%;border-collapse:collapse;margin-top:24px;font-size:24px}
+#wk th{background:#EFECE5;color:#5f594e;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:12px 14px;text-align:right}
+#wk th:first-child,#wk td:first-child{text-align:left}
+#wk td{padding:0 14px;border-bottom:1px solid #E4E0D6;text-align:right;font-weight:600;white-space:nowrap}
+#wk td.nm{font-weight:700}#wk .fe{font-size:30px;font-weight:700;color:#C23B66}
+#wk .pb{position:relative;height:16px;border-radius:8px;background:#EFECE5;overflow:hidden;min-width:220px}
+#wk .pb i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;width:0;transition:width 1.2s cubic-bezier(.2,1,.4,1)}
+#wk .chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;font-size:18px;color:#6b665c;align-items:center}
+#wk .chips span{background:#EFECE5;border-radius:999px;padding:4px 14px;font-weight:700;color:#3a3833}
+#wk .hb{display:grid;grid-template-columns:290px minmax(0,1fr) 230px;align-items:center;gap:18px;height:60px}
+#wk .hb .n{font-size:23px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#wk .hb .tr{position:relative;height:26px;background:#EFECE5;border-radius:8px}
+#wk .hb .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;width:0;transition:width 1.2s cubic-bezier(.2,1,.4,1)}
+#wk .hb .tr u{position:absolute;top:-6px;bottom:-6px;width:3px;background:#1d1c1a;opacity:.55}
+#wk .hb .tr em{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-style:normal;font-size:15px;font-weight:700;color:#3a3833;padding-left:10px}
+#wk .hb .f{font-size:28px;font-weight:700;text-align:right;white-space:nowrap}#wk .hb .f small{font-size:14px;font-weight:600;color:#8a8478;margin-left:6px}
 /* Popup: jemand klettert im Ranking nach oben */
 #cel{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;
   background:linear-gradient(150deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);overflow:hidden;opacity:0;transform:scale(1.04);transition:opacity .6s ease,transform .6s ease;pointer-events:none}
@@ -157,7 +181,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     setTimeout(function(){bx.remove();},4700);return 5000;
   }
   // Top 3 des Tages (16:30, 10 Sekunden): Blöcke wachsen 3 → 2 → 1, Namen bauen sich Buchstabe für Buchstabe auf
-  var LASTROWS=[],T3_DAY=null;
+  var LASTROWS=[],LASTWEEK=[],T3_DAY=null,WK_DONE={};
   function typeName(el,txt,ms,done){var i=0;el.innerHTML='<i></i>';var iv=setInterval(function(){i++;el.innerHTML=esc(txt.slice(0,i))+'<i></i>';if(i>=txt.length){clearInterval(iv);setTimeout(function(){el.innerHTML=esc(txt);if(done)done();},500);}},ms);}
   function top3Show(){
     var top=LASTROWS.filter(function(r){return r.opt>0;}).slice(0,3);if(!top.length||CEL_ON)return false;
@@ -177,7 +201,34 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     setTimeout(function(){card.classList.remove('on');dim.classList.remove('on');if(tv)tv.classList.remove('blur');setTimeout(function(){card.remove();dim.remove();CEL_ON=false;celNext();},700);},10000);
     return true;
   }
-  setInterval(function(){var d=new Date(),t=today(),m=d.getHours()*60+d.getMinutes();if(T3_DAY!==t&&m>=990&&m<995){if(top3Show())T3_DAY=t;}},15000);
+  setInterval(function(){var d=new Date(),t=today(),m=d.getHours()*60+d.getMinutes();if(T3_DAY!==t&&m>=990&&m<995){if(top3Show())T3_DAY=t;}
+    var wd=d.getDay();if(wd===4&&m>=740&&m<745&&WK_DONE['do'+t]==null){if(wkShow('do'))WK_DONE['do'+t]=1;}
+    if(wd===5&&m>=540&&m<545&&WK_DONE['fr'+t]==null){if(wkShow('fr'))WK_DONE['fr'+t]=1;}},15000);
+  function wkShow(kind){
+    if(CEL_ON)return false;var L=LASTWEEK.slice(),html,pos;
+    function bar(b,z,c){return '<div class="pb"><i data-w="'+Math.min(100,b/z*100).toFixed(1)+'" style="background:'+c+'"></i></div>';}
+    if(kind==='do'){
+      var C=L.filter(function(x){return x.f>0&&x.f<=20&&!x.away;}).sort(function(a,b){return a.f-b.f;}),done=L.filter(function(x){return x.f<=0;});
+      if(!C.length&&!done.length)return false;
+      html='<div class="k">'+hhmm()+' · AUSGLEICHSTAG AM FREITAG</div><div class="t">'+(C.length?'<b>'+C.length+'</b> '+(C.length===1?'kann':'können')+' morgen noch frei machen':'Wer schafft es noch?')+'</div>'
+        +'<div class="s">Wer bis heute Feierabend sein Wochenziel schafft, hat am Freitag frei. Hier alle, denen höchstens 20 Optimierungen fehlen.</div>';
+      var rh2=Math.max(42,Math.min(56,Math.floor(560/Math.max(1,C.length))));if(C.length)html+='<table><tr><th>Name</th><th>Woche</th><th>fehlen noch</th><th>je Std. bis Feierabend</th><th style="text-align:left">Fortschritt</th></tr>'+C.map(function(x){return '<tr style="height:'+rh2+'px"><td class="nm">'+esc(x.name)+'</td><td>'+x.b+' / '+x.z+'</td><td class="fe">'+x.f+'</td><td>'+(x.rest>0.2?(x.f/x.rest).toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1}):'–')+'</td><td>'+bar(x.b,x.z,'linear-gradient(90deg,#E9773F,#C23B66)')+'</td></tr>';}).join('')+'</table>';
+      if(done.length)html+='<div class="chips">Schon geschafft:'+done.map(function(x){return '<span>'+esc(x.name)+' ✓</span>';}).join('')+'</div>';
+      pos='left:300px;right:300px;top:'+Math.max(40,Math.round((1080-(300+rh2*C.length+(done.length?70:0)+80))/2))+'px';
+    } else {
+      var B=L.filter(function(x){return x.f>20&&!x.away;}).sort(function(a,b){return a.f-b.f;});if(!B.length)return false;
+      var tot=B.reduce(function(a,x){return a+x.f;},0);
+      html='<div class="k">'+hhmm()+' · ENDSPURT ZUM WOCHENZIEL</div><div class="t">Heute ist euer Tag – <b>holt euch die 140!</b></div><div class="s">Für '+(B.length===1?'eine Person':'diese '+B.length)+' zählt heute jede Optimierung · zusammen noch '+num(tot)+' bis zum Ziel</div><div style="margin-top:22px">'
+        +B.map(function(x){var rh=Math.max(40,Math.min(60,Math.floor(700/B.length)));var mx=Math.max(x.z,x.b)*1.04,ph=x.fri||7;return '<div class="hb" style="height:'+rh+'px"><div class="n">'+esc(x.name)+'</div><div class="tr"><i data-w="'+(x.b/mx*100).toFixed(1)+'" style="background:'+(x.f<=Math.round(ph*3.5)?'#F7B39A':'#C9C2B4')+'"></i><u style="left:'+(x.z/mx*100).toFixed(1)+'%"></u><em>'+x.b+' / '+x.z+'</em></div><div class="f">'+x.f+'<small>noch · '+(x.f/ph).toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1})+'/Std.</small></div></div>';}).join('')+'</div>';
+      pos='left:180px;right:180px;top:'+Math.max(40,Math.round((1080-(230+Math.max(40,Math.min(60,Math.floor(700/B.length)))*B.length+80))/2))+'px';
+    }
+    CEL_ON=true;var tv=stage.querySelector('.tv');if(tv)tv.classList.add('blur');
+    var dim=document.createElement('div');dim.id='t3dim';stage.appendChild(dim);
+    var card=document.createElement('div');card.id='wk';card.setAttribute('style',pos);card.innerHTML=html;stage.appendChild(card);void card.offsetWidth;dim.classList.add('on');card.classList.add('on');
+    setTimeout(function(){card.querySelectorAll('i[data-w]').forEach(function(i){i.style.width=i.getAttribute('data-w')+'%';});},500);
+    setTimeout(function(){card.classList.remove('on');dim.classList.remove('on');if(tv)tv.classList.remove('blur');setTimeout(function(){card.remove();dim.remove();CEL_ON=false;celNext();},700);},60000);
+    return true;
+  }
   function fxRun(c){
     if(c.team)return teamFx(c);
     var col=stage.querySelector('.bars .c[data-eid="'+c.id+'"]');if(!col){return 600;}
@@ -380,6 +431,17 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     var old=fresh&&RANK?snapCols():null,ups=fresh?rankUps(rows,t):[];
     var cel=document.getElementById('cel');stage.innerHTML=h;if(cel)stage.appendChild(cel);
     tagCols(rows);LASTROWS=rows;
+    // Wochenstand je Agent: bisher (Mo bis heute) und Wochenziel = Optimierungen je Std. × Arbeitsstunden der Woche
+    // (vergangene Tage nur, wenn es Zahlen gibt – Urlaub/Krank ohne Zahlen senkt das Ziel; heute/kommende Tage ohne eingetragene Abwesenheit)
+    (function(){var dw=(new Date(t+'T12:00:00').getDay()+6)%7,mo=addDays(t,-dw),L=[];
+      function absOn(id,d){var r=null;(D.abwesend||[]).forEach(function(a){if(a.employee_id===id&&a.von<=d&&a.bis>=d)r=r||{};if(r&&a.employee_id===id&&a.von<=d&&a.bis>=d){if(a.halb)r.halb=true;else r.ganz=true;}});return r;}
+      emps.forEach(function(e){var b=0,z=0;for(var k=0;k<5;k++){var d=addDays(mo,k),pp=(perf[e.id]||{})[d],ph=plannedHours(e,d);
+          if(d<=t)b+=opt(pp);
+          if(d<t){if(opt(pp)>0)z+=ph;}else{var a=absOn(e.id,d);if(a&&a.ganz&&!opt(pp))continue;z+=a&&a.halb?ph*0.5:ph;}}
+        var zr=Math.round(z*OPH);if(zr<=0)return;
+        var a0=absOn(e.id,t),pl=plannedHours(e,t);if(a0&&a0.halb)pl*=0.5;var rest=(a0&&a0.ganz)?0:Math.max(0,pl-Math.min(elapsedAt(e,t,refMin),pl));
+        L.push({name:e.name,b:b,z:zr,f:zr-b,rest:rest,away:!!(a0&&a0.ganz),fri:plannedHours(e,addDays(mo,4))});});
+      LASTWEEK=L;})();
     if(fresh){countUp(BV);crFlip();}
     if(fresh){
       var wait=animCols(old,ups);
@@ -388,6 +450,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
       rankSave(rows,t);prevSave(rows,t);
       // Probe für die Feier-Bildschirme: ?test=ziel | marge | auftrag
       if(TEST==='top3'){TEST='';setTimeout(top3Show,1200);}
+      if(TEST==='donnerstag'||TEST==='freitag'){var tk=TEST==='donnerstag'?'do':'fr';TEST='';setTimeout(function(){if(!wkShow(tk))console.log('Wochenkarte: niemand passt');},1200);}
       if(TEST==='team'){TEST='';var tb=Math.max(100,Math.floor(S.opt/100)*100);setTimeout(function(){CEL_Q.push({team:1,kick:'TEAM-MEILENSTEIN',big:num(tb)+' Optimierungen'});celNext();},1500);}
       if((TEST==='ziel'||TEST==='marge'||TEST==='auftrag')&&rows.length){var tr=rows[0],o=PREV[tr.e.id];
         if(TEST==='ziel'){o.opt=Math.max(0,Math.round(tr.ziel)-1);if(tr.opt<Math.round(tr.ziel))tr.ziel=tr.opt;}
