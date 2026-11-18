@@ -161,6 +161,19 @@ body.embed .tv{border-radius:22px}
 #t3.intro .cd{position:absolute;left:0;right:0;bottom:70px;font-size:260px;font-weight:200;line-height:1}
 #t3.intro .go{position:absolute;left:0;right:0;bottom:120px;font-size:150px;font-weight:800;letter-spacing:.02em;opacity:0;transform:scale(.4)}
 #t3.intro .go.on{opacity:1;transform:scale(1);transition:all .5s cubic-bezier(.2,1.6,.4,1)}
+/* Endspurt */
+#t3.endsp .ecd{position:absolute;left:0;right:0;top:150px;text-align:center;font-size:110px;font-weight:200;line-height:1;color:#C23B66;z-index:8}
+#t3.endsp .ecd.big{font-size:230px;top:130px}
+#t3.endsp .eend{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(247,245,240,.94);z-index:9;opacity:0;pointer-events:none;transition:opacity .5s}
+#t3.endsp .eend.on{opacity:1}#t3.endsp .eend b{font-size:150px;font-weight:800;background:linear-gradient(90deg,#E9773F,#C23B66);-webkit-background-clip:text;background-clip:text;color:transparent}
+#t3.endsp .eend small{font-size:30px;color:#6b665c;margin-top:10px}
+#t3 .man.watch .ar1{transform:rotate(78deg)}#t3 .man.watch .ar2{transform:rotate(-12deg)}
+#t3 .man.watch svg{animation:mTap 1.4s ease-in-out infinite}
+@keyframes mTap{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg)}}
+#t3 .man.pump .ar2{animation:mPump .45s ease-in-out infinite alternate}#t3 .man.pump .ar1{transform:rotate(12deg)}
+@keyframes mPump{from{transform:rotate(-120deg)}to{transform:rotate(-175deg)}}
+#t3 .man.pump svg{animation:mBob .45s ease-in-out infinite alternate}
+@keyframes mBob{from{transform:translateY(0)}to{transform:translateY(-8px)}}
 /* Wochenziel-Karten (Do 12:20, Fr 09:00) */
 #wk{position:absolute;z-index:61;background:#F7F5F0;border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;color:#1d1c1a;padding:40px 56px;box-sizing:border-box;
   opacity:0;transform:translateY(30px) scale(.97);transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.4,1)}
@@ -258,27 +271,75 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
   function phTs(t,hm){var p=String(hm).split(':');var d=new Date(t+'T00:00:00');d.setHours(+p[0],+p[1],0,0);return d.getTime();}
   function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}function lsSet(k){try{localStorage.setItem(k,'1');}catch(e){}}
   // aktive Power Hour: von Start bis zur Siegerehrung (Ergebnis mit dem ersten Datenstand nach dem Ende, spätestens 6 Min. danach)
+  // Power Hour läuft: Start bis Ende (danach normale Ansicht)
   function phState(t,now){var n=now.getTime(),res=null;
-    (D.powerhours||[]).forEach(function(h){if(res||h.datum!==t)return;var S=phTs(t,h.start),E=phTs(t,h.ende);if(n<S||n>E+12*60000)return;if(lsGet('phdone_'+h.id)&&n>E)return;
-      var after=(D.ticks||[]).map(function(k){return new Date(k.ts).getTime();}).filter(function(x){return x>E;}).sort(function(a,b){return a-b;})[0];
-      var fin=n>=E&&(after!=null||n>=E+6*60000),cut=n<E?n:(after!=null?after+60000:E);
-      res={h:h,S:S,E:E,fin:fin,cut:cut};});
+    (D.powerhours||[]).forEach(function(h){if(res||h.datum!==t)return;var S=phTs(t,h.start),E=phTs(t,h.ende);if(n<S||n>=E)return;res={h:h,S:S,E:E,cut:n};});
     return res;}
-  function phTick(){if(!D)return;var t=today(),now=new Date(),P=phState(t,now);
-    var el=stage.querySelector('.phT'),pp=stage.querySelector('.phP');if(P&&el){var l=P.E-now.getTime();el.textContent=l>0?mmss(l):'00:00';if(pp)pp.style.width=clamp((now.getTime()-P.S)/(P.E-P.S)*100,0,100).toFixed(1)+'%';}
-    if(!!P!==PHMODE&&!CEL_ON){render(false,true);return;}
-    if(!P||CEL_ON)return;var c=phCfg(),ms=Math.max(1,+(c.popupMin||2))*60000,kn=PH_KPI[P.h.kpi]||PH_KPI.opt,KV=phKV(P.h.kpi);
-    var list=LASTROWS.slice().sort(function(a,b){return KV(b)-KV(a)||b.opt-a.opt;}).filter(function(r){return KV(r)>0;});
-    var half=c.halbMin?P.S+c.halbMin*60000:P.S+(P.E-P.S)/2;
-    if(!lsGet('phhalf_'+P.h.id)&&now.getTime()>=half&&now.getTime()<half+5*60000&&now.getTime()<P.E&&list.length>=3){lsSet('phhalf_'+P.h.id);
-      var al=list.map(function(r){return {name:r.e.name,val:kn.f(KV(r))};});podiumShow(al.slice(0,3),'⚡ POWER HOUR · ZWISCHENSTAND · NOCH '+mmss(P.E-now.getTime()),'Zwischenstand','',ms,al);return;}
-    if(P.fin&&!lsGet('phdone_'+P.h.id)){lsSet('phdone_'+P.h.id);if(!list.length){render(false,true);return;}
-      var w=list[0],r2=list[1],r3=list[2];
-      ceremonyShow({kick:'⚡ POWER HOUR '+P.h.start+'–'+P.h.ende+' · '+kn.l.toUpperCase(),unit:kn.k==='e'?'':kn.u,value:KV(w),fmt:kn.k==='e'?function(v){return eur(v);}:function(v){return num(v);},name:w.e.name,
-        rest:(r2?'Platz 2 '+r2.e.name+' · '+kn.f(KV(r2)):'')+(r3?'   ·   Platz 3 '+r3.e.name+' · '+kn.f(KV(r3)):''),ms:ms});
-      setTimeout(function(){render(false,true);},ms+1500);}
+  // nach dem Ende: wartet auf den ersten Datenstand danach (spätestens 6 Min.), dann Siegerehrung
+  function phPending(t,now){var n=now.getTime(),res=null;
+    (D.powerhours||[]).forEach(function(h){if(res||h.datum!==t)return;var S=phTs(t,h.start),E=phTs(t,h.ende);if(n<E||n>E+12*60000||lsGet('phdone_'+h.id))return;
+      var after=(D.ticks||[]).map(function(k){return new Date(k.ts).getTime();}).filter(function(x){return x>E;}).sort(function(a,b){return a-b;})[0];
+      res={h:h,S:S,E:E,fin:(after!=null||n>=E+6*60000),cut:after!=null?after+60000:E};});
+    return res;}
+  function phList(P){var KV=phKV(P.h.kpi),agg={};(D.ticks||[]).forEach(function(k){var ts=new Date(k.ts).getTime();if(ts<=P.S||ts>P.cut)return;var a=agg[k.e]||(agg[k.e]={opt:0,my:0,marge:0,mm:0});
+      a.opt+=(k.oem||0)+(k.ups||0)+(k.wka||0);a.my+=k.my||0;a.marge+=+k.m||0;if((k.my||0)>0&&(k.oem||0)>0)a.mm+=(+k.om||0)*Math.min(1,k.my/k.oem);});
+    return LASTROWS.map(function(r){var a=agg[r.e.id]||{opt:0,my:0,marge:0,mm:0};return {e:r.e,opt:a.opt,my:a.my,marge:a.marge,mm:a.mm};}).filter(function(x){return KV(x)>0;}).sort(function(x,y){return KV(y)-KV(x)||y.opt-x.opt;});}
+  // ── Endspurt: die letzten 5 Minuten, Top 3 anonym, Figuren schauen auf die Uhr bzw. feuern an ──
+  var END=null;
+  function endShow(P){
+    if(CEL_ON)return false;CEL_ON=true;var tv=stage.querySelector('.tv');if(tv)tv.classList.add('blur');
+    var dim=document.createElement('div');dim.id='t3dim';stage.appendChild(dim);
+    var card=document.createElement('div');card.id='t3';card.className='pod endsp';var H={1:250,2:190,3:150},ord=[2,1,3];
+    var html='<div class="hd"><small>⚡ POWER HOUR · ENDSPURT · '+esc((PH_KPI[P.h.kpi]||PH_KPI.opt).l.toUpperCase())+'</small><b>Wer holt sich Platz 1?</b></div><div class="ecd">05:00</div><div class="scene"><div class="st3">';
+    ord.forEach(function(pl){html+='<div class="pc"><div class="blk p'+pl+'" data-pl="'+pl+'" style="height:'+H[pl]+'px"><div class="pl">'+pl+'</div><div class="bv">–</div></div></div>';});
+    card.innerHTML=html+'</div></div><div class="eend"><b>SCHLUSS!</b></div>';stage.appendChild(card);void card.offsetWidth;dim.classList.add('on');card.classList.add('on');
+    END={P:P,card:card,dim:dim,H:H,figs:{},cols:{},ci:0,done:false};
+    setTimeout(endUpdate,400);return true;
   }
-  var FORCE_R=false;
+  var END_COLS=[['#E9773F','#DE5A5E','#C23B66'],['#6BA8A0','#4E8C84','#36706A'],['#A9A39A','#8C857A','#6F695F'],['#F2C14E','#E2A23A','#C8862A']];
+  function endUpdate(){if(!END||END.done||!END.card.parentNode)return;var card=END.card,P=END.P,KV=phKV(P.h.kpi),kn=PH_KPI[P.h.kpi]||PH_KPI.opt;
+    var L=LASTROWS.slice().sort(function(a,b){return KV(b)-KV(a)||b.opt-a.opt;}).filter(function(r){return KV(r)>0;}).slice(0,3),W=150,scene=card.querySelector('.scene');
+    function bx(pl){var b=card.querySelector('.blk[data-pl="'+pl+'"]'),cr=card.getBoundingClientRect(),r=b.getBoundingClientRect();return {l:(r.left-cr.left)/SCALE+(r.width/SCALE)/2-W/2};}
+    var seen={};
+    L.forEach(function(r,i){var pl=i+1,id=String(r.e.id);seen[id]=1;var bv=card.querySelector('.blk[data-pl="'+pl+'"] .bv');if(bv)bv.textContent=kn.f(KV(r));
+      var x=bx(pl).l,y=END.H[pl]-32,f=END.figs[id];
+      if(!f){var c=END.cols[id]||(END.cols[id]=END_COLS[(END.ci++)%END_COLS.length]);var m=document.createElement('div');m.className='man '+(pl===1?'watch':'pump');m.innerHTML=manSvg(c[0],c[1],c[2]);m.style.left=x+'px';m.style.bottom=y+'px';scene.appendChild(m);
+        if(m.animate)m.animate([{transform:'translateY(-500px)'},{transform:'translateY(0)',offset:.7},{transform:'translateY(-24px)',offset:.85},{transform:'translateY(0)'}],{duration:900,easing:'ease-in'});
+        END.figs[id]={m:m,pl:pl};}
+      else if(f.pl!==pl){var m2=f.m,ox=parseFloat(m2.style.left),oy=parseFloat(m2.style.bottom);
+        // Platztausch: Figur springt im Bogen auf das neue Treppchen
+        if(m2.animate){m2.animate([{left:ox+'px',bottom:oy+'px'},{left:((ox+x)/2)+'px',bottom:(Math.max(oy,y)+170)+'px',offset:.5},{left:x+'px',bottom:y+'px'}],{duration:1100,easing:'ease-in-out'});}
+        m2.style.left=x+'px';m2.style.bottom=y+'px';m2.className='man '+(pl===1?'watch':'pump');f.pl=pl;}});
+    Object.keys(END.figs).forEach(function(id){if(seen[id])return;var f=END.figs[id];if(f.m.animate)f.m.animate([{transform:'translate(0,0) rotate(0)'},{transform:'translate(300px,700px) rotate(160deg)'}],{duration:1300,easing:'ease-in',fill:'forwards'});setTimeout(function(){f.m.remove();},1400);delete END.figs[id];});
+  }
+  function endClock(){if(!END||!END.card.parentNode)return;var card=END.card,l=END.P.E-Date.now(),ec=card.querySelector('.ecd');
+    if(l>10000){ec.textContent=mmss(l);ec.classList.remove('big');}
+    else if(l>0){var sN=String(Math.ceil(l/1000));if(ec.textContent!==sN){ec.textContent=sN;ec.classList.add('big');if(ec.animate)ec.animate([{transform:'scale(1.6)',opacity:0},{transform:'scale(1)',opacity:1,offset:.35},{transform:'scale(.92)',opacity:.85}],{duration:950,easing:'ease-out'});}}
+    else if(!END.done){END.done=true;ec.textContent='';var en=card.querySelector('.eend');en.classList.add('on');
+      Object.keys(END.figs).forEach(function(id){END.figs[id].m.className='man idle';});
+      // zurück zur normalen Ansicht im Hintergrund
+      FORCE_R=true;try{render(false,true);}finally{FORCE_R=false;}
+      setTimeout(function(){if(!card.parentNode)return;en.innerHTML='<b style="font-size:84px">Power Hour beendet</b><small>Die Auswertung kommt in wenigen Minuten</small>';},2200);
+      setTimeout(function(){var E2=END;END=null;card.classList.remove('on');E2.dim.classList.remove('on');var tv2=stage.querySelector('.tv');if(tv2)tv2.classList.remove('blur');setTimeout(function(){card.remove();E2.dim.remove();CEL_ON=false;celNext();},700);},10000);}}
+  setInterval(endClock,250);
+  function phTick(){if(!D)return;var t=today(),now=new Date(),n=now.getTime(),P=phState(t,now);
+    var el=stage.querySelector('.phT'),pp=stage.querySelector('.phP');if(P&&el){var l=P.E-n;el.textContent=l>0?mmss(l):'00:00';if(pp)pp.style.width=clamp((n-P.S)/(P.E-P.S)*100,0,100).toFixed(1)+'%';}
+    if(!!P!==PHMODE&&!CEL_ON){render(false,true);return;}
+    var c=phCfg(),ms=Math.max(1,+(c.popupMin||2))*60000;
+    if(P&&!CEL_ON){var kn=PH_KPI[P.h.kpi]||PH_KPI.opt,KV=phKV(P.h.kpi);
+      // Endspurt 5 Minuten vor Ende (bleibt bis zum Schluss stehen)
+      if(!lsGet('phend_'+P.h.id)&&n>=P.E-5*60000&&n<P.E-3000){lsSet('phend_'+P.h.id);endShow(P);return;}
+      var list=LASTROWS.slice().sort(function(a,b){return KV(b)-KV(a)||b.opt-a.opt;}).filter(function(r){return KV(r)>0;});
+      var half=c.halbMin?P.S+c.halbMin*60000:P.S+(P.E-P.S)/2;
+      if(!lsGet('phhalf_'+P.h.id)&&n>=half&&n<half+5*60000&&n<P.E-5*60000-ms&&list.length>=3){lsSet('phhalf_'+P.h.id);
+        var al=list.map(function(r){return {name:r.e.name,val:kn.f(KV(r))};});podiumShow(al.slice(0,3),'⚡ POWER HOUR · ZWISCHENSTAND · NOCH '+mmss(P.E-n),'Zwischenstand','',ms,al);return;}}
+    var Q=phPending(t,now);
+    if(Q&&Q.fin&&!CEL_ON){lsSet('phdone_'+Q.h.id);var kn2=PH_KPI[Q.h.kpi]||PH_KPI.opt,KV2=phKV(Q.h.kpi),L=phList(Q);if(!L.length)return;
+      var w=L[0],r2=L[1],r3=L[2];
+      ceremonyShow({kick:'⚡ POWER HOUR '+Q.h.start+'–'+Q.h.ende+' · '+kn2.l.toUpperCase(),unit:kn2.k==='e'?'':kn2.u,value:KV2(w),fmt:kn2.k==='e'?function(v){return eur(v);}:function(v){return num(v);},name:w.e.name,
+        rest:(r2?'Platz 2 '+r2.e.name+' · '+kn2.f(KV2(r2)):'')+(r3?'   ·   Platz 3 '+r3.e.name+' · '+kn2.f(KV2(r3)):''),ms:ms});}
+  }
+  var FORCE_R=false,FX_ON=false;
   function phIntro(h,S){
     if(CEL_ON)return false;CEL_ON=true;var tv=stage.querySelector('.tv');if(tv)tv.classList.add('blur');
     var kn=PH_KPI[h.kpi]||PH_KPI.opt,mins=Math.round((phTs(today(),h.ende)-phTs(today(),h.start))/60000);
@@ -471,7 +532,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     setTimeout(function(){card.classList.remove('on');dim.classList.remove('on');if(tv)tv.classList.remove('blur');setTimeout(function(){card.remove();dim.remove();CEL_ON=false;celNext();},700);},120000);
     return true;
   }
-  function fxRun(c){
+  function fxRun(c){FX_ON=true;setTimeout(function(){FX_ON=false;},c.team?5000:4800);
     if(c.team)return teamFx(c);
     var col=stage.querySelector('.bars .c[data-eid="'+c.id+'"]');if(!col){return 600;}
     var all=stage.querySelectorAll('[data-eid="'+c.id+'"]'),st=col.querySelector('.st')||col,p=stagePos(st);
@@ -576,7 +637,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
   function showMsg(t,s){stage.innerHTML='';var m=document.getElementById('msg');if(!m){m=document.createElement('div');m.id='msg';m.className='msg';document.body.appendChild(m);}m.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';}
 
   function render(netErr,fresh){
-    if(!D)return;if(CEL_ON&&!FORCE_R){setTimeout(function(){render(netErr,fresh);},1500);return;}var m=document.getElementById('msg');if(m)m.remove();
+    if(!D)return;if(FX_ON&&!FORCE_R){setTimeout(function(){render(netErr,fresh);},1500);return;}var m=document.getElementById('msg');if(m)m.remove();
     var cfg={};try{cfg=typeof D.config==='string'?JSON.parse(D.config||'{}'):(D.config||{});}catch(e){cfg={};}
     var ZOEM=cfg.crOEM!=null&&cfg.crOEM!==''?+cfg.crOEM:55,ZMY=cfg.crMY!=null&&cfg.crMY!==''?+cfg.crMY:20,OPH=cfg.optProStd?+cfg.optProStd:3.5;
     var NOEM=cfg.knappOEM!=null&&cfg.knappOEM!==''?+cfg.knappOEM:5,NMY=cfg.knappMY!=null&&cfg.knappMY!==''?+cfg.knappMY:3;
@@ -706,7 +767,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     var old=fresh&&RANK?snapCols():null,ups=fresh?rankUps(rows,t):[];
     var keep=[].slice.call(stage.children).filter(function(n){return !n.classList||!n.classList.contains('tv');}),blurOn=!!stage.querySelector('.tv.blur');
     stage.innerHTML=h;keep.forEach(function(n){stage.appendChild(n);});if(blurOn){var tvn=stage.querySelector('.tv');if(tvn)tvn.classList.add('blur');}
-    tagCols(rows);LASTROWS=rows;
+    tagCols(rows);LASTROWS=rows;if(END)setTimeout(endUpdate,50);
     // Wochenstand je Agent: bisher (Mo bis heute) und Wochenziel = Optimierungen je Std. × Arbeitsstunden der Woche
     // (vergangene Tage nur, wenn es Zahlen gibt – Urlaub/Krank ohne Zahlen senkt das Ziel; heute/kommende Tage ohne eingetragene Abwesenheit)
     (function(){var dw=(new Date(t+'T12:00:00').getDay()+6)%7,mo=addDays(t,-dw),L=[];
@@ -728,6 +789,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
       if(ev.length){setTimeout(function(){ev.slice(0,6).forEach(function(c){CEL_Q.push(c);});celNext();},wait+300);}
       rankSave(rows,t);prevSave(rows,t);
       // Probe für die Feier-Bildschirme: ?test=ziel | marge | auftrag
+      if(TEST==='endspurt'){TEST='';setTimeout(function(){var n=Date.now();endShow({h:{id:0,kpi:'opt',start:'',ende:''},S:n-55*60000,E:n+25000});},1000);}
       if(TEST==='intro'){TEST='';setTimeout(function(){var d=new Date(Date.now()+60000);phIntro({kpi:'opt',start:pad(d.getHours())+':'+pad(d.getMinutes()),ende:pad((d.getHours()+1)%24)+':'+pad(d.getMinutes())},Date.now()+14000);},1000);}
       if(TEST==='sieger'){TEST='';setTimeout(function(){var tt=LASTROWS.filter(function(r){return r.opt>0;}).slice(0,3);if(!tt.length)return;ceremonyShow({kick:'⚡ POWER HOUR · OPTIMIERUNGEN',unit:'Optimierungen',value:tt[0].opt,fmt:function(v){return Math.round(v);},name:tt[0].e.name,rest:(tt[1]?'Platz 2 '+tt[1].e.name+' · '+tt[1].opt:'')+(tt[2]?'   ·   Platz 3 '+tt[2].e.name+' · '+tt[2].opt:''),ms:120000});},1200);}
       if(TEST==='halbzeit'){TEST='';setTimeout(function(){var al=LASTROWS.filter(function(r){return r.opt>0;}).map(function(r){return {name:r.e.name,val:r.opt+' Opt.'};});podiumShow(al.slice(0,3),'⚡ POWER HOUR · HALBZEIT','Zwischenstand','Opt.',120000,al);},1200);}
