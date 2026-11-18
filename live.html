@@ -92,7 +92,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
   var stage=document.getElementById('stage');
   var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
   var D=null,lastOk=0;
-  var RANK=null,RANK_DAY=null,CEL_Q=[],CEL_ON=false,TEST=Q.get('test')||'';
+  var SCALE=1,TESTFAKE=false,RANK=null,RANK_DAY=null,CEL_Q=[],CEL_ON=false,TEST=Q.get('test')||'';
   function celShow(c){
     var el=document.getElementById('cel');if(!el){el=document.createElement('div');el.id='cel';stage.appendChild(el);}
     var cols=['#fff','#FFE1D6','#1d1c1a','#F7B39A'],cf='';
@@ -108,18 +108,29 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     if(CEL_ON||!CEL_Q.length)return;CEL_ON=true;var c=CEL_Q.shift();celShow(c);
     setTimeout(function(){var el=document.getElementById('cel');if(el)el.classList.remove('on');setTimeout(function(){CEL_ON=false;celNext();},900);},8000);
   }
-  function rankCheck(rows,t){
-    var now={};rows.forEach(function(r,i){now[r.e.id]={rank:i+1,opt:r.opt,marge:r.marge,name:r.e.name};});
-    if(RANK&&RANK_DAY===t){
-      var up=[];rows.forEach(function(r,i){var o=RANK[r.e.id];if(o&&i+1<o.rank&&r.opt>o.opt&&r.opt>0)up.push({name:r.e.name,von:o.rank,nach:i+1,opt:r.opt,marge:r.marge});});
-      up.sort(function(a,b){return a.nach-b.nach;});
-      up.slice(0,4).forEach(function(c){CEL_Q.push(c);});celNext();
-    } else if(TEST==='aufstieg'&&rows.length>1){CEL_Q.push({name:rows[1].e.name,von:4,nach:2,opt:rows[1].opt,marge:rows[1].marge});celNext();TEST='';}
-    RANK=now;RANK_DAY=t;
+  function rankUps(rows,t){
+    var up=[];if(!RANK||RANK_DAY!==t)return up;
+    rows.forEach(function(r,i){var o=RANK[r.e.id];if(o&&i+1<o.rank&&r.opt>o.opt&&r.opt>0)up.push({id:r.e.id,name:r.e.name,von:o.rank,nach:i+1,opt:r.opt,marge:r.marge});});
+    up.sort(function(a,b){return a.nach-b.nach;});return up;
   }
-
-  // ── Größe: 1920×1080 wird auf jedes Fenster/jeden Fernseher eingepasst ──
-  function fit(){var w=window.innerWidth,h=window.innerHeight,s=Math.min(w/1920,h/1080);stage.style.transform='translate('+((w-1920*s)/2)+'px,'+((h-1080*s)/2)+'px) scale('+s+')';}
+  function rankSave(rows,t){var now={};rows.forEach(function(r,i){now[r.e.id]={rank:i+1,opt:r.opt};});RANK=now;RANK_DAY=t;}
+  // Spalten (Name, CR, Säule, Marge, Ø) bekommen die Mitarbeiter-ID, damit sie beim Platzwechsel wandern können
+  function tagCols(rows){var cs=stage.querySelectorAll('.kr .v, .bars');for(var k=0;k<cs.length;k++){var ch=cs[k].children;for(var i=0;i<ch.length&&i<rows.length;i++){ch[i].setAttribute('data-eid',rows[i].e.id);ch[i].setAttribute('data-ro',k);}}}
+  function snapCols(){var m={};stage.querySelectorAll('[data-eid]').forEach(function(el){var r=el.getBoundingClientRect(),st=el.querySelector('.st');m[el.getAttribute('data-ro')+'|'+el.getAttribute('data-eid')]={x:r.left/SCALE,h:st?st.style.height:null};});return m;}
+  function animCols(old,ups){
+    if(!old)return 0;var upIds={};ups.forEach(function(u){upIds[u.id]=1;});var any=false;
+    stage.querySelectorAll('[data-eid]').forEach(function(el){
+      if(!el.animate)return;var o=old[el.getAttribute('data-ro')+'|'+el.getAttribute('data-eid')];if(!o)return;
+      var dx=o.x-el.getBoundingClientRect().left/SCALE,id=el.getAttribute('data-eid'),bar=el.classList.contains('c');
+      if(Math.abs(dx)<1&&!(bar&&o.h)){return;}
+      if(upIds[id]){any=true;el.style.position='relative';el.style.zIndex='5';
+        el.animate([{transform:'translate('+dx+'px,0)'},{transform:'translate('+dx+'px,'+(bar?-70:-14)+'px) scale('+(bar?1.08:1.04)+')',offset:.22},{transform:'translate(0,'+(bar?-70:-14)+'px) scale('+(bar?1.08:1.04)+')',offset:.78},{transform:'none'}],{duration:2600,easing:'ease-in-out'}).onfinish=function(){el.style.zIndex='';};
+      } else if(Math.abs(dx)>=1){any=true;el.animate([{transform:'translate('+dx+'px,0)'},{transform:'translate('+dx+'px,0)',offset:.2},{transform:'none',offset:.8},{transform:'none'}],{duration:2600,easing:'ease-in-out'});}
+      if(bar&&o.h){var st=el.querySelector('.st');if(st&&st.style.height!==o.h)st.animate([{height:o.h},{height:st.style.height}],{duration:1200,easing:'ease-out'});}
+    });
+    return any?2700:0;
+  }
+  function fit(){var w=window.innerWidth,h=window.innerHeight,s=Math.min(w/1920,h/1080);SCALE=s;stage.style.transform='translate('+((w-1920*s)/2)+'px,'+((h-1080*s)/2)+'px) scale('+s+')';}
   window.addEventListener('resize',fit);fit();
 
   // ── Hilfen ──
@@ -187,6 +198,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
         oemD:oem+(p?(p.oem_nicht_erfolgreich||0):0),oem:oem,ysm:p?(p.oem_yes||0)+(p.oem_sy||0)+my:0});
     });
     rows.sort(function(a,b){return b.opt-a.opt||b.marge-a.marge||a.e.name.localeCompare(b.e.name);});
+    if(D._fakeOrder){var pos={};D._fakeOrder.forEach(function(id,i){pos[id]=i;});rows.sort(function(a,b){return (pos[a.e.id]||0)-(pos[b.e.id]||0);});}
     // Vornamen; bei gleichen Vornamen mit Anfangsbuchstaben
     var fc={};rows.forEach(function(r){var f=r.e.name.split(' ')[0];fc[f]=(fc[f]||0)+1;});
     rows.forEach(function(r){var pa=r.e.name.split(' '),f=pa[0];r.nm=fc[f]>1&&pa[1]?f+' '+pa[pa.length-1].charAt(0)+'.':f;});
@@ -248,8 +260,18 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     var standTxt=stand?('Stand '+(iso(stand)===t?'':stand.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+' ')+pad(stand.getHours())+':'+pad(stand.getMinutes())):'';
     h+='<div class="ft"><span class="stand'+(alt?' alt':'')+'">'+(alt?'Keine Verbindung · letzter ':'')+standTxt+(ort?' · '+(ort==='VLC'?'Valencia':'Olching'):'')+'</span><span class="lg"><span><i style="background:#E2603C"></i><b>OEM MY</b></span><span><i style="background:#F7B39A"></i><b>OEM</b></span><span><i style="background:#E6DED0"></i>UPS</span><span><i style="background:#C9C2B4"></i>WKA</span><span><i style="background:#D9541E;height:4px;width:22px;vertical-align:3px"></i>Soll (steigt mit der Uhrzeit)</span></span></div>';
     h+='</div></div>';
+    var old=fresh&&RANK?snapCols():null,ups=fresh?rankUps(rows,t):[];
     var cel=document.getElementById('cel');stage.innerHTML=h;if(cel)stage.appendChild(cel);
-    if(fresh)rankCheck(rows,t);
+    tagCols(rows);
+    if(fresh){
+      var wait=animCols(old,ups);
+      if(ups.length){setTimeout(function(){ups.slice(0,4).forEach(function(c){CEL_Q.push(c);});celNext();},wait+300);}
+      rankSave(rows,t);
+      if(TEST==='aufstieg'&&!TESTFAKE&&rows.length>3){TESTFAKE=true;var tr=rows[1];RANK[tr.e.id]={rank:4,opt:tr.opt-3};
+        // Probe: so tun, als stünde die Person vorher auf Platz 4
+        var fk=rows.slice();fk.splice(1,1);fk.splice(3,0,tr);D._fakeOrder=fk.map(function(r){return r.e.id;});render(false,false);
+        setTimeout(function(){D._fakeOrder=null;TEST='';render(false,true);},2500);}
+    }
   }
 
   load();
