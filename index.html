@@ -4509,7 +4509,7 @@ function liveNewKey(){if(currentUserRole!=='admin')return;
     renderLive();});}
 function liveSaveCfg(){if(currentUserRole!=='admin')return;var g=function(id){var el=document.getElementById(id);return el?el.value.replace(',','.'):'';};
   var c={crOEM:g('liveCrOem'),crMY:g('liveCrMy'),knappOEM:g('liveKnOem'),knappMY:g('liveKnMy'),optProStd:g('liveOph')};
-  Object.keys(c).forEach(function(k){c[k]=c[k]===''?null:+c[k];if(c[k]!=null&&isNaN(c[k]))c[k]=null;});
+  Object.keys(c).forEach(function(k){c[k]=c[k]===''?null:+c[k];if(c[k]!=null&&isNaN(c[k]))c[k]=null;});c=Object.assign({},settings.liveConfig||{},c);
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
     settings.liveConfig=c;LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
@@ -4539,6 +4539,7 @@ function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;
     +fld('Optimierungen je Std.',inp('liveOph',c.optProStd,0.1,!adm))
     +(adm?'<button class="btn btn-primary" type="button" onclick="liveSaveCfg()"><i class="ti ti-device-floppy"></i> Einstellungen speichern</button>':'')+'</div></div>';
   h+=phbHtml();
+  h+=figHtml();
   h+='</div>';
   ma.innerHTML=h;}
 
@@ -4618,6 +4619,63 @@ function phbHtml(){
     h+='</table>';}
   return h+'</div>';
 }
+
+// Kinder-Figur (eigene Zeichnung): o={g:'m'|'w',skin:'hell'|'mittel'|'dunkel',hair:'kurz'|'locken'|'zopf'|'puffs',shirt:'#hex'}
+var KID_N=0;
+var KID_SKIN={hell:['#F8D6BE','#E8B494'],mittel:['#C99068','#A26A44'],dunkel:['#9A6440','#6E4026']};
+function kidShade(hex,f){var n=parseInt(hex.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;r=Math.round(r*f);g=Math.round(g*f);b=Math.round(b*f);return '#'+((1<<24)+(Math.min(255,r)<<16)+(Math.min(255,g)<<8)+Math.min(255,b)).toString(16).slice(1);}
+function kidSvg(o){o=o||{};var girl=o.g==='w',sk=KID_SKIN[o.skin]||KID_SKIN.hell,sh=o.shirt||'#F2884F',hs=o.hair||(girl?'zopf':'kurz'),g='kd'+(++KID_N);
+  var dark=o.skin==='dunkel'||o.skin==='mittel',h1=dark?'#1d1410':(o.haarfarbe||'#5A3A26'),h2=dark?'#3A2A20':kidShade(h1,1.35);
+  var d='<defs><radialGradient id="'+g+'s" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="'+sk[0]+'"/><stop offset="1" stop-color="'+sk[1]+'"/></radialGradient>'
+    +'<linearGradient id="'+g+'t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+kidShade(sh,1.08)+'"/><stop offset="1" stop-color="'+kidShade(sh,.82)+'"/></linearGradient>'
+    +'<linearGradient id="'+g+'p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E5C8A"/><stop offset="1" stop-color="#2E4670"/></linearGradient>'
+    +'<linearGradient id="'+g+'h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+h2+'"/><stop offset="1" stop-color="'+h1+'"/></linearGradient></defs>';
+  var S='url(#'+g+'s)',T='url(#'+g+'t)',P='url(#'+g+'p)',H='url(#'+g+'h)',shoe=girl?'#C84B4B':'#7A4A2A';
+  function arm(c,x){return '<g class="'+c+'" style="transform-origin:'+x+'px 104px"><rect x="'+(x-6)+'" y="100" width="12" height="26" rx="6" fill="'+T+'"/><rect x="'+(x-4.5)+'" y="122" width="9" height="26" rx="4.5" fill="'+S+'"/><circle cx="'+x+'" cy="150" r="6.5" fill="'+S+'"/></g>';}
+  function leg(c,x){return '<g class="'+c+'" style="transform-origin:'+x+'px 160px"><rect x="'+(x-7)+'" y="156" width="14" height="'+(girl?60:58)+'" rx="7" fill="'+(girl?S:P)+'"/><path d="M'+(x-9)+' 212 h16 a7 7 0 0 1 7 7 v3 h-25 v-4 a6 6 0 0 1 2-6z" fill="'+shoe+'"/></g>';}
+  var back=(girl&&hs!=='puffs'&&hs!=='kurz'&&hs!=='locken')?'<path d="M30 48 Q28 110 40 128 Q60 136 80 128 Q92 110 90 48 Z" fill="'+H+'"/><path d="M86 40 Q112 52 104 92 Q100 108 92 112 Q98 88 90 62Z" fill="'+H+'"/>':'';
+  var body=leg('lg2',68)+arm('ar2',78);
+  body+=girl?'<path d="M44 98 Q60 92 76 98 L84 162 Q60 170 36 162 Z" fill="'+T+'"/>':'<rect x="42" y="96" width="36" height="66" rx="14" fill="'+T+'"/><rect x="42" y="148" width="36" height="16" rx="6" fill="'+P+'"/>';
+  body+=leg('lg1',52);
+  var he='<circle cx="34" cy="58" r="7" fill="'+S+'"/><circle cx="86" cy="58" r="7" fill="'+S+'"/><circle cx="60" cy="56" r="30" fill="'+S+'"/><rect x="54" y="82" width="12" height="16" rx="5" fill="'+S+'"/>';
+  function eye(x){return '<ellipse cx="'+x+'" cy="60" rx="7" ry="8.5" fill="#fff"/><circle cx="'+(x+.6)+'" cy="61.5" r="5.2" fill="#6B4226"/><circle cx="'+(x+.6)+'" cy="61.5" r="2.8" fill="#1d1c1a"/><circle cx="'+(x+2.4)+'" cy="59" r="1.8" fill="#fff"/><circle cx="'+(x-1.2)+'" cy="64" r=".9" fill="#fff"/>';}
+  he+='<g class="eyes" style="transform-origin:60px 60px">'+eye(49)+eye(71)+'</g>';
+  if(girl)he+='<path d="M41 53 l-3 -2 M42 51 l-2 -3 M79 53 l3 -2 M78 51 l2 -3" stroke="#1d1c1a" stroke-width="1.4" stroke-linecap="round"/>';
+  he+='<path d="M43 48 Q49 44 55 47" stroke="'+h1+'" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M65 47 Q71 44 77 48" stroke="'+h1+'" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+  he+='<ellipse cx="42" cy="72" rx="5.5" ry="3.4" fill="#F28C8C" opacity=".45"/><ellipse cx="78" cy="72" rx="5.5" ry="3.4" fill="#F28C8C" opacity=".45"/><path d="M58 69 q2 2 4 0" stroke="'+kidShade(sk[1],.85)+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+  he+='<path class="ms" d="M52 75 Q60 82 68 75" stroke="#8A2E2E" stroke-width="2.4" fill="none" stroke-linecap="round"/><g class="mh"><path d="M51 74 Q60 86 69 74 Z" fill="#8A2E2E"/><path d="M54 76 Q60 79 66 76 L66 74 L54 74Z" fill="#fff"/></g><path class="mw" d="M53 79 Q60 75 67 79" stroke="#8A2E2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+  if(hs==='puffs')he+='<circle cx="34" cy="28" r="14" fill="'+H+'"/><circle cx="86" cy="28" r="14" fill="'+H+'"/><path d="M30 52 Q28 24 60 23 Q92 24 90 52 Q84 38 72 36 Q60 42 48 36 Q36 40 30 52Z" fill="'+H+'"/><circle cx="46" cy="30" r="3.5" fill="#F2C14E"/><circle cx="74" cy="30" r="3.5" fill="#F2C14E"/>';
+  else if(hs==='locken')he+=[[36,40,9],[44,30,10],[54,24,10],[66,24,10],[76,30,10],[84,40,9],[40,48,6],[80,48,6],[60,30,9]].map(function(c){return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'" fill="'+H+'"/>';}).join('');
+  else if(hs==='zopf')he+='<path d="M30 54 Q28 24 60 22 Q92 24 90 54 Q86 40 74 36 Q66 46 50 42 Q40 44 34 56Z" fill="'+H+'"/><circle cx="92" cy="40" r="6" fill="#F2884F"/>';
+  else he+='<path d="M31 52 Q26 22 56 20 Q66 12 74 22 Q92 24 90 52 Q86 40 80 38 Q76 46 66 40 Q58 48 48 40 Q40 46 36 44 Q32 48 31 52Z" fill="'+H+'"/><path d="M50 22 q4 -10 10 -4 q2 -8 9 -2" stroke="'+H+'" stroke-width="5" fill="none" stroke-linecap="round"/>';
+  return '<svg viewBox="0 0 120 240">'+d+back+body+he+arm('ar1',42)+'</svg>';}
+// Vorbelegung: Mädchen-Namen, Hautfarbe/Haare, Shirtfarbe je Person
+var KID_SHIRTS=['#F2884F','#6BA8A0','#F2C14E','#8C7BD6','#E2603C','#5B9BD5','#C23B66','#7FB069','#D98E5B','#4E8C84'];
+var KID_W=/^(bianca|alina|katharina|kathrin|danae|laura|melanie|dogoro|dori|anna|lena|julia|sarah|sara|lisa|maria|sophie|sophia|nina|eva|emma|mia|lea|jana|nadine|sandra|sabrina|vanessa|jessica|christina|stefanie|tanja|petra|claudia|andrea|monika|elena|carmen|lucia|paula|isabel|ines|olga|irina|natalia|svetlana|ana)$/i;
+function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f),o={g:w?'w':'m',skin:'hell',hair:w?'zopf':'kurz',shirt:KID_SHIRTS[(idx||0)%KID_SHIRTS.length]};
+  if(/^(dogoro|dori)$/i.test(f)){o.g='w';o.skin='dunkel';o.hair='puffs';o.shirt='#6BA8A0';}
+  if(/^roque$/i.test(f)){o.g='m';o.skin='mittel';o.hair='locken';o.shirt='#F2C14E';}
+  return o;}
+
+// ── Figuren der Live-Ansicht (je Agent: Junge/Mädchen, Hautfarbe, Haare, Shirt) ──
+var FIG={msg:''};
+function figPeople(){var L=(employees||[]).filter(function(e){return e.active!==false&&(isAgentEmp(e)||/^(dori|dogoro)$/i.test(String(e.name||'').split(' ')[0]));});return L.slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name));});}
+function figOf(e,i){var f=((settings.liveConfig||{}).figuren||{})[e.id];return f||kidDefault(e,i);}
+function figRead(){var out={};figPeople().forEach(function(e,i){var g=function(k){var el=document.getElementById('fig_'+k+'_'+e.id);return el?el.value:'';};out[e.id]={g:g('g')||'m',skin:g('s')||'hell',hair:g('h')||'kurz',shirt:g('c')||'#F2884F'};});return out;}
+function figPreview(id){var all=figRead(),el=document.getElementById('fig_p_'+id);if(el&&all[id])el.innerHTML=kidSvg(all[id]);}
+function figSave(){if(currentUserRole!=='admin')return;var c=Object.assign({},settings.liveConfig||{},{figuren:figRead()});
+  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;FIG.msg='Figuren gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
+function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=figPeople();
+  var inp='height:32px;box-sizing:border-box;font-size:13px;padding:0 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)';
+  var sel=function(id,val,opts){return '<select id="'+id+'"'+dis+' style="'+inp+'" onchange="figPreview(this.id.split(\'_\').pop())">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';};
+  var h='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div class="card-title" style="margin:0"><i class="ti ti-mood-kid"></i> Figuren</div><span class="kal-note">So erscheint jede Person in den Animationen (Treppchen, Zwischenstand, Endspurt, Siegerehrung)</span>'+(adm?'<button class="btn btn-primary" type="button" style="margin-left:auto" onclick="figSave()"><i class="ti ti-device-floppy"></i> Figuren speichern</button>':'')+'</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">';
+  P.forEach(function(e,i){var f=figOf(e,i);
+    h+='<div style="display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:var(--bg)"><div id="fig_p_'+e.id+'" style="width:48px;height:96px;flex-shrink:0">'+kidSvg(f)+'</div><div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1"><b style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</b>'
+      +'<div style="display:flex;gap:5px;flex-wrap:wrap">'+sel('fig_g_'+e.id,f.g,[['m','Junge'],['w','Mädchen']])+sel('fig_s_'+e.id,f.skin,[['hell','hell'],['mittel','mittel'],['dunkel','dunkel']])+'</div>'
+      +'<div style="display:flex;gap:5px;align-items:center">'+sel('fig_h_'+e.id,f.hair,[['kurz','kurze Haare'],['locken','Locken'],['zopf','Pferdeschwanz'],['puffs','Puffs']])+'<input type="color" id="fig_c_'+e.id+'" value="'+(f.shirt||'#F2884F')+'"'+dis+' onchange="figPreview(\''+e.id+'\')" style="width:34px;height:32px;padding:0;border:1px solid var(--border);border-radius:8px;background:none"></div></div></div>';});
+  h+='</div>'+(FIG.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(FIG.msg)+'</div>':'')+'</div>';return h;}
 
 function selectLive(){view='live';bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function selectProvisionTeam(){view='provisionTeam';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
