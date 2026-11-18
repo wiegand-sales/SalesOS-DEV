@@ -4538,8 +4538,86 @@ function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;
     +fld('CR MY Ziel (%)',inp('liveCrMy',c.crMY,1,!adm))+fld('knapp dran (Pkt.)',inp('liveKnMy',c.knappMY,1,!adm))
     +fld('Optimierungen je Std.',inp('liveOph',c.optProStd,0.1,!adm))
     +(adm?'<button class="btn btn-primary" type="button" onclick="liveSaveCfg()"><i class="ti ti-device-floppy"></i> Einstellungen speichern</button>':'')+'</div></div>';
+  h+=phbHtml();
   h+='</div>';
   ma.innerHTML=h;}
+
+
+// ── Power Hour (bis zu drei pro Tag) + Historie ──
+var PHB={loaded:false,loading:false,err:'',date:null,all:[],ticks:{},open:null,msg:''};
+var PHB_KPI={opt:'Optimierungen',my:'Mega Yes',marge:'Margenerhöhung',marge_my:'Marge je Mega Yes'};
+function phbHM(t){return t?String(t).slice(0,5):'';}
+function phbTs(d,hm){var p=hm.split(':'),x=new Date(d+'T00:00:00');x.setHours(+p[0],+p[1],0,0);return x.getTime();}
+function phbLoad(){if(PHB.loading)return;PHB.loading=true;PHB.date=PHB.date||today();
+  sb.from('power_hours').select('*').order('datum',{ascending:false}).order('start_zeit').then(function(res){
+    PHB.loading=false;PHB.loaded=true;
+    if(res.error){PHB.err=/power_hours/.test(res.error.message||'')||res.error.code==='42P01'?'Für die Power Hour bitte zuerst 46_power_hour.sql in Supabase ausführen.':'Power Hours konnten nicht geladen werden: '+res.error.message;renderLiveIfOpen();return;}
+    PHB.err='';PHB.all=res.data||[];phbLoadTicks();renderLiveIfOpen();});}
+function renderLiveIfOpen(){if(view==='live')renderLive();}
+function phbLoadTicks(){var now=Date.now(),dates={};PHB.all.forEach(function(h){if(phbTs(h.datum,phbHM(h.end_zeit))<now&&!PHB.ticks[h.datum])dates[h.datum]=1;});
+  Object.keys(dates).slice(0,40).forEach(function(d){PHB.ticks[d]='lädt';var out=[];
+    (function page(from){sb.from('performance_ticks').select('employee_id,ts,d_oem,d_my,d_yes,d_sy,d_nicht,d_ups,d_wka,d_oem_marge,d_marge').eq('date',d).order('ts').range(from,from+999).then(function(r){
+      if(r.error){PHB.ticks[d]=[];renderLiveIfOpen();return;}out=out.concat(r.data||[]);if((r.data||[]).length===1000)page(from+1000);else{PHB.ticks[d]=out;renderLiveIfOpen();}});})(0);});}
+function phbResult(h){var tk=PHB.ticks[h.datum];if(!Array.isArray(tk))return null;var S=phbTs(h.datum,phbHM(h.start_zeit)),E=phbTs(h.datum,phbHM(h.end_zeit));
+  var after=tk.map(function(k){return new Date(k.ts).getTime();}).filter(function(x){return x>E;})[0],cut=after!=null?after+60000:E,agg={};
+  tk.forEach(function(k){var ts=new Date(k.ts).getTime();if(ts<=S||ts>cut)return;var a=agg[k.employee_id]||(agg[k.employee_id]={opt:0,my:0,marge:0,marge_my:0});
+    a.opt+=(k.d_oem||0)+(k.d_ups||0)+(k.d_wka||0);a.my+=k.d_my||0;a.marge+=+k.d_marge||0;if((k.d_my||0)>0&&(k.d_oem||0)>0)a.marge_my+=(+k.d_oem_marge||0)*Math.min(1,k.d_my/k.d_oem);});
+  var L=Object.keys(agg).map(function(id){var e=(employees||[]).find(function(x){return String(x.id)===String(id);});return {name:e?e.name:'?',v:agg[id][h.kpi]||0};}).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;});
+  return {list:L,total:L.reduce(function(a,x){return a+x.v;},0)};}
+function phbFmt(h,v){return (h.kpi==='marge'||h.kpi==='marge_my')?'€'+Math.round(v).toLocaleString('de-DE'):Math.round(v).toLocaleString('de-DE');}
+function phbStatus(h){var now=Date.now(),S=phbTs(h.datum,phbHM(h.start_zeit)),E=phbTs(h.datum,phbHM(h.end_zeit));
+  if(now<S)return {t:'geplant',c:'background:#FBE3DA;color:#9A3F22'};
+  if(now<E){var m=Math.ceil((E-now)/60000);return {t:'läuft · noch '+m+' Min.',c:'background:#F08566;color:#fff'};}
+  var r=phbResult(h);return {t:r&&r.list.length?'vorbei · Sieger '+r.list[0].name.split(' ')[0]+' ('+phbFmt(h,r.list[0].v)+')':'vorbei',c:'background:#EFECE5;color:#5f594e'};}
+function phbSetDate(d){PHB.date=d||today();PHB.msg='';renderLive();}
+function phbSave(){if(currentUserRole!=='admin')return;var d=PHB.date,jobs=[],err=null,ex=PHB.all.filter(function(h){return h.datum===d;});
+  for(var i=0;i<3;i++){var st=(document.getElementById('phS'+i)||{}).value||'',en=(document.getElementById('phE'+i)||{}).value||'',kp=(document.getElementById('phK'+i)||{}).value||'opt',id=(document.getElementById('phS'+i)||{dataset:{}}).dataset.id||'';
+    var old=id?ex.find(function(h){return String(h.id)===id;}):null;
+    if(old&&Date.now()>phbTs(old.datum,phbHM(old.end_zeit))){continue;} // vorbei = gesperrt
+    if(st&&en){if(en<=st){err='Bei Zeile '+(i+1)+' liegt das Ende vor dem Start.';break;}
+      var row={datum:d,start_zeit:st,end_zeit:en,kpi:kp,updated_at:new Date().toISOString()};
+      jobs.push(id?sb.from('power_hours').update(row).eq('id',id):sb.from('power_hours').insert(row));}
+    else if(id){jobs.push(sb.from('power_hours').delete().eq('id',id));}}
+  if(err){PHB.msg=err;renderLive();return;}
+  var c={halbMin:(document.getElementById('phHalf')||{}).value||'',popupMin:(document.getElementById('phPop')||{}).value||'2'};c.halbMin=c.halbMin===''?null:+c.halbMin;c.popupMin=+c.popupMin||2;
+  jobs.push(sb.from('settings').upsert({key:'powerHourConfig',value:JSON.stringify(c)},{onConflict:'key'}));
+  Promise.all(jobs).then(function(rs){var bad=rs.find(function(r){return r&&r.error;});
+    if(bad){PHB.msg='Speichern fehlgeschlagen: '+bad.error.message;renderLive();return;}
+    settings.powerHourConfig=c;PHB.msg='Gespeichert. Die Fernseher übernehmen es innerhalb einer Minute.';PHB.loaded=false;phbLoad();});}
+function phbToggle(id){PHB.open=PHB.open===id?null:id;renderLive();}
+function phbHtml(){
+  if(!PHB.loaded){phbLoad();return '<div class="card card-static"><div class="card-title"><i class="ti ti-bolt"></i> Power Hours</div><div class="kal-note">Lädt …</div></div>';}
+  if(PHB.err)return '<div class="card card-static"><div class="card-title"><i class="ti ti-bolt"></i> Power Hours</div><div class="kal-note">'+esc(PHB.err)+'</div></div>';
+  var adm=currentUserRole==='admin',d=PHB.date||today(),rows=PHB.all.filter(function(h){return h.datum===d;}).slice(0,3),c=settings.powerHourConfig||{};
+  var inp='height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)';
+  var h='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div class="card-title" style="margin:0"><i class="ti ti-bolt"></i> Power Hours</div><span class="kal-note">bis zu drei am Tag · Banner, Säulen und CR zählen in der Zeit nur ab Start · Zwischenstand und Siegerehrung auf den Fernsehern</span>'
+    +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="kal-note">Tag</span><input type="date" value="'+d+'" onchange="phbSetDate(this.value)" style="'+inp+'"></span></div>';
+  h+='<div style="display:grid;grid-template-columns:30px 120px 120px 210px 90px 1fr;gap:12px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;padding-bottom:6px"><span></span><span>Start</span><span>Ende</span><span>Gezählt wird</span><span>Dauer</span><span>Status</span></div>';
+  for(var i=0;i<3;i++){var r=rows[i]||null,st=r?phbHM(r.start_zeit):'',en=r?phbHM(r.end_zeit):'',past=r&&Date.now()>phbTs(r.datum,en),dis=(!adm||past)?' disabled':'',ss=r?phbStatus(r):null;
+    var du=st&&en?Math.round((phbTs(d,en)-phbTs(d,st))/60000)+' Min.':'';
+    h+='<div style="display:grid;grid-template-columns:30px 120px 120px 210px 90px 1fr;gap:12px;align-items:center;padding:7px 0;border-top:1px solid var(--border)"><b style="font-size:18px;font-weight:300;color:var(--text3)">'+(i+1)+'</b>'
+      +'<input type="time" id="phS'+i+'" data-id="'+(r?r.id:'')+'" value="'+st+'"'+dis+' style="'+inp+'"><input type="time" id="phE'+i+'" value="'+en+'"'+dis+' style="'+inp+'">'
+      +'<select id="phK'+i+'"'+dis+' style="'+inp+'">'+Object.keys(PHB_KPI).map(function(k){return '<option value="'+k+'"'+(r&&r.kpi===k?' selected':'')+'>'+PHB_KPI[k]+'</option>';}).join('')+'</select>'
+      +'<span class="kal-note">'+du+'</span><span>'+(ss?'<span style="font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;'+ss.c+'">'+esc(ss.t)+'</span>':'<span class="kal-note">frei</span>')+'</span></div>';}
+  h+='<div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">'
+    +'<label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text3)">Zwischenstand nach (Min.)<input type="number" id="phHalf" min="1" placeholder="Hälfte" value="'+(c.halbMin||'')+'"'+(adm?'':' disabled')+' style="'+inp+';width:120px"></label>'
+    +'<label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text3)">Popups stehen (Min.)<input type="number" id="phPop" min="1" value="'+(c.popupMin||2)+'"'+(adm?'':' disabled')+' style="'+inp+';width:110px"></label>'
+    +'<span class="kal-note" style="flex:1">Zeile leeren und speichern = Power Hour löschen. Vorbei ist vorbei: abgelaufene Power Hours lassen sich nicht mehr ändern.</span>'
+    +(adm?'<button class="btn btn-primary" type="button" onclick="phbSave()"><i class="ti ti-device-floppy"></i> Speichern</button>':'')+'</div>'
+    +(PHB.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(PHB.msg)+'</div>':'')+'</div>';
+  // Historie
+  var now=Date.now(),past=PHB.all.filter(function(x){return phbTs(x.datum,phbHM(x.end_zeit))<now;});
+  h+='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div class="card-title" style="margin:0"><i class="ti ti-trophy"></i> Historie</div><span class="kal-note">alle bisherigen Power Hours · Klick auf eine Zeile zeigt die ganze Rangliste</span></div>';
+  if(!past.length)h+='<div class="kal-note">Noch keine Power Hour vorbei.</div>';
+  else{var th='text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;padding:8px 10px;background:#EFECE5',td='padding:8px 10px;border-bottom:1px solid var(--border);font-size:13px';
+    h+='<table style="width:100%;border-collapse:collapse"><tr><th style="'+th+'">Tag</th><th style="'+th+'">Zeit</th><th style="'+th+'">Dauer</th><th style="'+th+'">Kennzahl</th><th style="'+th+'">Sieger</th><th style="'+th+'">Ergebnis</th><th style="'+th+'">Platz 2 · 3</th><th style="'+th+';text-align:right">Team gesamt</th></tr>';
+    past.forEach(function(x){var R=phbResult(x),s1=phbHM(x.start_zeit),e1=phbHM(x.end_zeit),L=R?R.list:[];
+      h+='<tr style="cursor:pointer" onclick="phbToggle('+x.id+')"><td style="'+td+'">'+x.datum.split('-').reverse().join('.')+'</td><td style="'+td+'">'+s1+'–'+e1+'</td><td style="'+td+'">'+Math.round((phbTs(x.datum,e1)-phbTs(x.datum,s1))/60000)+' Min.</td><td style="'+td+'">'+PHB_KPI[x.kpi]+'</td>'
+        +'<td style="'+td+';font-weight:700">'+(R?(L[0]?'🏆 '+esc(L[0].name):'–'):'lädt …')+'</td><td style="'+td+';font-weight:700">'+(L[0]?phbFmt(x,L[0].v):'')+'</td><td style="'+td+';color:var(--text3)">'+(L[1]?esc(L[1].name.split(' ')[0])+' '+phbFmt(x,L[1].v):'')+(L[2]?' · '+esc(L[2].name.split(' ')[0])+' '+phbFmt(x,L[2].v):'')+'</td><td style="'+td+';text-align:right">'+(R?phbFmt(x,R.total):'')+'</td></tr>';
+      if(PHB.open===x.id&&L.length)h+='<tr><td colspan="8" style="padding:8px 10px 14px;background:var(--bg)">'+L.map(function(y,i){return '<div style="display:flex;gap:12px;font-size:13px;padding:3px 0"><b style="width:26px;color:var(--text3);font-weight:400">'+(i+1)+'.</b><span style="flex:1">'+esc(y.name)+'</span><b>'+phbFmt(x,y.v)+'</b></div>';}).join('')+'</td></tr>';});
+    h+='</table>';}
+  return h+'</div>';
+}
 
 function selectLive(){view='live';bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function selectProvisionTeam(){view='provisionTeam';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
@@ -11871,6 +11949,7 @@ function loadSettingsFromSupabase(){
       if(r.key==='tokenExpiry')settings.tokenExpiry=r.value||'';
       if(r.key==='extensionUrl')settings.extensionUrl=r.value||'';
       if(r.key==='liveKey')settings.liveKey=r.value||'';
+      if(r.key==='powerHourConfig'){try{settings.powerHourConfig=JSON.parse(r.value||'{}')||{};}catch(e){settings.powerHourConfig={};}}
       if(r.key==='liveConfig'){try{settings.liveConfig=JSON.parse(r.value||'{}')||{};}catch(e){settings.liveConfig={};}}
       if(r.key==='rolePermissions'||r.key==='kalenderRules'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'||r.key==='ftpRange'||r.key==='permPersons'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
