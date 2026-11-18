@@ -48,10 +48,10 @@ body.embed .tv{border-radius:22px}
 .bars .c b{font-size:24px;font-weight:700;margin-bottom:4px}
 .bars .st{width:72%;display:flex;flex-direction:column-reverse;border-radius:10px 10px 2px 2px;overflow:hidden;transition:height .8s}
 .bars .st i{display:block;flex-shrink:0}
-.sollN{position:absolute;left:0;right:0;border-top:4px solid #C23B66;z-index:2}
-.sollN span{position:absolute;left:-112px;top:-14px;background:#C23B66;color:#fff;font-size:14px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap}
-.sollF{position:absolute;left:0;right:0;border-top:2px dashed rgba(194,59,102,.35);z-index:1}
-.sollF span{position:absolute;right:0;top:-22px;font-size:13px;font-weight:700;color:rgba(194,59,102,.7)}
+.sollN{position:absolute;left:0;right:0;border-top:4px solid #D9541E;z-index:2}
+.sollN span{position:absolute;left:-112px;top:-14px;background:#D9541E;color:#fff;font-size:14px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.sollF{position:absolute;left:0;right:0;border-top:2px dashed rgba(217,84,30,.4);z-index:1}
+.sollF span{position:absolute;right:0;top:-22px;font-size:13px;font-weight:700;color:rgba(217,84,30,.8)}
 .ft{display:flex;align-items:center;gap:18px;margin-top:10px;font-size:16px;color:#5f594e;flex-shrink:0}
 .ft .stand{color:#8a8478;font-weight:600}.ft .stand.alt{color:#C9502F}
 .ft .lg{margin-left:auto;display:flex;gap:18px;align-items:center}
@@ -60,6 +60,22 @@ body.embed .tv{border-radius:22px}
 .leer small{font-size:20px;font-weight:500}
 .msg{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:34px;font-weight:700;color:#3a3833;gap:14px;padding:40px}
 .msg small{font-size:20px;font-weight:500;color:#8a8478;max-width:900px;line-height:1.5}
+/* Popup: jemand klettert im Ranking nach oben */
+#cel{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;
+  background:linear-gradient(150deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);overflow:hidden;opacity:0;transform:scale(1.04);transition:opacity .6s ease,transform .6s ease;pointer-events:none}
+body.embed #cel{border-radius:22px}
+#cel.on{opacity:1;transform:scale(1)}
+#cel .k{font-size:30px;font-weight:700;letter-spacing:.2em;position:relative;z-index:3}
+#cel .big{font-size:170px;font-weight:200;line-height:1;margin-top:10px;position:relative;z-index:2}
+#cel .big small{font-size:60px;font-weight:300;opacity:.75;margin:0 24px;vertical-align:28px}
+#cel .big,#cel .nm,#cel .sub{z-index:3!important}
+#cel .nm{font-size:84px;font-weight:700;margin-top:22px;position:relative;z-index:2}
+#cel .sub{font-size:34px;opacity:.92;margin-top:16px;position:relative;z-index:2}
+#cel.on .big,#cel.on .nm{animation:celPop .9s cubic-bezier(.2,1.4,.4,1) both}
+#cel.on .nm{animation-delay:.15s}
+@keyframes celPop{0%{transform:translateY(40px) scale(.85);opacity:0}100%{transform:none;opacity:1}}
+#cel .cf{position:absolute;z-index:1;top:-60px;width:18px;height:28px;border-radius:4px;opacity:.9;animation:celFall linear infinite}
+@keyframes celFall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(1200px) rotate(720deg)}}
 </style>
 </head>
 <body>
@@ -76,6 +92,31 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
   var stage=document.getElementById('stage');
   var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
   var D=null,lastOk=0;
+  var RANK=null,RANK_DAY=null,CEL_Q=[],CEL_ON=false,TEST=Q.get('test')||'';
+  function celShow(c){
+    var el=document.getElementById('cel');if(!el){el=document.createElement('div');el.id='cel';stage.appendChild(el);}
+    var cols=['#fff','#FFE1D6','#1d1c1a','#F7B39A'],cf='';
+    for(var i=0;i<46;i++)cf+='<span class="cf" style="left:'+(Math.random()*100).toFixed(1)+'%;background:'+cols[i%4]+';animation-duration:'+(3+Math.random()*4).toFixed(1)+'s;animation-delay:-'+(Math.random()*6).toFixed(1)+'s"></span>';
+    el.innerHTML=cf+'<div class="k">EIN PLATZ NACH OBEN'+(c.von-c.nach>1?' · '+(c.von-c.nach)+' PLÄTZE':'')+'</div>'
+      +'<div class="big"><small>Platz '+c.von+' →</small>Platz '+c.nach+'</div>'
+      +'<div class="nm">'+esc(c.name)+'</div>'
+      +'<div class="sub">'+c.opt+' Optimierungen'+(c.marge?' · '+eur(c.marge)+' Marge':'')+(c.opt?' · Ø '+eur(c.marge/c.opt)+' je Optimierung':'')+'</div>';
+    el.querySelector('.k').textContent=(c.von-c.nach>1?(c.von-c.nach)+' PLÄTZE NACH OBEN':'EIN PLATZ NACH OBEN');
+    void el.offsetWidth;el.classList.add('on');
+  }
+  function celNext(){
+    if(CEL_ON||!CEL_Q.length)return;CEL_ON=true;var c=CEL_Q.shift();celShow(c);
+    setTimeout(function(){var el=document.getElementById('cel');if(el)el.classList.remove('on');setTimeout(function(){CEL_ON=false;celNext();},900);},8000);
+  }
+  function rankCheck(rows,t){
+    var now={};rows.forEach(function(r,i){now[r.e.id]={rank:i+1,opt:r.opt,marge:r.marge,name:r.e.name};});
+    if(RANK&&RANK_DAY===t){
+      var up=[];rows.forEach(function(r,i){var o=RANK[r.e.id];if(o&&i+1<o.rank&&r.opt>o.opt&&r.opt>0)up.push({name:r.e.name,von:o.rank,nach:i+1,opt:r.opt,marge:r.marge});});
+      up.sort(function(a,b){return a.nach-b.nach;});
+      up.slice(0,4).forEach(function(c){CEL_Q.push(c);});celNext();
+    } else if(TEST==='aufstieg'&&rows.length>1){CEL_Q.push({name:rows[1].e.name,von:4,nach:2,opt:rows[1].opt,marge:rows[1].marge});celNext();TEST='';}
+    RANK=now;RANK_DAY=t;
+  }
 
   // ── Größe: 1920×1080 wird auf jedes Fenster/jeden Fernseher eingepasst ──
   function fit(){var w=window.innerWidth,h=window.innerHeight,s=Math.min(w/1920,h/1080);stage.style.transform='translate('+((w-1920*s)/2)+'px,'+((h-1080*s)/2)+'px) scale('+s+')';}
@@ -109,12 +150,12 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
         if(/Kein Zugang|42501/i.test(res.error.message||'')||res.error.code==='42501'){D=null;showMsg('Diese Adresse ist nicht mehr gültig.','Im Sales OS wurde eine neue Adresse für die Live-Ansicht erzeugt. Bitte die neue Adresse unter „Live“ kopieren.');return;}
         render(true);return;
       }
-      D=res.data||{};lastOk=Date.now();render(false);
+      D=res.data||{};lastOk=Date.now();render(false,true);
     }).catch(function(){render(true);});
   }
   function showMsg(t,s){stage.innerHTML='';var m=document.getElementById('msg');if(!m){m=document.createElement('div');m.id='msg';m.className='msg';document.body.appendChild(m);}m.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';}
 
-  function render(netErr){
+  function render(netErr,fresh){
     if(!D)return;var m=document.getElementById('msg');if(m)m.remove();
     var cfg={};try{cfg=typeof D.config==='string'?JSON.parse(D.config||'{}'):(D.config||{});}catch(e){cfg={};}
     var ZOEM=cfg.crOEM!=null&&cfg.crOEM!==''?+cfg.crOEM:55,ZMY=cfg.crMY!=null&&cfg.crMY!==''?+cfg.crMY:20,OPH=cfg.optProStd?+cfg.optProStd:3.5;
@@ -205,9 +246,10 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     }
     var alt=netErr||(lastOk&&Date.now()-lastOk>5*60000);
     var standTxt=stand?('Stand '+(iso(stand)===t?'':stand.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+' ')+pad(stand.getHours())+':'+pad(stand.getMinutes())):'';
-    h+='<div class="ft"><span class="stand'+(alt?' alt':'')+'">'+(alt?'Keine Verbindung · letzter ':'')+standTxt+(ort?' · '+(ort==='VLC'?'Valencia':'Olching'):'')+'</span><span class="lg"><span><i style="background:#E2603C"></i><b>OEM MY</b></span><span><i style="background:#F7B39A"></i><b>OEM</b></span><span><i style="background:#E6DED0"></i>UPS</span><span><i style="background:#C9C2B4"></i>WKA</span><span><i style="background:#C23B66;height:4px;width:22px;vertical-align:3px"></i>Soll (steigt mit der Uhrzeit)</span></span></div>';
+    h+='<div class="ft"><span class="stand'+(alt?' alt':'')+'">'+(alt?'Keine Verbindung · letzter ':'')+standTxt+(ort?' · '+(ort==='VLC'?'Valencia':'Olching'):'')+'</span><span class="lg"><span><i style="background:#E2603C"></i><b>OEM MY</b></span><span><i style="background:#F7B39A"></i><b>OEM</b></span><span><i style="background:#E6DED0"></i>UPS</span><span><i style="background:#C9C2B4"></i>WKA</span><span><i style="background:#D9541E;height:4px;width:22px;vertical-align:3px"></i>Soll (steigt mit der Uhrzeit)</span></span></div>';
     h+='</div></div>';
-    stage.innerHTML=h;
+    var cel=document.getElementById('cel');stage.innerHTML=h;if(cel)stage.appendChild(cel);
+    if(fresh)rankCheck(rows,t);
   }
 
   load();
