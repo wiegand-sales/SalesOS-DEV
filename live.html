@@ -93,6 +93,29 @@ body.embed .tv{border-radius:22px}
 #t3 .blk{width:100%;margin-top:10px;border-radius:18px 18px 0 0;display:flex;flex-direction:column;align-items:center;height:0;overflow:hidden;transition:height .8s cubic-bezier(.2,1.1,.4,1)}
 #t3 .blk .pl{font-size:100px;font-weight:200;line-height:1;margin-top:12px}#t3 .blk .op{font-size:24px;font-weight:600}
 #t3 .p1{background:linear-gradient(160deg,#E9773F 0%,#DE5A5E 55%,#C23B66 100%);color:#fff}#t3 .p2{background:#E6E1D7;color:#3a3833}#t3 .p3{background:#EFECE5;color:#3a3833}
+/* Margen-Champion: Figur läuft herein, schiebt das Podest weg und jubelt */
+#t3 .st3{transition:none}
+#t3 .man{position:absolute;bottom:0;width:150px;height:300px;z-index:5}
+#t3 .man svg{width:100%;height:100%;overflow:visible}
+#t3 .man .lg1,#t3 .man .lg2,#t3 .man .ar1,#t3 .man .ar2{transition:transform .35s ease}
+#t3 .man.walk .lg1{animation:mLeg .5s ease-in-out infinite alternate}
+#t3 .man.walk .lg2{animation:mLeg .5s ease-in-out infinite alternate-reverse}
+#t3 .man.walk .ar1{animation:mArm .5s ease-in-out infinite alternate-reverse}
+#t3 .man.walk .ar2{animation:mArm .5s ease-in-out infinite alternate}
+@keyframes mLeg{from{transform:rotate(-24deg)}to{transform:rotate(24deg)}}
+@keyframes mArm{from{transform:rotate(-20deg)}to{transform:rotate(20deg)}}
+#t3 .man.push .ar1,#t3 .man.push .ar2{animation:none;transform:rotate(82deg)}
+#t3 .man.cheer .ar1{animation:none;transform:rotate(158deg)}
+#t3 .man.cheer .ar2{animation:none;transform:rotate(-158deg)}
+#t3 .man.cheer .lg1{animation:none;transform:rotate(-8deg)}#t3 .man.cheer .lg2{animation:none;transform:rotate(8deg)}
+#t3 .man.cheer svg{animation:mJump .7s ease-in-out infinite}
+@keyframes mJump{0%,100%{transform:translateY(0)}45%{transform:translateY(-34px)}}
+#t3 .chmp{position:absolute;left:0;right:0;text-align:center;z-index:6;opacity:0;transform:scale(.6);transition:opacity .6s,transform .7s cubic-bezier(.2,1.5,.4,1)}
+#t3 .chmp.on{opacity:1;transform:none}
+#t3 .chmp small{display:block;font-size:22px;font-weight:700;letter-spacing:.22em;color:#8a8478}
+#t3 .chmp .nm2{font-size:64px;font-weight:700;margin-top:6px}
+#t3 .chmp .eu{font-size:130px;font-weight:200;line-height:1;background:linear-gradient(90deg,#E9773F,#C23B66);-webkit-background-clip:text;background-clip:text;color:transparent}
+#t3 .chmp .sb2{font-size:22px;color:#6b665c;margin-top:6px}
 /* Wochenziel-Karten (Do 12:20, Fr 09:00) */
 #wk{position:absolute;z-index:61;background:#F7F5F0;border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;color:#1d1c1a;padding:40px 56px;box-sizing:border-box;
   opacity:0;transform:translateY(30px) scale(.97);transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.4,1)}
@@ -183,7 +206,37 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
   // Top 3 des Tages (16:45, 2 Minuten): Blöcke wachsen 3 → 2 → 1, Namen bauen sich Buchstabe für Buchstabe auf
   var LASTROWS=[],LASTWEEK=[],T3_DAY=null,WK_DONE={};
   function typeName(el,txt,ms,done){var i=0;el.innerHTML='<i></i>';var iv=setInterval(function(){i++;el.innerHTML=esc(txt.slice(0,i))+'<i></i>';if(i>=txt.length){clearInterval(iv);setTimeout(function(){el.innerHTML=esc(txt);if(done)done();},500);}},ms);}
-  function top3Show(){
+  // Figur (eigene, schlichte Zeichnung im Board-Stil)
+  var MAN_SVG='<svg viewBox="0 0 120 240"><defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E9773F"/><stop offset=".5" stop-color="#DE5A5E"/><stop offset="1" stop-color="#C23B66"/></linearGradient></defs>'
+    +'<g class="lg2" style="transform-origin:66px 132px"><rect x="60" y="128" width="13" height="84" rx="6.5" fill="#3a3833"/><rect x="58" y="204" width="24" height="10" rx="5" fill="#1d1c1a"/></g>'
+    +'<g class="ar2" style="transform-origin:70px 64px"><rect x="65" y="60" width="11" height="64" rx="5.5" fill="#C23B66"/><circle cx="70.5" cy="126" r="7" fill="#F2C6A8"/></g>'
+    +'<rect x="40" y="52" width="40" height="84" rx="16" fill="url(#mg)"/>'
+    +'<g class="lg1" style="transform-origin:54px 132px"><rect x="47" y="128" width="13" height="84" rx="6.5" fill="#1d1c1a"/><rect x="38" y="204" width="24" height="10" rx="5" fill="#1d1c1a"/></g>'
+    +'<circle cx="60" cy="28" r="20" fill="#F2C6A8"/><path d="M40 26 Q42 6 60 7 Q78 6 80 24 Q70 16 60 17 Q48 16 40 26Z" fill="#1d1c1a"/>'
+    +'<g class="ar1" style="transform-origin:50px 64px"><rect x="44" y="60" width="11" height="64" rx="5.5" fill="#E9773F"/><circle cx="49.5" cy="126" r="7" fill="#F2C6A8"/></g></svg>';
+  function champSeq(card){
+    var ch=LASTROWS.filter(function(r){return r.marge>0;}).slice().sort(function(a,b){return b.marge-a.marge;})[0];if(!ch||!card.parentNode)return;
+    var st=card.querySelector('.st3');if(!st||!st.animate)return;
+    var W=card.clientWidth,man=document.createElement('div');man.className='man walk';man.innerHTML=MAN_SVG;man.style.left=(W+20)+'px';card.appendChild(man);
+    var stR=st.offsetLeft+st.offsetWidth;
+    // 1) von rechts an das Podest heranlaufen
+    var a1=man.animate([{left:(W+20)+'px'},{left:(stR-10)+'px'}],{duration:2600,easing:'linear',fill:'forwards'});
+    a1.onfinish=function(){if(!card.parentNode)return;man.style.left=(stR-10)+'px';man.className='man push walk';
+      // 2) Podest nach links aus der Karte schieben
+      var d1=(stR-10)-(W/2-75),dx=-(stR+40);
+      // gemeinsam schieben, bis die Figur in der Mitte steht – dann rutscht das Podest allein weiter hinaus
+      st.animate([{transform:'translateX(0)'},{transform:'translateX('+(-d1)+'px)',offset:.78},{transform:'translateX('+dx+'px)'}],{duration:3600,easing:'ease-in-out',fill:'forwards'});
+      var a2=man.animate([{left:(stR-10)+'px'},{left:(W/2-75)+'px'}],{duration:2800,easing:'ease-in-out',fill:'forwards'});
+      a2.onfinish=function(){if(!card.parentNode)return;man.style.left=(W/2-75)+'px';
+        // 3) stehen bleiben, Hände hoch, darüber Name und Marge
+        man.className='man cheer';
+        var hd=card.querySelector('.hd');if(hd)hd.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'});
+        var c=document.createElement('div');c.className='chmp';c.style.top='60px';
+        c.innerHTML='<small>💰 MARGEN-CHAMPION DES TAGES</small><div class="nm2">'+esc(ch.e.name)+'</div><div class="eu">'+eur(ch.marge)+'</div><div class="sb2">'+ch.opt+' Optimierungen · Ø '+eur(ch.opt?ch.marge/ch.opt:0)+' je Optimierung</div>';
+        card.appendChild(c);setTimeout(function(){c.classList.add('on');},300);
+      };};
+  }
+  function top3Show(champAt){
     var top=LASTROWS.filter(function(r){return r.opt>0;}).slice(0,3);if(!top.length||CEL_ON)return false;
     CEL_ON=true;var tv=stage.querySelector('.tv');if(tv)tv.classList.add('blur');
     var dim=document.createElement('div');dim.id='t3dim';stage.appendChild(dim);
@@ -195,6 +248,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     function step(pl,at,ms){var r=top[pl-1];if(!r)return;setTimeout(function(){var b=q('.blk',pl);if(b)b.style.height=H[pl]+'px';},at);
       setTimeout(function(){typeName(q('.nm',pl),r.e.name,ms,function(){var sb=q('.sb',pl);if(sb)sb.classList.add('on');if(pl===1){var cr=card.querySelector('.cr');var c1=card.querySelectorAll('.cr');c1.forEach(function(x){if(x.textContent)x.classList.add('on');});burst();}});},at+500);}
     step(3,600,55);step(2,2000,55);step(1,3500,110);
+    setTimeout(function(){champSeq(card);},champAt||60000);
     var rain=null;function rainStart(){if(rain)return;var cols=['#E9773F','#DE5A5E','#C23B66','#F7B39A','#1d1c1a','#FFD2C2'],k=0;rain=setInterval(function(){for(var j=0;j<3;j++){var qq=document.createElement('span');qq.className='tcf';qq.style.zIndex='62';qq.style.left=(Math.random()*1920)+'px';qq.style.background=cols[(k++)%cols.length];stage.appendChild(qq);
       if(qq.animate)qq.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:'translate('+((Math.random()-.5)*200)+'px,1150px) rotate('+(360+Math.random()*900)+'deg)',opacity:.9}],{duration:3500+Math.random()*2000,easing:'linear',fill:'both'});
       (function(qq){setTimeout(function(){qq.remove();},5600);})(qq);}},180);}
@@ -452,7 +506,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
       if(ev.length){setTimeout(function(){ev.slice(0,6).forEach(function(c){CEL_Q.push(c);});celNext();},wait+300);}
       rankSave(rows,t);prevSave(rows,t);
       // Probe für die Feier-Bildschirme: ?test=ziel | marge | auftrag
-      if(TEST==='top3'){TEST='';setTimeout(top3Show,1200);}
+      if(TEST==='top3'){TEST='';setTimeout(function(){top3Show(15000);},1200);}
       if(TEST==='donnerstag'||TEST==='freitag'){var tk=TEST==='donnerstag'?'do':'fr';TEST='';setTimeout(function(){if(!wkShow(tk))console.log('Wochenkarte: niemand passt');},1200);}
       if(TEST==='team'){TEST='';var tb=Math.max(100,Math.floor(S.opt/100)*100);setTimeout(function(){CEL_Q.push({team:1,kick:'TEAM-MEILENSTEIN',big:num(tb)+' Optimierungen'});celNext();},1500);}
       if((TEST==='ziel'||TEST==='marge'||TEST==='auftrag')&&rows.length){var tr=rows[0],o=PREV[tr.e.id];
