@@ -1045,6 +1045,7 @@ tr.pv-empty td{background:repeating-linear-gradient(-45deg,transparent 0 6px,rgb
     <button class="rl-btn" id="rail-overview" onclick="selectWiegandSub('overview')"><i class="ti ti-chart-bar"></i><span class="rl-tip">Performance</span></button>
     <button class="rl-btn" id="rail-ziel" onclick="selectWiegandSub('ziel')"><i class="ti ti-target"></i><span class="rl-tip">Zielvereinbarung</span></button>
     <button class="rl-btn" id="rail-provision" onclick="selectProvisionTeam()"><i class="ti ti-coin-euro"></i><span class="rl-tip">Provision</span></button>
+    <button class="rl-btn" id="rail-live" onclick="selectLive()"><i class="ti ti-device-tv"></i><span class="rl-tip">Live</span></button>
     <div class="rl-sep"></div>
     <button class="rl-btn" id="rail-aufgaben" onclick="selectAufgaben()"><i class="ti ti-checklist"></i><span class="rl-tip">Aufgaben</span></button>
     <button class="rl-btn" id="rail-kalender" onclick="selectKalender()"><i class="ti ti-calendar"></i><span class="rl-tip">Kalender</span></button>
@@ -1082,6 +1083,7 @@ tr.pv-empty td{background:repeating-linear-gradient(-45deg,transparent 0 6px,rgb
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Performance</div>
       
       <div class="sb-item sb-navsub" id="nav-team-provision" onclick="selectProvisionTeam()">Provision</div>
+      <div class="sb-item sb-navsub" id="nav-team-live" onclick="selectLive()">Live</div>
       <div class="sb-item sb-navsub" id="nav-team-kalender" onclick="selectKalender()">Kalender</div>
       <div class="sb-item sb-navsub" id="nav-team-aufgaben" onclick="selectAufgaben()">Aufgaben</div>
       <div class="sb-item sb-navsub" id="nav-coaching-activity" onclick="selectCoachingActivity()">Aktivitäten</div>
@@ -4290,12 +4292,12 @@ function empTargets(emp){
 
 
 // ── Menueleiste: Symbolleiste + Panel ──
-var SB_AREAS={dashboard:'Dashboard',overview:'Performance',coaching:'Coaching',kalender:'Kalender',aufgaben:'Aufgaben',provision:'Provision',activity:'Aktivitäten',ziel:'Zielvereinbarung',settings:'Einstellungen'};
+var SB_AREAS={dashboard:'Dashboard',overview:'Performance',coaching:'Coaching',kalender:'Kalender',aufgaben:'Aufgaben',provision:'Provision',live:'Live',activity:'Aktivitäten',ziel:'Zielvereinbarung',settings:'Einstellungen'};
 var _railArea='overview';
 function updateRail(){
-  var area=view==='aufgaben'?'aufgaben':view==='kalender'?'kalender':view==='dashboard'?'dashboard':view==='settings'?'settings':view==='activity'?'activity':view==='provisionTeam'?'provision':view==='coaching'?'coaching':(view==='team'&&wiegandView==='ziel')?'ziel':view==='team'?'overview':_railArea;
+  var area=view==='live'?'live':view==='aufgaben'?'aufgaben':view==='kalender'?'kalender':view==='dashboard'?'dashboard':view==='settings'?'settings':view==='activity'?'activity':view==='provisionTeam'?'provision':view==='coaching'?'coaching':(view==='team'&&wiegandView==='ziel')?'ziel':view==='team'?'overview':_railArea;
   _railArea=area;
-  var MAPID={aufgaben:'nav-team-aufgaben',kalender:'nav-team-kalender',dashboard:'nav-team-dashboard',overview:'nav-team-overview',coaching:'nav-team-coaching',provision:'nav-team-provision',activity:'nav-coaching-activity',ziel:'nav-team-ziel',settings:'nav-settings'};
+  var MAPID={aufgaben:'nav-team-aufgaben',kalender:'nav-team-kalender',dashboard:'nav-team-dashboard',overview:'nav-team-overview',coaching:'nav-team-coaching',provision:'nav-team-provision',live:'nav-team-live',activity:'nav-coaching-activity',ziel:'nav-team-ziel',settings:'nav-settings'};
   Object.keys(SB_AREAS).forEach(function(k){
     var b=document.getElementById('rail-'+k);if(!b)return;
     b.classList.toggle('on',k===area&&view!=='emp');
@@ -4486,6 +4488,60 @@ function showView(v){
 }
 function selectDashboard(){view='dashboard';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function selectCoachingActivity(){view='activity';wiegandNavOpen=true;bannerViewMode='activity';resetBannerRotation();renderSidebar();renderMain();}
+
+// ── Live-Ansicht für die Fernseher (live.html mit geheimem Schlüssel, ohne Anmeldung) ──
+var LIVE={ort:'',msg:''};
+function liveCfg(){var c=settings.liveConfig||{};return {crOEM:c.crOEM!=null&&c.crOEM!==''?+c.crOEM:55,crMY:c.crMY!=null&&c.crMY!==''?+c.crMY:20,optProStd:c.optProStd?+c.optProStd:3.5,knappOEM:c.knappOEM!=null&&c.knappOEM!==''?+c.knappOEM:5,knappMY:c.knappMY!=null&&c.knappMY!==''?+c.knappMY:3};}
+function liveBase(){return location.href.split('#')[0].split('?')[0].replace(/index\.html$/,'').replace(/\/?$/,'/')+'live.html';}
+function liveUrl(embed){var k=settings.liveKey||'';if(!k)return '';return liveBase()+'?k='+encodeURIComponent(k)+(LIVE.ort?'&s='+LIVE.ort:'')+(embed?'&embed=1':'');}
+function liveSetOrt(o){LIVE.ort=o;LIVE.msg='';renderLive();}
+function liveCopy(){var u=liveUrl(false);if(!u)return;var done=function(){LIVE.msg='Adresse kopiert.';renderLive();};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(done,function(){var i=document.getElementById('liveUrlField');if(i){i.select();document.execCommand('copy');done();}});
+  else{var i=document.getElementById('liveUrlField');if(i){i.select();document.execCommand('copy');done();}}}
+function liveOpen(){var u=liveUrl(false);if(u)window.open(u,'_blank','noopener');}
+function liveNewKey(){if(currentUserRole!=='admin')return;
+  if(settings.liveKey&&!confirm('Neue Adresse erzeugen?\n\nDie bisherige Adresse funktioniert danach auf keinem Fernseher mehr. Du musst dort die neue Adresse öffnen.'))return;
+  var a=new Uint8Array(18);crypto.getRandomValues(a);var k=Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2);}).join('');
+  sb.from('settings').upsert({key:'liveKey',value:k},{onConflict:'key'}).then(function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
+    settings.liveKey=k;LIVE.msg='Neue Adresse erzeugt. Bitte auf den Fernsehern neu öffnen.';
+    if(typeof logActivity==='function'){try{logActivity('employee','updated','Live-Ansicht: neue Adresse erzeugt');}catch(e){}}
+    renderLive();});}
+function liveSaveCfg(){if(currentUserRole!=='admin')return;var g=function(id){var el=document.getElementById(id);return el?el.value.replace(',','.'):'';};
+  var c={crOEM:g('liveCrOem'),crMY:g('liveCrMy'),knappOEM:g('liveKnOem'),knappMY:g('liveKnMy'),optProStd:g('liveOph')};
+  Object.keys(c).forEach(function(k){c[k]=c[k]===''?null:+c[k];if(c[k]!=null&&isNaN(c[k]))c[k]=null;});
+  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
+    settings.liveConfig=c;LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
+function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;
+  var adm=currentUserRole==='admin',k=settings.liveKey||'',c=liveCfg(),u=liveUrl(false);
+  var inp=function(id,v,step,dis){return '<input type="number" id="'+id+'" value="'+(v==null?'':v)+'" step="'+step+'" min="0"'+(dis?' disabled':'')+' style="width:90px;height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">';};
+  var fld=function(l,h){return '<label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text3)">'+l+h+'</label>';};
+  var h='<div class="content">'+buildGlobalBannerHtml(gbVisible());
+  h+='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-device-tv"></i> Live-Ansicht</div><span class="kal-note">So sieht es auf dem Fernseher aus · aktualisiert sich jede Minute</span>'
+    +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="kal-note">Standort</span><span class="dsh-seg">'
+    +[['','Alle'],['MUC','Olching'],['VLC','Valencia']].map(function(o){return '<button type="button" class="'+(LIVE.ort===o[0]?'on':'')+'" onclick="liveSetOrt(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</span></span></div>';
+  if(k){h+='<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#EEEDE9;border:1px solid var(--border)"><iframe src="'+esc(liveUrl(true))+'" title="Live-Ansicht" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>';}
+  else{h+='<div class="kal-note" style="padding:30px;text-align:center">Noch keine Adresse vorhanden. '+(adm?'Bitte unten „Adresse erzeugen“ klicken (vorher 45_live_ansicht.sql in Supabase ausführen).':'Ein Admin muss die Adresse zuerst erzeugen.')+'</div>';}
+  h+='</div>';
+  h+='<div class="card card-static"><div class="card-title"><i class="ti ti-link"></i> Auf dem Fernseher öffnen</div>'
+    +'<div class="kal-note" style="margin-bottom:10px">Diese Adresse im Browser des Fernsehers öffnen und auf Vollbild stellen. Eine Anmeldung ist dort nicht nötig. Wer die Adresse kennt, sieht die Live-Zahlen, deshalb nur auf den Fernsehern verwenden.</div>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="liveUrlField" readonly value="'+esc(u)+'" onclick="this.select()" style="flex:1;min-width:320px;height:34px;box-sizing:border-box;font-size:13px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
+    +'<button class="btn btn-primary" type="button" onclick="liveCopy()"'+(u?'':' disabled')+'><i class="ti ti-copy"></i> Adresse kopieren</button>'
+    +'<button class="btn" type="button" onclick="liveOpen()"'+(u?'':' disabled')+'><i class="ti ti-arrows-maximize"></i> Im neuen Fenster öffnen</button>'
+    +(adm?'<button class="btn" type="button" onclick="liveNewKey()"><i class="ti ti-refresh"></i> '+(k?'Neue Adresse erzeugen':'Adresse erzeugen')+'</button>':'')+'</div>'
+    +(LIVE.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)"><i class="ti ti-check"></i> '+esc(LIVE.msg)+'</div>':'')+'</div>';
+  h+='<div class="card card-static"><div class="card-title"><i class="ti ti-adjustments"></i> Ziele in der Live-Ansicht</div>'
+    +'<div class="kal-note" style="margin-bottom:12px">Orange = Ziel erreicht, hell-orange = knapp dran, grau = deutlich darunter. Soll-Linie und Tagesziel der Optimierungen = Optimierungen je Arbeitsstunde × Arbeitszeit laut Stammdaten. Das Marge-Soll kommt aus der Zielvereinbarung.</div>'
+    +'<div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap">'
+    +fld('CR OEM Ziel (%)',inp('liveCrOem',c.crOEM,1,!adm))+fld('knapp dran (Pkt.)',inp('liveKnOem',c.knappOEM,1,!adm))
+    +fld('CR MY Ziel (%)',inp('liveCrMy',c.crMY,1,!adm))+fld('knapp dran (Pkt.)',inp('liveKnMy',c.knappMY,1,!adm))
+    +fld('Optimierungen je Std.',inp('liveOph',c.optProStd,0.1,!adm))
+    +(adm?'<button class="btn btn-primary" type="button" onclick="liveSaveCfg()"><i class="ti ti-device-floppy"></i> Einstellungen speichern</button>':'')+'</div></div>';
+  h+='</div>';
+  ma.innerHTML=h;}
+
+function selectLive(){view='live';bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function selectProvisionTeam(){view='provisionTeam';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function closeWiegandSubnav(){
   wiegandNavOpen=false;
@@ -4531,7 +4587,7 @@ function recomputeTeamTargets(){
   TEAM_TARGET_KEYS.forEach(function(k){var t=teamTargetFor(list,k);if(t){KPI_TARGETS[k]=KPI_TARGETS[k]||{};KPI_TARGETS[k].val=t.val;KPI_TARGETS[k].dir=t.dir;}});
   if(KPI_TARGETS.crOEM)CR_GOOD=KPI_TARGETS.crOEM.val;
 }
-function renderMain(){recomputeTeamTargets();if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching'){view='kalender';renderKalender();}else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else renderEmpDetail();}
+function renderMain(){recomputeTeamTargets();if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching'){view='kalender';renderKalender();}else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else if(view==='live')renderLive();else renderEmpDetail();}
 
 // ── Browser-Zurück/Vor innerhalb des Boards ──
 // Jede neue Ansicht (Bereich, Mitarbeiter, Reiter, Einstellungen-Unterseite) wird als Verlaufseintrag gemerkt.
@@ -11814,6 +11870,8 @@ function loadSettingsFromSupabase(){
       if(r.key==='ftpLastSync')settings.ftpLastSync=r.value||'';
       if(r.key==='tokenExpiry')settings.tokenExpiry=r.value||'';
       if(r.key==='extensionUrl')settings.extensionUrl=r.value||'';
+      if(r.key==='liveKey')settings.liveKey=r.value||'';
+      if(r.key==='liveConfig'){try{settings.liveConfig=JSON.parse(r.value||'{}')||{};}catch(e){settings.liveConfig={};}}
       if(r.key==='rolePermissions'||r.key==='kalenderRules'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'||r.key==='ftpRange'||r.key==='permPersons'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
