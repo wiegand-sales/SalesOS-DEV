@@ -120,6 +120,25 @@ body.embed .tv{border-radius:22px}
 #t3 .man.flip.lunge svg{animation:mLungeR .5s ease-out}
 @keyframes mLungeR{0%{transform:scaleX(-1)}40%{transform:scaleX(-1) translateX(-26px) rotate(-8deg)}100%{transform:scaleX(-1)}}
 #t3.pod .blk .pl{font-size:70px}
+/* Siegerehrung: dunkle Nacht, Figur zündet Rakete, Feuerwerk */
+#t3dim.dark{background:rgba(12,11,10,.72)}
+#t3.night{background:radial-gradient(ellipse at 50% 110%,#3a2a24 0%,#1d1c1a 45%,#0e0d0c 100%);color:#fff;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+#t3.night .gr{position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(#2a2622,#151412);border-top:1px solid #3a3530}
+#t3.night .kk{position:absolute;left:0;right:0;top:44px;text-align:center;font-size:22px;font-weight:700;letter-spacing:.22em;color:#A39D91;opacity:0;transition:opacity .8s}
+#t3.night .val{position:absolute;left:0;right:0;top:170px;text-align:center;font-size:150px;font-weight:200;line-height:1;opacity:0;transform:scale(.7);transition:opacity .6s,transform .8s cubic-bezier(.2,1.5,.4,1);
+  background:linear-gradient(90deg,#F2884F,#F0607A);-webkit-background-clip:text;background-clip:text;color:transparent}
+#t3.night .val small{font-size:56px;font-weight:300}
+#t3.night .who{position:absolute;left:0;right:0;top:350px;text-align:center;opacity:0;transform:translateY(30px) scale(.8);transition:opacity .7s,transform .9s cubic-bezier(.2,1.5,.4,1)}
+#t3.night .who .tr{font-size:56px;line-height:1}#t3.night .who small{display:block;font-size:26px;font-weight:300;color:#C9C2B4;margin-top:8px}
+#t3.night .who b{display:block;font-size:92px;font-weight:700;color:#fff;text-shadow:0 0 30px rgba(240,133,102,.55)}
+#t3.night .rest{position:absolute;left:0;right:0;top:600px;text-align:center;font-size:24px;color:#A39D91;opacity:0;transition:opacity .8s}
+#t3.night .on{opacity:1!important;transform:none!important}
+#t3 .rk{position:absolute;bottom:40px;width:40px;height:120px;z-index:4}
+#t3 .rk svg{width:100%;height:100%;overflow:visible}
+#t3 .fz{position:absolute;width:10px;height:10px;border-radius:50%;background:#FFD27A;box-shadow:0 0 12px 6px rgba(255,170,60,.8);z-index:6;animation:fzF .15s infinite alternate}
+@keyframes fzF{from{transform:scale(.7)}to{transform:scale(1.3)}}
+#t3 .fwp{position:absolute;width:7px;height:7px;border-radius:50%;z-index:3;pointer-events:none}
+#t3 .fwf{position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;z-index:3;pointer-events:none;box-shadow:0 0 60px 30px rgba(255,240,220,.8)}
 #t3 .blk .bn{font-size:26px;font-weight:700;margin-top:6px;white-space:nowrap}#t3 .blk .bv{font-size:22px;font-weight:600;opacity:.9}
 @keyframes mJump{0%,100%{transform:translateY(0)}45%{transform:translateY(-34px)}}
 #t3 .chmp{position:absolute;left:0;right:0;text-align:center;z-index:6;opacity:0;transform:scale(.6);transition:opacity .6s,transform .7s cubic-bezier(.2,1.5,.4,1)}
@@ -259,6 +278,47 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
             setTimeout(function(){w.className='man walk';var p1c=bx(1);moveTo(w,p1c.l+p1c.w/2-W/2,700);
               setTimeout(function(){w.className='man cheer';burst();},750);},1300);},1350);},1300);},950);},5200);
     setTimeout(function(){card.classList.remove('on');dim.classList.remove('on');if(tv)tv.classList.remove('blur');setTimeout(function(){card.remove();dim.remove();CEL_ON=false;celNext();},700);},ms||120000);
+    return true;
+  }
+  // Siegerehrung: Figur läuft zur Rakete, zündet sie, Feuerwerk, dann Zahl und Name
+  function fireworks(card,x,y,n,big){var cols=['#FFD27A','#F2884F','#F0607A','#C23B66','#FFFFFF','#F7B39A'],base=cols[Math.floor(Math.random()*cols.length)];
+    var fl=document.createElement('div');fl.className='fwf';fl.style.left=(x-10)+'px';fl.style.top=(y-10)+'px';card.appendChild(fl);
+    if(fl.animate)fl.animate([{opacity:1,transform:'scale(.2)'},{opacity:0,transform:'scale('+(big?3:1.8)+')'}],{duration:500,fill:'forwards'});setTimeout(function(){fl.remove();},600);
+    for(var i=0;i<n;i++){var q=document.createElement('span');q.className='fwp';var c=Math.random()<.6?base:cols[i%cols.length];q.style.background=c;q.style.boxShadow='0 0 10px 2px '+c;q.style.left=x+'px';q.style.top=y+'px';card.appendChild(q);
+      var a=Math.PI*2*i/n+Math.random()*.2,r=(big?260:170)*(.7+Math.random()*.4),dx=Math.cos(a)*r,dy=Math.sin(a)*r;
+      if(q.animate)q.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(1)',opacity:1,offset:.55},{transform:'translate('+(dx*1.08)+'px,'+(dy+90)+'px) scale(.3)',opacity:0}],{duration:1500+Math.random()*500,easing:'cubic-bezier(.1,.8,.3,1)',fill:'forwards'});
+      (function(q){setTimeout(function(){q.remove();},2200);})(q);}}
+  function ceremonyShow(o){
+    if(CEL_ON)return false;CEL_ON=true;var tv=stage.querySelector('.tv');if(tv)tv.classList.add('blur');
+    var dim=document.createElement('div');dim.id='t3dim';dim.className='dark';stage.appendChild(dim);
+    var card=document.createElement('div');card.id='t3';card.className='night';
+    card.innerHTML='<div class="kk">'+esc(o.kick)+'</div><div class="val"><span class="vn">0</span> <small>'+esc(o.unit)+'</small></div>'
+      +'<div class="who"><div class="tr">🏆</div><small>Sieger der Power Hour</small><b>'+esc(o.name)+'</b></div><div class="rest">'+esc(o.rest||'')+'</div><div class="gr"></div>'
+      +'<div class="rk"><svg viewBox="0 0 40 120"><rect x="18" y="58" width="4" height="62" fill="#8C857A"/><path d="M20 0 L32 22 L32 70 L8 70 L8 22 Z" fill="#C23B66"/><path d="M20 0 L32 22 L8 22 Z" fill="#F2884F"/><rect x="8" y="40" width="24" height="8" fill="#FFD27A"/><path d="M8 62 L0 76 L8 72Z M32 62 L40 76 L32 72Z" fill="#E9773F"/></svg></div>';
+    stage.appendChild(card);void card.offsetWidth;dim.classList.add('on');card.classList.add('on');
+    var W=card.clientWidth,Hc=card.clientHeight,rk=card.querySelector('.rk'),cx=W/2;rk.style.left=(cx-20)+'px';
+    var man=document.createElement('div');man.className='man walk flip';man.innerHTML=manSvg('#E9773F','#DE5A5E','#C23B66');man.style.left='-170px';man.style.bottom='14px';card.appendChild(man);
+    var T=[],loop=null;function at(ms,f){T.push(setTimeout(function(){if(card.parentNode)f();},ms));}
+    // 1) Figur läuft von links bis kurz vor die Rakete
+    at(500,function(){if(man.animate)man.animate([{left:'-170px'},{left:(cx-175)+'px'}],{duration:2600,easing:'ease-in-out',fill:'forwards'});});
+    // 2) bückt sich und zündet (Arme nach vorn, Funke an der Lunte)
+    var fz=null;
+    at(3200,function(){man.className='man push flip';fz=document.createElement('div');fz.className='fz';fz.style.left=(cx-8)+'px';fz.style.bottom='52px';card.appendChild(fz);});
+    // 3) erschrocken zurück, Rakete startet
+    at(4300,function(){man.className='man walk';if(man.animate)man.animate([{left:(cx-175)+'px'},{left:(cx-590)+'px'}],{duration:1000,easing:'ease-out',fill:'forwards'});});
+    at(5000,function(){man.className='man idle flip';if(fz){fz.style.transition='bottom .9s ease-in';}
+      if(rk.animate){rk.animate([{transform:'translateY(0)'},{transform:'translateY(-'+(Hc-170)+'px)'}],{duration:900,easing:'ease-in',fill:'forwards'});}
+      if(fz&&fz.animate)fz.animate([{bottom:'52px'},{bottom:(Hc-60)+'px'}],{duration:900,easing:'ease-in',fill:'forwards'});
+      for(var k=0;k<12;k++)(function(k){setTimeout(function(){if(!card.parentNode)return;var sp=document.createElement('span');sp.className='fwp';sp.style.background='#FFD27A';sp.style.boxShadow='0 0 8px 2px #FFB24A';sp.style.left=(cx-3+(Math.random()-.5)*8)+'px';sp.style.top=(Hc-110-k*(Hc-200)/12)+'px';card.appendChild(sp);if(sp.animate)sp.animate([{opacity:1},{opacity:0,transform:'translateY(40px)'}],{duration:600,fill:'forwards'});setTimeout(function(){sp.remove();},700);},k*70);})(k);});
+    // 4) Explosion – Kennzahl erscheint und zählt hoch
+    at(5900,function(){rk.style.display='none';if(fz)fz.remove();fireworks(card,cx,150,70,true);card.querySelector('.kk').classList.add('on');
+      var v=card.querySelector('.val');v.classList.add('on');var vn=v.querySelector('.vn'),t0=null;
+      function st(ts){if(!t0)t0=ts;var k=Math.min(1,(ts-t0)/1600),e=1-Math.pow(1-k,3);vn.textContent=o.fmt(o.value*e);if(k<1&&card.parentNode)requestAnimationFrame(st);}requestAnimationFrame(st);});
+    // 5) Name des Siegers, Figur jubelt, Feuerwerk geht weiter
+    at(8300,function(){card.querySelector('.who').classList.add('on');man.className='man cheer';fireworks(card,cx-320,190,50,false);fireworks(card,cx+320,210,50,false);
+      loop=setInterval(function(){if(!card.parentNode){clearInterval(loop);return;}fireworks(card,120+Math.random()*(W-240),90+Math.random()*260,40+Math.floor(Math.random()*30),Math.random()<.3);},950);});
+    at(9800,function(){card.querySelector('.rest').classList.add('on');});
+    setTimeout(function(){T.forEach(clearTimeout);if(loop)clearInterval(loop);card.classList.remove('on');dim.classList.remove('on');if(tv)tv.classList.remove('blur');setTimeout(function(){card.remove();dim.remove();CEL_ON=false;celNext();},700);},o.ms||120000);
     return true;
   }
   function champSeq(card){
@@ -560,6 +620,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
       if(ev.length){setTimeout(function(){ev.slice(0,6).forEach(function(c){CEL_Q.push(c);});celNext();},wait+300);}
       rankSave(rows,t);prevSave(rows,t);
       // Probe für die Feier-Bildschirme: ?test=ziel | marge | auftrag
+      if(TEST==='sieger'){TEST='';setTimeout(function(){var tt=LASTROWS.filter(function(r){return r.opt>0;}).slice(0,3);if(!tt.length)return;ceremonyShow({kick:'⚡ POWER HOUR · OPTIMIERUNGEN',unit:'Optimierungen',value:tt[0].opt,fmt:function(v){return Math.round(v);},name:tt[0].e.name,rest:(tt[1]?'Platz 2 '+tt[1].e.name+' · '+tt[1].opt:'')+(tt[2]?'   ·   Platz 3 '+tt[2].e.name+' · '+tt[2].opt:''),ms:120000});},1200);}
       if(TEST==='halbzeit'){TEST='';setTimeout(function(){var tt=LASTROWS.filter(function(r){return r.opt>0;}).slice(0,3).map(function(r){return {name:r.e.name,val:r.opt+' Opt.'};});podiumShow(tt,'⚡ POWER HOUR · HALBZEIT','Zwischenstand','Opt.',120000);},1200);}
       if(TEST==='top3'){TEST='';setTimeout(function(){top3Show(15000);},1200);}
       if(TEST==='donnerstag'||TEST==='freitag'){var tk=TEST==='donnerstag'?'do':'fr';TEST='';setTimeout(function(){if(!wkShow(tk))console.log('Wochenkarte: niemand passt');},1200);}
@@ -578,7 +639,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
 
   // Vorführ-Modus (?demo=1): alle 2 Minuten eine andere Animation bzw. Karte, sonst normaler Betrieb
   if(Q.get('demo')==='1'){
-    var DSTEPS=['aufstieg','ziel','marge','auftrag','zahlen','team','top3','halbzeit','donnerstag','freitag'],di=0;
+    var DSTEPS=['aufstieg','ziel','marge','auftrag','zahlen','team','top3','halbzeit','sieger','donnerstag','freitag'],di=0;
     function demoNext(){if(!D)return;if(CEL_ON){setTimeout(demoNext,5000);return;}var st=DSTEPS[di%DSTEPS.length];di++;
       if(st==='zahlen'){if(LASTBV)LASTBV=LASTBV.map(function(x){return [x[0]==null?null:x[0]*0.85,x[1]];});if(LASTCR){var n=0;Object.keys(LASTCR).forEach(function(k){if(n<6){LASTCR[k]='x';n++;}});}render(false,true);return;}
       if(st==='aufstieg')TESTFAKE=false;
