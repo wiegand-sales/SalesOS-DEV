@@ -93,6 +93,8 @@ body.embed .tv{border-radius:22px}
 #t3 .blk{width:100%;margin-top:10px;border-radius:18px 18px 0 0;display:flex;flex-direction:column;align-items:center;height:0;overflow:hidden;transition:height .8s cubic-bezier(.2,1.1,.4,1)}
 #t3 .blk .pl{font-size:100px;font-weight:200;line-height:1;margin-top:12px}#t3 .blk .op{font-size:24px;font-weight:600}
 #t3 .p1{background:linear-gradient(160deg,#E9773F 0%,#DE5A5E 55%,#C23B66 100%);color:#fff}#t3 .p2{background:#E6E1D7;color:#3a3833}#t3 .p3{background:#EFECE5;color:#3a3833}
+/* Tagesbester bei Marge, CR OEM und CR MY: Zelle im Banner-Verlauf mit Krone */
+.kr .v span.best{background:linear-gradient(135deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%)!important;color:#fff!important;border-radius:8px;box-shadow:0 6px 16px rgba(194,59,102,.35);overflow:visible}
 /* Margen-Champion: Figur läuft herein, schiebt das Podest weg und jubelt */
 #t3 .st3{transition:none}
 #t3 .man{position:absolute;bottom:0;width:150px;height:300px;z-index:5}
@@ -204,7 +206,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     setTimeout(function(){bx.remove();},4700);return 5000;
   }
   // Top 3 des Tages (16:45, 2 Minuten): Blöcke wachsen 3 → 2 → 1, Namen bauen sich Buchstabe für Buchstabe auf
-  var LASTROWS=[],LASTWEEK=[],T3_DAY=null,WK_DONE={};
+  var BEST={},LASTBEST=null,LASTROWS=[],LASTWEEK=[],T3_DAY=null,WK_DONE={};
   function typeName(el,txt,ms,done){var i=0;el.innerHTML='<i></i>';var iv=setInterval(function(){i++;el.innerHTML=esc(txt.slice(0,i))+'<i></i>';if(i>=txt.length){clearInterval(iv);setTimeout(function(){el.innerHTML=esc(txt);if(done)done();},500);}},ms);}
   // Figur (eigene, schlichte Zeichnung im Board-Stil)
   var MAN_SVG='<svg viewBox="0 0 120 240"><defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E9773F"/><stop offset=".5" stop-color="#DE5A5E"/><stop offset="1" stop-color="#C23B66"/></linearGradient></defs>'
@@ -456,9 +458,13 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     } else {
       // Kopf: Namen + CR-Kästchen
       h+='<div class="kr nmr"><span class="l"></span><div class="v">'+rows.map(function(r){return '<span>'+esc(r.nm)+'</span>';}).join('')+'</div></div>';
+      var bO=null,bM=null,bG=null;rows.forEach(function(r){var o=r.oemD>=5?r.oem/r.oemD:null,m=r.ysm>=5?r.my/r.ysm:null;
+        if(o!=null&&(!bO||o>bO.v))bO={id:r.e.id,v:o};if(m!=null&&(!bM||m>bM.v))bM={id:r.e.id,v:m};if(r.marge>0&&(!bG||r.marge>bG.v))bG={id:r.e.id,v:r.marge};});
+      BEST={o:bO&&bO.id,m:bM&&bM.id,g:bG&&bG.id};
+      function bestify(html,on){return on?html.replace('<span class="','<span class="best ').replace(' %</span>',' % 👑</span>'):html;}
       function crBox(v,z,n){if(v==null)return '<span class="k-none">–</span>';var x=Math.round(v),c=x>=z?'k-okb':x>=z-n?'k-midb':'k-nob';return '<span class="'+c+'">'+x+' %</span>';}
-      h+='<div class="kr crr"><span class="l">CR OEM <small>≥'+ZOEM+' %</small></span><div class="v">'+rows.map(function(r){return crBox(r.oemD>0?r.oem/r.oemD*100:null,ZOEM,NOEM);}).join('')+'</div></div>';
-      h+='<div class="kr crr"><span class="l">CR MY <small>≥'+ZMY+' %</small></span><div class="v">'+rows.map(function(r){return crBox(r.ysm>0?r.my/r.ysm*100:null,ZMY,NMY);}).join('')+'</div></div>';
+      h+='<div class="kr crr"><span class="l">CR OEM <small>≥'+ZOEM+' %</small></span><div class="v">'+rows.map(function(r){return bestify(crBox(r.oemD>0?r.oem/r.oemD*100:null,ZOEM,NOEM),BEST.o===r.e.id);}).join('')+'</div></div>';
+      h+='<div class="kr crr"><span class="l">CR MY <small>≥'+ZMY+' %</small></span><div class="v">'+rows.map(function(r){return bestify(crBox(r.ysm>0?r.my/r.ysm*100:null,ZMY,NMY),BEST.m===r.e.id);}).join('')+'</div></div>';
       // Soll-Linie (Vollzeit-Tag laut Standard-Arbeitszeit des Wochentags)
       var vz={work_hours:null},vzPl=plannedHours(vz,t),vzDef=dayDef(vz,t);
       var sollNow=vzPl>0?OPH*elapsedAt(vz,t,refMin):0,vzZiel=OPH*vzPl;
@@ -478,7 +484,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
         return '<div class="c">'+(r.opt>0&&showN?'<b>'+r.opt+'</b>':'')+'<span class="st" style="height:'+Y(r.opt).toFixed(2)+'%">'+seg.map(function(s){return s[0]>0?'<i style="height:'+(s[0]/r.opt*100).toFixed(2)+'%;background:'+s[1]+'"></i>':'';}).join('')+'</span></div>';
       }).join('')+'</div></div></div>';
       // Fuß: Marge und Ø je Optimierung
-      h+='<div class="kr" style="margin-top:8px"><span class="l">MARGE</span><div class="v">'+rows.map(function(r){var hot=r.marge>=2000;return '<span style="color:'+(hot?'#C23B66':'#3a3833')+'">'+(r.marge?eurK(r.marge):'–')+(hot?' 🎉':'')+'</span>';}).join('')+'</div></div>';
+      h+='<div class="kr" style="margin-top:8px"><span class="l">MARGE</span><div class="v">'+rows.map(function(r){var hot=r.marge>=2000,bb=BEST.g===r.e.id;return bb?'<span class="best">'+eurK(r.marge)+' 👑</span>':'<span style="color:'+(hot?'#C23B66':'#3a3833')+'">'+(r.marge?eurK(r.marge):'–')+(hot?' 🎉':'')+'</span>';}).join('')+'</div></div>';
       h+='<div class="kr"><span class="l">Ø / OPT.</span><div class="v">'+rows.map(function(r){return '<span style="color:#8a8478;font-weight:600">'+(r.opt?eur(r.marge/r.opt):'–')+'</span>';}).join('')+'</div></div>';
     }
     var alt=netErr||(lastOk&&Date.now()-lastOk>5*60000);
@@ -499,7 +505,10 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
         var a0=absOn(e.id,t),pl=plannedHours(e,t);if(a0&&a0.halb)pl*=0.5;var rest=(a0&&a0.ganz)?0:Math.max(0,pl-Math.min(elapsedAt(e,t,refMin),pl));
         L.push({name:e.name,b:b,z:zr,f:zr-b,rest:rest,away:!!(a0&&a0.ganz),fri:plannedHours(e,addDays(mo,4))});});
       LASTWEEK=L;})();
-    if(fresh){countUp(BV);crFlip();}
+    if(fresh){countUp(BV);crFlip();
+      if(LASTBEST){[['o',1],['m',2],['g',4]].forEach(function(x){var id=BEST[x[0]];if(id&&id!==LASTBEST[x[0]]){var el=stage.querySelector('.kr .v span[data-ro="'+x[1]+'"][data-eid="'+id+'"]');
+        if(el&&el.animate)el.animate([{transform:'scale(.6) rotate(-6deg)',opacity:.3},{transform:'scale(1.25) rotate(3deg)',opacity:1,offset:.5},{transform:'scale(1)'}],{duration:1100,easing:'cubic-bezier(.2,1.4,.4,1)'});}});}
+      LASTBEST={o:BEST.o,m:BEST.m,g:BEST.g};}
     if(fresh){
       var wait=animCols(old,ups);
       var ev=teamEvents(S,t).concat(events(rows,t));PREVT={opt:S.opt};PREVT_DAY=t;
