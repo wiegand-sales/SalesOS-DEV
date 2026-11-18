@@ -69,6 +69,10 @@ body.embed .tv{border-radius:22px}
 .fxc{position:absolute;z-index:39;width:12px;height:18px;border-radius:3px;pointer-events:none}
 .c.fxon .st{box-shadow:0 0 0 4px #fff,0 0 0 8px #F08566,0 18px 40px rgba(240,133,102,.45)}
 .kr .v span.fxcell{outline:3px solid #F08566;outline-offset:2px;border-radius:6px}
+@keyframes crFlip{0%{transform:rotateX(0)}45%{transform:rotateX(90deg)}55%{transform:rotateX(-90deg)}100%{transform:rotateX(0)}}
+.kr .v span.crflip{animation:crFlip .9s ease-in-out}
+.kr .v span.crglow{box-shadow:0 0 0 3px #fff,0 0 18px 4px rgba(240,133,102,.75)}
+.tcf{position:absolute;top:-40px;z-index:45;width:16px;height:24px;border-radius:4px;pointer-events:none}
 /* Popup: jemand klettert im Ranking nach oben */
 #cel{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;
   background:linear-gradient(150deg,#E9773F 0%,#DE5A5E 50%,#C23B66 100%);overflow:hidden;opacity:0;transform:scale(1.04);transition:opacity .6s ease,transform .6s ease;pointer-events:none}
@@ -103,7 +107,37 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
   var D=null,lastOk=0;
   var SCALE=1,TESTFAKE=false,RANK=null,RANK_DAY=null,CEL_Q=[],CEL_ON=false,TEST=Q.get('test')||'';
   function stagePos(el){var r=el.getBoundingClientRect(),sr=stage.getBoundingClientRect();return {x:(r.left-sr.left)/SCALE,y:(r.top-sr.top)/SCALE,w:r.width/SCALE,h:r.height/SCALE};}
+  // 1) Banner-Zahlen zählen hoch, statt umzuspringen
+  var LASTBV=null;
+  function fmtB(v,f){if(v==null||isNaN(v))return '–';return f==='p'?Math.round(v)+' %':f==='e'?eur(v):num(v);}
+  function countUp(bv){var bs=stage.querySelectorAll('.b1 > div > b');
+    bv.forEach(function(x,i){var el=bs[i];if(!el)return;var o=LASTBV&&LASTBV[i]?LASTBV[i][0]:null,n=x[0];
+      if(o==null||n==null||isNaN(o)||isNaN(n)||Math.round(o)===Math.round(n))return;
+      var t0=null,dur=1400;el.textContent=fmtB(o,x[1]);
+      function step(ts){if(!t0)t0=ts;var k=Math.min(1,(ts-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmtB(o+(n-o)*e,x[1]);if(k<1)requestAnimationFrame(step);}
+      requestAnimationFrame(step);
+      if(el.animate)el.animate([{transform:'scale(1)'},{transform:'scale(1.06)',offset:.3},{transform:'scale(1)'}],{duration:1400,easing:'ease-out'});});
+    LASTBV=bv;}
+  // 2) CR-Kästchen kippen einmal um, wenn sich ihre Farbe ändert (Ziel erreicht = leuchtet auf)
+  var LASTCR=null;
+  function crFlip(){var now={};stage.querySelectorAll('.kr.crr .v span[data-eid]').forEach(function(el){var k=el.getAttribute('data-ro')+'|'+el.getAttribute('data-eid');now[k]=el.className;
+      if(LASTCR&&LASTCR[k]&&LASTCR[k]!==el.className){el.classList.add('crflip');if(el.classList.contains('k-okb'))el.classList.add('crglow');setTimeout(function(){el.classList.remove('crflip');el.classList.remove('crglow');},2600);}});
+    LASTCR=now;}
+  // 6) Team-Meilenstein: Banner leuchtet, Konfetti über die ganze Breite, Abzeichen unter dem Banner
+  function teamFx(c){
+    var b1=stage.querySelector('.b1');
+    if(b1&&b1.animate)b1.animate([{boxShadow:'0 0 0 0 rgba(240,133,102,0)'},{boxShadow:'0 0 0 10px rgba(255,255,255,.9),0 0 60px 20px rgba(240,133,102,.7)',offset:.25},{boxShadow:'0 0 0 10px rgba(255,255,255,.9),0 0 60px 20px rgba(240,133,102,.7)',offset:.7},{boxShadow:'0 0 0 0 rgba(240,133,102,0)'}],{duration:4200,easing:'ease-in-out'});
+    var cols=['#E9773F','#DE5A5E','#C23B66','#F7B39A','#1d1c1a','#FFD2C2'];
+    for(var i=0;i<90;i++){var q=document.createElement('span');q.className='tcf';q.style.left=(Math.random()*1920)+'px';q.style.background=cols[i%cols.length];stage.appendChild(q);
+      if(q.animate)q.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:'translate('+((Math.random()-.5)*200)+'px,1150px) rotate('+(360+Math.random()*900)+'deg)',opacity:.9}],{duration:3000+Math.random()*1800,delay:Math.random()*900,easing:'cubic-bezier(.3,.1,.6,1)',fill:'both'});
+      (function(q){setTimeout(function(){q.remove();},5800);})(q);}
+    var bx=document.createElement('div');bx.className='fxb';bx.style.left='960px';var bp=b1?stagePos(b1):{y:28,h:170};bx.style.top=(bp.y+bp.h+280)+'px';
+    bx.innerHTML='<small>'+esc(c.kick)+'</small><b>'+c.big+'</b>';stage.appendChild(bx);
+    if(bx.animate)bx.animate([{transform:'translate(-50%,-60%) scale(.3)',opacity:0},{transform:'translate(-50%,-100%) scale(1.12)',opacity:1,offset:.12},{transform:'translate(-50%,-100%) scale(1)',offset:.2},{transform:'translate(-50%,-100%) scale(1)',opacity:1,offset:.85},{transform:'translate(-50%,-110%) scale(.96)',opacity:0}],{duration:4600,easing:'ease-out',fill:'forwards'});
+    setTimeout(function(){bx.remove();},4700);return 5000;
+  }
   function fxRun(c){
+    if(c.team)return teamFx(c);
     var col=stage.querySelector('.bars .c[data-eid="'+c.id+'"]');if(!col){return 600;}
     var all=stage.querySelectorAll('[data-eid="'+c.id+'"]'),st=col.querySelector('.st')||col,p=stagePos(st);
     var cx=p.x+p.w/2,top=p.y;
@@ -147,6 +181,11 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     });
     ev.sort(function(a,b){return b.p-a.p;});return ev;
   }
+  var PREVT=null,PREVT_DAY=null;
+  function teamEvents(S,t){var ev=[];if(PREVT==null||PREVT_DAY!==t){return ev;}
+    if(S.ziel>0&&PREVT.opt<Math.round(S.ziel)&&S.opt>=Math.round(S.ziel))ev.push({team:1,p:5,kick:'TEAM · TAGESZIEL ERREICHT',big:num(S.opt)+' Optimierungen ✓'});
+    else{var a=Math.floor(PREVT.opt/100),b=Math.floor(S.opt/100);if(b>a&&b>0)ev.push({team:1,p:4,kick:'TEAM-MEILENSTEIN',big:num(b*100)+' Optimierungen'});}
+    return ev;}
   function prevSave(rows,t){var m={};rows.forEach(function(r){m[r.e.id]={opt:r.opt,marge:r.marge};});PREV=m;PREV_DAY=t;}
   function rankSave(rows,t){var now={};rows.forEach(function(r,i){now[r.e.id]={rank:i+1,opt:r.opt};});RANK=now;RANK_DAY=t;}
   // Spalten (Name, CR, Säule, Marge, Ø) bekommen die Mitarbeiter-ID, damit sie beim Platzwechsel wandern können
@@ -251,6 +290,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     // ── Banner ──
     function tile(lbl,badge,val,sub,pct,mark){return '<div><small>'+lbl+(badge||'')+'</small><b>'+val+'</b><em>'+sub+'</em><div class="pg"><i style="width:'+clamp(pct||0,0,100).toFixed(1)+'%"></i>'+(mark!=null?'<u style="left:calc('+clamp(mark,0,100).toFixed(1)+'% - 1.5px)"></u>':'')+'</div></div>';}
     function crSub(v,z){if(v==null)return 'noch keine Zahlen';var d=Math.round(v)-z;return d>=0?(d===0?'Ziel erreicht':d+' Pkt. über Ziel'):(-d<=3?'knapp ':'')+(-d)+' Pkt. darunter';}
+    var BV=[[S.opt,'n'],[crOEM,'p'],[crMY,'p'],[S.marge,'e'],[mpo,'e']];
     var h='<div class="tv"><div class="b1">';
     h+=tile('OPTIMIERUNGEN','',num(S.opt),'Soll jetzt '+num(S.soll)+' · Tagesziel '+num(S.ziel),S.ziel>0?S.opt/S.ziel*100:0,S.ziel>0?S.soll/S.ziel*100:null);
     h+=tile('CR OEM','<span class="st'+(crOEM!=null&&Math.round(crOEM)>=ZOEM?' ok':'')+'">Ziel '+ZOEM+' %</span>',crOEM==null?'–':Math.round(crOEM)+' %',crSub(crOEM,ZOEM),crOEM==null?0:crOEM/ZOEM*100,100);
@@ -298,12 +338,14 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
     var old=fresh&&RANK?snapCols():null,ups=fresh?rankUps(rows,t):[];
     var cel=document.getElementById('cel');stage.innerHTML=h;if(cel)stage.appendChild(cel);
     tagCols(rows);
+    if(fresh){countUp(BV);crFlip();}
     if(fresh){
       var wait=animCols(old,ups);
-      var ev=events(rows,t);
+      var ev=teamEvents(S,t).concat(events(rows,t));PREVT={opt:S.opt};PREVT_DAY=t;
       if(ev.length){setTimeout(function(){ev.slice(0,6).forEach(function(c){CEL_Q.push(c);});celNext();},wait+300);}
       rankSave(rows,t);prevSave(rows,t);
       // Probe für die Feier-Bildschirme: ?test=ziel | marge | auftrag
+      if(TEST==='team'){TEST='';var tb=Math.max(100,Math.floor(S.opt/100)*100);setTimeout(function(){CEL_Q.push({team:1,kick:'TEAM-MEILENSTEIN',big:num(tb)+' Optimierungen'});celNext();},1500);}
       if((TEST==='ziel'||TEST==='marge'||TEST==='auftrag')&&rows.length){var tr=rows[0],o=PREV[tr.e.id];
         if(TEST==='ziel'){o.opt=Math.max(0,Math.round(tr.ziel)-1);if(tr.opt<Math.round(tr.ziel))tr.ziel=tr.opt;}
         if(TEST==='marge'){o.marge=1990;if(tr.marge<2000)tr.marge=2150;}
