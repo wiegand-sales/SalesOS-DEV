@@ -261,6 +261,18 @@ body.embed #cel{border-radius:22px}
 .sman.man.wave .ar2{animation:kWave .5s ease-in-out infinite alternate}
 .sman.man.wave .ar1{transform:rotate(10deg)}
 .sman{position:absolute;width:150px;height:300px;z-index:30;pointer-events:none}.sman svg{width:100%;height:100%;overflow:visible}
+
+.man .ba,.man .mg{display:none}
+.man.grim .ba,.man.grim .mg{display:inline}.man.grim .bn,.man.grim .ms,.man.grim .mh,.man.grim .mw{display:none!important}
+.sman.man.hips .ar1{transform:rotate(-28deg)}.sman.man.hips .ar2{transform:rotate(28deg)}
+.sman.man.hips svg{animation:kStomp .5s ease-in-out 3}
+@keyframes kStomp{0%,100%{transform:translateY(0)}40%{transform:translateY(-14px)}60%{transform:translateY(2px)}}
+.sman.man.flip.hips svg{animation:kStompF .5s ease-in-out 3}
+@keyframes kStompF{0%,100%{transform:scaleX(-1) translateY(0)}40%{transform:scaleX(-1) translateY(-14px)}60%{transform:scaleX(-1) translateY(2px)}}
+.sman.man.point .ar2{transform:rotate(-118deg)}.sman.man.point .ar1{transform:rotate(-20deg)}
+.dsay{position:absolute;z-index:31;background:#fff;border:3px solid #1d1c1a;border-radius:22px;padding:10px 18px;font-size:30px;font-weight:800;color:#1d1c1a;white-space:nowrap;transform:translate(-50%,-100%);box-shadow:0 8px 20px rgba(0,0,0,.15)}
+.dsay::after{content:'';position:absolute;left:50%;bottom:-16px;margin-left:-10px;border:10px solid transparent;border-top:14px solid #1d1c1a}
+.dcup{position:absolute;z-index:29;font-size:56px;line-height:1}
 </style>
 </head>
 <body>
@@ -445,9 +457,9 @@ function kidSvg(o){o=o||{};var girl=o.g==='w',sk=KID_SKIN[o.skin]||KID_SKIN.hell
   function eye(x){return '<ellipse cx="'+x+'" cy="60" rx="7" ry="8.5" fill="#fff"/><circle cx="'+(x+.6)+'" cy="61.5" r="5.2" fill="#6B4226"/><circle cx="'+(x+.6)+'" cy="61.5" r="2.8" fill="#1d1c1a"/><circle cx="'+(x+2.4)+'" cy="59" r="1.8" fill="#fff"/><circle cx="'+(x-1.2)+'" cy="64" r=".9" fill="#fff"/>';}
   he+='<g class="eyes" style="transform-origin:60px 60px">'+eye(49)+eye(71)+'</g>';
   if(girl)he+='<path d="M41 53 l-3 -2 M42 51 l-2 -3 M79 53 l3 -2 M78 51 l2 -3" stroke="#1d1c1a" stroke-width="1.4" stroke-linecap="round"/>';
-  he+='<path d="M43 48 Q49 44 55 47" stroke="'+h1+'" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M65 47 Q71 44 77 48" stroke="'+h1+'" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+  he+='<g class="bn"><path d="M43 48 Q49 44 55 47" stroke="'+h1+'" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M65 47 Q71 44 77 48" stroke="'+h1+'" stroke-width="2.6" fill="none" stroke-linecap="round"/></g><g class="ba"><path d="M42 45 L56 51" stroke="'+h1+'" stroke-width="3.4" stroke-linecap="round"/><path d="M78 45 L64 51" stroke="'+h1+'" stroke-width="3.4" stroke-linecap="round"/></g>';
   he+='<ellipse cx="42" cy="72" rx="5.5" ry="3.4" fill="#F28C8C" opacity=".45"/><ellipse cx="78" cy="72" rx="5.5" ry="3.4" fill="#F28C8C" opacity=".45"/><path d="M58 69 q2 2 4 0" stroke="'+kidShade(sk[1],.85)+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
-  he+='<path class="ms" d="M52 75 Q60 82 68 75" stroke="#8A2E2E" stroke-width="2.4" fill="none" stroke-linecap="round"/><g class="mh"><path d="M51 74 Q60 86 69 74 Z" fill="#8A2E2E"/><path d="M54 76 Q60 79 66 76 L66 74 L54 74Z" fill="#fff"/></g><path class="mw" d="M53 79 Q60 75 67 79" stroke="#8A2E2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+  he+='<path class="ms" d="M52 75 Q60 82 68 75" stroke="#8A2E2E" stroke-width="2.4" fill="none" stroke-linecap="round"/><g class="mh"><path d="M51 74 Q60 86 69 74 Z" fill="#8A2E2E"/><path d="M54 76 Q60 79 66 76 L66 74 L54 74Z" fill="#fff"/></g><path class="mw" d="M53 79 Q60 75 67 79" stroke="#8A2E2E" stroke-width="2.2" fill="none" stroke-linecap="round"/><path class="mg" d="M51 81 Q60 72 69 81" stroke="#8A2E2E" stroke-width="2.8" fill="none" stroke-linecap="round"/>';
   if(hs==='puffs')he+='<circle cx="34" cy="28" r="14" fill="'+H+'"/><circle cx="86" cy="28" r="14" fill="'+H+'"/><path d="M30 52 Q28 24 60 23 Q92 24 90 52 Q84 38 72 36 Q60 42 48 36 Q36 40 30 52Z" fill="'+H+'"/><circle cx="46" cy="30" r="3.5" fill="#F2C14E"/><circle cx="74" cy="30" r="3.5" fill="#F2C14E"/>';
   else if(hs==='locken')he+=[[36,40,9],[44,30,10],[54,24,10],[66,24,10],[76,30,10],[84,40,9],[40,48,6],[80,48,6],[60,30,9]].map(function(c){return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'" fill="'+H+'"/>';}).join('');
   else if(hs==='zopf')he+='<path d="M30 54 Q28 24 60 22 Q92 24 90 54 Q86 40 74 36 Q66 46 50 42 Q40 44 34 56Z" fill="'+H+'"/><circle cx="92" cy="40" r="6" fill="#F2884F"/>';
@@ -479,20 +491,34 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
     var cand=LASTROWS.filter(function(r){return r.soll>0||r.opt>0;});if(!cand.length)return false;
     var low=cand.slice().sort(function(a,b){return a.opt-b.opt||a.marge-b.marge;})[0];
     var col=stage.querySelector('.bars .c[data-eid="'+low.e.id+'"]'),pl=stage.querySelector('.ch .pl');if(!col||!pl||!col.animate)return false;
-    FX_ON=true;var cp=stagePos(col),pp=stagePos(pl),base=1080-(pp.y+pp.h),fromLeft=(cp.x+cp.w/2)<960;
-    var d=document.createElement('div');d.className='man sman walk'+(fromLeft?' flip':'');d.innerHTML=kidSvg(kidFor(e));d.style.bottom=(base-22)+'px';
+    FX_ON=true;var cp=stagePos(col),pp=stagePos(pl),base=1080-(pp.y+pp.h),fromLeft=(cp.x+cp.w+130>1900)||(cp.x+cp.w/2)<960,F=fromLeft?' flip':'';
+    var d=document.createElement('div');d.className='man sman walk grim'+F;d.innerHTML=kidSvg(kidFor(e));d.style.bottom=(base-22)+'px';
     var start=fromLeft?-170:1940,stop=fromLeft?cp.x-118:cp.x+cp.w-32;d.style.left=start+'px';stage.appendChild(d);
+    var bub=null,T=[];function at(ms,f){T.push(setTimeout(f,ms));}
+    function say(txt){if(bub)bub.remove();bub=document.createElement('div');bub.className='dsay';bub.textContent=txt;bub.style.left=(parseFloat(d.style.left)+75)+'px';bub.style.top=(1080-(base-22)-300-18)+'px';stage.appendChild(bub);var bw=bub.offsetWidth,bx0=parseFloat(bub.style.left);bub.style.left=Math.max(bw/2+20,Math.min(1900-bw/2,bx0))+'px';
+      if(bub.animate)bub.animate([{transform:'translate(-50%,-80%) scale(.4)',opacity:0},{transform:'translate(-50%,-100%) scale(1.08)',opacity:1,offset:.6},{transform:'translate(-50%,-100%) scale(1)'}],{duration:400,easing:'ease-out'});}
     var dur=Math.max(1800,Math.abs(stop-start)/0.38);
     var a=d.animate([{left:start+'px'},{left:stop+'px'}],{duration:dur,easing:'linear',fill:'forwards'});
-    a.onfinish=function(){d.style.left=stop+'px';d.className='man sman push'+(fromLeft?' flip':'');
-      // an der Säule rütteln
-      col.style.transformOrigin='50% 100%';
-      col.animate([{transform:'rotate(0)'},{transform:'rotate(-4deg)'},{transform:'rotate(4deg)'},{transform:'rotate(-5deg)'},{transform:'rotate(5deg)'},{transform:'rotate(-3deg)'},{transform:'rotate(3deg)'},{transform:'rotate(0)'}],{duration:1800,easing:'ease-in-out'});
-      d.animate([{transform:'translateX(0)'},{transform:'translateX('+(fromLeft?10:-10)+'px)'},{transform:'translateX(0)'}],{duration:260,iterations:7});
-      setTimeout(function(){d.className='man sman wave'+(fromLeft?' flip':'');
-        setTimeout(function(){d.className='man sman walk'+(fromLeft?'':' flip');var out=fromLeft?-170:1940;
-          var b=d.animate([{left:stop+'px'},{left:out+'px'}],{duration:Math.max(1500,Math.abs(out-stop)/0.45),easing:'linear',fill:'forwards'});
-          b.onfinish=function(){d.remove();FX_ON=false;};},2600);},1900);};
+    a.onfinish=function(){d.style.left=stop+'px';
+      // 1) Hände in die Hüften, aufstampfen
+      d.className='man sman hips grim'+F;say('Hallo?! 👀');
+      // 2) an der Säule rütteln
+      at(1900,function(){d.className='man sman push grim'+F;say('Aufwachen!');col.style.transformOrigin='50% 100%';
+        col.animate([{transform:'rotate(0)'},{transform:'rotate(-4deg)'},{transform:'rotate(4deg)'},{transform:'rotate(-5deg)'},{transform:'rotate(5deg)'},{transform:'rotate(-3deg)'},{transform:'rotate(3deg)'},{transform:'rotate(0)'}],{duration:1800,easing:'ease-in-out'});
+        d.animate([{transform:'translateX(0)'},{transform:'translateX('+(fromLeft?10:-10)+'px)'},{transform:'translateX(0)'}],{duration:260,iterations:7});});
+      // 3) auf die Soll-Linie zeigen
+      at(4100,function(){d.className='man sman point grim'+F;say('Da musst du hin! ☝️');var sl=stage.querySelector('.sollN');
+        if(sl&&sl.animate)sl.animate([{boxShadow:'0 0 0 0 rgba(217,84,30,0)'},{boxShadow:'0 0 18px 6px rgba(217,84,30,.7)'},{boxShadow:'0 0 0 0 rgba(217,84,30,0)'}],{duration:900,iterations:2});});
+      // 4) Kaffee hinstellen
+      at(6600,function(){d.className='man sman push'+F;say('Hier, ein Kaffee ☕');var cup=document.createElement('div');cup.className='dcup';cup.textContent='☕';
+        cup.style.left=(cp.x+cp.w/2-28)+'px';cup.style.bottom=(base+2)+'px';stage.appendChild(cup);
+        if(cup.animate)cup.animate([{transform:'translateY(-120px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.7},{transform:'translateY(-10px)',offset:.85},{transform:'translateY(0)'}],{duration:700,easing:'ease-in'});
+        at(9000,function(){if(cup.animate){var c2=cup.animate([{opacity:1},{opacity:0}],{duration:800,fill:'forwards'});c2.onfinish=function(){cup.remove();};}else cup.remove();});});
+      // 5) doch noch freundlich winken, dann gehen
+      at(8800,function(){d.className='man sman wave'+F;say('Du schaffst das! 💪');});
+      at(11000,function(){if(bub){bub.remove();bub=null;}d.className='man sman walk'+(fromLeft?'':' flip');var out=fromLeft?-170:1940;
+        var b2=d.animate([{left:stop+'px'},{left:out+'px'}],{duration:Math.max(1500,Math.abs(out-stop)/0.45),easing:'linear',fill:'forwards'});
+        b2.onfinish=function(){d.remove();FX_ON=false;};});};
     return true;}
   setInterval(function(){if(!D)return;var t=today(),d=new Date(),m=d.getHours()*60+d.getMinutes();if(DORI12!==t&&m>=720&&m<725&&!lsGet('dori12_'+t)){if(doriShake()){DORI12=t;lsSet('dori12_'+t);}}},5000);
   function doriPlan(card){setTimeout(function(){doriPeek(card);},5000+Math.random()*6000);setTimeout(function(){doriPeek(card);},55000+Math.random()*15000);}
