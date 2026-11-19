@@ -227,6 +227,40 @@ body.embed #cel{border-radius:22px}
 @keyframes kWave{from{transform:rotate(-150deg)}to{transform:rotate(-115deg)}}
 .dori{position:absolute;width:150px;height:300px;z-index:20;pointer-events:none}
 .dori svg{width:100%;height:100%;overflow:visible}
+
+/* Posen für Figuren direkt in der Ansicht */
+.sman.man{position:absolute;bottom:0;width:150px;height:300px;z-index:5}
+.sman.man svg{width:100%;height:100%;overflow:visible}
+.sman.man .lg1,.sman.man .lg2,.sman.man .ar1,.sman.man .ar2{transition:transform .35s ease}
+.sman.man.walk .lg1{animation:mLeg .5s ease-in-out infinite alternate}
+.sman.man.walk .lg2{animation:mLeg .5s ease-in-out infinite alternate-reverse}
+.sman.man.walk .ar1{animation:mArm .5s ease-in-out infinite alternate-reverse}
+.sman.man.walk .ar2{animation:mArm .5s ease-in-out infinite alternate}
+.sman.man.push .ar1,.sman.man.push .ar2{animation:none;transform:rotate(82deg)}
+.sman.man.cheer .ar1{animation:none;transform:rotate(158deg)}
+.sman.man.cheer .ar2{animation:none;transform:rotate(-158deg)}
+.sman.man.cheer .lg1{animation:none;transform:rotate(-8deg)}
+.sman.man.cheer .lg2{animation:none;transform:rotate(8deg)}
+.sman.man.cheer svg{animation:mJump .7s ease-in-out infinite}
+.sman.man.flip svg{transform:scaleX(-1)}
+.sman.man.flip.cheer svg{animation:none}
+.sman.man.idle .ar1{transform:rotate(14deg)}
+.sman.man.idle .ar2{transform:rotate(-14deg)}
+.sman.man.lunge svg{animation:mLunge .5s ease-out}
+.sman.man.flip.lunge svg{animation:mLungeR .5s ease-out}
+.sman.man.watch .ar1{transform:rotate(78deg)}
+.sman.man.watch .ar2{transform:rotate(-12deg)}
+.sman.man.watch svg{animation:mTap 1.4s ease-in-out infinite}
+.sman.man.pump .ar2{animation:mPump .45s ease-in-out infinite alternate}
+.sman.man.pump .ar1{transform:rotate(12deg)}
+.sman.man.pump svg{animation:mBob .45s ease-in-out infinite alternate}
+.sman.man.cheer .ar1{animation:none;transform:rotate(138deg)}
+.sman.man.cheer .ar2{animation:none;transform:rotate(-138deg)}
+.sman.man.idle .ar1{transform:rotate(10deg)}
+.sman.man.idle .ar2{transform:rotate(-10deg)}
+.sman.man.wave .ar2{animation:kWave .5s ease-in-out infinite alternate}
+.sman.man.wave .ar1{transform:rotate(10deg)}
+.sman{position:absolute;width:150px;height:300px;z-index:30;pointer-events:none}.sman svg{width:100%;height:100%;overflow:visible}
 </style>
 </head>
 <body>
@@ -438,6 +472,29 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
     if(d.animate){var a=d.animate([{transform:'translateY(190px) rotate('+tilt+'deg)'},{transform:'translateY(0) rotate('+tilt+'deg)'}],{duration:900,easing:'cubic-bezier(.2,1.1,.4,1)',fill:'forwards'});
       a.onfinish=function(){d.className='man dori wave';setTimeout(function(){d.className='man dori idle';if(d.animate)d.animate([{transform:'translateY(0) rotate('+tilt+'deg)'},{transform:'translateY(210px) rotate('+tilt+'deg)'}],{duration:700,easing:'ease-in',fill:'forwards'});setTimeout(function(){d.remove();},750);},2400);};}
     else setTimeout(function(){d.remove();},3000);}
+  // 12:00 – Dori läuft zur Säule mit den wenigsten Optimierungen, rüttelt daran, winkt und geht wieder
+  var DORI12=null;
+  function doriShake(){
+    var e=(D.mitarbeiter||[]).find(function(x){return /^(dori|dogoro)$/i.test(String(x.name||'').split(' ')[0]);});if(!e||CEL_ON||FX_ON||PHMODE)return false;
+    var cand=LASTROWS.filter(function(r){return r.soll>0||r.opt>0;});if(!cand.length)return false;
+    var low=cand.slice().sort(function(a,b){return a.opt-b.opt||a.marge-b.marge;})[0];
+    var col=stage.querySelector('.bars .c[data-eid="'+low.e.id+'"]'),pl=stage.querySelector('.ch .pl');if(!col||!pl||!col.animate)return false;
+    FX_ON=true;var cp=stagePos(col),pp=stagePos(pl),base=1080-(pp.y+pp.h),fromLeft=(cp.x+cp.w/2)<960;
+    var d=document.createElement('div');d.className='man sman walk'+(fromLeft?' flip':'');d.innerHTML=kidSvg(kidFor(e));d.style.bottom=(base-22)+'px';
+    var start=fromLeft?-170:1940,stop=fromLeft?cp.x-118:cp.x+cp.w-32;d.style.left=start+'px';stage.appendChild(d);
+    var dur=Math.max(1800,Math.abs(stop-start)/0.38);
+    var a=d.animate([{left:start+'px'},{left:stop+'px'}],{duration:dur,easing:'linear',fill:'forwards'});
+    a.onfinish=function(){d.style.left=stop+'px';d.className='man sman push'+(fromLeft?' flip':'');
+      // an der Säule rütteln
+      col.style.transformOrigin='50% 100%';
+      col.animate([{transform:'rotate(0)'},{transform:'rotate(-4deg)'},{transform:'rotate(4deg)'},{transform:'rotate(-5deg)'},{transform:'rotate(5deg)'},{transform:'rotate(-3deg)'},{transform:'rotate(3deg)'},{transform:'rotate(0)'}],{duration:1800,easing:'ease-in-out'});
+      d.animate([{transform:'translateX(0)'},{transform:'translateX('+(fromLeft?10:-10)+'px)'},{transform:'translateX(0)'}],{duration:260,iterations:7});
+      setTimeout(function(){d.className='man sman wave'+(fromLeft?' flip':'');
+        setTimeout(function(){d.className='man sman walk'+(fromLeft?'':' flip');var out=fromLeft?-170:1940;
+          var b=d.animate([{left:stop+'px'},{left:out+'px'}],{duration:Math.max(1500,Math.abs(out-stop)/0.45),easing:'linear',fill:'forwards'});
+          b.onfinish=function(){d.remove();FX_ON=false;};},2600);},1900);};
+    return true;}
+  setInterval(function(){if(!D)return;var t=today(),d=new Date(),m=d.getHours()*60+d.getMinutes();if(DORI12!==t&&m>=720&&m<725&&!lsGet('dori12_'+t)){if(doriShake()){DORI12=t;lsSet('dori12_'+t);}}},5000);
   function doriPlan(card){setTimeout(function(){doriPeek(card);},5000+Math.random()*6000);setTimeout(function(){doriPeek(card);},55000+Math.random()*15000);}
   function manSvg(c1,c2,c3){var id='mg'+(++MAN_N);return MAN_SVG.replace(/id="mg"/,'id="'+id+'"').replace('url(#mg)','url(#'+id+')').replace('stop-color="#E9773F"/><stop offset=".5" stop-color="#DE5A5E"/><stop offset="1" stop-color="#C23B66"','stop-color="'+c1+'"/><stop offset=".5" stop-color="'+c2+'"/><stop offset="1" stop-color="'+c3+'"');}
   // Zwischenstand: drei Figuren jubeln auf dem Podest, dann schubst Platz 1 erst Platz 3 und dann Platz 2 herunter
@@ -851,6 +908,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
       if(ev.length){setTimeout(function(){ev.slice(0,6).forEach(function(c){CEL_Q.push(c);});celNext();},wait+300);}
       rankSave(rows,t);prevSave(rows,t);
       // Probe für die Feier-Bildschirme: ?test=ziel | marge | auftrag
+      if(TEST==='dori12'){TEST='';setTimeout(doriShake,1500);}
       if(TEST==='endspurt'){TEST='';setTimeout(function(){var n=Date.now();endShow({h:{id:0,kpi:'opt',start:'',ende:''},S:n-55*60000,E:n+25000});},1000);}
       if(TEST==='intro'){TEST='';setTimeout(function(){var d=new Date(Date.now()+60000);phIntro({kpi:'opt',start:pad(d.getHours())+':'+pad(d.getMinutes()),ende:pad((d.getHours()+1)%24)+':'+pad(d.getMinutes())},Date.now()+14000);},1000);}
       if(TEST==='sieger'){TEST='';setTimeout(function(){var tt=LASTROWS.filter(function(r){return r.opt>0;}).slice(0,3);if(!tt.length)return;ceremonyShow({id:tt[0].e.id,kick:'⚡ POWER HOUR · OPTIMIERUNGEN',unit:'Optimierungen',value:tt[0].opt,fmt:function(v){return Math.round(v);},name:tt[0].e.name,rest:(tt[1]?'Platz 2 '+tt[1].e.name+' · '+tt[1].opt:'')+(tt[2]?'   ·   Platz 3 '+tt[2].e.name+' · '+tt[2].opt:''),ms:120000});},1200);}
@@ -872,7 +930,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
 
   // Vorführ-Modus (?demo=1): alle 2 Minuten eine andere Animation bzw. Karte, sonst normaler Betrieb
   if(Q.get('demo')==='1'){
-    var DSTEPS=['aufstieg','ziel','marge','auftrag','zahlen','team','top3','intro','halbzeit','sieger','donnerstag','freitag'],di=0;
+    var DSTEPS=['dori12','aufstieg','ziel','marge','auftrag','zahlen','team','top3','intro','halbzeit','sieger','donnerstag','freitag'],di=0;
     function demoNext(){if(!D)return;if(CEL_ON){setTimeout(demoNext,5000);return;}var st=DSTEPS[di%DSTEPS.length];di++;
       if(st==='zahlen'){if(LASTBV)LASTBV=LASTBV.map(function(x){return [x[0]==null?null:x[0]*0.85,x[1]];});if(LASTCR){var n=0;Object.keys(LASTCR).forEach(function(k){if(n<6){LASTCR[k]='x';n++;}});}render(false,true);return;}
       if(st==='aufstieg')TESTFAKE=false;
