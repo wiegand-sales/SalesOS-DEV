@@ -877,7 +877,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
   // ── Daten holen (jede Minute) ──
   function load(){
     if(!KEY){showMsg('Diese Adresse ist unvollständig.','Bitte die Adresse im Sales OS unter „Live“ kopieren und hier öffnen.');return;}
-    sb.rpc('live_daten',{p_key:KEY,p_von:addDays(today(),-10)}).then(function(res){
+    sb.rpc('live_daten',{p_key:KEY,p_von:(function(){var x=addDays(today(),-10),m=today().slice(0,8)+'01';return x<m?x:m;})()}).then(function(res){
       if(res.error){
         if(/Kein Zugang|42501/i.test(res.error.message||'')||res.error.code==='42501'){D=null;showMsg('Diese Adresse ist nicht mehr gültig.','Im Sales OS wurde eine neue Adresse für die Live-Ansicht erzeugt. Bitte die neue Adresse unter „Live“ kopieren.');return;}
         render(true);return;
