@@ -4742,15 +4742,15 @@ function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=fi
 
 // ── Zeitplan der Popups auf den Fernsehern ──
 var ZPB={msg:''};
-var ZPB_DEF={dori:{on:true,t:'12:00'},top3:{on:true,t:'17:00',min:2},do:{on:true,t:'12:20',wd:4,min:2},fr:{on:true,t:'09:00',wd:5,min:2}};
-var ZPB_ROWS=[['dori','☕ Dori besucht den Letztplatzierten','geht zur Säule mit den wenigsten Optimierungen, rüttelt, bringt einen Tequila',false],
+var ZPB_DEF={dori:{on:true,t:'11:45'},top3:{on:true,t:'17:00',min:2},do:{on:true,t:'14:00',wd:4,min:5},fr:{on:true,t:'09:00',wd:5,min:2},woche:{on:true,t:'12:00',bis:'13:00'}};
+var ZPB_ROWS=[['woche','📅 Wochenansicht','alle Werte von Montag bis heute · mit Popup beim Wechsel hin und zurück',false],['dori','☕ Dori besucht den Letztplatzierten','geht zur Säule mit den wenigsten Optimierungen, rüttelt, bringt einen Tequila',false],
   ['top3','🏆 Top 3 des Tages','Treppchen, danach der Margen-Champion',true],
   ['do','🗓️ Ausgleichstag am Freitag','wer höchstens 20 Optimierungen vom Wochenziel entfernt ist',true],
   ['fr','💪 Endspurt zum Wochenziel','wer beim Wochenziel noch hinterherhängt',true]];
 function zpbGet(k){var z=((settings.liveConfig||{}).zeitplan||{})[k]||{},o={};Object.keys(ZPB_DEF[k]).forEach(function(x){o[x]=z[x]!=null&&z[x]!==''?z[x]:ZPB_DEF[k][x];});return o;}
 function zpbSave(){if(currentUserRole!=='admin')return;var zpl={};
   ZPB_ROWS.forEach(function(r){var k=r[0],g=function(id){return document.getElementById('zp_'+id+'_'+k);};var o={on:!!(g('on')&&g('on').checked),t:(g('t')&&g('t').value)||ZPB_DEF[k].t};
-    if(g('wd'))o.wd=g('wd').value===''?null:+g('wd').value;if(g('min'))o.min=Math.max(1,+g('min').value||2);zpl[k]=o;});
+    if(g('wd'))o.wd=g('wd').value===''?null:+g('wd').value;if(g('min'))o.min=Math.max(1,+g('min').value||2);if(g('bis'))o.bis=g('bis').value||'13:00';zpl[k]=o;});
   var c=Object.assign({},settings.liveConfig||{},{zeitplan:zpl});
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;ZPB.msg='Zeitplan gespeichert. Die Fernseher übernehmen ihn innerhalb einer Minute.';renderLive();});}
@@ -4765,7 +4765,7 @@ function zpbHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled';
       +'<div style="min-width:0"><b style="font-size:13px">'+r[1]+'</b><div class="kal-note">'+r[2]+'</div></div>'
       +(k==='do'||k==='fr'?'<select id="zp_wd_'+k+'"'+dis+' style="'+inp+'">'+WD.map(function(w){return '<option value="'+w[0]+'"'+(String(z.wd==null?'':z.wd)===w[0]?' selected':'')+'>'+w[1]+'</option>';}).join('')+'</select>':'<span class="kal-note">täglich</span>')
       +'<input type="time" id="zp_t_'+k+'" value="'+esc(z.t)+'"'+dis+' style="'+inp+'">'
-      +(r[3]?'<input type="number" min="1" id="zp_min_'+k+'" value="'+(z.min||2)+'"'+dis+' style="'+inp+';width:80px">':'<span class="kal-note">ca. 17 Sek.</span>')+'</div>';});
+      +(r[3]?'<input type="number" min="1" id="zp_min_'+k+'" value="'+(z.min||2)+'"'+dis+' style="'+inp+';width:80px">':(k==='woche'?'<label class="kal-note" style="display:flex;flex-direction:column;gap:2px">bis<input type="time" id="zp_bis_'+k+'" value="'+esc(z.bis||'13:00')+'"'+dis+' style="'+inp+'"></label>':'<span class="kal-note">ca. 17 Sek.</span>'))+'</div>';});
   h+=(ZPB.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(ZPB.msg)+'</div>':'')+'</div>';return h;}
 
 function selectLive(){view='live';bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
