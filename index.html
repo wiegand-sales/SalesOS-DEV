@@ -4772,7 +4772,7 @@ function zpbHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled';
 
 // ── Persönliche KPI-Ziele für die Live-Ansicht (Fernseher sehen keine Provisionsdaten) ──
 function liveZieleCalc(){var out={};(employees||[]).forEach(function(e){if(e.active===false||!isAgentEmp(e))return;var t=empTargets(e);
-  out[e.id]={fo:t.crOEM&&t.crOEM.val,my:t.crMegaYes&&t.crMegaYes.val,tw:t.crTeilweise&&t.crTeilweise.val,sm:t.crSyMy&&t.crSyMy.val};});return out;}
+  out[e.id]={fo:t.crOEM&&t.crOEM.val,my:t.crMegaYes&&t.crMegaYes.val,tw:t.crTeilweise&&t.crTeilweise.val,sm:t.crSyMy&&t.crSyMy.val,ao:t.anteilOEM&&t.anteilOEM.val};});return out;}
 function liveZieleSync(){try{if(currentUserRole!=='admin'||!employees||!employees.length||typeof sb==='undefined')return;var z=liveZieleCalc(),c=settings.liveConfig||{};
   if(JSON.stringify(c.ziele||{})===JSON.stringify(z))return;var n=Object.assign({},c,{ziele:z,zieleStand:today()});
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(n)},{onConflict:'key'}).then(function(res){if(!(res&&res.error))settings.liveConfig=n;});}catch(e){}}
