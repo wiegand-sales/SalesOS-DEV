@@ -891,7 +891,8 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
       if(a.halb&&!a.ganz)pl*=0.5;
       var o=opt(p);
       var arbeitet=pl>0&&!a.ganz;
-      if(!arbeitet&&!o)return; // heute frei/abwesend und keine Zahlen → nicht zeigen
+      if(!arbeitet&&!o){ // heute frei/abwesend und keine Zahlen: in der Wochenansicht trotzdem zeigen, wenn diese Woche gearbeitet
+        if(!(WEEK_ON&&!phState(t,now)))return;var dwx=(new Date(t+'T12:00:00').getDay()+6)%7,mox=addDays(t,-dwx),had=false;for(var kx=0;kx<=dwx&&kx<5;kx++){if(opt((perf[e.id]||{})[addDays(mox,kx)])>0)had=true;}if(!had)return;} // heute frei/abwesend und keine Zahlen → nicht zeigen
       var el=arbeitet?Math.min(elapsedAt(e,t,refMin),pl):0;
       var z=ziel[e.id],dayM=z&&z.opt_per_tag&&z.marge_per_opt?(+z.opt_per_tag)*(+z.marge_per_opt):0;if(a.halb&&!a.ganz)dayM*=0.5;
       var my=p?(p.oem_my||0):0,oem=p?(p.oem_gesamt||0):0;
