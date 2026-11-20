@@ -4538,6 +4538,7 @@ function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;
     +fld('CR MY Ziel (%)',inp('liveCrMy',c.crMY,1,!adm))+fld('knapp dran (Pkt.)',inp('liveKnMy',c.knappMY,1,!adm))
     +fld('Optimierungen je Std.',inp('liveOph',c.optProStd,0.1,!adm))
     +(adm?'<button class="btn btn-primary" type="button" onclick="liveSaveCfg()"><i class="ti ti-device-floppy"></i> Einstellungen speichern</button>':'')+'</div></div>';
+  h+=zpbHtml();
   h+=phbHtml();
   h+=figHtml();
   h+='</div>';
@@ -4676,6 +4677,35 @@ function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=fi
       +'<div style="display:flex;gap:5px;flex-wrap:wrap">'+sel('fig_g_'+e.id,f.g,[['m','Junge'],['w','Mädchen']])+sel('fig_s_'+e.id,f.skin,[['hell','hell'],['mittel','mittel'],['dunkel','dunkel']])+'</div>'
       +'<div style="display:flex;gap:5px;align-items:center">'+sel('fig_h_'+e.id,f.hair,[['kurz','kurze Haare'],['locken','Locken'],['zopf','Pferdeschwanz'],['puffs','Puffs']])+'<input type="color" id="fig_c_'+e.id+'" value="'+(f.shirt||'#F2884F')+'"'+dis+' onchange="figPreview(\''+e.id+'\')" style="width:34px;height:32px;padding:0;border:1px solid var(--border);border-radius:8px;background:none"></div></div></div>';});
   h+='</div>'+(FIG.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(FIG.msg)+'</div>':'')+'</div>';return h;}
+
+
+// ── Zeitplan der Popups auf den Fernsehern ──
+var ZPB={msg:''};
+var ZPB_DEF={dori:{on:true,t:'12:00'},top3:{on:true,t:'17:00',min:2},do:{on:true,t:'12:20',wd:4,min:2},fr:{on:true,t:'09:00',wd:5,min:2}};
+var ZPB_ROWS=[['dori','☕ Dori besucht den Letztplatzierten','geht zur Säule mit den wenigsten Optimierungen, rüttelt, bringt einen Tequila',false],
+  ['top3','🏆 Top 3 des Tages','Treppchen, danach der Margen-Champion',true],
+  ['do','🗓️ Ausgleichstag am Freitag','wer höchstens 20 Optimierungen vom Wochenziel entfernt ist',true],
+  ['fr','💪 Endspurt zum Wochenziel','wer beim Wochenziel noch hinterherhängt',true]];
+function zpbGet(k){var z=((settings.liveConfig||{}).zeitplan||{})[k]||{},o={};Object.keys(ZPB_DEF[k]).forEach(function(x){o[x]=z[x]!=null&&z[x]!==''?z[x]:ZPB_DEF[k][x];});return o;}
+function zpbSave(){if(currentUserRole!=='admin')return;var zpl={};
+  ZPB_ROWS.forEach(function(r){var k=r[0],g=function(id){return document.getElementById('zp_'+id+'_'+k);};var o={on:!!(g('on')&&g('on').checked),t:(g('t')&&g('t').value)||ZPB_DEF[k].t};
+    if(g('wd'))o.wd=g('wd').value===''?null:+g('wd').value;if(g('min'))o.min=Math.max(1,+g('min').value||2);zpl[k]=o;});
+  var c=Object.assign({},settings.liveConfig||{},{zeitplan:zpl});
+  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;ZPB.msg='Zeitplan gespeichert. Die Fernseher übernehmen ihn innerhalb einer Minute.';renderLive();});}
+function zpbHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled';
+  var inp='height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)';
+  var WD=[['','täglich'],['1','Montag'],['2','Dienstag'],['3','Mittwoch'],['4','Donnerstag'],['5','Freitag']];
+  var h='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div class="card-title" style="margin:0"><i class="ti ti-clock-play"></i> Zeitplan der Popups</div><span class="kal-note">wann die Animationen und Karten auf den Fernsehern erscheinen · Power Hours stellst du oben extra ein</span>'+(adm?'<button class="btn btn-primary" type="button" style="margin-left:auto" onclick="zpbSave()"><i class="ti ti-device-floppy"></i> Zeitplan speichern</button>':'')+'</div>';
+  h+='<div style="display:grid;grid-template-columns:60px minmax(0,1fr) 140px 120px 110px;gap:12px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;padding-bottom:6px"><span>An</span><span>Popup</span><span>Tag</span><span>Uhrzeit</span><span>Dauer (Min.)</span></div>';
+  ZPB_ROWS.forEach(function(r){var k=r[0],z=zpbGet(k);
+    h+='<div style="display:grid;grid-template-columns:60px minmax(0,1fr) 140px 120px 110px;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--border)">'
+      +'<label style="display:flex;align-items:center"><input type="checkbox" id="zp_on_'+k+'"'+(z.on?' checked':'')+dis+' style="width:18px;height:18px"></label>'
+      +'<div style="min-width:0"><b style="font-size:13px">'+r[1]+'</b><div class="kal-note">'+r[2]+'</div></div>'
+      +(k==='do'||k==='fr'?'<select id="zp_wd_'+k+'"'+dis+' style="'+inp+'">'+WD.map(function(w){return '<option value="'+w[0]+'"'+(String(z.wd==null?'':z.wd)===w[0]?' selected':'')+'>'+w[1]+'</option>';}).join('')+'</select>':'<span class="kal-note">täglich</span>')
+      +'<input type="time" id="zp_t_'+k+'" value="'+esc(z.t)+'"'+dis+' style="'+inp+'">'
+      +(r[3]?'<input type="number" min="1" id="zp_min_'+k+'" value="'+(z.min||2)+'"'+dis+' style="'+inp+';width:80px">':'<span class="kal-note">ca. 17 Sek.</span>')+'</div>';});
+  h+=(ZPB.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(ZPB.msg)+'</div>':'')+'</div>';return h;}
 
 function selectLive(){view='live';bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function selectProvisionTeam(){view='provisionTeam';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
