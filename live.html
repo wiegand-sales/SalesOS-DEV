@@ -286,6 +286,8 @@ body.embed #cel{border-radius:22px}
 #t3.vsw .vk{font-size:22px;font-weight:700;letter-spacing:.22em;color:#8a8478}
 #t3.vsw .vt{font-size:84px;font-weight:300;line-height:1.1;margin-top:14px;color:#1d1c1a}
 #t3.vsw .vs{font-size:28px;color:#6b665c;margin-top:18px}
+
+.bars .c b{position:relative}.bars .c b .bcr{position:absolute;right:-22px;top:-16px;font-style:normal;font-size:22px;transform:rotate(22deg)}
 </style>
 </head>
 <body>
@@ -920,7 +922,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
           if(dd<=t&&pp){a.oem+=pp.oem_gesamt||0;a.my+=pp.oem_my||0;a.ups+=pp.ups_yes||0;a.wka+=pp.wka_gesamt_yes||0;a.ni+=pp.oem_nicht_erfolgreich||0;a.ysm+=(pp.oem_yes||0)+(pp.oem_sy||0)+(pp.oem_my||0);a.marge+=+pp.marge||0;}
           if(dd<t){if(pp&&opt(pp)>0){hp+=ph;hz+=ph;}}else if(dd===t){var ab=abw[e.id]||{},pt=ab.ganz?0:(ab.halb?ph*.5:ph);hz+=pt;hp+=Math.min(elapsedAt(e,t,refMin),pt);}else hz+=ph;}
         r.oem=a.oem;r.my=a.my;r.oemRest=Math.max(0,a.oem-a.my);r.ups=a.ups;r.wka=a.wka;r.opt=a.oem+a.ups+a.wka;r.marge=a.marge;r.oemD=a.oem+a.ni;r.ysm=a.ysm;
-        r.soll=OPH*hp;r.ziel=OPH*hz;r.mSoll=0;r.mZiel=0;});}
+        r.soll=OPH*hp;r.ziel=OPH*hz;r.mSoll=0;r.mZiel=0;r.hrs=hp;r.oph=hp>0?r.opt/hp:0;});}
     WKMODE=WK;VMODE=VM;
     // ── Power Hour: aktive Stunde suchen, Werte nur ab Start aus den Ticks rechnen ──
     var PHS=phState(t,now);PHMODE=!!PHS;
@@ -935,7 +937,8 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
       KV=phKV(PHS.h.kpi);
       rows.sort(function(a,b){return KV(b)-KV(a)||b.opt-a.opt||a.e.name.localeCompare(b.e.name);});
     } else
-    rows.sort(function(a,b){return b.opt-a.opt||b.marge-a.marge||a.e.name.localeCompare(b.e.name);});
+    rows.sort(function(a,b){return VM==='monat'?((b.oph||0)-(a.oph||0)||b.opt-a.opt):(b.opt-a.opt||b.marge-a.marge||a.e.name.localeCompare(b.e.name));});
+    if(VM==='monat'&&!PHS)KV=function(r){return r.oph||0;};
     if(!PHS){var ff=WK?periodFrom(VM,t):t;rows.forEach(function(r){var e=r.e,fk=fokusOf(e),q={og:0,on:0,ug:0,un:0,wg:0,wn:0,tw:0,ye:0,sy:0,my:0};
         for(var dd=ff;dd<=t;dd=addDays(dd,1)){var pp=(perf[e.id]||{})[dd];if(!pp)continue;q.og+=pp.oem_gesamt||0;q.on+=pp.oem_nicht_erfolgreich||0;q.ug+=pp.ups_gesamt||0;q.un+=pp.ups_nerf||0;
           q.wg+=(pp.wo_gesamt||0)+(pp.wu_gesamt||0);q.wn+=(pp.wo_nerf||0)+(pp.wu_nerf||0)+(pp.wo_beendet||0)+(pp.wu_beendet||0);q.tw+=pp.oem_tw||0;q.ye+=pp.oem_yes||0;q.sy+=pp.oem_sy||0;q.my+=pp.oem_my||0;}
@@ -973,7 +976,9 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
     } else {
     var KW=(function(){var d=new Date(t+'T12:00:00');d.setDate(d.getDate()+3-(d.getDay()+6)%7);var w1=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-w1)/864e5-3+(w1.getDay()+6)%7)/7);})();
     var MON=['JANUAR','FEBRUAR','MÄRZ','APRIL','MAI','JUNI','JULI','AUGUST','SEPTEMBER','OKTOBER','NOVEMBER','DEZEMBER'][new Date(t+'T12:00:00').getMonth()],PER=VM==='woche'?'Woche':VM==='monat'?'Monat':'';
-    h+=tile(VM==='woche'?'WOCHE KW '+KW+' · OPTIMIERUNGEN':VM==='monat'?'MONAT '+MON+' · OPTIMIERUNGEN':'OPTIMIERUNGEN','',num(S.opt),'Soll jetzt '+num(S.soll),S.ziel>0?S.opt/S.ziel*100:0,S.ziel>0?S.soll/S.ziel*100:null);
+    var SH=rows.reduce(function(a,r){return a+(r.hrs||0);},0),TOPH=SH>0?S.opt/SH:0;
+    if(VM==='monat')h+=tile('MONAT '+MON+' · OPT. JE STUNDE','',TOPH.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}),num(S.opt)+' Optimierungen in '+num(SH)+' Std.',TOPH/OPH*100,100);
+    else h+=tile(VM==='woche'?'WOCHE KW '+KW+' · OPTIMIERUNGEN':'OPTIMIERUNGEN','',num(S.opt),'Soll jetzt '+num(S.soll),S.ziel>0?S.opt/S.ziel*100:0,S.ziel>0?S.soll/S.ziel*100:null);
     h+=tile('CR FOKUS','',crOEM==null?'–':Math.round(crOEM)+' %',(WK?PER+' · ':'')+crSub(crOEM,ZOEM),crOEM==null?0:crOEM/ZOEM*100,100);
     h+=tile('CR MY','',crMY==null?'–':Math.round(crMY)+' %',(WK?PER+' · ':'')+crSub(crMY,ZMY),crMY==null?0:crMY/ZMY*100,100);
     var mOk=S.mSoll>0&&S.marge>=S.mSoll;
@@ -990,28 +995,29 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
       h+='<div class="kr nmr"><span class="l"></span><div class="v">'+rows.map(function(r){return '<span>'+esc(r.nm)+'</span>';}).join('')+'</div></div>';
       var bO=null,bM=null,bG=null;rows.forEach(function(r){var o=r.oemD>=5?r.oem/r.oemD:null,m=r.ysm>=5?r.my/r.ysm:null;
         if(o!=null&&(!bO||o>bO.v))bO={id:r.e.id,v:o};if(m!=null&&(!bM||m>bM.v))bM={id:r.e.id,v:m};if(r.marge>0&&(!bG||r.marge>bG.v))bG={id:r.e.id,v:r.marge};});
-      BEST={o:bO&&bO.id,m:bM&&bM.id,g:bG&&bG.id};
-      function bestify(html,on){return on?html.replace('<span class="','<span class="best '):html;}
+      var bT=null,bS=null,bP=null;rows.forEach(function(r){var tw=r.twd>=5?r.tw/r.twd:null,sm=r.smd>=5?r.sm/r.smd:null;if(tw!=null&&(!bT||tw<bT.v))bT={id:r.e.id,v:tw};if(sm!=null&&(!bS||sm>bS.v))bS={id:r.e.id,v:sm};if((r.oph||0)>0&&(!bP||r.oph>bP.v))bP={id:r.e.id,v:r.oph};});
+      BEST={o:bO&&bO.id,m:bM&&bM.id,g:bG&&bG.id,t:bT&&bT.id,s:bS&&bS.id,p:bP&&bP.id};
+      function bestify(html,on){if(on)return html.replace('<span class="','<span class="best ');if(VM==='monat'&&html.indexOf('k-okb')>=0)return '<span style="background:transparent"></span>';return html;}
       function crBox(v,z,n){if(v==null)return '<span class="k-none">–</span>';var x=Math.round(v),c=x>=z?'k-okb':x>=z-n?'k-midb':'k-nob';return '<span class="'+c+'">'+x+' %</span>';}
       function crBoxL(v,z,n){if(v==null)return '<span class="k-none">–</span>';var x=Math.round(v),c=x<=z?'k-okb':x<=z+n?'k-midb':'k-nob';return '<span class="'+c+'">'+x+' %</span>';}
       h+='<div class="kr crr"><span class="l">'+(PHS?'CR OEM':'CR FOKUS')+'</span><div class="v">'+rows.map(function(r){return bestify(crBox(r.oemD>0?r.oem/r.oemD*100:null,zOf(r,'fo',ZOEM),NOEM),BEST.o===r.e.id);}).join('')+'</div></div>';
-      h+='<div class="kr crr"><span class="l">CR MY</span><div class="v">'+rows.map(function(r){return bestify(crBox(r.ysm>0?r.my/r.ysm*100:null,zOf(r,'my',ZMY),NMY),BEST.m===r.e.id);}).join('')+'</div></div>';
       if(VM==='monat'){
-        h+='<div class="kr crr"><span class="l">CR TW</span><div class="v">'+rows.map(function(r){return crBoxL(r.twd>0?r.tw/r.twd*100:null,zOf(r,'tw',25),5);}).join('')+'</div></div>';
-        h+='<div class="kr crr"><span class="l">CR SY/MY</span><div class="v">'+rows.map(function(r){return crBox(r.smd>0?r.sm/r.smd*100:null,zOf(r,'sm',60),5);}).join('')+'</div></div>';}
+        h+='<div class="kr crr"><span class="l">CR TW</span><div class="v">'+rows.map(function(r){return bestify(crBoxL(r.twd>0?r.tw/r.twd*100:null,zOf(r,'tw',25),5),BEST.t===r.e.id);}).join('')+'</div></div>';
+        h+='<div class="kr crr"><span class="l">CR SY/MY</span><div class="v">'+rows.map(function(r){return bestify(crBox(r.smd>0?r.sm/r.smd*100:null,zOf(r,'sm',60),5),BEST.s===r.e.id);}).join('')+'</div></div>';}
+      h+='<div class="kr crr"><span class="l">CR MY</span><div class="v">'+rows.map(function(r){return bestify(crBox(r.ysm>0?r.my/r.ysm*100:null,zOf(r,'my',ZMY),NMY),BEST.m===r.e.id);}).join('')+'</div></div>';
       // Soll-Linie (Vollzeit-Tag laut Standard-Arbeitszeit des Wochentags)
       var vz={work_hours:null},vzPl=plannedHours(vz,t),vzDef=dayDef(vz,t);
       var sollNow=vzPl>0?OPH*elapsedAt(vz,t,refMin):0,vzZiel=OPH*vzPl;
       if(WK){var past=0,all=0;for(var d2=periodFrom(VM,t);d2<=periodEnd(VM,t);d2=addDays(d2,1)){var p2=plannedHours(vz,d2);all+=p2;if(d2<t)past+=p2;}sollNow=OPH*(past+(vzPl>0?elapsedAt(vz,t,refMin):0));vzZiel=OPH*all;vzPl=Math.max(vzPl,1);}
       var maxBar=rows.reduce(function(m,r){return Math.max(m,KV(r));},0);if(PHS){vzPl=0;vzZiel=0;}
-      var isEur=PHS&&(PHS.h.kpi==='marge'||PHS.h.kpi==='marge_my');
-      var top=Math.max(maxBar,WK?sollNow*1.1:vzZiel,isEur?500:(PHS?5:10)),step=isEur?(top>4000?1000:top>2000?500:top>800?200:100):(top>600?200:top>300?100:top>150?50:top>60?20:top>30?10:top>12?5:PHS?2:5),yMax=Math.ceil(top/step)*step;if(yMax-maxBar<step*0.4&&maxBar>=(WK?sollNow:vzZiel))yMax+=step;
+      var isEur=PHS&&(PHS.h.kpi==='marge'||PHS.h.kpi==='marge_my'),isPH=VM==='monat'&&!PHS;if(isPH){sollNow=OPH;vzZiel=OPH;}
+      var top=isPH?Math.max(maxBar*1.08,OPH*1.15):Math.max(maxBar,WK?sollNow*1.1:vzZiel,isEur?500:(PHS?5:10)),step=isPH?1:isEur?(top>4000?1000:top>2000?500:top>800?200:100):(top>600?200:top>300?100:top>150?50:top>60?20:top>30?10:top>12?5:PHS?2:5),yMax=Math.ceil(top/step)*step;if(!isPH&&yMax-maxBar<step*0.4&&maxBar>=(WK?sollNow:vzZiel))yMax+=step;
       var Y=function(v){return clamp(v/yMax*100,0,100);};
       h+='<div class="ch"><div class="yl">';for(var v=0;v<=yMax;v+=step)h+='<span style="bottom:'+Y(v).toFixed(2)+'%">'+(isEur?(v>=1000?(v/1000).toLocaleString('de-DE')+'k':v):v)+'</span>';h+='</div><div class="pl">';
       for(var g=0;g<=yMax;g+=step)h+='<div class="gl" style="bottom:'+Y(g).toFixed(2)+'%"></div>';
       if(vzPl>0){
         var hh=Math.floor(refMin/60),mm=refMin%60;
-        h+='<div class="sollN" style="bottom:'+Y(sollNow).toFixed(2)+'%"><span>Soll '+(WK?PER+' ':'')+pad(hh)+':'+pad(mm)+' · '+Math.round(sollNow)+'</span></div>';
+        h+='<div class="sollN" style="bottom:'+Y(sollNow).toFixed(2)+'%"><span>'+(isPH?'Soll':'Soll '+(WK?PER+' ':'')+pad(hh)+':'+pad(mm)+' · '+Math.round(sollNow))+'</span></div>';
         var endMin=WK?0:(tmin(vzDef.bis)||1020),n=0;
         for(var hr=hh+1;hr*60<=endMin&&n<2;hr++){n++;var sv=OPH*elapsedAt(vz,t,hr*60);h+='<div class="sollF" style="bottom:'+Y(sv).toFixed(2)+'%"><span>'+pad(hr)+':00 · '+Math.round(sv)+'</span></div>';}
       }
@@ -1020,7 +1026,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
         if(!PHS||PHS.h.kpi==='opt')seg=[[r.my,'#E2603C'],[r.oemRest,'#F7B39A'],[r.ups,'#E6DED0'],[r.wka,'#C9C2B4']];
         else if(PHS.h.kpi==='my')seg=[[r.my,'#E2603C']];
         else seg=[[kv,'linear-gradient(180deg,#E9773F,#C23B66)']];
-        var tot2=seg.reduce(function(a,x){return a+x[0];},0)||1,lbl=isEur?eurK(kv):kv;
+        var tot2=seg.reduce(function(a,x){return a+x[0];},0)||1,lbl=isEur?eurK(kv):isPH?kv.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+(BEST.p===r.e.id?'<em class="bcr">👑</em>':''):kv;
         return '<div class="c">'+(kv>0&&showN?'<b>'+lbl+'</b>':'')+'<span class="st" style="height:'+Y(kv).toFixed(2)+'%">'+seg.map(function(s){return s[0]>0?'<i style="height:'+(s[0]/tot2*100).toFixed(2)+'%;background:'+s[1]+'"></i>':'';}).join('')+'</span></div>';
       }).join('')+'</div></div></div>';
       // Fuß: Marge und Ø je Optimierung
