@@ -273,6 +273,11 @@ body.embed #cel{border-radius:22px}
 .dsay{position:absolute;z-index:31;background:#fff;border:3px solid #1d1c1a;border-radius:22px;padding:10px 18px;font-size:30px;font-weight:800;color:#1d1c1a;white-space:nowrap;transform:translate(-50%,-100%);box-shadow:0 8px 20px rgba(0,0,0,.15)}
 .dsay::after{content:'';position:absolute;left:50%;bottom:-16px;margin-left:-10px;border:10px solid transparent;border-top:14px solid #1d1c1a}
 .dcup{position:absolute;z-index:29;font-size:56px;line-height:1}
+
+.dtbl,.dbot,.dglas,.demo{position:absolute;z-index:29;pointer-events:none}
+.demo{font-size:34px;line-height:1}
+.dglas{width:30px;height:40px;border:3px solid rgba(255,255,255,.95);border-top:0;border-radius:0 0 6px 6px;box-shadow:0 0 0 1.5px #8a8478;background:rgba(255,255,255,.35);overflow:hidden;box-sizing:border-box}
+.dglas i{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#F4D35E,#E9A23B);transition:height 1.2s ease-out}
 </style>
 </head>
 <body>
@@ -513,14 +518,31 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
       // 3) auf die Soll-Linie zeigen
       at(4100,function(){d.className='man sman point grim'+F;say('Da musst du hin! ☝️');var sl=stage.querySelector('.sollN');
         if(sl&&sl.animate)sl.animate([{boxShadow:'0 0 0 0 rgba(217,84,30,0)'},{boxShadow:'0 0 18px 6px rgba(217,84,30,.7)'},{boxShadow:'0 0 0 0 rgba(217,84,30,0)'}],{duration:900,iterations:2});});
-      // 4) Kaffee hinstellen
-      at(6600,function(){d.className='man sman push'+F;say('Hier, ein Kaffee ☕');var cup=document.createElement('div');cup.className='dcup';cup.textContent='☕';
-        cup.style.left=(cp.x+cp.w/2-28)+'px';cup.style.bottom=(base+2)+'px';stage.appendChild(cup);
-        if(cup.animate)cup.animate([{transform:'translateY(-120px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.7},{transform:'translateY(-10px)',offset:.85},{transform:'translateY(0)'}],{duration:700,easing:'ease-in'});
-        at(9000,function(){if(cup.animate){var c2=cup.animate([{opacity:1},{opacity:0}],{duration:800,fill:'forwards'});c2.onfinish=function(){cup.remove();};}else cup.remove();});});
-      // 5) doch noch freundlich winken, dann gehen
-      at(8800,function(){d.className='man sman wave'+F;say('Du schaffst das! 💪');});
-      at(11000,function(){if(bub){bub.remove();bub=null;}d.className='man sman walk'+(fromLeft?'':' flip');var out=fromLeft?-170:1940;
+      // 4) Tisch kommt dazu, Dori bereitet einen Tequila vor
+      var tbl=null,bot=null,gl=null,fill=null,lim=null,sal=null;
+      at(6400,function(){var tx=fromLeft?stop-150:stop+150;tbl=document.createElement('div');tbl.className='dtbl';tbl.style.left=tx+'px';tbl.style.bottom=(base-2)+'px';
+        tbl.innerHTML='<svg viewBox="0 0 140 110" width="140" height="110"><rect x="6" y="40" width="128" height="12" rx="4" fill="#B07A4A"/><rect x="6" y="40" width="128" height="4" rx="2" fill="#C99464"/><rect x="18" y="52" width="9" height="58" rx="3" fill="#8A5A34"/><rect x="113" y="52" width="9" height="58" rx="3" fill="#8A5A34"/></svg>';stage.appendChild(tbl);
+        if(tbl.animate)tbl.animate([{transform:'translateY(-260px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.7},{transform:'translateY(-14px)',offset:.85},{transform:'translateY(0)'}],{duration:650,easing:'ease-in'});
+        var top=base-2+52;
+        bot=document.createElement('div');bot.className='dbot';bot.style.left=(tx+14)+'px';bot.style.bottom=top+'px';bot.innerHTML='<svg viewBox="0 0 30 80" width="30" height="80"><rect x="11" y="0" width="8" height="16" rx="2" fill="#2E7D4F"/><path d="M6 18 Q15 12 24 18 L26 78 Q15 82 4 78Z" fill="#E9C46A" opacity=".9"/><rect x="5" y="40" width="20" height="16" rx="2" fill="#C23B66"/><text x="15" y="51" font-size="7" font-weight="700" text-anchor="middle" fill="#fff">TQ</text></svg>';stage.appendChild(bot);
+        gl=document.createElement('div');gl.className='dglas';gl.style.left=(tx+72)+'px';gl.style.bottom=top+'px';gl.innerHTML='<i></i>';fill=gl.querySelector('i');stage.appendChild(gl);
+        sal=document.createElement('div');sal.className='demo';sal.textContent='🧂';sal.style.left=(tx+100)+'px';sal.style.bottom=top+'px';stage.appendChild(sal);
+        d.className='man sman push'+(fromLeft?'':' flip');say('Moment … 🍋🧂');});
+      // einschenken: Flasche kippt, Glas füllt sich, Salz und Limette
+      at(7300,function(){if(bot&&bot.animate){bot.style.transformOrigin='50% 100%';bot.animate([{transform:'translate(0,0) rotate(0)'},{transform:'translate(48px,-60px) rotate(115deg)',offset:.25},{transform:'translate(48px,-60px) rotate(115deg)',offset:.75},{transform:'translate(0,0) rotate(0)'}],{duration:1800,easing:'ease-in-out'});}
+        setTimeout(function(){if(fill)fill.style.height='80%';},500);
+        setTimeout(function(){if(sal&&sal.animate){sal.animate([{transform:'rotate(0)'},{transform:'translate(-20px,-30px) rotate(-150deg)'},{transform:'translate(-20px,-30px) rotate(-120deg)'},{transform:'translate(-20px,-30px) rotate(-150deg)'},{transform:'rotate(0)'}],{duration:900});}},1900);
+        setTimeout(function(){if(!gl)return;lim=document.createElement('div');lim.className='demo';lim.textContent='🍋';lim.style.left=(parseFloat(gl.style.left)+16)+'px';lim.style.bottom=(parseFloat(gl.style.bottom)+34)+'px';lim.style.fontSize='30px';stage.appendChild(lim);
+          if(lim.animate)lim.animate([{transform:'translateY(-80px) rotate(-40deg)',opacity:0},{transform:'translateY(0) rotate(20deg)',opacity:1}],{duration:450,easing:'ease-in'});},2800);});
+      // 5) Tequila an die Säule bringen
+      at(10600,function(){d.className='man sman push'+F;say('Hier, ein Tequila! 🥃');if(!gl)return;
+        var gx=parseFloat(gl.style.left),gy=parseFloat(gl.style.bottom),tx2=cp.x+cp.w/2-18,ty2=base+2;
+        [gl,lim].forEach(function(el,k){if(!el||!el.animate)return;var ox=parseFloat(el.style.left),oy=parseFloat(el.style.bottom),dx=tx2+(k?16:0)-ox,dy=ty2+(k?34:0)-oy;
+          el.animate([{transform:'translate(0,0)'},{transform:'translate('+(dx/2)+'px,'+(-(80))+'px)',offset:.5},{transform:'translate('+dx+'px,'+(-dy)+'px)'}],{duration:900,easing:'ease-in-out',fill:'forwards'});});});
+      // 6) doch noch freundlich winken, dann gehen (Tisch und Tequila verschwinden)
+      at(12300,function(){d.className='man sman wave'+F;say('Prost – du schaffst das! 💪');});
+      at(16500,function(){[tbl,bot,gl,lim,sal].forEach(function(el){if(!el)return;if(el.animate){var x=el.animate([{opacity:1},{opacity:0}],{duration:800,fill:'forwards'});x.onfinish=function(){el.remove();};}else el.remove();});});
+      at(14500,function(){if(bub){bub.remove();bub=null;}d.className='man sman walk'+(fromLeft?'':' flip');var out=fromLeft?-170:1940;
         var b2=d.animate([{left:stop+'px'},{left:out+'px'}],{duration:Math.max(1500,Math.abs(out-stop)/0.45),easing:'linear',fill:'forwards'});
         b2.onfinish=function(){d.remove();FX_ON=false;};});};
     return true;}
