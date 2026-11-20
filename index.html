@@ -4513,7 +4513,7 @@ function liveSaveCfg(){if(currentUserRole!=='admin')return;var g=function(id){va
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
     settings.liveConfig=c;LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
-function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;
+function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;setTimeout(liveZieleSync,500);
   var adm=currentUserRole==='admin',k=settings.liveKey||'',c=liveCfg(),u=liveUrl(false);
   var inp=function(id,v,step,dis){return '<input type="number" id="'+id+'" value="'+(v==null?'':v)+'" step="'+step+'" min="0"'+(dis?' disabled':'')+' style="width:90px;height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">';};
   var fld=function(l,h){return '<label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text3)">'+l+h+'</label>';};
@@ -4711,7 +4711,8 @@ function figRead(){var out={};figPeople().forEach(function(e,i){var g=function(k
     ['headset','freck','ohrringe','bart'].forEach(function(k){var el=g(k);if(el&&el.checked)o[k]=true;});
     out[e.id]=o;});return out;}
 function figPreview(id){var all=figRead(),el=document.getElementById('fig_p_'+id),e=figPeople().find(function(x){return String(x.id)===String(id);});if(el&&all[id])el.innerHTML=kidSvg(Object.assign({letter:e?String(e.name||'').charAt(0):''},all[id]));}
-function figSave(){if(currentUserRole!=='admin')return;var c=Object.assign({},settings.liveConfig||{},{figuren:figRead()});
+function figFokus(e){var f=((settings.liveConfig||{}).fokus||{})[e.id];if(f)return f;var n=String(e.name||'').split(' ')[0];return /^bianca$/i.test(n)?'UPS':/^abenezer$/i.test(n)?'WKA':'OEM';}
+function figSave(){if(currentUserRole!=='admin')return;var fo={};figPeople().forEach(function(e){var el=document.getElementById('fig_fokus_'+e.id);fo[e.id]=el?el.value:figFokus(e);});var c=Object.assign({},settings.liveConfig||{},{figuren:figRead(),fokus:fo});
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;FIG.msg='Figuren gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
 function figMore(id){var d=document.getElementById('fig_m_'+id);if(d)d.style.display=d.style.display==='none'?'grid':'none';}
@@ -4736,17 +4737,18 @@ function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=fi
       +lab('Brille',sel('brille',id,f.brille||'',[['','keine'],['rund','rund'],['eckig','eckig']]))
       +lab('Kopfbedeckung',sel('hut',id,f.hut||'',[['','keine'],['cap','Cap'],['muetze','Mütze'],['kopftuch','Kopftuch'],['stirnband','Stirnband']]))
       +lab('Hose/Rock · Schuhe','<div style="display:flex;gap:6px">'+col('hose',id,f.hose||'#3E5C8A',!!f.hose)+col('schuh',id,f.schuh||'#7A4A2A',!!f.schuh)+'</div>')
+      +lab('CR Fokus',sel('fokus',id,figFokus(e),[['OEM','OEM'],['UPS','UPS'],['WKA','WKA']]))
       +'<div style="display:flex;flex-direction:column;gap:3px">'+chk('headset',id,f.headset,'Headset')+chk('freck',id,f.freck,'Sommersprossen')+chk('ohrringe',id,f.ohrringe,'Ohrringe')+chk('bart',id,f.bart,'Bärtchen')+'</div>'
       +'</div></div>';});
   h+='</div>'+(FIG.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(FIG.msg)+'</div>':'')+'</div>';return h;}
 
 // ── Zeitplan der Popups auf den Fernsehern ──
 var ZPB={msg:''};
-var ZPB_DEF={dori:{on:true,t:'11:45'},top3:{on:true,t:'17:00',min:2},do:{on:true,t:'14:00',wd:4,min:5},fr:{on:true,t:'09:00',wd:5,min:2},woche:{on:true,t:'12:00',bis:'13:00'}};
-var ZPB_ROWS=[['woche','📅 Wochenansicht','alle Werte von Montag bis heute · mit Popup beim Wechsel hin und zurück',false],['dori','☕ Dori besucht den Letztplatzierten','geht zur Säule mit den wenigsten Optimierungen, rüttelt, bringt einen Tequila',false],
-  ['top3','🏆 Top 3 des Tages','Treppchen, danach der Margen-Champion',true],
-  ['do','🗓️ Ausgleichstag am Freitag','wer höchstens 20 Optimierungen vom Wochenziel entfernt ist',true],
-  ['fr','💪 Endspurt zum Wochenziel','wer beim Wochenziel noch hinterherhängt',true]];
+var ZPB_DEF={dori:{on:true,t:'11:45'},top3:{on:true,t:'17:00',min:2},do:{on:true,t:'14:00',wd:4,min:5},fr:{on:true,t:'09:00',wd:5,min:2},woche:{on:true,t:'12:00',bis:'12:30'},monat:{on:true,t:'12:30',bis:'13:00'}};
+var ZPB_ROWS=[['woche','Wochenansicht','alle Werte von Montag bis heute · Popup beim Wechsel',false],['monat','Monatsansicht','alle Werte vom 1. bis heute, mit CR TW und CR SY/MY · Popup beim Wechsel, danach zurück zum Tag',false],['dori','Dori besucht den Letztplatzierten','geht zur Säule mit den wenigsten Optimierungen, rüttelt, bringt einen Tequila',false],
+  ['top3','Top 3 des Tages','Treppchen, danach der Margen-Champion',true],
+  ['do','Ausgleichstag am Freitag','wer höchstens 20 Optimierungen vom Wochenziel entfernt ist',true],
+  ['fr','Endspurt zum Wochenziel','wer beim Wochenziel noch hinterherhängt',true]];
 function zpbGet(k){var z=((settings.liveConfig||{}).zeitplan||{})[k]||{},o={};Object.keys(ZPB_DEF[k]).forEach(function(x){o[x]=z[x]!=null&&z[x]!==''?z[x]:ZPB_DEF[k][x];});return o;}
 function zpbSave(){if(currentUserRole!=='admin')return;var zpl={};
   ZPB_ROWS.forEach(function(r){var k=r[0],g=function(id){return document.getElementById('zp_'+id+'_'+k);};var o={on:!!(g('on')&&g('on').checked),t:(g('t')&&g('t').value)||ZPB_DEF[k].t};
@@ -4765,8 +4767,16 @@ function zpbHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled';
       +'<div style="min-width:0"><b style="font-size:13px">'+r[1]+'</b><div class="kal-note">'+r[2]+'</div></div>'
       +(k==='do'||k==='fr'?'<select id="zp_wd_'+k+'"'+dis+' style="'+inp+'">'+WD.map(function(w){return '<option value="'+w[0]+'"'+(String(z.wd==null?'':z.wd)===w[0]?' selected':'')+'>'+w[1]+'</option>';}).join('')+'</select>':'<span class="kal-note">täglich</span>')
       +'<input type="time" id="zp_t_'+k+'" value="'+esc(z.t)+'"'+dis+' style="'+inp+'">'
-      +(r[3]?'<input type="number" min="1" id="zp_min_'+k+'" value="'+(z.min||2)+'"'+dis+' style="'+inp+';width:80px">':(k==='woche'?'<label class="kal-note" style="display:flex;flex-direction:column;gap:2px">bis<input type="time" id="zp_bis_'+k+'" value="'+esc(z.bis||'13:00')+'"'+dis+' style="'+inp+'"></label>':'<span class="kal-note">ca. 17 Sek.</span>'))+'</div>';});
+      +(r[3]?'<input type="number" min="1" id="zp_min_'+k+'" value="'+(z.min||2)+'"'+dis+' style="'+inp+';width:80px">':(k==='woche'||k==='monat'?'<label class="kal-note" style="display:flex;flex-direction:column;gap:2px">bis<input type="time" id="zp_bis_'+k+'" value="'+esc(z.bis||'13:00')+'"'+dis+' style="'+inp+'"></label>':'<span class="kal-note">ca. 17 Sek.</span>'))+'</div>';});
   h+=(ZPB.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(ZPB.msg)+'</div>':'')+'</div>';return h;}
+
+// ── Persönliche KPI-Ziele für die Live-Ansicht (Fernseher sehen keine Provisionsdaten) ──
+function liveZieleCalc(){var out={};(employees||[]).forEach(function(e){if(e.active===false||!isAgentEmp(e))return;var t=empTargets(e);
+  out[e.id]={fo:t.crOEM&&t.crOEM.val,my:t.crMegaYes&&t.crMegaYes.val,tw:t.crTeilweise&&t.crTeilweise.val,sm:t.crSyMy&&t.crSyMy.val};});return out;}
+function liveZieleSync(){try{if(currentUserRole!=='admin'||!employees||!employees.length||typeof sb==='undefined')return;var z=liveZieleCalc(),c=settings.liveConfig||{};
+  if(JSON.stringify(c.ziele||{})===JSON.stringify(z))return;var n=Object.assign({},c,{ziele:z,zieleStand:today()});
+  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(n)},{onConflict:'key'}).then(function(res){if(!(res&&res.error))settings.liveConfig=n;});}catch(e){}}
+setInterval(liveZieleSync,10*60*1000);setTimeout(liveZieleSync,20000);
 
 function selectLive(){view='live';bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
 function selectProvisionTeam(){view='provisionTeam';wiegandNavOpen=true;bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
