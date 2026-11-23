@@ -130,10 +130,10 @@ body.sb-collapsed .sb-rail{border-right:none;}
 #espBody>div>*:last-child{margin-bottom:0!important}
 #ncSecNew>div[style*="#EFECE5"]>*:last-child,#spSecNew>div[style*="#EFECE5"]>*:last-child,#qaSecBew>div[style*="#EFECE5"]>*:last-child{margin-bottom:0!important}
 /* Mitarbeiter-Kopf: Reiter als Schalter */
-#empTabBar.emp-seg,#setTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
-#empTabBar.emp-seg .tab,#setTabBar.emp-seg .tab{height:28px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text2);background:transparent;white-space:nowrap}
-#empTabBar.emp-seg .tab.active,#setTabBar.emp-seg .tab.active{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-#empTabBar.emp-seg .tab:hover:not(.active),#setTabBar.emp-seg .tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,.55)}
+#empTabBar.emp-seg,#setTabBar.emp-seg,#liveTabBar.emp-seg{display:inline-flex;gap:2px;background:#EFECE5;border:1px solid #E4E0D6;border-radius:11px;padding:2px;height:34px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
+#empTabBar.emp-seg .tab,#setTabBar.emp-seg .tab,#liveTabBar.emp-seg .tab{height:28px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--text2);background:transparent;white-space:nowrap}
+#empTabBar.emp-seg .tab.active,#setTabBar.emp-seg .tab.active,#liveTabBar.emp-seg .tab.active{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#empTabBar.emp-seg .tab:hover:not(.active),#setTabBar.emp-seg .tab:hover:not(.active),#liveTabBar.emp-seg .tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,.55)}
 .emp-seg-badge{font-size:10.5px;font-weight:700;background:#F08566;color:#fff;border-radius:8px;padding:0 6px;line-height:16px;margin-left:6px}
 .tab-bar{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:none;padding:0 24px 10px;display:flex;gap:3px;flex-shrink:0;}
 .tab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;border-radius:9px;color:var(--text2);border-bottom:none;transition:all .12s;white-space:nowrap;}
@@ -4513,34 +4513,76 @@ function liveSaveCfg(){if(currentUserRole!=='admin')return;var g=function(id){va
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
     settings.liveConfig=c;LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
-function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;setTimeout(liveZieleSync,500);
-  var adm=currentUserRole==='admin',k=settings.liveKey||'',c=liveCfg(),u=liveUrl(false);
-  var inp=function(id,v,step,dis){return '<input type="number" id="'+id+'" value="'+(v==null?'':v)+'" step="'+step+'" min="0"'+(dis?' disabled':'')+' style="width:90px;height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">';};
-  var fld=function(l,h){return '<label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text3)">'+l+h+'</label>';};
-  var h='<div class="content">'+buildGlobalBannerHtml(gbVisible());
-  h+='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-device-tv"></i> Live-Ansicht</div><span class="kal-note">So sieht es auf dem Fernseher aus · aktualisiert sich jede Minute</span>'
-    +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="kal-note">Standort</span><span class="dsh-seg">'
-    +[['','Alle'],['MUC','Olching'],['VLC','Valencia']].map(function(o){return '<button type="button" class="'+(LIVE.ort===o[0]?'on':'')+'" onclick="liveSetOrt(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</span></span></div>';
-  if(k){h+='<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#EEEDE9;border:1px solid var(--border)"><iframe src="'+esc(liveUrl(true))+'" title="Live-Ansicht" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>';}
-  else{h+='<div class="kal-note" style="padding:30px;text-align:center">Noch keine Adresse vorhanden. '+(adm?'Bitte unten „Adresse erzeugen“ klicken (vorher 45_live_ansicht.sql in Supabase ausführen).':'Ein Admin muss die Adresse zuerst erzeugen.')+'</div>';}
-  h+='</div>';
-  h+='<div class="card card-static"><div class="card-title"><i class="ti ti-link"></i> Auf dem Fernseher öffnen</div>'
-    +'<div class="kal-note" style="margin-bottom:10px">Diese Adresse im Browser des Fernsehers öffnen und auf Vollbild stellen. Eine Anmeldung ist dort nicht nötig. Wer die Adresse kennt, sieht die Live-Zahlen, deshalb nur auf den Fernsehern verwenden.</div>'
-    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="liveUrlField" readonly value="'+esc(u)+'" onclick="this.select()" style="flex:1;min-width:320px;height:34px;box-sizing:border-box;font-size:13px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
-    +'<button class="btn btn-primary" type="button" onclick="liveCopy()"'+(u?'':' disabled')+'><i class="ti ti-copy"></i> Adresse kopieren</button>'
-    +'<button class="btn" type="button" onclick="liveOpen()"'+(u?'':' disabled')+'><i class="ti ti-arrows-maximize"></i> Im neuen Fenster öffnen</button>'
-    +(adm?'<button class="btn" type="button" onclick="liveNewKey()"><i class="ti ti-refresh"></i> '+(k?'Neue Adresse erzeugen':'Adresse erzeugen')+'</button>':'')+'</div>'
-    +(LIVE.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)"><i class="ti ti-check"></i> '+esc(LIVE.msg)+'</div>':'')+'</div>';
-  h+='<div class="card card-static"><div class="card-title"><i class="ti ti-adjustments"></i> Ziele in der Live-Ansicht</div>'
-    +'<div class="kal-note" style="margin-bottom:12px">Orange = Ziel erreicht, hell-orange = knapp dran, grau = deutlich darunter. Soll-Linie und Tagesziel der Optimierungen = Optimierungen je Arbeitsstunde × Arbeitszeit laut Stammdaten. Das Marge-Soll kommt aus der Zielvereinbarung.</div>'
-    +'<div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap">'
-    +fld('CR OEM Ziel (%)',inp('liveCrOem',c.crOEM,1,!adm))+fld('knapp dran (Pkt.)',inp('liveKnOem',c.knappOEM,1,!adm))
-    +fld('CR MY Ziel (%)',inp('liveCrMy',c.crMY,1,!adm))+fld('knapp dran (Pkt.)',inp('liveKnMy',c.knappMY,1,!adm))
-    +fld('Optimierungen je Std.',inp('liveOph',c.optProStd,0.1,!adm))
-    +(adm?'<button class="btn btn-primary" type="button" onclick="liveSaveCfg()"><i class="ti ti-device-floppy"></i> Einstellungen speichern</button>':'')+'</div></div>';
-  h+=zpbHtml();
-  h+=phbHtml();
-  h+=figHtml();
+var LIVE_TAB='uebersicht';
+function liveTab(t){LIVE_TAB=t;renderLive();}
+function liveTest(k){LIVE.test=k;LIVE.testN=(LIVE.testN||0)+1;var f=document.getElementById('liveFrame');if(f)f.src=liveUrl(true)+'&test='+encodeURIComponent(k)+'&r='+LIVE.testN;}
+function liveTodayList(){var L=[],wd=new Date().getDay(),t=today();
+  ZPB_ROWS.forEach(function(r){var z=zpbGet(r[0]);if(!z.on)return;if(z.wd!=null&&+z.wd!==wd)return;if(wd===0||wd===6)return;
+    var test={dori:'dori12',woche:'woche',monat:'woche',top3:'top3',do:'donnerstag',fr:'freitag'}[r[0]];L.push({t:z.t,txt:r[1]+(z.bis?' bis '+z.bis:''),test:test});});
+  (PHB.all||[]).filter(function(h){return h.datum===t;}).forEach(function(h){L.push({t:phbHM(h.start_zeit),txt:'Power Hour · '+PHB_KPI[h.kpi]+' bis '+phbHM(h.end_zeit),test:'intro'});});
+  return L.sort(function(a,b){return a.t<b.t?-1:1;});}
+function liveSettingsSave(){if(currentUserRole!=='admin')return;var g=function(id){var el=document.getElementById(id);return el?el.value.replace(',','.'):'';},n=function(id){var v=g(id);return v===''?null:+v;},cb=function(id){var el=document.getElementById(id);return !!(el&&el.checked);};
+  var fo={};figPeople().forEach(function(e){var el=document.getElementById('set_fokus_'+e.id);fo[e.id]=el?el.value:figFokus(e);});
+  var c=Object.assign({},settings.liveConfig||{},{crOEM:n('ls_fo'),knappOEM:n('ls_fok'),crMY:n('ls_my'),knappMY:n('ls_myk'),crTW:n('ls_tw'),knappTW:n('ls_twk'),crSM:n('ls_sm'),knappSM:n('ls_smk'),crAO:n('ls_ao'),knappAO:n('ls_aok'),optProStd:n('ls_oph'),fokus:fo,
+    feiern:{aufstieg:cb('lf_auf'),ziel:cb('lf_ziel'),marge:cb('lf_marge'),margeSchwelle:n('lf_margeS')||2000,auftrag:cb('lf_auftrag'),auftragSchwelle:n('lf_auftragS')||500,team:cb('lf_team'),teamSchritt:n('lf_teamS')||100,zaehlen:cb('lf_zaehl'),kippen:cb('lf_kipp')},dori:{cameo:cb('ld_cameo')}});
+  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
+function liveSettingsHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',c=settings.liveConfig||{},F=c.feiern||{},Dr=c.dori||{};
+  var inp='height:32px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);width:86px';
+  var num=function(id,v,ph){return '<input type="number" step="any" id="'+id+'" value="'+(v==null?'':v)+'" placeholder="'+(ph||'')+'"'+dis+' style="'+inp+'">';};
+  var on=function(v){return v!==false;};
+  var cbx=function(id,v,l){return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;cursor:pointer"><input type="checkbox" id="'+id+'"'+(on(v)?' checked':'')+dis+' style="width:16px;height:16px;margin:0;flex-shrink:0"><span>'+l+'</span></label>';};
+  var row=function(l,a,b){return '<span style="font-size:13px">'+l+'</span>'+a+(b||'<span></span>');};
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">';
+  h+='<div class="card card-static" style="margin:0"><div class="card-title"><i class="ti ti-target"></i> Ziele und Farben</div><div class="kal-note" style="margin-bottom:12px">Die Farben richten sich nach den <b>persönlichen Zielen aus der Provisionsvereinbarung</b> (inkl. Onboarding). Ziele werden auf den Fernsehern nicht angezeigt. Die Ersatz-Ziele gelten nur für Personen ohne eigene Vereinbarung.</div>'
+    +'<div style="display:grid;grid-template-columns:auto auto auto;gap:8px 16px;align-items:center;justify-content:start"><b style="font-size:11px;color:var(--text3)">KENNZAHL</b><b style="font-size:11px;color:var(--text3)">ERSATZ-ZIEL</b><b style="font-size:11px;color:var(--text3)">„KNAPP“ (PKT.)</b>'
+    +row('CR Fokus (%)',num('ls_fo',c.crOEM,'55'),num('ls_fok',c.knappOEM,'5'))+row('CR MY (%)',num('ls_my',c.crMY,'20'),num('ls_myk',c.knappMY,'3'))
+    +row('CR TW (%, max.)',num('ls_tw',c.crTW,'25'),num('ls_twk',c.knappTW,'5'))+row('CR SY/MY (%)',num('ls_sm',c.crSM,'60'),num('ls_smk',c.knappSM,'5'))
+    +row('Anteil OEM (%)',num('ls_ao',c.crAO,'–'),num('ls_aok',c.knappAO,'5'))+row('Opt. je Stunde (Soll)',num('ls_oph',c.optProStd,'3,5'))
+    +'</div></div>';
+  var P=figPeople();
+  h+='<div class="card card-static" style="margin:0"><div class="card-title"><i class="ti ti-focus-2"></i> CR Fokus je Agent</div><div class="kal-note" style="margin-bottom:8px">welche CR in der Zeile „CR Fokus“ zählt</div>'
+    +P.map(function(e){var f=figFokus(e);return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid var(--border);font-size:13px"><span>'+esc(e.name)+'</span><select id="set_fokus_'+e.id+'"'+dis+' style="width:90px;flex-shrink:0;height:28px;font-size:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);padding:0 6px">'+['OEM','UPS','WKA'].map(function(o){return '<option'+(o===f?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';}).join('')+'</div>';
+  h+='<div class="card card-static" style="margin:0"><div class="card-title"><i class="ti ti-confetti"></i> Feiern an der Säule</div><div class="kal-note" style="margin-bottom:8px">was eine Animation auslöst</div>'
+    +'<div style="display:grid;grid-template-columns:1fr auto;gap:2px 16px;align-items:center">'
+    +cbx('lf_auf',F.aufstieg,'Aufstieg im Ranking')+'<span></span>'+cbx('lf_ziel',F.ziel,'Tages- / Wochen- / Monatsziel erreicht')+'<span></span>'
+    +cbx('lf_marge',F.marge,'Marge am Tag über …')+num('lf_margeS',F.margeSchwelle,'2000')+cbx('lf_auftrag',F.auftrag,'Top-Auftrag über …')+num('lf_auftragS',F.auftragSchwelle,'500')
+    +cbx('lf_team',F.team,'Team-Meilenstein alle … Opt.')+num('lf_teamS',F.teamSchritt,'100')+cbx('lf_zaehl',F.zaehlen,'Zahlen im Banner zählen hoch')+'<span></span>'+cbx('lf_kipp',F.kippen,'CR-Kästchen kippen bei Farbwechsel')+'<span></span></div></div>';
+  h+='<div class="card card-static" style="margin:0"><div class="card-title"><i class="ti ti-mood-kid"></i> Dori</div>'+cbx('ld_cameo',Dr.cameo,'Dori schaut in große Animationen rein und winkt')+'<div class="kal-note" style="margin-top:6px">Ihren Besuch beim Letztplatzierten stellst du im Reiter „Zeitplan“ ein.</div>'
+    +(adm?'<div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn btn-primary" type="button" onclick="liveSettingsSave()"><i class="ti ti-device-floppy"></i> Einstellungen speichern</button></div>':'')+'</div>';
+  return h+'</div>';}
+function renderLive(){var ma=document.getElementById('mainArea');if(!ma)return;setTimeout(liveZieleSync,500);if(!PHB.loaded)phbLoad();
+  var adm=currentUserRole==='admin',k=settings.liveKey||'',u=liveUrl(false),c=settings.liveConfig||{};
+  var TABS=[['uebersicht','Übersicht'],['zeitplan','Zeitplan'],['powerhour','Power Hour'],['figuren','Figuren'],['einstellungen','Einstellungen']];
+  var last=settings.ftpLastSync?new Date(settings.ftpLastSync):null,ago=last?Math.round((Date.now()-last.getTime())/60000):null;
+  var hint=function(txt,warn){return '<span style="height:34px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:10px;font-size:12.5px;white-space:nowrap;'+(warn?'background:#FDF0EB;border:1px solid rgba(240,133,102,0.55);color:#B5513A':'background:#fff;border:1px solid #E4E0D6;color:var(--text2)')+'"><span style="width:8px;height:8px;border-radius:50%;background:'+(warn?'#F08566':'#3a3833')+'"></span>'+txt+'</span>';};
+  var hints=hint('Daten '+(ago==null?'unbekannt':ago<60?'vor '+ago+' Min.':last.toLocaleDateString('de-DE')),ago==null||ago>30)+hint('Ziele '+(c.zieleStand===today()?'aktuell':'nicht übergeben'),c.zieleStand!==today());
+  var h='<div style="padding:22px 24px 8px;flex-shrink:0"><div style="background:#F7F5F0;border:1px solid #E4E0D6;border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(40,32,15,0.06)">'
+    +'<div style="display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:11px;background:#EFECE5;border:1px solid #E4E0D6;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;color:var(--text)"><i class="ti ti-device-tv"></i></div>'
+    +'<div style="min-width:0"><div style="font-size:18px;font-weight:800;line-height:1.2">Live</div><div style="font-size:12.5px;color:var(--text2);line-height:1.3">Was auf den Fernsehern läuft · Vorschau, Zeitplan, Power Hours und Figuren</div></div></div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-top:14px"><div class="emp-seg" id="liveTabBar">'+TABS.map(function(t){return '<div class="tab'+(t[0]===LIVE_TAB?' active':'')+'" onclick="liveTab(\''+t[0]+'\')">'+t[1]+'</div>';}).join('')+'</div><span style="margin-left:auto;display:flex;gap:6px">'+hints+'</span></div></div></div>'
+    +'<div class="content" style="max-width:100%;padding-top:6px">';
+  if(LIVE.msg)h+='<div class="kal-note" style="margin:0 0 10px;color:var(--text)"><i class="ti ti-check"></i> '+esc(LIVE.msg)+'</div>';
+  if(LIVE_TAB==='uebersicht'){
+    h+='<div class="card card-static"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap"><div class="card-title" style="margin:0"><i class="ti ti-device-tv"></i> Vorschau</div><span class="kal-note">genau wie auf dem Fernseher · aktualisiert sich jede Minute</span>'
+      +'<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="dsh-seg">'+[['','Alle'],['MUC','Olching'],['VLC','Valencia']].map(function(o){return '<button type="button" class="'+(LIVE.ort===o[0]?'on':'')+'" onclick="liveSetOrt(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</span>'
+      +'<button class="btn" type="button" onclick="liveOpen()"'+(u?'':' disabled')+'><i class="ti ti-arrows-maximize"></i> Vollbild</button><button class="btn" type="button" onclick="'+(u?'window.open(\''+esc(liveUrl(false))+'&demo=1\',\'_blank\',\'noopener\')':'')+'"'+(u?'':' disabled')+'><i class="ti ti-player-play"></i> Vorführ-Modus</button></span></div>';
+    h+=k?'<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#EEEDE9;border:1px solid var(--border)"><iframe id="liveFrame" src="'+esc(liveUrl(true))+'" title="Live-Ansicht" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>'
+      :'<div class="kal-note" style="padding:30px;text-align:center">Noch keine Adresse vorhanden.'+(adm?' Unten „Adresse erzeugen“ klicken.':' Ein Admin muss die Adresse zuerst erzeugen.')+'</div>';
+    h+='</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">';
+    var TL=liveTodayList();
+    h+='<div class="card card-static" style="margin:0"><div class="card-title"><i class="ti ti-clock"></i> Heute auf den Fernsehern</div><div class="kal-note" style="margin-bottom:6px">aus Zeitplan und Power Hours · „Testen“ zeigt es sofort oben in der Vorschau</div>'
+      +(TL.length?TL.map(function(x){return '<div style="display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--border)"><b style="font-size:13px">'+esc(x.t)+'</b><span style="font-size:13px">'+esc(x.txt)+'</span><button class="btn" type="button" style="height:28px;padding:0 10px;font-size:12px" onclick="liveTest(\''+x.test+'\')">Testen</button></div>';}).join(''):'<div class="kal-note">Heute ist nichts geplant.</div>')
+      +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><span class="kal-note">Weitere testen:</span>'
+      +[['aufstieg','Aufstieg'],['ziel','Tagesziel'],['marge','€-Marge'],['auftrag','Top-Auftrag'],['team','Team'],['halbzeit','Zwischenstand'],['endspurt','Endspurt'],['sieger','Siegerehrung']].map(function(x){return '<button class="btn" type="button" style="height:28px;padding:0 10px;font-size:12px" onclick="liveTest(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</div></div>';
+    h+='<div class="card card-static" style="margin:0"><div class="card-title"><i class="ti ti-link"></i> Adresse für die Fernseher</div><div class="kal-note" style="margin-bottom:10px">im Browser des Fernsehers öffnen und auf Vollbild stellen · keine Anmeldung nötig · nur auf den Fernsehern verwenden</div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input id="liveUrlField" readonly value="'+esc(u)+'" onclick="this.select()" style="flex:1;min-width:0;height:34px;box-sizing:border-box;font-size:13px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)">'
+      +'<button class="btn btn-primary" type="button" onclick="liveCopy()"'+(u?'':' disabled')+'><i class="ti ti-copy"></i> Kopieren</button></div>'
+      +(adm?'<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn" type="button" onclick="liveNewKey()"><i class="ti ti-refresh"></i> '+(k?'Neue Adresse erzeugen':'Adresse erzeugen')+'</button></div>':'')+'</div>';
+    h+='</div>';
+  } else if(LIVE_TAB==='zeitplan')h+=zpbHtml();
+  else if(LIVE_TAB==='powerhour')h+=phbHtml();
+  else if(LIVE_TAB==='figuren')h+=figHtml();
+  else h+=liveSettingsHtml();
   h+='</div>';
   ma.innerHTML=h;}
 
@@ -4715,7 +4757,7 @@ function figFokus(e){var f=((settings.liveConfig||{}).fokus||{})[e.id];if(f)retu
 function figSave(){if(currentUserRole!=='admin')return;var fo={};figPeople().forEach(function(e){var el=document.getElementById('fig_fokus_'+e.id);fo[e.id]=el?el.value:figFokus(e);});var c=Object.assign({},settings.liveConfig||{},{figuren:figRead(),fokus:fo});
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;FIG.msg='Figuren gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
-function figMore(id){var d=document.getElementById('fig_m_'+id);if(d)d.style.display=d.style.display==='none'?'grid':'none';}
+function figMore(id){var d=document.getElementById('fig_m_'+id);if(d){var op=d.style.display==='none';d.style.display=op?'grid':'none';FIG.open=FIG.open||{};FIG.open[id]=op;}}
 function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=figPeople();
   var inp='height:30px;box-sizing:border-box;font-size:12px;padding:0 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);min-width:0';
   var sel=function(k,id,val,opts){return '<select id="fig_'+k+'_'+id+'"'+dis+' style="'+inp+'" onchange="figPreview(\''+id+'\')">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(String(o[0])===String(val==null?'':val)?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';};
@@ -4723,13 +4765,13 @@ function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=fi
   var chk=function(k,id,val,l){return '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2)"><input type="checkbox" id="fig_'+k+'_'+id+'"'+(val?' checked':'')+dis+' onchange="figPreview(\''+id+'\')">'+l+'</label>';};
   var lab=function(t,x){return '<label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text3);min-width:0">'+t+x+'</label>';};
   var h='<style>.kidp svg .mh,.kidp svg .mw,.kidp svg .ba,.kidp svg .mg{display:none}</style><div class="card card-static"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div class="card-title" style="margin:0"><i class="ti ti-mood-kid"></i> Figuren</div><span class="kal-note">So erscheint jede Person in den Animationen · „Mehr“ öffnet weitere Einstellungen</span>'+(adm?'<button class="btn btn-primary" type="button" style="margin-left:auto" onclick="figSave()"><i class="ti ti-device-floppy"></i> Figuren speichern</button>':'')+'</div>';
-  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;align-items:start">';
+  h+='<div style="display:flex;flex-direction:column;gap:0">';
   P.forEach(function(e,i){var f=figOf(e,i),id=e.id;
-    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:var(--bg)"><div style="display:flex;gap:10px;align-items:center"><div class="kidp" id="fig_p_'+id+'" style="width:52px;height:104px;flex-shrink:0">'+kidSvg(f)+'</div><div style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1"><b style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</b>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">'+sel('g',id,f.g,[['m','Junge'],['w','Mädchen']])+sel('s',id,f.skin,[['hell','Haut hell'],['mittel','Haut mittel'],['dunkel','Haut dunkel']])+'</div>'
-      +'<div style="display:flex;gap:5px;align-items:center">'+sel('h',id,f.hair,[['kurz','kurze Haare'],['scheitel','Seitenscheitel'],['igel','Igel'],['locken','Locken'],['zopf','Pferdeschwanz'],['zoepfe','zwei Zöpfe'],['lang','lange Haare'],['bob','Bob'],['dutt','Dutt'],['puffs','Puffs'],['glatze','Glatze']])+col('c',id,f.shirt||'#F2884F',true)
-      +'<button type="button" class="btn" style="height:30px;padding:0 8px;font-size:12px" onclick="figMore(\''+id+'\')">Mehr</button></div></div></div>'
-      +'<div id="fig_m_'+id+'" style="display:none;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'
+    h+='<div style="border-top:1px solid var(--border);padding:4px 0"><div style="display:grid;grid-template-columns:36px minmax(150px,220px) 110px 130px 150px 34px 1fr;gap:10px;align-items:center"><div class="kidp" id="fig_p_'+id+'" style="width:30px;height:60px">'+kidSvg(f)+'</div><b style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</b>'
+      +sel('g',id,f.g,[['m','Junge'],['w','Mädchen']])+sel('s',id,f.skin,[['hell','Haut hell'],['mittel','Haut mittel'],['dunkel','Haut dunkel']])
+      +sel('h',id,f.hair,[['kurz','kurze Haare'],['scheitel','Seitenscheitel'],['igel','Igel'],['locken','Locken'],['zopf','Pferdeschwanz'],['zoepfe','zwei Zöpfe'],['lang','lange Haare'],['bob','Bob'],['dutt','Dutt'],['puffs','Puffs'],['glatze','Glatze']])+col('c',id,f.shirt||'#F2884F',true)
+      +'<span style="justify-self:end"><button type="button" class="btn" style="height:30px;padding:0 10px;font-size:12px" onclick="figMore(\''+id+'\')">Mehr</button></span></div>'
+      +'<div id="fig_m_'+id+'" style="display:'+(FIG.open&&FIG.open[id]?'grid':'none')+';grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:6px 0 6px 46px;padding:10px;border-radius:10px;background:#EFECE5">'
       +lab('Haarfarbe',sel('hc',id,f.hc||'',[['','automatisch'],['schwarz','schwarz'],['dunkelbraun','dunkelbraun'],['braun','braun'],['blond','blond'],['rot','rot'],['grau','grau']]))
       +lab('Augen',sel('eye',id,f.eye||'',[['','braun'],['blau','blau'],['gruen','grün']]))
       +lab('Unten',sel('unten',id,f.unten||'',[['','automatisch'],['hose','Hose'],['rock','Rock/Kleid']]))
@@ -4737,7 +4779,6 @@ function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=fi
       +lab('Brille',sel('brille',id,f.brille||'',[['','keine'],['rund','rund'],['eckig','eckig']]))
       +lab('Kopfbedeckung',sel('hut',id,f.hut||'',[['','keine'],['cap','Cap'],['muetze','Mütze'],['kopftuch','Kopftuch'],['stirnband','Stirnband']]))
       +lab('Hose/Rock · Schuhe','<div style="display:flex;gap:6px">'+col('hose',id,f.hose||'#3E5C8A',!!f.hose)+col('schuh',id,f.schuh||'#7A4A2A',!!f.schuh)+'</div>')
-      +lab('CR Fokus',sel('fokus',id,figFokus(e),[['OEM','OEM'],['UPS','UPS'],['WKA','WKA']]))
       +'<div style="display:flex;flex-direction:column;gap:3px">'+chk('headset',id,f.headset,'Headset')+chk('freck',id,f.freck,'Sommersprossen')+chk('ohrringe',id,f.ohrringe,'Ohrringe')+chk('bart',id,f.bart,'Bärtchen')+'</div>'
       +'</div></div>';});
   h+='</div>'+(FIG.msg?'<div class="kal-note" style="margin-top:10px;color:var(--text)">'+esc(FIG.msg)+'</div>':'')+'</div>';return h;}
