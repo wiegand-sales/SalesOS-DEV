@@ -427,7 +427,7 @@ var SUPABASE_ANON_KEY = 'sb_publishable_6C8m6s4zxS2lQKFGEMd_yw_fnEBGN8k';
       ceremonyShow({id:w.e.id,kick:'⚡ POWER HOUR '+Q.h.start+'–'+Q.h.ende+' · '+kn2.l.toUpperCase(),unit:kn2.k==='e'?'':kn2.u,value:KV2(w),fmt:kn2.k==='e'?function(v){return eur(v);}:function(v){return num(v);},name:w.e.name,
         rest:(r2?'Platz 2 '+r2.e.name+' · '+kn2.f(KV2(r2)):'')+(r3?'   ·   Platz 3 '+r3.e.name+' · '+kn2.f(KV2(r3)):''),ms:ms});}
   }
-  var FORCE_R=false,FX_ON=false,VIEW=(['woche','monat'].indexOf(VIEW_FIX)>=0?VIEW_FIX:'tag'),WKMODE=false,VMODE='tag',VIEW_INIT=false;
+  var FORCE_R=false,FX_ON=false,FX_SINCE=0,VIEW=(['woche','monat'].indexOf(VIEW_FIX)>=0?VIEW_FIX:'tag'),WKMODE=false,VMODE='tag',VIEW_INIT=false;
   function periodFrom(v,t){if(v==='monat')return t.slice(0,8)+'01';var dw=(new Date(t+'T12:00:00').getDay()+6)%7;return addDays(t,-dw);}
   function periodEnd(v,t){if(v==='monat'){var d=new Date(t+'T12:00:00');d=new Date(d.getFullYear(),d.getMonth()+1,0,12);return iso(d);}return addDays(periodFrom(v,t),4);}
   function fokusOf(e){var c={};try{c=typeof D.config==='string'?JSON.parse(D.config||'{}'):(D.config||{});}catch(x){c={};}var f=(c&&c.fokus&&c.fokus[e.id])||'';if(f)return f;var n=String(e.name||'').split(' ')[0];return /^bianca$/i.test(n)?'UPS':/^abenezer$/i.test(n)?'WKA':'OEM';}
@@ -587,7 +587,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
     var cand=LASTROWS.filter(function(r){return r.soll>0||r.opt>0;});if(!cand.length)return false;
     var low=cand.slice().sort(function(a,b){return a.opt-b.opt||a.marge-b.marge;})[0];
     var col=stage.querySelector('.bars .c[data-eid="'+low.e.id+'"]'),pl=stage.querySelector('.ch .pl');if(!col||!pl||!col.animate)return false;
-    FX_ON=true;var cp=stagePos(col),pp=stagePos(pl),base=1080-(pp.y+pp.h),fromLeft=(cp.x+cp.w+130>1900)||(cp.x+cp.w/2)<960,F=fromLeft?' flip':'';
+    FX_ON=true;FX_SINCE=Date.now();var cp=stagePos(col),pp=stagePos(pl),base=1080-(pp.y+pp.h),fromLeft=(cp.x+cp.w+130>1900)||(cp.x+cp.w/2)<960,F=fromLeft?' flip':'';
     var d=document.createElement('div');d.className='man sman walk grim'+F;d.innerHTML=kidSvg(kidFor(e));d.style.bottom=(base-22)+'px';
     var start=fromLeft?-170:1940,stop=fromLeft?cp.x-118:cp.x+cp.w-32;d.style.left=start+'px';stage.appendChild(d);
     var bub=null,T=[];function at(ms,f){T.push(setTimeout(f,ms));}
@@ -794,7 +794,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
     setTimeout(function(){card.classList.remove('on');dim.classList.remove('on');unblur();setTimeout(function(){card.remove();dim.remove();CEL_ON=false;celNext();},700);},ZP_MS);
     return true;
   }
-  function fxRun(c){FX_ON=true;setTimeout(function(){FX_ON=false;},c.team?5000:4800);
+  function fxRun(c){FX_ON=true;FX_SINCE=Date.now();setTimeout(function(){FX_ON=false;},c.team?5000:4800);
     if(c.team)return teamFx(c);
     var col=stage.querySelector('.bars .c[data-eid="'+c.id+'"]');if(!col){return 600;}
     var all=stage.querySelectorAll('[data-eid="'+c.id+'"]'),st=col.querySelector('.st')||col,p=stagePos(st);
@@ -899,7 +899,8 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
   function showMsg(t,s){stage.innerHTML='';var m=document.getElementById('msg');if(!m){m=document.createElement('div');m.id='msg';m.className='msg';document.body.appendChild(m);}m.innerHTML=esc(t)+'<small>'+esc(s)+'</small>';}
 
   function render(netErr,fresh){
-    if(!D)return;if(FX_ON&&!FORCE_R){setTimeout(function(){render(netErr,fresh);},1500);return;}var m=document.getElementById('msg');if(m)m.remove();
+    if(!D)return;if(FX_ON&&Date.now()-FX_SINCE>45000)FX_ON=false;/* Sicherheitsnetz: hängende Animation blockiert nie länger als 45 s */
+    if(FX_ON&&!FORCE_R){setTimeout(function(){render(netErr,fresh);},1500);return;}var m=document.getElementById('msg');if(m)m.remove();
     var cfg={};try{cfg=typeof D.config==='string'?JSON.parse(D.config||'{}'):(D.config||{});}catch(e){cfg={};}
     var ZOEM=cfg.crOEM!=null&&cfg.crOEM!==''?+cfg.crOEM:55,ZMY=cfg.crMY!=null&&cfg.crMY!==''?+cfg.crMY:20,OPH=cfg.optProStd?+cfg.optProStd:3.5;
     var NOEM=cfg.knappOEM!=null&&cfg.knappOEM!==''?+cfg.knappOEM:5,NMY=cfg.knappMY!=null&&cfg.knappMY!==''?+cfg.knappMY:3;
