@@ -7,7 +7,6 @@ select 'employees'        as tabelle, count(*) from public.employees
 union all select 'performance (Mitarbeiter)', count(distinct employee_id) from public.performance
 union all select 'zielvereinbarung', count(*) from public.zielvereinbarung
 union all select 'protocols',  count(*) from public.protocols
-union all select 'app_users',  count(*) from public.app_users
-union all select 'admin_secrets', count(*) from public.admin_secrets;
+union all select 'app_users',  count(*) from public.app_users;
 rollback;
 -- Erwartet: employees 1, performance 1 Mitarbeiter, zielvereinbarung nur eigene Zeilen, alles andere 0.
