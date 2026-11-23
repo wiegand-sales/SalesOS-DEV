@@ -8967,7 +8967,7 @@ function dshLiveCard(){if(!DSH_LIVE_STAND&&!window._dshLivePulling){window._dshL
   var e0=function(x){return '€'+Math.round(x||0).toLocaleString('de-DE');},p0=function(x){return x==null?'–':Math.round(x)+' %';};
   var tile=function(l,val,sub,ko){return '<div class="dsh-qt'+(ko?' dsh-ko':'')+'"><div class="l">'+l+'</div><div class="v big">'+val+'</div><div class="kv"><span>'+sub+'</span></div></div>';};
   // ── Diagramm wie die Live-Ansicht, in den Dashboard-Farben ──
-  var CM='#3A3530',CO='#5C564F',CU='#A89C8E',CW='#D3C8B6',isM=v==='monat';
+  var CM='#E2603C',CO='#5C564F',CU='#A89C8E',CW='#D3C8B6',isM=v==='monat';
   var G='display:grid;grid-template-columns:110px repeat('+N+',minmax(0,1fr));gap:6px;align-items:center';
   // allgemeines Soll (Vollzeit, 28 am Tag)
   var t0=today(),vz=R.map(function(r){return r.e;}).sort(function(a2,b2){return (workHoursForDate(b2,t0)||0)-(workHoursForDate(a2,t0)||0);})[0],vzS=0;
