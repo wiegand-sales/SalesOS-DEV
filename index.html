@@ -8929,6 +8929,16 @@ function dshChart(list,p){
   return '<div class="dsh-chart"><div class="hd"><span class="inf">'+info+'</span><span class="dsh-lg">'+leg+'</span></div>'
     +'<div class="area">'+grid+'<div class="cols" style="gap:'+gap+'px">'+cols+'</div></div><div class="xl" style="gap:'+gap+'px">'+lab+'</div></div>';
 }
+
+// ── Dashboard-Kachel „Live“: dasselbe Diagramm wie auf den Fernsehern, ohne Animationen ──
+var DSH_LIVE='tag';
+function dshLiveSrc(){return liveUrl(true)+'&static=1&kachel=1&view='+DSH_LIVE;}
+function dshLiveSet(v){DSH_LIVE=v;var f=document.getElementById('dshLiveFrame');if(f)f.src=dshLiveSrc();var g=document.getElementById('dshLiveSeg');if(g)g.querySelectorAll('button').forEach(function(b){b.className=b.getAttribute('data-v')===v?'on':'';});
+  var n=document.getElementById('dshLiveNote');if(n)n.textContent='wie auf den Fernsehern · '+(v==='woche'?'Montag bis heute':v==='monat'?'1. bis heute':'heute');}
+function dshLiveCard(){if(!settings.liveKey)return '';
+  var seg='<span class="dsh-seg" id="dshLiveSeg">'+[['tag','Tag'],['woche','Woche'],['monat','Monat']].map(function(x){return '<button type="button" data-v="'+x[0]+'" class="'+(DSH_LIVE===x[0]?'on':'')+'" onclick="dshLiveSet(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>';
+  return '<div class="card"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" id="dshLiveNote" style="margin-left:0">wie auf den Fernsehern · '+(DSH_LIVE==='woche'?'Montag bis heute':DSH_LIVE==='monat'?'1. bis heute':'heute')+'</span>'+seg+'</span></div>'
+    +'<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#F7F5F0"><iframe id="dshLiveFrame" src="'+esc(dshLiveSrc())+'" title="Live" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div></div>';}
 function renderDashboard(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   _dshPlanCache={};
@@ -8958,6 +8968,7 @@ function renderDashboard(){
   tiles+=DSH_AREAS.map(function(k,i){var v=parts[i],c=dshCr(S,k),mp=dshMpo(S,k),lo=under(k,c)&&Z[k]!=null,lm=under('MPO',mp);
     return '<div class="dsh-qt"><div class="l"><i class="dsh-dot" style="background:'+DSH_AC[i]+'"></i>'+k+'<span class="pc">'+(psum>0?Math.round(v/psum*100):0)+' %</span></div><div class="v big">'+dshEur(v)+'</div><div class="kv"><span>CR <b class="'+(lo?'dsh-lo':'')+'">'+dshPct(c)+'</b></span><span>Ø je Auftrag <b class="'+(lm?'dsh-lo':'')+'">'+dshEur1(mp)+'</b></span></div>'+tileTeams(k)+'</div>';}).join('')+dshDonutTile(parts,psum,S)+'</div>';
   var main='<div class="card"><div class="card-title">Margenerhöhung<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">Kacheln: '+(dshPeriod==='days'?'heute':dshPeriod==='weeks'?'laufende Woche':dshPeriod==='months'?'laufender Monat':'Geschäftsjahr '+R.lbl+' bis heute')+'</span>'+pseg+'</span></div>'+dshChart(all,dshPeriod)+tiles+'</div>';
+  h+=dshLiveCard();
   h+=main;
   // ── 2 · Team-Steckbriefe: eine Kennzahl, Gesamt + SE/SR/OB/VLC ──
   h+=dshTeamBox(all,T);
