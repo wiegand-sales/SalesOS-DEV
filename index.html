@@ -296,11 +296,6 @@ tr.perf-avg-row:hover td{background:rgba(29,28,26,0.07)!important;}
 .sess-row{display:flex;align-items:center;gap:10px;padding:11px 15px;border-bottom:1px solid var(--border);}
 .sess-row:last-child{border-bottom:none;}
 .ftp-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;background:var(--teal-bg);color:var(--teal-dark);}
-/* SOLIDROAD */
-.sr-sim{background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-lg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(40,32,15,0.06);padding:13px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
-.sr-ring{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;border:3px solid;}
-.sr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
-.sr-tag{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg2);color:var(--text2);}
 /* TASKS */
 .task-item{background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r-lg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 10px 24px rgba(40,32,15,0.06);margin-bottom:8px;overflow:hidden;}
 .task-item.overdue{border-left:3px solid var(--red);}
@@ -1184,14 +1179,6 @@ tr.pv-empty td{background:repeating-linear-gradient(-45deg,transparent 0 6px,rgb
   <div class="modal-actions"><button class="btn" onclick="closeModal('ratingModal')">Abbrechen</button><button class="btn btn-primary" onclick="saveRatingCriterion()"><i class="ti ti-check"></i> Add</button></div>
 </div></div>
 
-<div class="modal-ov hidden" id="srModal"><div class="modal">
-  <div class="modal-title">SolidRoad verbinden</div>
-  <div style="margin-bottom:10px"><label>API-Schlüssel</label><input type="password" id="srKeyInput" placeholder="sr_live_..."></div>
-  <div style="margin-bottom:14px"><label>Organisations-ID</label><input type="text" id="srOrgInput" placeholder="Your SolidRoad org ID"></div>
-  <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Find your API key in SolidRoad → Settings → Integrations → API-Schlüssels.</p>
-  <div class="modal-actions"><button class="btn" onclick="closeModal('srModal')">Abbrechen</button><button class="btn btn-primary" onclick="saveSRKey()"><i class="ti ti-plug"></i> Verbinden</button></div>
-</div></div>
-
 <div class="modal-ov hidden" id="addAppUserModal"><div class="modal">
   <div class="modal-title">Admin/Betrachter hinzufügen</div>
   <div style="margin-bottom:12px"><label>Name</label><input type="text" id="newAppUserName" placeholder="Vor- und Nachname"></div>
@@ -2034,7 +2021,7 @@ var COACHING_WIE_LABEL={'Einzelcoaching':'Coaching'};
 // Alte Arten aus der Zeit vor Nov 2026: behalten ihren Namen, zählen für Filter und Auswertung zu einer der drei Kategorien
 var COACHING_LEGACY_CAT=(function(){var m={},add=function(cat,l){l.forEach(function(t){m[t]=cat;});};
   add('Coaching',['Gruppencoaching','Call Shadowing Aktiv','Call Shadowing Passiv','Call Shadowing (Aktiv)','Call Shadowing (Passiv)','1:1 Coaching','Live Coaching','Call Review','Rollenspiel','Feedbackgespräch','Motivation','Mentoring','Call Blitz','Mega YES','Cross Selling','Neukunden','Bestandskunden','Follow-up','Angebotsnachverfolgung','Abschlusstraining','Lead-Abarbeitung','Fokuszeit']);
-  add('Onboarding',['Training','Produkttraining','Pitch-Training','Einwandtraining','Systemtraining','SolidRoad-Training','Wissens-Quiz','Nachschulung']);
+  add('Onboarding',['Training','Produkttraining','Pitch-Training','Einwandtraining','Systemtraining','Wissens-Quiz','Nachschulung']);
   add('Performance',['KPI Review','Performance-Gespräch','Zielvereinbarung','Tagesziel','Wochenziel','Monatsziel','Teammeeting','Daily','Kick-off','Karrieregespräch','Entwicklungsplan']);return m;})();
 function findCoachingCategoryForType(typeValue){
   var cats=Object.keys(COACHING_CATEGORIES);
@@ -2241,7 +2228,7 @@ function initAppAfterLogin(){
   }).then(function(){
     if(currentUserRole==='agent'){ showAgentLock(); return; }
     if(currentUserRole==='none'){ showNoAccessLock(); return; }
-    Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadAdminSecretsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(), loadSolidroadFromSupabase(), loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase(), loadAbsencesFromSupabase(), loadZielLocksFromSupabase(), loadAufgabenFromSupabase()]).then(function(){
+    Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(),loadEmployeeHistoryFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase(), loadAbsencesFromSupabase(), loadZielLocksFromSupabase(), loadAufgabenFromSupabase()]).then(function(){
       lsLoad();               // Rest der Daten (protocols, ...) bleibt vorerst lokal
       runAppInit();
       logAppOpen(); // Zugriff protokollieren (max. 1 Eintrag je 30 Min. und Nutzer)
@@ -2857,10 +2844,10 @@ function exportEmpSummary(empId){
   setTimeout(function(){w.print();},350);
 }
 function exportDaten(){
-  // Geheime Schlüssel (SolidRoad, Live-Fernseher-Schlüssel) nie in die Sicherungsdatei schreiben
-  var safeSettings=Object.assign({},settings);delete safeSettings.srApiKey;delete safeSettings.srOrgId;delete safeSettings.liveKey;
+  // Geheime Schlüssel (Live-Fernseher-Schlüssel) nie in die Sicherungsdatei schreiben
+  var safeSettings=Object.assign({},settings);delete safeSettings.liveKey;
   if(safeSettings.liveConfig&&typeof safeSettings.liveConfig==='object'){safeSettings.liveConfig=Object.assign({},safeSettings.liveConfig);delete safeSettings.liveConfig.liveKey;delete safeSettings.liveConfig.key;}
-  var d={exportiert:new Date().toISOString(),version:'sfp-v1',employees:employees,protocols:protocols,performance:performance,solidroadData:solidroadData,tasks:tasks,reviews:reviews,KPI_TARGETS:KPI_TARGETS,settings:safeSettings,ratingCriteria:ratingCriteria};
+  var d={exportiert:new Date().toISOString(),version:'sfp-v1',employees:employees,protocols:protocols,performance:performance,tasks:tasks,reviews:reviews,KPI_TARGETS:KPI_TARGETS,settings:safeSettings,ratingCriteria:ratingCriteria};
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));
   a.download='sfp-backup-'+today()+'.json';a.click();
@@ -2970,20 +2957,6 @@ function restoreBackupToSupabase(d){
     });
   }
 
-  var solRows=[];
-  Object.keys(d.solidroadData||{}).forEach(function(empId){
-    ((d.solidroadData[empId]||{}).simulations||[]).forEach(function(s){
-      solRows.push({id:s.id,employee_id:empId,date:s.date,name:s.name,score:s.score,
-        status:s.status||'passed',tags:s.tags||[]});
-    });
-  });
-  if(solRows.length){
-    chain=chain.then(function(){
-      status('SolidRoad-Simulationen (' + solRows.length + ')…');
-      return sb.from('solidroad_simulations').upsert(solRows,{onConflict:'id'}).then(function(res){return checkErr(res,'SolidRoad-Simulationen');});
-    });
-  }
-
   var reviewRows=[],reviewKpiRows=[];
   var REVIEW_KEYS=['opener','einwand','loop','bedarf','abschluss','gespraech','zusammenfassung','produkt','motivation','coach','zuverl','team','crOEM','crTW','crSY','crMY'];
   Object.keys(d.reviews||{}).forEach(function(empId){
@@ -3047,15 +3020,6 @@ function restoreBackupToSupabase(d){
     chain=chain.then(function(){
       status('FTP-Einstellung…');
       return sb.from('settings').upsert({key:'ftpUrl',value:d.settings.ftpUrl},{onConflict:'key'}).then(function(res){return checkErr(res,'FTP-Einstellung');});
-    });
-  }
-  if(d.settings&&(d.settings.srApiKey||d.settings.srOrgId)){
-    chain=chain.then(function(){
-      status('SolidRoad-Zugangsdaten…');
-      return sb.from('admin_secrets').upsert([
-        {key:'srApiKey',value:d.settings.srApiKey||''},
-        {key:'srOrgId',value:d.settings.srOrgId||''}
-      ],{onConflict:'key'}).then(function(res){return checkErr(res,'SolidRoad-Zugangsdaten');});
     });
   }
 
@@ -3145,7 +3109,7 @@ var teamRange=7;
 var teamCustomFrom=null;
 var teamCustomTo=null;
 var teamPerfMetric='margeGesamt';
-var settings={srApiKey:'',srOrgId:'',ftpUrl:''};
+var settings={ftpUrl:''};
 var view='dashboard', selectedEmp=null, activeTab='performance'; // Start nach dem Öffnen: Dashboard (ohne Zugriff: Übersicht)
 var teamFilter='ALL';
 var perfMetric='crOEM', perfRange=7;
@@ -3318,7 +3282,6 @@ var employees=[
 var protocols={};
 var performance={};
 
-var solidroadData={};
 
 var tasks={};
 // ── REVIEWS ──
@@ -6602,16 +6565,15 @@ function renderTeam(){
   }
   coverageHtml+='</div>';
 
-  // Spalte 3: QA-Calls vs Sessions vs Simulationen (gesamt, nicht nur Zeitraum)
-  var totQA=0,totSess=0,totSim=0;
+  // Spalte 3: QA-Calls vs Sessions (gesamt, nicht nur Zeitraum)
+  var totQA=0,totSess=0;
   list.forEach(function(e){
     totQA+=(callRatings[e.id]||[]).length;
     totSess+=(protocols[e.id]||[]).filter(function(p){return p.status!=='geplant';}).length;
-    totSim+=(solidroadData[e.id]&&solidroadData[e.id].simulations)?solidroadData[e.id].simulations.length:0;
   });
-  var maxRatio=Math.max(totQA,totSess,totSim,1);
-  coverageHtml+='<div><div class="sec-title" style="margin-bottom:8px">QA-Calls · Sessions · Simulationen <span style="font-weight:400;text-transform:none;letter-spacing:0">(gesamt, Team)</span></div>';
-  [{l:'QA-Calls',n:totQA,c:'var(--blue)'},{l:'Sessions',n:totSess,c:'var(--purple)'},{l:'Simulationen',n:totSim,c:'var(--teal)'}].forEach(function(r){
+  var maxRatio=Math.max(totQA,totSess,1);
+  coverageHtml+='<div><div class="sec-title" style="margin-bottom:8px">QA-Calls · Sessions <span style="font-weight:400;text-transform:none;letter-spacing:0">(gesamt, Team)</span></div>';
+  [{l:'QA-Calls',n:totQA,c:'var(--blue)'},{l:'Sessions',n:totSess,c:'var(--purple)'}].forEach(function(r){
     var pct=Math.round(r.n/maxRatio*100);
     coverageHtml+='<div style="margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>'+r.l+'</span><span style="font-weight:700">'+r.n+'</span></div>'
@@ -7156,7 +7118,6 @@ function renderTab(){
   var tc2=document.getElementById('tabContent');
   if(!tc2)return;
   var p=protocols[emp.id]||[];
-  var sr=solidroadData[emp.id]||{simulations:[]};
   var alerts=checkAlerts(emp.id);
   var html='';
 
@@ -8013,43 +7974,6 @@ function renderTab(){
     })(tc,SDIMS,SCCAT,Math.max(maxVal,5));
   }
 
-  // ── SOLIDROAD TAB ──
-  if(activeTab==='solidroad'){
-    var sims=sr.simulations;
-    var srScore=sims.length?Math.round(sims.reduce(function(a,s){return a+s.score;},0)/sims.length):null;
-    if(!settings.srApiKey){
-      html+='<div style="background:var(--purple-bg);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;text-align:center;margin-bottom:14px">'
-        +'<div style="font-size:36px;color:var(--purple);margin-bottom:10px"><i class="ti ti-robot"></i></div>'
-        +'<div style="font-size:16px;font-weight:600;margin-bottom:6px">Connect SolidRoad</div>'
-        +'<div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Add your API key in Einstellungen to sync simulation scores automatically.</div>'
-        +'<button class="btn btn-primary btn-sm" style="width:auto;margin:0 auto" onclick="showView(\'settings\')"><i class="ti ti-settings"></i> Go to Einstellungen</button></div>';
-    }
-    if(srScore!==null){
-      html+='<div class="g4">'
-        +'<div class="kpi" style="border-top-color:'+scoreColor(srScore)+'"><div class="kpi-label" style="color:'+scoreColor(srScore)+'">Avg. Score</div><div class="kpi-val" style="color:'+scoreColor(srScore)+'">'+srScore+'%</div><div class="kpi-sub">all simulations</div></div>'
-        +'<div class="kpi" style="border-top-color:var(--blue)"><div class="kpi-label" style="color:var(--blue)">Simulations</div><div class="kpi-val" style="color:var(--blue)">'+sims.length+'</div><div class="kpi-sub">completed</div></div>'
-        +'<div class="kpi" style="border-top-color:var(--teal)"><div class="kpi-label" style="color:var(--teal)">Best Score</div><div class="kpi-val" style="color:var(--teal)">'+Math.max.apply(null,sims.map(function(s){return s.score;}))+'%</div><div class="kpi-sub">highest simulation</div></div>'
-        +'<div class="kpi" style="border-top-color:var(--purple)"><div class="kpi-label" style="color:var(--purple)">Passed</div><div class="kpi-val" style="color:var(--purple)">'+sims.filter(function(s){return s.status==='passed';}).length+'</div><div class="kpi-sub">of '+sims.length+'</div></div>'
-        +'</div>';
-    }
-    if(sims.length>0){
-      html+='<div class="sec-title">Simulations</div>';
-      sims.forEach(function(s){
-        var col=scoreColor(s.score);
-        html+='<div class="sr-sim"><div class="sr-ring" style="border-color:'+col+';color:'+col+'">'+s.score+'%</div>'
-          +'<div style="flex:1"><div style="font-size:13px;font-weight:500">'+esc(s.name)+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px">'+fd(s.date)+'</div>'
-          +'<div class="sr-tags">'+s.tags.map(function(t){return '<span class="sr-tag">'+t+'</span>';}).join('')+'</div></div></div>';
-      });
-    } else if(settings.srApiKey){html+='<div class="empty">No simulations completed yet.</div>';}
-    if(settings.srApiKey){
-      html+='<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Log Simulation Manually</div>'
-        +'<div class="f3"><div><label>Name</label><input type="text" id="srName" placeholder="e.g. Objection: Price too high"></div>'
-        +'<div><label>Date</label><input type="date" id="srDate" value="'+today()+'"></div>'
-        +'<div><label>Score (%)</label><input type="number" id="srScore" placeholder="0-100" min="0" max="100"></div></div>'
-        +'<div style="margin-bottom:12px"><label>Tags (comma separated)</label><input type="text" id="srTags" placeholder="e.g. Objection Handling, Closing"></div>'
-        +'<button class="btn btn-primary btn-sm" style="width:auto" onclick="saveSRSim()"><i class="ti ti-check"></i> Save</button></div>';
-    }
-  }
 
 
   // ── TASKS TAB ──
@@ -9227,8 +9151,8 @@ var PERM_ROWS=[
   {key:'histEdit',label:'Bewertungen & Kommentare nachträglich ändern oder löschen',group:'Verwaltung',editOrNone:true},
   {key:'settings',label:'Einstellungen',group:'Verwaltung',adminOnly:true}
 ];
-var PERM_DEFAULT={coach:{salary:'S',kalEdit:'E',provEdit:'-',provCoaches:'-',performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',solidroad:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
-                  viewer:{salary:'S',kalEdit:'-',provEdit:'-',provCoaches:'-',performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',solidroad:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
+var PERM_DEFAULT={coach:{salary:'S',kalEdit:'E',provEdit:'-',provCoaches:'-',performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
+                  viewer:{salary:'S',kalEdit:'-',provEdit:'-',provCoaches:'-',performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
 function rolePerms(){ var s=settings.rolePermissions||{}; return {coach:Object.assign({},PERM_DEFAULT.coach,s.coach||{}),viewer:Object.assign({},PERM_DEFAULT.viewer,s.viewer||{})}; }
 function permFor(key,role){
   role=role||currentUserRole;
@@ -9584,8 +9508,6 @@ function buildIntegrationsHtml(){
     sKvTable(sKv('Agents mit Zugang',withLogin+' von '+agentsAll.length))
     +'<div><label for="extUrl">Link zum Chrome Web Store (für die Agents)</label><input id="extUrl" placeholder="https://chromewebstore.google.com/detail/…" value="'+esc(settings.extensionUrl||'')+'" onchange="settings.extensionUrl=this.value.trim();sb.from(\'settings\').upsert({key:\'extensionUrl\',value:settings.extensionUrl},{onConflict:\'key\'}).then(function(){renderMain();})"></div>'
     +(settings.extensionUrl?'<div><a class="btn sbtn" style="text-decoration:none" href="'+esc(settings.extensionUrl)+'" target="_blank" rel="noopener">Store-Seite öffnen ↗</a></div>':''));
-  var sr=sCard('ti-robot','SolidRoad','KI-Vertriebssimulationen, vor allem im Onboarding',settings.srApiKey?sStatus('Verbunden','ok'):sStatus('Nicht verbunden','off'),
-    '<div><button class="btn sbtn" onclick="openModal(\'srModal\')">'+(settings.srApiKey?'Verbindung bearbeiten':'Verbinden')+'</button></div>');
   function bItem(l,v,x,warn){return '<div style="padding:2px 16px;border-right:1px solid rgba(255,255,255,0.14)"><div style="font-size:9.5px;color:#FFE1D6;font-weight:600;letter-spacing:.05em;text-transform:uppercase">'+l+'</div><div style="font-size:19px;font-weight:700;color:'+(warn?'#FFB38A':'#fff')+'">'+v+'</div><div style="font-size:11px;color:#FFEDE6">'+x+'</div></div>';}
   var syncTxt=ageMin===null?'kein Sync':ageMin<=90?'läuft':ageMin<=360?'verzögert':'gestoppt';
   var tokTxt=d===null?'Datum fehlt':d<0?'abgelaufen':d<=30?'in '+d+' Tagen':'ok';
@@ -9596,7 +9518,7 @@ function buildIntegrationsHtml(){
     +bItem('Zugangsschlüssel',tokTxt,'GitHub-Token für cron-job.org',d===null||d<=30)
     +bItem('Erweiterung',withLogin+' von '+agentsAll.length,'Agents mit Zugang'+(settings.extensionUrl?'':' · Link fehlt'),!settings.extensionUrl).replace('border-right:1px solid rgba(255,255,255,0.14)','')
     +'</div></div>';
-  return banner+sfp+unC+tok+ext+sr;
+  return banner+sfp+unC+tok+ext;
 }
 
 function buildDataHtml(){
@@ -11021,30 +10943,6 @@ function resetSessionFormFields(){
 
 
 
-var _savingSRSim=false;
-function saveSRSim(){
-  if(_savingSRSim)return;
-  var name=document.getElementById('srName').value.trim();
-  var date=document.getElementById('srDate').value;
-  var score=parseInt(document.getElementById('srScore').value)||0;
-  var tags=(document.getElementById('srTags').value||'').split(',').map(function(t){return t.trim();}).filter(Boolean);
-  if(!name||!score)return;
-  var payload={employee_id:selectedEmp,date:date,name:name,score:score,status:'passed',tags:tags};
-  _savingSRSim=true;
-  sb.from('solidroad_simulations').insert(payload).select().single().then(function(res){
-    _savingSRSim=false;
-    if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
-    var r=res.data;
-    if(!solidroadData[selectedEmp])solidroadData[selectedEmp]={simulations:[]};
-    solidroadData[selectedEmp].simulations.unshift({id:r.id,date:r.date,name:r.name,score:r.score,status:r.status,tags:r.tags||[]});
-    var e0=employees.find(function(x){return x.id===selectedEmp;});
-    logActivity('solidroad','created','SolidRoad-Simulation erfasst: "'+name+'" (Score '+score+')',selectedEmp,e0?e0.name:'');
-    renderTab();
-  }).catch(function(err){
-    _savingSRSim=false;
-    alert('Unerwarteter Fehler: '+err.message);
-  });
-}
 
 var _savingRatingCriterion=false;
 function saveRatingCriterion(){
@@ -11603,7 +11501,6 @@ function saveNewEmpFull(){
     STANDARD_TARGETS=[]; // Ziele kommen aus Stammdaten & Provisionsvereinbarung, keine versteckten Standard-Einzelwerte mehr
     employees.push(ne);
     protocols[ne.id]=[];performance[ne.id]=[];
-    if(typeof solidroadData!=='undefined')solidroadData[ne.id]={simulations:[]};
     if(typeof tasks!=='undefined')tasks[ne.id]=[];
     (STANDARD_TARGETS.length?sb.from('employee_kpi_targets').insert(STANDARD_TARGETS.map(function(t){return {employee_id:e.id,metric_key:t.rk,val:t.val,dir:t.dir};})):Promise.resolve({})).then(function(r2){
       if(r2.error)console.warn('Standard-KPI-Ziele konnten nicht angelegt werden:',r2.error);
@@ -12199,21 +12096,6 @@ function loadEmployeeKpiTargetsFromSupabase(){
   });
 }
 
-function loadSolidroadFromSupabase(){
-  return selectAllPaginated('solidroad_simulations').then(function(res){
-    if(res.error){console.warn('solidroad_simulations load failed:',res.error);return false;}
-    var byEmp={};
-    (res.data||[]).forEach(function(r){
-      if(!byEmp[r.employee_id])byEmp[r.employee_id]={simulations:[]};
-      byEmp[r.employee_id].simulations.push({
-        id:r.id,date:r.date,name:r.name,score:r.score,status:r.status||'passed',tags:r.tags||[]
-      });
-    });
-    Object.keys(byEmp).forEach(function(k){byEmp[k].simulations.sort(function(a,b){return b.date.localeCompare(a.date);});});
-    solidroadData=byEmp;
-    return true;
-  });
-}
 
 function loadKpiTargetsFromSupabase(){
   return sb.from('kpi_targets').select('*').then(function(res){
@@ -12258,16 +12140,6 @@ function loadSettingsFromSupabase(){
   });
 }
 
-function loadAdminSecretsFromSupabase(){
-  return sb.from('admin_secrets').select('*').then(function(res){
-    if(res.error){console.warn('admin_secrets load failed (normal fuer Nicht-Admins):',res.error);return false;}
-    (res.data||[]).forEach(function(r){
-      if(r.key==='srApiKey')settings.srApiKey=r.value||'';
-      if(r.key==='srOrgId')settings.srOrgId=r.value||'';
-    });
-    return true;
-  });
-}
 
 function loadReviewsFromSupabase(){
   return Promise.all([
@@ -12549,20 +12421,6 @@ function saveFTP(){
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     logActivity('settings','updated','FTP-Datensync-Verbindungsinfo aktualisiert');
     alert('Gespeichert.');
-  });
-}
-var _savingSRKey=false;
-function saveSRKey(){
-  if(_savingSRKey)return;
-  var key=document.getElementById('srKeyInput').value.trim();
-  var org=document.getElementById('srOrgInput').value.trim();
-  if(!key)return;
-  settings.srApiKey=key;settings.srOrgId=org;
-  _savingSRKey=true;
-  sb.from('admin_secrets').upsert([{key:'srApiKey',value:key},{key:'srOrgId',value:org}],{onConflict:'key'}).then(function(res){
-    _savingSRKey=false;
-    if(res.error){alert('Fehler beim Speichern (nur Admin darf das): '+res.error.message);return;}
-    closeModal('srModal');renderMain();
   });
 }
 
