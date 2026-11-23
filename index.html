@@ -8947,7 +8947,7 @@ setInterval(dshLivePull,3*60*1000);
 function dshLiveHl(v){DSH_LIVE_HL=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
 function dshLiveSet(v){DSH_LIVE=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
 function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,from=v==='tag'?t:v==='woche'?kalAdd(t,-dw):t.slice(0,8)+'01',out=[];
-  (employees||[]).forEach(function(e){if(e.active===false||!isAgentEmp(e))return;var rows=(performance[e.id]||[]).filter(function(x){return x.date>=from&&x.date<=t;});if(!rows.length&&v==='monat')return;
+  (employees||[]).forEach(function(e){if(e.active===false||!isAgentEmp(e))return;var rows=(performance[e.id]||[]).filter(function(x){return x.date>=from&&x.date<=t;});
     var q={oem:0,my:0,ye:0,sy:0,tw:0,ne:0,ups:0,une:0,wka:0,wne:0,m:0},hrs=0,seen={};
     rows.forEach(function(x){q.oem+=x.convOEM||0;q.my+=x.convMY||0;q.ye+=x.convYes||0;q.sy+=x.convSY||0;q.tw+=x.convTW||0;q.ne+=x.notSuccessful||0;q.ups+=x.ups_yes||0;q.une+=x.upsNichtErfolgreich||0;q.wka+=x.wka_gesamt_yes||0;
       q.wne+=(x.wkaOemNichtErfolgreich||0)+(x.wkaUpsNichtErfolgreich||0)+(x.wkaOemBeendet||0)+(x.wkaUpsBeendet||0);q.m+=x.margeGesamt||0;
@@ -8962,7 +8962,7 @@ function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,
 function dshLiveCard(){if(!DSH_LIVE_STAND&&!window._dshLivePulling){window._dshLivePulling=1;setTimeout(function(){dshLivePull();window._dshLivePulling=0;},300);}var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{},N=R.length;
   var seg='<span class="dsh-seg" title="Bestwert (Top) oder schlechtesten Wert (Worst) je Kennzahl hervorheben">'+[['top','Top'],['worst','Worst']].map(function(x){return '<button type="button" class="'+(DSH_LIVE_HL===x[0]?'on':'')+'" onclick="dshLiveHl(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>'
     +'<span class="dsh-seg">'+[['tag','Tag'],['woche','Woche'],['monat','Monat']].map(function(x){return '<button type="button" class="'+(v===x[0]?'on':'')+'" onclick="dshLiveSet(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>';
-  var h='<div class="card" id="dshLiveBox"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">'+(v==='tag'?'heute':v==='woche'?'Montag bis heute':'1. bis heute')+(v==='monat'?' · alle Agents mit Zahlen':' · alle aktiven Agents')+(DSH_LIVE_STAND?' · Stand '+('0'+DSH_LIVE_STAND.getHours()).slice(-2)+':'+('0'+DSH_LIVE_STAND.getMinutes()).slice(-2):'')+'</span>'+seg+'</span></div>';
+  var h='<div class="card" id="dshLiveBox"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">'+(v==='tag'?'heute':v==='woche'?'Montag bis heute':'1. bis heute')+' · alle aktiven Agents'+(DSH_LIVE_STAND?' · Stand '+('0'+DSH_LIVE_STAND.getHours()).slice(-2)+':'+('0'+DSH_LIVE_STAND.getMinutes()).slice(-2):'')+'</span>'+seg+'</span></div>';
   if(!N)return h+'<div class="kal-note" style="padding:24px;text-align:center">Für diesen Zeitraum gibt es noch keine Zahlen.</div></div>';
   var S={opt:0,hrs:0,m:0,soll:0,fn:0,fd:0,my:0,ysm:0};R.forEach(function(r){S.opt+=r.opt;S.hrs+=r.hrs;S.m+=r.marge;S.soll+=r.soll;var q=r.q;S.my+=q.my;S.ysm+=q.ye+q.sy+q.my;
     if(r.fk==='UPS'){S.fn+=q.ups;S.fd+=q.ups+q.une;}else if(r.fk==='WKA'){S.fn+=q.wka;S.fd+=q.wka+q.wne;}else{S.fn+=q.oem;S.fd+=q.oem+q.ne;}});
