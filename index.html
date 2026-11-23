@@ -8932,15 +8932,56 @@ function dshChart(list,p){
     +'<div class="area">'+grid+'<div class="cols" style="gap:'+gap+'px">'+cols+'</div></div><div class="xl" style="gap:'+gap+'px">'+lab+'</div></div>';
 }
 
-// ── Dashboard-Kachel „Live“: dasselbe Diagramm wie auf den Fernsehern, ohne Animationen ──
+// ── Dashboard-Kachel „Live“: eigene, ruhige Ansicht (Tag / Woche / Monat) aus den Board-Daten ──
 var DSH_LIVE='tag';
-function dshLiveSrc(){return liveUrl(true)+'&static=1&kachel=1&view='+DSH_LIVE;}
-function dshLiveSet(v){DSH_LIVE=v;var f=document.getElementById('dshLiveFrame');if(f)f.src=dshLiveSrc();var g=document.getElementById('dshLiveSeg');if(g)g.querySelectorAll('button').forEach(function(b){b.className=b.getAttribute('data-v')===v?'on':'';});
-  var n=document.getElementById('dshLiveNote');if(n)n.textContent='wie auf den Fernsehern · '+(v==='woche'?'Montag bis heute':v==='monat'?'1. bis heute':'heute');}
-function dshLiveCard(){if(!settings.liveKey)return '';
-  var seg='<span class="dsh-seg" id="dshLiveSeg">'+[['tag','Tag'],['woche','Woche'],['monat','Monat']].map(function(x){return '<button type="button" data-v="'+x[0]+'" class="'+(DSH_LIVE===x[0]?'on':'')+'" onclick="dshLiveSet(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>';
-  return '<div class="card"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" id="dshLiveNote" style="margin-left:0">wie auf den Fernsehern · '+(DSH_LIVE==='woche'?'Montag bis heute':DSH_LIVE==='monat'?'1. bis heute':'heute')+'</span>'+seg+'</span></div>'
-    +'<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#F7F5F0"><iframe id="dshLiveFrame" src="'+esc(dshLiveSrc())+'" title="Live" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div></div>';}
+function dshLiveSet(v){DSH_LIVE=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
+function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,from=v==='tag'?t:v==='woche'?kalAdd(t,-dw):t.slice(0,8)+'01',out=[];
+  (employees||[]).forEach(function(e){if(e.active===false||!isAgentEmp(e))return;var rows=(performance[e.id]||[]).filter(function(x){return x.date>=from&&x.date<=t;});if(!rows.length)return;
+    var q={oem:0,my:0,ye:0,sy:0,tw:0,ne:0,ups:0,une:0,wka:0,wne:0,m:0},hrs=0,seen={};
+    rows.forEach(function(x){q.oem+=x.convOEM||0;q.my+=x.convMY||0;q.ye+=x.convYes||0;q.sy+=x.convSY||0;q.tw+=x.convTW||0;q.ne+=x.notSuccessful||0;q.ups+=x.ups_yes||0;q.une+=x.upsNichtErfolgreich||0;q.wka+=x.wka_gesamt_yes||0;
+      q.wne+=(x.wkaOemNichtErfolgreich||0)+(x.wkaUpsNichtErfolgreich||0)+(x.wkaOemBeendet||0)+(x.wkaUpsBeendet||0);q.m+=x.margeGesamt||0;
+      if(!seen[x.date]){seen[x.date]=1;hrs+=x.date===t?(elapsedWorkHoursTodayFor(e)||0):(workHoursForDate(e,x.date)||0);}});
+    var fk=typeof figFokus==='function'?figFokus(e):'OEM',fn=fk==='UPS'?q.ups:fk==='WKA'?q.wka:q.oem,fd=fk==='UPS'?q.ups+q.une:fk==='WKA'?q.wka+q.wne:q.oem+q.ne,opt=q.oem+q.ups+q.wka,tg=empTargets(e)||{};
+    out.push({e:e,opt:opt,my:q.my,oemR:Math.max(0,q.oem-q.my),ups:q.ups,wka:q.wka,marge:q.m,hrs:hrs,oph:hrs>0?opt/hrs:0,soll:3.5*hrs,
+      fo:fd>0?fn/fd*100:null,cm:(q.ye+q.sy+q.my)>0?q.my/(q.ye+q.sy+q.my)*100:null,tw:(q.tw+q.ye+q.sy+q.my)>0?q.tw/(q.tw+q.ye+q.sy+q.my)*100:null,sm:(q.ye+q.sy+q.my)>0?(q.sy+q.my)/(q.ye+q.sy+q.my)*100:null,ao:opt>0?q.oem/opt*100:null,
+      z:{fo:tg.crOEM&&tg.crOEM.val,cm:tg.crMegaYes&&tg.crMegaYes.val,tw:tg.crTeilweise&&tg.crTeilweise.val,sm:tg.crSyMy&&tg.crSyMy.val,ao:tg.anteilOEM&&tg.anteilOEM.val},q:q,fk:fk});});
+  out.sort(function(a,b){return v==='monat'?(b.oph-a.oph):(b.opt-a.opt||b.marge-a.marge);});return out;}
+function dshLiveCard(){var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{},N=R.length;
+  var seg='<span class="dsh-seg">'+[['tag','Tag'],['woche','Woche'],['monat','Monat']].map(function(x){return '<button type="button" class="'+(v===x[0]?'on':'')+'" onclick="dshLiveSet(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>';
+  var h='<div class="card" id="dshLiveBox"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">'+(v==='tag'?'heute':v==='woche'?'Montag bis heute':'1. bis heute')+' · alle Agents mit Zahlen</span>'+seg+'</span></div>';
+  if(!N)return h+'<div class="kal-note" style="padding:24px;text-align:center">Für diesen Zeitraum gibt es noch keine Zahlen.</div></div>';
+  var S={opt:0,hrs:0,m:0,soll:0,fn:0,fd:0,my:0,ysm:0};R.forEach(function(r){S.opt+=r.opt;S.hrs+=r.hrs;S.m+=r.marge;S.soll+=r.soll;var q=r.q;S.my+=q.my;S.ysm+=q.ye+q.sy+q.my;
+    if(r.fk==='UPS'){S.fn+=q.ups;S.fd+=q.ups+q.une;}else if(r.fk==='WKA'){S.fn+=q.wka;S.fd+=q.wka+q.wne;}else{S.fn+=q.oem;S.fd+=q.oem+q.ne;}});
+  var e0=function(x){return '€'+Math.round(x||0).toLocaleString('de-DE');},p0=function(x){return x==null?'–':Math.round(x)+' %';};
+  var tile=function(l,val,sub,ko){return '<div class="dsh-qt'+(ko?' dsh-ko':'')+'"><div class="l">'+l+'</div><div class="v big">'+val+'</div><div class="kv"><span>'+sub+'</span></div></div>';};
+  h+='<div class="dsh-q" style="margin-bottom:14px">'
+    +(v==='monat'?tile('Opt. je Stunde',(S.hrs>0?S.opt/S.hrs:0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}),S.opt.toLocaleString('de-DE')+' Opt. in '+Math.round(S.hrs).toLocaleString('de-DE')+' Std.',true)
+      :tile('Optimierungen',S.opt.toLocaleString('de-DE'),'Soll bis jetzt '+Math.round(S.soll).toLocaleString('de-DE'),true))
+    +tile('CR Fokus',p0(S.fd>0?S.fn/S.fd*100:null),'je Agent sein Schwerpunkt')+tile('CR MY',p0(S.ysm>0?S.my/S.ysm*100:null),'Mega Yes an OEM-Abschlüssen')
+    +tile('Marge',e0(S.m),'Ø '+e0(S.m/N)+' je Agent')+tile('Ø je Optimierung',e0(S.opt>0?S.m/S.opt:0),v==='tag'?'heute':v==='woche'?'diese Woche':'dieser Monat')+'</div>';
+  var G='display:grid;grid-template-columns:96px repeat('+N+',minmax(0,1fr));gap:6px;align-items:center';
+  var cell=function(val,z,kn,low){if(val==null)return '<span class="dlv-c" style="background:#EFECE5;color:#B4AC9C">–</span>';var x=Math.round(val),cl;
+    if(z==null)cl='background:#EFECE5;color:var(--text2)';else{var ok=low?x<=z:x>=z,mid=low?x<=z+kn:x>=z-kn;cl=ok?'background:#E2603C;color:#fff':mid?'background:#FBD5C6;color:#9A3F22':'background:#C9C2B4;color:#3a3833';}
+    return '<span class="dlv-c" style="'+cl+'">'+x+' %</span>';};
+  var kn=function(k,d){return c[k]!=null?+c[k]:d;},zz=function(r,k,fb){return r.z[k]!=null&&r.z[k]!==''?+r.z[k]:(c[fb]!=null?+c[fb]:null);};
+  var line=function(l,f){return '<div style="'+G+';margin-top:4px"><span class="dlv-l">'+l+'</span>'+R.map(f).join('')+'</div>';};
+  h+='<style>.dlv-c{display:block;text-align:center;font-size:12px;font-weight:700;border-radius:6px;padding:3px 0;white-space:nowrap;overflow:hidden}.dlv-l{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase}.dlv-n{font-size:12.5px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>';
+  h+='<div style="'+G+'"><span></span>'+R.map(function(r){return '<span class="dlv-n" title="'+esc(r.e.name)+'">'+esc(String(r.e.name).split(' ')[0])+'</span>';}).join('')+'</div>';
+  h+=line('CR Fokus',function(r){return cell(r.fo,zz(r,'fo','crOEM'),kn('knappOEM',5));});
+  if(v==='monat'){h+=line('CR TW',function(r){return cell(r.tw,zz(r,'tw','crTW'),kn('knappTW',5),true);});h+=line('CR SY/MY',function(r){return cell(r.sm,zz(r,'sm','crSM'),kn('knappSM',5));});}
+  h+=line('CR MY',function(r){return cell(r.cm,zz(r,'cm','crMY'),kn('knappMY',3));});
+  if(v==='monat')h+=line('Anteil OEM',function(r){return cell(r.ao,zz(r,'ao','crAO'),kn('knappAO',5));});
+  // Säulen
+  var val=function(r){return v==='monat'?r.oph:r.opt;},mx=Math.max.apply(null,R.map(val).concat(R.map(function(r){return v==='monat'?3.5:r.soll;})).concat([v==='monat'?4:10]))*1.1,H=240;
+  h+='<div style="'+G+';align-items:end;height:'+(H+24)+'px;margin-top:14px;position:relative"><span></span>'+R.map(function(r){var x=val(r),hh=Math.max(2,x/mx*H),sl=(v==='monat'?3.5:r.soll)/mx*H,tot=r.opt||1;
+      var segs=[[r.my,'#E2603C'],[r.oemR,'#F7B39A'],[r.ups,'#E6DED0'],[r.wka,'#C9C2B4']].filter(function(s2){return s2[0]>0;}).map(function(s2){return '<i style="display:block;height:'+(s2[0]/tot*100).toFixed(1)+'%;background:'+s2[1]+'"></i>';}).join('');
+      return '<div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center"><b style="font-size:13px;margin-bottom:3px">'+(v==='monat'?x.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}):x)+'</b>'
+        +'<span style="display:flex;flex-direction:column-reverse;width:70%;height:'+hh.toFixed(1)+'px;border-radius:6px 6px 2px 2px;overflow:hidden">'+segs+'</span>'
+        +(sl>0?'<i title="Soll" style="position:absolute;left:6%;right:6%;bottom:'+sl.toFixed(1)+'px;border-top:2px dashed #D9541E"></i>':'')+'</div>';}).join('')+'</div>';
+  h+=line('Marge',function(r){return '<span class="dlv-c" style="color:var(--text);background:none">'+(r.marge>=1000?'€'+(r.marge/1000).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+'k':e0(r.marge))+'</span>';});
+  h+=line('Ø / Opt.',function(r){return '<span class="dlv-c" style="color:var(--text3);background:none;font-weight:600">'+(r.opt?e0(r.marge/r.opt):'–')+'</span>';});
+  h+='<div style="display:flex;gap:16px;justify-content:flex-end;margin-top:10px;font-size:11.5px;color:var(--text3)">'+[['#E2603C','OEM MY'],['#F7B39A','OEM'],['#E6DED0','UPS'],['#C9C2B4','WKA']].map(function(x){return '<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+x[0]+';margin-right:5px"></i>'+x[1]+'</span>';}).join('')+'<span><i style="display:inline-block;width:16px;border-top:2px dashed #D9541E;margin-right:5px;vertical-align:3px"></i>Soll</span>'+(v==='monat'?'<span>Säulen = Optimierungen je Stunde</span>':'')+'</div>';
+  return h+'</div>';}
 function renderDashboard(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   _dshPlanCache={};
