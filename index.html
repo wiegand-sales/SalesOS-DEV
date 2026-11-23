@@ -8933,7 +8933,17 @@ function dshChart(list,p){
 }
 
 // ── Dashboard-Kachel „Live“: eigene, ruhige Ansicht (Tag / Woche / Monat) aus den Board-Daten ──
-var DSH_LIVE='tag',DSH_LIVE_HL='top';
+var DSH_LIVE='tag',DSH_LIVE_HL='top',DSH_LIVE_STAND=null;
+function dshLivePull(){var el=document.getElementById('dshLiveBox');if(!el||document.hidden||typeof sb==='undefined')return;var t=today(),from=kalAdd(t,-((new Date(t+'T12:00:00').getDay()+6)%7));if(t.slice(0,8)+'01'<from)from=t.slice(0,8)+'01';
+  try{var qq=sb.from('performance').select(PERF_COLS);if(!qq||typeof qq.gte!=='function')return;}catch(e){return;}
+  qq.gte('date',from).then(function(res){if(!res||res.error)return;var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push({
+      date:r.date,notReached:r.oem_nicht_erreicht,notPossible:r.oem_nicht_moeglich,notSuccessful:r.oem_nicht_erfolgreich,convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka_gesamt_yes:r.wka_gesamt_yes,
+      margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
+      gesamtAktivitaeten:r.gesamt_aktivitaeten,gesamtNichtErreicht:r.gesamt_nicht_erreicht,gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich,upsNichtErfolgreich:r.ups_nicht_erfolgreich,
+      wkaOemNichtErfolgreich:r.wka_oem_nicht_erfolgreich,wkaUpsNichtErfolgreich:r.wka_ups_nicht_erfolgreich,wkaOemBeendet:r.wka_oem_beendet,wkaUpsBeendet:r.wka_ups_beendet});});
+    Object.keys(by).concat(Object.keys(performance||{})).forEach(function(id){var old=(performance[id]||[]).filter(function(x){return x.date<from;});performance[id]=old.concat(by[id]||[]).sort(function(a2,b2){return b2.date.localeCompare(a2.date);});});
+    DSH_LIVE_STAND=new Date();var e2=document.getElementById('dshLiveBox');if(e2)e2.outerHTML=dshLiveCard();});}
+setInterval(dshLivePull,3*60*1000);
 function dshLiveHl(v){DSH_LIVE_HL=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
 function dshLiveSet(v){DSH_LIVE=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
 function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,from=v==='tag'?t:v==='woche'?kalAdd(t,-dw):t.slice(0,8)+'01',out=[];
@@ -8947,10 +8957,10 @@ function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,
       fo:fd>0?fn/fd*100:null,cm:(q.ye+q.sy+q.my)>0?q.my/(q.ye+q.sy+q.my)*100:null,tw:(q.tw+q.ye+q.sy+q.my)>0?q.tw/(q.tw+q.ye+q.sy+q.my)*100:null,sm:(q.ye+q.sy+q.my)>0?(q.sy+q.my)/(q.ye+q.sy+q.my)*100:null,ao:opt>0?q.oem/opt*100:null,
       z:{oph:tg.optH&&tg.optH.val,fo:tg.crOEM&&tg.crOEM.val,cm:tg.crMegaYes&&tg.crMegaYes.val,tw:tg.crTeilweise&&tg.crTeilweise.val,sm:tg.crSyMy&&tg.crSyMy.val,ao:tg.anteilOEM&&tg.anteilOEM.val},q:q,fk:fk});});
   out.sort(function(a,b){return v==='monat'?(b.oph-a.oph):(b.opt-a.opt||b.marge-a.marge);});return out;}
-function dshLiveCard(){var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{},N=R.length;
+function dshLiveCard(){if(!DSH_LIVE_STAND&&!window._dshLivePulling){window._dshLivePulling=1;setTimeout(function(){dshLivePull();window._dshLivePulling=0;},300);}var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{},N=R.length;
   var seg='<span class="dsh-seg" title="Bestwert (Top) oder schlechtesten Wert (Worst) je Kennzahl hervorheben">'+[['top','Top'],['worst','Worst']].map(function(x){return '<button type="button" class="'+(DSH_LIVE_HL===x[0]?'on':'')+'" onclick="dshLiveHl(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>'
     +'<span class="dsh-seg">'+[['tag','Tag'],['woche','Woche'],['monat','Monat']].map(function(x){return '<button type="button" class="'+(v===x[0]?'on':'')+'" onclick="dshLiveSet(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>';
-  var h='<div class="card" id="dshLiveBox"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">'+(v==='tag'?'heute':v==='woche'?'Montag bis heute':'1. bis heute')+' · alle Agents mit Zahlen</span>'+seg+'</span></div>';
+  var h='<div class="card" id="dshLiveBox"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">'+(v==='tag'?'heute':v==='woche'?'Montag bis heute':'1. bis heute')+' · alle Agents mit Zahlen'+(DSH_LIVE_STAND?' · Stand '+('0'+DSH_LIVE_STAND.getHours()).slice(-2)+':'+('0'+DSH_LIVE_STAND.getMinutes()).slice(-2):'')+'</span>'+seg+'</span></div>';
   if(!N)return h+'<div class="kal-note" style="padding:24px;text-align:center">Für diesen Zeitraum gibt es noch keine Zahlen.</div></div>';
   var S={opt:0,hrs:0,m:0,soll:0,fn:0,fd:0,my:0,ysm:0};R.forEach(function(r){S.opt+=r.opt;S.hrs+=r.hrs;S.m+=r.marge;S.soll+=r.soll;var q=r.q;S.my+=q.my;S.ysm+=q.ye+q.sy+q.my;
     if(r.fk==='UPS'){S.fn+=q.ups;S.fd+=q.ups+q.une;}else if(r.fk==='WKA'){S.fn+=q.wka;S.fd+=q.wka+q.wne;}else{S.fn+=q.oem;S.fd+=q.oem+q.ne;}});
@@ -8967,6 +8977,20 @@ function dshLiveCard(){var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{}
   var und=R.filter(function(r){return val(r)<sol(r);}).length;
   var lg=[[CM,'OEM MY'],[CO,'OEM'],[CU,'UPS'],[CW,'WKA']].map(function(x){return '<span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+x[0]+';margin-right:5px"></i>'+x[1]+'</span>';}).join('')
     +'<span><i style="display:inline-block;width:11px;height:9px;border:1.5px dashed #A89C8E;border-radius:2px;margin-right:5px;vertical-align:-1px"></i>persönliches Soll</span><span><i style="display:inline-block;width:16px;border-top:2px dashed #D9541E;margin-right:5px;vertical-align:3px"></i>'+(isM?'Soll 3,5 je Std.':'Soll für 28 am Tag')+'</span>';
+  // Kennzahl-Band wie auf den Fernsehern, in Grau
+  var zAvg=function(k,fb){var L=R.map(function(r){return r.z[k];}).filter(function(x){return x!=null&&x!=='';}).map(Number);return L.length?L.reduce(function(p2,q2){return p2+q2;},0)/L.length:(c[fb]!=null?+c[fb]:null);};
+  var crF=S.fd>0?S.fn/S.fd*100:null,crY=S.ysm>0?S.my/S.ysm*100:null,zF=zAvg('fo','crOEM'),zY=zAvg('cm','crMY');
+  var dif=function(x,z){if(x==null||z==null)return '';var d=Math.round(x)-Math.round(z);return d>=0?(d===0?'genau im Plan':d+' Pkt. drüber'):(-d<=3?'knapp ':'')+(-d)+' Pkt. darunter';};
+  var bt=function(l,val,sub,w,mk,first){return '<div style="padding:0 22px;'+(first?'padding-left:0;':'border-left:1px solid #D9D2C6;')+'min-width:0"><div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;color:#5f594e;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+l+'</div><div style="font-size:40px;font-weight:300;line-height:1.1;margin-top:4px;color:var(--text);white-space:nowrap">'+val+'</div><div style="font-size:12.5px;color:#6b665c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>'
+    +'<div style="position:relative;height:6px;border-radius:3px;background:'+(w==null?'transparent':'#D9D2C6')+';margin-top:10px">'+(w==null?'':'<i style="position:absolute;left:0;top:0;bottom:0;width:'+Math.max(0,Math.min(100,w)).toFixed(1)+'%;border-radius:3px;background:#5C564F"></i>')+(mk!=null?'<u style="position:absolute;top:-3px;width:3px;height:12px;border-radius:2px;background:#1d1c1a;left:calc('+mk+'% - 1.5px)"></u>':'')+'</div></div>';};
+  var oph0=S.hrs>0?S.opt/S.hrs:0;
+  h+='<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#EFECE5;border-radius:12px;padding:16px 22px;margin-bottom:12px">'
+    +(isM?bt('Monat · Opt. je Stunde',oph0.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}),S.opt.toLocaleString('de-DE')+' Opt. in '+Math.round(S.hrs).toLocaleString('de-DE')+' Std.',oph0/3.5*80,80,true)
+      :bt((v==='woche'?'Woche · ':'')+'Optimierungen',S.opt.toLocaleString('de-DE'),'Soll jetzt '+Math.round(S.soll).toLocaleString('de-DE'),S.soll>0?S.opt/S.soll*80:0,80,true))
+    +bt('CR Fokus',p0(crF),dif(crF,zF),zF?crF/zF*100:null,zF?100:null)
+    +bt('CR MY',p0(crY),dif(crY,zY),zY?crY/zY*100:null,zY?100:null)
+    +bt(v==='tag'?'Marge gesamt':v==='woche'?'Marge Woche':'Marge Monat',e0(S.m),'Ø '+e0(S.m/N)+' je Agent',null,null)
+    +bt('Ø je Optimierung',e0(S.opt>0?S.m/S.opt:0),v==='tag'?'heute':v==='woche'?'diese Woche':'dieser Monat',null,null)+'</div>';
   h+='<div style="background:#EFECE5;border-radius:12px;padding:12px 14px 14px"><div style="display:flex;align-items:center;font-size:11.5px;color:var(--text2);margin-bottom:12px;flex-wrap:wrap;gap:8px"><span><b style="color:#C9502F">'+und+' von '+N+' Agents</b> unter ihrem Soll</span><span style="margin-left:auto;display:flex;gap:14px;flex-wrap:wrap">'+lg+'</span></div>';
   var ax='';for(var yv=0;yv<=yMax+1e-9;yv+=st){ax+='<div style="position:absolute;left:0;right:0;bottom:'+Yp(yv).toFixed(1)+'px;border-top:1px solid '+(yv===0?'#BDB3A6':'rgba(0,0,0,.06)')+'"></div><span style="position:absolute;right:calc(100% + 8px);bottom:'+(Yp(yv)-7).toFixed(1)+'px;font-size:11px;color:var(--text3)">'+(isM?yv.toLocaleString('de-DE'):yv)+'</span>';}
   var now=new Date(),hm=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
@@ -8998,27 +9022,6 @@ function dshLiveCard(){var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{}
   h+=kpi('Anteil OEM',function(r){return r.ao;},function(r){return zz(r,'ao','crAO');},kn('knappAO',5));
   h+='</div>';
   h+='</div>';
-  // Kacheln mit Team-Aufteilung wie bei „Margenerhöhung“
-  var TM={};DSH_TEAMS.forEach(function(t){TM[t]=R.filter(function(r){return dshTeamOf(r.e)===t;});});
-  var agg=function(L){var a={opt:0,hrs:0,soll:0,m:0,fn:0,fd:0,my:0,ysm:0,n:L.length,zf:[],zm:[]};L.forEach(function(r){var q=r.q;a.opt+=r.opt;a.hrs+=r.hrs;a.soll+=r.soll;a.m+=r.marge;a.my+=q.my;a.ysm+=q.ye+q.sy+q.my;
-      if(r.fk==='UPS'){a.fn+=q.ups;a.fd+=q.ups+q.une;}else if(r.fk==='WKA'){a.fn+=q.wka;a.fd+=q.wka+q.wne;}else{a.fn+=q.oem;a.fd+=q.oem+q.ne;}if(r.z.fo!=null)a.zf.push(+r.z.fo);if(r.z.cm!=null)a.zm.push(+r.z.cm);});
-    a.fo=a.fd>0?a.fn/a.fd*100:null;a.cm=a.ysm>0?a.my/a.ysm*100:null;a.oph=a.hrs>0?a.opt/a.hrs:0;a.mpo=a.opt>0?a.m/a.opt:null;var av=function(x){return x.length?x.reduce(function(p,q){return p+q;},0)/x.length:null;};a.zfo=av(a.zf);a.zmy=av(a.zm);return a;};
-  var A0=agg(R),TA={};DSH_TEAMS.forEach(function(t){TA[t]=agg(TM[t]);});
-  var f1=function(x){return x.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});},ek=function(x){return x>=1000?'€'+(x/1000).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+'k':e0(x);};
-  var teams=function(h1,h2,fn){var r='<div class="tm"><div class="th"><span>Team</span><span>'+h1+'</span><span></span><span>'+h2+'</span></div>';
-    DSH_TEAMS.forEach(function(t){var a=TA[t];if(!a.n){r+='<div class="tr"><span class="n">'+t+'</span><span class="na">keine Daten</span></div>';return;}var x=fn(a);
-      if(x==null){r+='<div class="tr"><span class="n">'+t+'</span><span class="na">'+(t==='VLC'?'nur OEM':'keine Daten')+'</span></div>';return;}
-      r+='<div class="tr"><span class="n">'+t+'</span><span class="t"><i class="'+(x.lo?'lo':'')+'" style="width:'+Math.max(0,Math.min(100,x.w)).toFixed(1)+'%"></i></span><span class="c'+(x.lo?' dsh-lo':'')+'">'+x.c+'</span><span class="m">'+(x.m||'')+'</span></div>';});return r+'</div>';};
-  var T1=function(l,val,kv,body,ko){return '<div class="dsh-qt'+(ko?' dsh-ko':'')+'"><div class="l">'+l+'</div><div class="v big">'+val+'</div><div class="kv"><span>'+kv+'</span></div>'+body+'</div>';};
-  var mxM=Math.max.apply(null,DSH_TEAMS.map(function(t){return TA[t].m;}).concat([1])),mxP=Math.max.apply(null,DSH_TEAMS.map(function(t){return TA[t].mpo||0;}).concat([1]));
-  h+='<div class="dsh-q" style="margin-top:12px">'
-    +(v==='monat'?T1('Gesamt · Monat',f1(A0.oph),'Opt. je Stunde · '+A0.opt.toLocaleString('de-DE')+' Opt. in '+Math.round(A0.hrs).toLocaleString('de-DE')+' Std.',teams('Opt./Std.','Opt.',function(a){return {w:a.oph/4.5*100,c:a.oph.toLocaleString('de-DE',{maximumFractionDigits:1,minimumFractionDigits:1}),m:a.opt,lo:a.oph<3.5};}),true)
-      :T1('Gesamt · '+(v==='tag'?'heute':'Woche'),A0.opt.toLocaleString('de-DE'),'Optimierungen · Soll bis jetzt '+Math.round(A0.soll).toLocaleString('de-DE'),teams('Soll','Opt.',function(a){var pc=a.soll>0?a.opt/a.soll*100:0;return {w:pc,c:Math.round(pc)+' %',m:a.opt,lo:pc<100};}),true))
-    +T1('CR Fokus',p0(A0.fo),'je Agent sein Schwerpunkt',teams('CR','',function(a){return a.fo==null?null:{w:a.fo,c:p0(a.fo),lo:a.zfo!=null&&a.fo<a.zfo};}))
-    +T1('CR MY',p0(A0.cm),'Mega Yes an OEM-Abschlüssen',teams('CR','',function(a){return a.cm==null?null:{w:a.cm*2,c:p0(a.cm),lo:a.zmy!=null&&a.cm<a.zmy};}))
-    +T1('Marge',e0(A0.m),'Ø '+e0(A0.m/N)+' je Agent',teams('Marge','Ø/Agent',function(a){return {w:a.m/mxM*100,c:ek(a.m),m:ek(a.m/a.n)};}))
-    +T1('Ø je Optimierung',e0(A0.mpo||0),v==='tag'?'heute':v==='woche'?'diese Woche':'dieser Monat',teams('Ø/Opt.','',function(a){return a.mpo==null?null:{w:a.mpo/mxP*100,c:e0(a.mpo),lo:A0.mpo!=null&&a.mpo<A0.mpo*0.9};}))
-    +'</div>';
   return h+'</div>';}
 function renderDashboard(){
   var ma=document.getElementById('mainArea');if(!ma)return;
