@@ -3143,7 +3143,7 @@ var teamCustomFrom=null;
 var teamCustomTo=null;
 var teamPerfMetric='margeGesamt';
 var settings={srApiKey:'',srOrgId:'',ftpUrl:''};
-var view='team', selectedEmp=null, activeTab='performance';
+var view='dashboard', selectedEmp=null, activeTab='performance'; // Start nach dem Öffnen: Dashboard (ohne Zugriff: Übersicht)
 var teamFilter='ALL';
 var perfMetric='crOEM', perfRange=7;
 var perfTableGroup='day'; // 'day' | 'week' | 'month'
@@ -4872,7 +4872,7 @@ function recomputeTeamTargets(){
   TEAM_TARGET_KEYS.forEach(function(k){var t=teamTargetFor(list,k);if(t){KPI_TARGETS[k]=KPI_TARGETS[k]||{};KPI_TARGETS[k].val=t.val;KPI_TARGETS[k].dir=t.dir;}});
   if(KPI_TARGETS.crOEM)CR_GOOD=KPI_TARGETS.crOEM.val;
 }
-function renderMain(){recomputeTeamTargets();if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching'){view='kalender';renderKalender();}else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else if(view==='live')renderLive();else renderEmpDetail();}
+function renderMain(){recomputeTeamTargets();if(view==='dashboard'){var _nd=document.getElementById('nav-team-dashboard');if(_nd&&_nd.style.display==='none'){view='team';wiegandView='overview';renderSidebar();}}if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching'){view='kalender';renderKalender();}else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else if(view==='live')renderLive();else renderEmpDetail();}
 
 // ── Browser-Zurück/Vor innerhalb des Boards ──
 // Jede neue Ansicht (Bereich, Mitarbeiter, Reiter, Einstellungen-Unterseite) wird als Verlaufseintrag gemerkt.
