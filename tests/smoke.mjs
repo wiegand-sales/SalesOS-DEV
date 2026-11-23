@@ -141,7 +141,7 @@ check('Sitzung: Abmeldung nach 4 Stunden Inaktivität', sess.abgemeldet === true
 // 10) Kalender: Ansichten, Regeln, Urlaubskonto, Genehmigen
 await step("selectKalender()");
 for (const v of ['woche', 'jahr', 'team', 'monat']) await step(`kalSetView('${v}')`);
-await step("kalSetPane('gen')"); await step("kalSetPane('plan')"); await step("kalSetLoc('VLC')"); await step("kalSetLoc('MUC')");
+await step("kalSetPane('gen')"); await step("kalSetPane('plan')"); await step("kalLocToggle('MUC')"); await step("kalLocToggle('MUC')");
 const kal = await page.evaluate(`(function(){
   var t=today(),d=function(n){return addDaysUTC(t,n);},y=t.slice(0,4);
   employees[0].urlaub={};employees[0].urlaub[y]={anspruch:28,flex:5,uebertrag:0,vorher_genommen:10};
@@ -185,7 +185,7 @@ const kalRg = await page.evaluate(`(function(){var t=today(),d=function(n){retur
   absences=absences.concat([{id:'r1',employeeId:'e2',art:'urlaub',von:wd,bis:wd,halb:false,status:'genehmigt',eingereichtAm:d(-5)},{id:'r2',employeeId:'e3',art:'urlaub',von:wd,bis:wd,halb:false,status:'genehmigt',eingereichtAm:d(-5)}]);
   _kalOnIdx=null;settings.kalenderRules={freiGrenze:2};var g2=kalEval({employeeId:'e5',art:'urlaub',von:wd,bis:wd,halb:false}).H.some(function(h){return /2 oder mehr andere frei/.test(h.h);});
   settings.kalenderRules={freiGrenze:5};var g5=kalEval({employeeId:'e5',art:'urlaub',von:wd,bis:wd,halb:false}).H.some(function(h){return /andere frei/.test(h.h);});
-  settings.kalenderRules={weekly:{auto:false},routinen:[{id:'rx',art:'KPI Review',rhythmus:'monat',empIds:['e1']}]};_kalTC.v=null;var T=kalTasks();
+  settings.kalenderRules={weekly:{auto:false},routinen:[{id:'rx',art:'Weekly',rhythmus:'monat',empIds:['e4']}]};_kalTC.v=null;var T=kalTasks();
   var noWk=!T.some(function(x){return /^wk/.test(x.id);}),rt=T.some(function(x){return /^rtrx/.test(x.id);});
   settings.kalenderRules={verschieben:'antrag'};kalMoveAbs('r1',wd,addDaysUTC(wd,7));var mv=absences.find(function(a){return a.id==='r1';}).status;
   settings.kalenderRules={};view='settings';settingsView='kalender';renderMain();var page=!!document.querySelector('#mainArea')&&/Weekly automatisch vorschlagen/.test(document.getElementById('mainArea').innerHTML);view='kalender';renderMain();
@@ -209,7 +209,7 @@ check('Zielvereinbarung: Ziel = Tage × Opt./Tag × Marge/Opt.', zt.ziel);
 check('Zielvereinbarung: Tabelle Jahr/Monat/Mitarbeiter', zt.html && zt.os);
 const zw = await page.evaluate(`(function(){ZT.zv='w';var h=zielTreeHtml();ZT.zv='m';return {ok:/KW \\d+/.test(h)&&/Jahr \\d{4}/.test(h),leer:/01\\.11\\.–30\\.10\\./.test(h)};})()`);
 check('Zielvereinbarung: Wochenansicht', zw.ok && !zw.leer);
-const au = await page.evaluate(`(function(){selectAufgaben();var n=document.querySelectorAll('#mainArea .au-col').length,L=aufgAll(),k=L.length?L[0].key:null;if(k){var to=aufgStaff()[aufgStaff().length-1].key;aufgAssign(k,to);}var moved=k?aufgAll().find(function(o){return o.key===k;}).assignee===aufgStaff()[aufgStaff().length-1].key:true;AU.view='l';renderAufgaben();var list=!!document.querySelector('#mainArea .au-mine');AU.view='k';view='kalender';return {n:n,moved:moved,list:list};})()`);
+const au = await page.evaluate(`(function(){AU.view='k';selectAufgaben();var n=document.querySelectorAll('#mainArea .au-col').length,L=aufgAll(),k=L.length?L[0].key:null;if(k){var to=aufgStaff()[aufgStaff().length-1].key;aufgAssign(k,to);}var moved=k?aufgAll().find(function(o){return o.key===k;}).assignee===aufgStaff()[aufgStaff().length-1].key:true;AU.view='l';renderAufgaben();var list=!!document.querySelector('#mainArea .au-mine');AU.view='k';view='kalender';return {n:n,moved:moved,list:list};})()`);
 check('Aufgaben: Kanban mit Spalten je Person', au.n >= 1, au.n);
 check('Aufgaben: Neu zuweisen', au.moved);
 check('Aufgaben: Liste mit „Meine Aufgaben“', au.list);

@@ -8864,13 +8864,17 @@ function dshChart(list,p){
 // ── Dashboard-Kachel „Live“: eigene, ruhige Ansicht (Tag / Woche / Monat) aus den Board-Daten ──
 var DSH_LIVE='tag',DSH_LIVE_HL='top',DSH_LIVE_STAND=null;
 function dshLivePull(){var el=document.getElementById('dshLiveBox');if(!el||document.hidden||typeof sb==='undefined')return;var t=today(),from=kalAdd(t,-((new Date(t+'T12:00:00').getDay()+6)%7));if(t.slice(0,8)+'01'<from)from=t.slice(0,8)+'01';
-  try{var qq=sb.from('performance').select(PERF_COLS);if(!qq||typeof qq.gte!=='function')return;}catch(e){return;}
-  qq.gte('date',from).then(function(res){if(!res||res.error)return;var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push({
+  // Seitenweise laden (Supabase liefert max. 1000 Zeilen je Abfrage), feste Sortierung für stabile Seiten
+  var PAGE=1000,rows=[];
+  function page(off){var qq;try{qq=sb.from('performance').select(PERF_COLS);if(!qq||typeof qq.gte!=='function')return Promise.resolve(null);}catch(e){return Promise.resolve(null);}
+    return qq.gte('date',from).order('employee_id').order('date').range(off,off+PAGE-1).then(function(res){if(!res||res.error)return null;var d=res.data||[];rows=rows.concat(d);return d.length===PAGE?page(off+PAGE):{data:rows};});}
+  page(0).then(function(res){if(!res)return;var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push({
       date:r.date,notReached:r.oem_nicht_erreicht,notPossible:r.oem_nicht_moeglich,notSuccessful:r.oem_nicht_erfolgreich,convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka_gesamt_yes:r.wka_gesamt_yes,
       margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
       gesamtAktivitaeten:r.gesamt_aktivitaeten,gesamtNichtErreicht:r.gesamt_nicht_erreicht,gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich,upsNichtErfolgreich:r.ups_nicht_erfolgreich,
       wkaOemNichtErfolgreich:r.wka_oem_nicht_erfolgreich,wkaUpsNichtErfolgreich:r.wka_ups_nicht_erfolgreich,wkaOemBeendet:r.wka_oem_beendet,wkaUpsBeendet:r.wka_ups_beendet});});
-    Object.keys(by).concat(Object.keys(performance||{})).forEach(function(id){var old=(performance[id]||[]).filter(function(x){return x.date<from;});performance[id]=old.concat(by[id]||[]).sort(function(a2,b2){return b2.date.localeCompare(a2.date);});});
+    // Nur Mitarbeiter mit neuen Daten aktualisieren – nie Daten im Speicher löschen, nur weil die Abfrage nichts liefert
+    Object.keys(by).forEach(function(id){var old=(performance[id]||[]).filter(function(x){return x.date<from;});performance[id]=old.concat(by[id]).sort(function(a2,b2){return b2.date.localeCompare(a2.date);});});
     DSH_LIVE_STAND=new Date();var e2=document.getElementById('dshLiveBox');if(e2)e2.outerHTML=dshLiveCard();});}
 setInterval(dshLivePull,3*60*1000);
 function dshLiveHl(v){DSH_LIVE_HL=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
