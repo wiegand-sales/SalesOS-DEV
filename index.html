@@ -4820,7 +4820,7 @@ function zpbHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled';
 
 // ── Persönliche KPI-Ziele für die Live-Ansicht (Fernseher sehen keine Provisionsdaten) ──
 function liveZieleCalc(){var out={};(employees||[]).forEach(function(e){if(e.active===false||!isAgentEmp(e))return;var t=empTargets(e);
-  out[e.id]={fo:t.crOEM&&t.crOEM.val,my:t.crMegaYes&&t.crMegaYes.val,tw:t.crTeilweise&&t.crTeilweise.val,sm:t.crSyMy&&t.crSyMy.val,ao:t.anteilOEM&&t.anteilOEM.val};});return out;}
+  out[e.id]={fo:t.crOEM&&t.crOEM.val,my:t.crMegaYes&&t.crMegaYes.val,tw:t.crTeilweise&&t.crTeilweise.val,sm:t.crSyMy&&t.crSyMy.val,ao:t.anteilOEM&&t.anteilOEM.val,oph:t.optPerH&&t.optPerH.val};});return out;}
 function liveZieleSync(){try{if(currentUserRole!=='admin'||!employees||!employees.length||typeof sb==='undefined')return;var z=liveZieleCalc(),c=settings.liveConfig||{};
   if(JSON.stringify(c.ziele||{})===JSON.stringify(z))return;var n=Object.assign({},c,{ziele:z,zieleStand:today()});
   sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(n)},{onConflict:'key'}).then(function(res){if(!(res&&res.error))settings.liveConfig=n;});}catch(e){}}
@@ -8954,9 +8954,10 @@ function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,
       if(!seen[x.date]){seen[x.date]=1;hrs+=x.date===t?(elapsedWorkHoursTodayFor(e)||0):(workHoursForDate(e,x.date)||0);}});
     if(v!=='monat'&&!seen[t])hrs+=elapsedWorkHoursTodayFor(e)||0;
     var fk=typeof figFokus==='function'?figFokus(e):'OEM',fn=fk==='UPS'?q.ups:fk==='WKA'?q.wka:q.oem,fd=fk==='UPS'?q.ups+q.une:fk==='WKA'?q.wka+q.wne:q.oem+q.ne,opt=q.oem+q.ups+q.wka,tg=empTargets(e)||{};
-    out.push({e:e,opt:opt,my:q.my,oemR:Math.max(0,q.oem-q.my),ups:q.ups,wka:q.wka,marge:q.m,hrs:hrs,oph:hrs>0?opt/hrs:0,soll:3.5*hrs,
+    var oZ=(tg.optPerH&&tg.optPerH.val!=null&&tg.optPerH.val!=='')?+tg.optPerH.val:((settings.liveConfig||{}).optProStd!=null?+(settings.liveConfig||{}).optProStd:3.5);
+    out.push({e:e,opt:opt,my:q.my,oemR:Math.max(0,q.oem-q.my),ups:q.ups,wka:q.wka,marge:q.m,hrs:hrs,oph:hrs>0?opt/hrs:0,soll:oZ*hrs,
       fo:fd>0?fn/fd*100:null,cm:(q.ye+q.sy+q.my)>0?q.my/(q.ye+q.sy+q.my)*100:null,tw:(q.tw+q.ye+q.sy+q.my)>0?q.tw/(q.tw+q.ye+q.sy+q.my)*100:null,sm:(q.ye+q.sy+q.my)>0?(q.sy+q.my)/(q.ye+q.sy+q.my)*100:null,ao:opt>0?q.oem/opt*100:null,
-      z:{oph:tg.optH&&tg.optH.val,fo:tg.crOEM&&tg.crOEM.val,cm:tg.crMegaYes&&tg.crMegaYes.val,tw:tg.crTeilweise&&tg.crTeilweise.val,sm:tg.crSyMy&&tg.crSyMy.val,ao:tg.anteilOEM&&tg.anteilOEM.val},q:q,fk:fk});});
+      z:{oph:tg.optPerH&&tg.optPerH.val,fo:tg.crOEM&&tg.crOEM.val,cm:tg.crMegaYes&&tg.crMegaYes.val,tw:tg.crTeilweise&&tg.crTeilweise.val,sm:tg.crSyMy&&tg.crSyMy.val,ao:tg.anteilOEM&&tg.anteilOEM.val},q:q,fk:fk});});
   out.sort(function(a,b){return v==='monat'?(b.oph-a.oph):(b.opt-a.opt||b.marge-a.marge);});return out;}
 function dshLiveCard(){if(!DSH_LIVE_STAND&&!window._dshLivePulling){window._dshLivePulling=1;setTimeout(function(){dshLivePull();window._dshLivePulling=0;},300);}var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{},N=R.length;
   var seg='<span class="dsh-seg" title="Bestwert (Top) oder schlechtesten Wert (Worst) je Kennzahl hervorheben">'+[['top','Top'],['worst','Worst']].map(function(x){return '<button type="button" class="'+(DSH_LIVE_HL===x[0]?'on':'')+'" onclick="dshLiveHl(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>'
