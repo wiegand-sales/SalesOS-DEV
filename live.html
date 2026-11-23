@@ -1001,6 +1001,9 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
       var bO=null,bM=null,bG=null;rows.forEach(function(r){var o=r.oemD>=5?r.oem/r.oemD:null,m=r.ysm>=5?r.my/r.ysm:null;
         if(o!=null&&(!bO||o>bO.v))bO={id:r.e.id,v:o};if(m!=null&&(!bM||m>bM.v))bM={id:r.e.id,v:m};if(r.marge>0&&(!bG||r.marge>bG.v))bG={id:r.e.id,v:r.marge};});
       var bT=null,bS=null,bP=null,bA=null;rows.forEach(function(r){var tw=r.twd>=5?r.tw/r.twd:null,sm=r.smd>=5?r.sm/r.smd:null;if(tw!=null&&(!bT||tw<bT.v))bT={id:r.e.id,v:tw};if(sm!=null&&(!bS||sm>bS.v))bS={id:r.e.id,v:sm};if((r.oph||0)>0&&(!bP||r.oph>bP.v))bP={id:r.e.id,v:r.oph};if(r.ao!=null&&r.opt>=5&&(!bA||r.ao>bA.v))bA={id:r.e.id,v:r.ao};});
+      // Krone nur, wenn der Wert das persönliche Ziel erreicht; in der Power Hour keine CR-Kronen (zu wenige Gespräche)
+      function zOk(b,k,def,low){if(!b)return null;var r=rows.find(function(x){return x.e.id===b.id;}),z=r?zOf(r,k,def):def;if(z==null)return b;var v=b.v*(k==='p'?1:100);return (low?v<=z:v>=z)?b:null;}
+      if(PHS){bO=null;bM=null;}else{bO=zOk(bO,'fo',ZOEM);bM=zOk(bM,'my',ZMY);bT=zOk(bT,'tw',25,true);bS=zOk(bS,'sm',60);bA=zOk(bA,'ao',null);}
       BEST={o:bO&&bO.id,m:bM&&bM.id,g:bG&&bG.id,t:bT&&bT.id,s:bS&&bS.id,p:bP&&bP.id,a:bA&&bA.id};
       function bestify(html,on){if(on)return html.replace('<span class="','<span class="best ');if(VM==='monat'&&html.indexOf('k-okb')>=0)return '<span style="background:transparent"></span>';return html;}
       function crBox(v,z,n){if(v==null)return '<span class="k-none">–</span>';var x=Math.round(v),c=x>=z?'k-okb':x>=z-n?'k-midb':'k-nob';return '<span class="'+c+'">'+x+' %</span>';}
