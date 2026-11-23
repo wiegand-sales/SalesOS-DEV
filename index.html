@@ -8933,7 +8933,8 @@ function dshChart(list,p){
 }
 
 // ── Dashboard-Kachel „Live“: eigene, ruhige Ansicht (Tag / Woche / Monat) aus den Board-Daten ──
-var DSH_LIVE='tag';
+var DSH_LIVE='tag',DSH_LIVE_HL='top';
+function dshLiveHl(v){DSH_LIVE_HL=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
 function dshLiveSet(v){DSH_LIVE=v;var el=document.getElementById('dshLiveBox');if(el)el.outerHTML=dshLiveCard();}
 function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,from=v==='tag'?t:v==='woche'?kalAdd(t,-dw):t.slice(0,8)+'01',out=[];
   (employees||[]).forEach(function(e){if(e.active===false||!isAgentEmp(e))return;var rows=(performance[e.id]||[]).filter(function(x){return x.date>=from&&x.date<=t;});if(!rows.length)return;
@@ -8947,7 +8948,8 @@ function dshLiveRows(v){var t=today(),dw=(new Date(t+'T12:00:00').getDay()+6)%7,
       z:{oph:tg.optH&&tg.optH.val,fo:tg.crOEM&&tg.crOEM.val,cm:tg.crMegaYes&&tg.crMegaYes.val,tw:tg.crTeilweise&&tg.crTeilweise.val,sm:tg.crSyMy&&tg.crSyMy.val,ao:tg.anteilOEM&&tg.anteilOEM.val},q:q,fk:fk});});
   out.sort(function(a,b){return v==='monat'?(b.oph-a.oph):(b.opt-a.opt||b.marge-a.marge);});return out;}
 function dshLiveCard(){var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{},N=R.length;
-  var seg='<span class="dsh-seg">'+[['tag','Tag'],['woche','Woche'],['monat','Monat']].map(function(x){return '<button type="button" class="'+(v===x[0]?'on':'')+'" onclick="dshLiveSet(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>';
+  var seg='<span class="dsh-seg" title="Bestwert (+) oder schlechtesten Wert (−) je Kennzahl hervorheben">'+[['top','+'],['worst','−']].map(function(x){return '<button type="button" class="'+(DSH_LIVE_HL===x[0]?'on':'')+'" onclick="dshLiveHl(\''+x[0]+'\')" style="min-width:34px;font-weight:700;font-size:15px">'+x[1]+'</button>';}).join('')+'</span>'
+    +'<span class="dsh-seg">'+[['tag','Tag'],['woche','Woche'],['monat','Monat']].map(function(x){return '<button type="button" class="'+(v===x[0]?'on':'')+'" onclick="dshLiveSet(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</span>';
   var h='<div class="card" id="dshLiveBox"><div class="card-title">Live<span class="dsh-tr"><span class="dsh-cr" style="margin-left:0">'+(v==='tag'?'heute':v==='woche'?'Montag bis heute':'1. bis heute')+' · alle Agents mit Zahlen</span>'+seg+'</span></div>';
   if(!N)return h+'<div class="kal-note" style="padding:24px;text-align:center">Für diesen Zeitraum gibt es noch keine Zahlen.</div></div>';
   var S={opt:0,hrs:0,m:0,soll:0,fn:0,fd:0,my:0,ysm:0};R.forEach(function(r){S.opt+=r.opt;S.hrs+=r.hrs;S.m+=r.marge;S.soll+=r.soll;var q=r.q;S.my+=q.my;S.ysm+=q.ye+q.sy+q.my;
@@ -8983,9 +8985,10 @@ function dshLiveCard(){var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{}
   h+='<div style="'+G+'"><span class="dlv-l">Agents</span>'+R.map(function(r){return '<span class="dlv-n" title="'+esc(r.e.name)+'">'+esc(String(r.e.name).split(' ')[0])+'</span>';}).join('')+'</div>';
   // KPI-Zeilen: erreicht hellbeige, knapp mittelbraun, nicht erreicht fast schwarz, schlechtester Wert rot
   var kn=function(k,d){return c[k]!=null?+c[k]:d;},zz=function(r,k,fb){return r.z[k]!=null&&r.z[k]!==''?+r.z[k]:(c[fb]!=null?+c[fb]:null);};
-  var kpi=function(l,get,zf,knapp,low,fmt){var vals=R.map(get),wi=-1,wv=null;vals.forEach(function(x,i){if(x==null)return;if(wv==null||(low?x>wv:x<wv)){wv=x;wi=i;}});
+  var kpi=function(l,get,zf,knapp,low,fmt){var vals=R.map(get),wi=-1,wv=null,bi=-1,bv=null;vals.forEach(function(x,i){if(x==null)return;if(wv==null||(low?x>wv:x<wv)){wv=x;wi=i;}if(bv==null||(low?x<bv:x>bv)){bv=x;bi=i;}});
     return line(l,function(r,i){var x=vals[i];if(x==null)return '<span class="dlv-c" style="color:#B4AC9C;background:none">–</span>';var t=fmt?fmt(x):Math.round(x)+' %',z=zf(r),stl;
-      if(i===wi&&N>1&&!(z!=null&&(low?x<=z:x>=z)))stl='background:#C62828;color:#fff';else if(z==null)stl='background:none;color:var(--text2)';else{var ok=low?x<=z:x>=z,mid=low?x<=z+knapp:x>=z-knapp;stl=ok?'background:#D3C8B6;color:#5C564F':mid?'background:#A89C8E;color:#fff':'background:#3A3530;color:#fff';}
+      var HLS='background:linear-gradient(135deg,#E9773F,#DE5A5E 55%,#C23B66);color:#fff';
+      if(N>1&&DSH_LIVE_HL==='top'&&i===bi)stl=HLS;else if(N>1&&DSH_LIVE_HL==='worst'&&i===wi&&!(z!=null&&(low?x<=z:x>=z)))stl=HLS;else if(z==null)stl='background:none;color:var(--text2)';else{var ok=low?x<=z:x>=z,mid=low?x<=z+knapp:x>=z-knapp;stl=ok?'background:#D3C8B6;color:#5C564F':mid?'background:#A89C8E;color:#fff':'background:#3A3530;color:#fff';}
       return '<span class="dlv-c" style="'+stl+'">'+t+'</span>';});};
   h+=kpi('Opt. je Std.',function(r){return r.hrs>0?r.oph:null;},function(r){return r.z.oph!=null&&r.z.oph!==''?+r.z.oph:(c.optProStd!=null?+c.optProStd:3.5);},0.3,false,function(x){return x.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});});
   h+=kpi('CR Fokus',function(r){return r.fo;},function(r){return zz(r,'fo','crOEM');},kn('knappOEM',5));
