@@ -927,7 +927,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
       var z=ziel[e.id],dayM=z&&z.opt_per_tag&&z.marge_per_opt?(+z.opt_per_tag)*(+z.marge_per_opt):0;if(a.halb&&!a.ganz)dayM*=0.5;
       var my=p?(p.oem_my||0):0,oem=p?(p.oem_gesamt||0):0;
       rows.push({e:e,p:p,opt:o,my:my,oemRest:Math.max(0,oem-my),ups:p?(p.ups_yes||0):0,wka:p?(p.wka_gesamt_yes||0):0,
-        marge:p?(+p.marge||0):0,soll:OPH*el,ziel:OPH*(arbeitet?pl:0),mSoll:pl>0?dayM*(el/pl):0,mZiel:arbeitet?dayM:0,
+        marge:p?(+p.marge||0):0,soll:zOf({e:e},'oph',OPH)*el,ziel:zOf({e:e},'oph',OPH)*(arbeitet?pl:0),mSoll:pl>0?dayM*(el/pl):0,mZiel:arbeitet?dayM:0,
         oemD:oem+(p?(p.oem_nicht_erfolgreich||0):0),oem:oem,ysm:p?(p.oem_yes||0)+(p.oem_sy||0)+my:0});
     });
     // ── Wochen-/Monatsansicht: alle Werte im Zeitraum bis heute ──
@@ -938,7 +938,7 @@ function kidDefault(e,idx){var f=String(e.name||'').split(' ')[0],w=KID_W.test(f
           if(dd<=t&&pp){a.oem+=pp.oem_gesamt||0;a.my+=pp.oem_my||0;a.ups+=pp.ups_yes||0;a.wka+=pp.wka_gesamt_yes||0;a.ni+=pp.oem_nicht_erfolgreich||0;a.ysm+=(pp.oem_yes||0)+(pp.oem_sy||0)+(pp.oem_my||0);a.marge+=+pp.marge||0;}
           if(dd<t){if(pp&&opt(pp)>0){hp+=ph;hz+=ph;}}else if(dd===t){var ab=abw[e.id]||{},pt=ab.ganz?0:(ab.halb?ph*.5:ph);hz+=pt;hp+=Math.min(elapsedAt(e,t,refMin),pt);}else hz+=ph;}
         r.oem=a.oem;r.my=a.my;r.oemRest=Math.max(0,a.oem-a.my);r.ups=a.ups;r.wka=a.wka;r.opt=a.oem+a.ups+a.wka;r.marge=a.marge;r.oemD=a.oem+a.ni;r.ysm=a.ysm;
-        r.soll=OPH*hp;r.ziel=OPH*hz;r.mSoll=0;r.mZiel=0;r.hrs=hp;r.oph=hp>0?r.opt/hp:0;r.oemAll=a.oem;r.ao=r.opt>0?a.oem/r.opt*100:null;});}
+        var oZ=zOf(r,'oph',OPH);r.soll=oZ*hp;r.ziel=oZ*hz;r.mSoll=0;r.mZiel=0;r.hrs=hp;r.oph=hp>0?r.opt/hp:0;r.oemAll=a.oem;r.ao=r.opt>0?a.oem/r.opt*100:null;});}
     WKMODE=WK;VMODE=VM;
     // ── Power Hour: aktive Stunde suchen, Werte nur ab Start aus den Ticks rechnen ──
     var PHS=phState(t,now);PHMODE=!!PHS;
