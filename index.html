@@ -8961,7 +8961,7 @@ function dshLiveCard(){var v=DSH_LIVE,R=dshLiveRows(v),c=settings.liveConfig||{}
   var t0=today(),vz=R.map(function(r){return r.e;}).sort(function(a2,b2){return (workHoursForDate(b2,t0)||0)-(workHoursForDate(a2,t0)||0);})[0],vzS=0;
   if(isM)vzS=3.5;else if(vz){var dw0=(new Date(t0+'T12:00:00').getDay()+6)%7,f0=v==='tag'?t0:kalAdd(t0,-dw0),hh=0;for(var d0=f0;d0<=t0;d0=kalAdd(d0,1)){hh+=d0===t0?(elapsedWorkHoursTodayFor(vz)||0):(workHoursForDate(vz,d0)||0);}vzS=3.5*hh;}
   var val=function(r){return isM?r.oph:r.opt;},sol=function(r){return isM?((r.z.oph!=null&&r.z.oph!=='')?+r.z.oph:3.5):r.soll;};
-  var mx=Math.max.apply(null,R.map(val).concat(R.map(sol)).concat([vzS,isM?4:10]))*1.12,st=isM?1:(mx>60?20:mx>30?10:5),yMax=Math.ceil(mx/st)*st,H=250,Yp=function(x){return x/yMax*H;};
+  var mx=Math.max.apply(null,R.map(val).concat(R.map(sol)).concat([vzS,isM?4:10]))*1.12,st=isM?1:(mx>60?20:mx>30?10:5),yMax=Math.ceil(mx/st)*st,H=380,Yp=function(x){return x/yMax*H;};
   var und=R.filter(function(r){return val(r)<sol(r);}).length;
   var lg=[[CM,'OEM MY'],[CO,'OEM'],[CU,'UPS'],[CW,'WKA']].map(function(x){return '<span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+x[0]+';margin-right:5px"></i>'+x[1]+'</span>';}).join('')
     +'<span><i style="display:inline-block;width:11px;height:9px;border:1.5px dashed #A89C8E;border-radius:2px;margin-right:5px;vertical-align:-1px"></i>persönliches Soll</span><span><i style="display:inline-block;width:16px;border-top:2px dashed #D9541E;margin-right:5px;vertical-align:3px"></i>'+(isM?'Soll 3,5 je Std.':'Soll für 28 am Tag')+'</span>';
