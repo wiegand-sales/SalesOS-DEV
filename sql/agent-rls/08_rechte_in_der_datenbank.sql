@@ -9,7 +9,9 @@
 --      „Bewertungen & Kommentare nachträglich ändern oder löschen“.
 -- Voraussetzung: 04_betrachter_nur_lesen.sql und 07_board_rolle.sql sind ausgeführt.
 -- ERST IM DEV-PROJEKT ausführen und mit einem Coach-Login testen, dann im Live-Projekt.
--- Rückgängig machen: 04_betrachter_nur_lesen.sql erneut ausführen (stellt die bisherigen Regeln wieder her).
+-- ACHTUNG: 04_betrachter_nur_lesen.sql NICHT erneut ausführen, um dies rückgängig zu machen!
+-- 04 legt Lese-/Schreibregeln auf ALLE Tabellen und würde spätere Schutzregeln aushebeln
+-- (u. a. Gehälter, Provision, app_users, settings, admin_secrets aus 09, 29, 37, 48).
 
 begin;
 

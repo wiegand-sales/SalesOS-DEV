@@ -1795,7 +1795,7 @@ function buildUserOverviewHtml(){
     if(!lg) actions+='<span class="pa-slot"></span><span class="pa-slot"></span>';
     if(lg) actions+='<button class="btn sbtn" title="Passwort neu setzen" aria-label="Passwort neu setzen" onclick="personLogin(\'reset\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-key"></i></button>'
       +'<button class="btn sbtn" title="Login entfernen" aria-label="Login entfernen" onclick="personLogin(\'remove\',\''+target+'\',\''+p.id+'\')"><i class="ti ti-user-x"></i></button>';
-    if(p.kind==='app') actions+='<button class="btn sbtn" title="Person entfernen" aria-label="Person entfernen" onclick="deleteAppUser(\''+p.id+'\',\''+String(p.name).replace(/'/g,"\\'")+'\')"><i class="ti ti-trash"></i></button>';
+    if(p.kind==='app') actions+='<button class="btn sbtn" title="Person entfernen" aria-label="Person entfernen" onclick="deleteAppUser(\''+jsq(p.id)+'\',\''+jsq(p.name)+'\')"><i class="ti ti-trash"></i></button>';
     else actions+='<button class="btn sbtn" title="Mitarbeiter öffnen" aria-label="Mitarbeiter öffnen" onclick="selectEmp(\''+p.id+'\')"><i class="ti ti-arrow-right"></i></button>';
     var bg='';
     var lastCell=(lg&&lg.last_sign_in_at)?(function(){var d=new Date(lg.last_sign_in_at);return '<span style="font-size:12.5px;color:var(--text2);white-space:nowrap">'+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear()+' · '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+'</span>';})():'<span style="font-size:12.5px;color:var(--text3)">–</span>';
@@ -2809,13 +2809,13 @@ function exportEmpSummary(empId){
   var abgeschlossen=sessions.filter(function(s){return s.status!=='geplant';});
   var lastSessions=abgeschlossen.slice(0,5).map(function(s){
     var _dur=sessionDuration(s.uhrzeit,s.endUhrzeit);
-    return '<tr><td>'+fd(s.date)+'</td><td>'+(s.type||'—')+'</td><td>'+(_dur?formatDuration(_dur):'—')+'</td><td>'+(s.topics&&s.topics.length?s.topics.join(', '):(s.focus||'—'))+'</td><td>'+(s.cont||'—')+'</td></tr>';
+    return '<tr><td>'+fd(s.date)+'</td><td>'+esc(s.type||'—')+'</td><td>'+(_dur?formatDuration(_dur):'—')+'</td><td>'+esc(s.topics&&s.topics.length?s.topics.join(', '):(s.focus||'—'))+'</td><td>'+esc(s.cont||'—')+'</td></tr>';
   }).join('');
 
   var milestones=kpiMilestones(emp.id);
   var empGoalsExp=(goals[emp.id]||[]).slice().sort(function(a,b){return (b.createdAt||'').localeCompare(a.createdAt||'');});
   var goalsExpHtml=empGoalsExp.length?empGoalsExp.map(function(g){
-    return '<tr><td>'+esc(g.description)+'</td><td>'+(g.metricKey?focusMetricLabel(g.metricKey)+' ≥ '+g.targetValue+'%':'—')+'</td><td>'+(g.targetDate?fd(g.targetDate):'—')+'</td><td>'+g.status+'</td></tr>';
+    return '<tr><td>'+esc(g.description)+'</td><td>'+(g.metricKey?focusMetricLabel(g.metricKey)+' ≥ '+g.targetValue+'%':'—')+'</td><td>'+(g.targetDate?fd(g.targetDate):'—')+'</td><td>'+esc(g.status)+'</td></tr>';
   }).join(''):'';
   var milestonesHtml=milestones.length?milestones.map(function(m){return '<li>'+fd(m.date)+' – '+m.label+'</li>';}).join(''):'<li>Noch keine Meilensteine erreicht</li>';
 
@@ -2833,7 +2833,7 @@ function exportEmpSummary(empId){
     +'@media print{body{padding:16px}}'
     +'</style></head><body>'
     +'<h1>Coaching-Zusammenfassung: '+esc(emp.name)+'</h1>'
-    +'<div class="meta">'+emp.role+' · '+(emp.team||'')+' · '+emp.phase+(emp.startDate?' · Start '+fd(emp.startDate):'')+' · erstellt am '+fd(today())+'</div>'
+    +'<div class="meta">'+esc(emp.role)+' · '+esc(emp.team||'')+' · '+esc(emp.phase)+(emp.startDate?' · Start '+fd(emp.startDate):'')+' · erstellt am '+fd(today())+'</div>'
     +'<h2>KPI-Übersicht (Ø letzte 30 Tage)</h2>'
     +'<table><tr><th>KPI</th><th>Aktuell</th><th>Ziel</th><th>Ø Rolle ('+emp.role+')</th><th>Status</th></tr>'+kpiHtml+'</table>'
     +'<h2>QA-Performance</h2>'
@@ -2847,7 +2847,7 @@ function exportEmpSummary(empId){
     +'<h2>Entwicklung & Meilensteine</h2>'
     +'<ul>'+milestonesHtml+'</ul>'
     +'<h2>Notizen</h2>'
-    +'<div class="notes-box">'+(emp.notes?emp.notes.replace(/</g,'&lt;'):'Keine Notizen vorhanden.')+'</div>'
+    +'<div class="notes-box">'+(emp.notes?esc(emp.notes):'Keine Notizen vorhanden.')+'</div>'
     +'</body></html>';
 
   var w=window.open('','_blank');
@@ -2857,7 +2857,10 @@ function exportEmpSummary(empId){
   setTimeout(function(){w.print();},350);
 }
 function exportDaten(){
-  var d={exportiert:new Date().toISOString(),version:'sfp-v1',employees:employees,protocols:protocols,performance:performance,solidroadData:solidroadData,tasks:tasks,reviews:reviews,KPI_TARGETS:KPI_TARGETS,settings:settings,ratingCriteria:ratingCriteria};
+  // Geheime Schlüssel (SolidRoad, Live-Fernseher-Schlüssel) nie in die Sicherungsdatei schreiben
+  var safeSettings=Object.assign({},settings);delete safeSettings.srApiKey;delete safeSettings.srOrgId;delete safeSettings.liveKey;
+  if(safeSettings.liveConfig&&typeof safeSettings.liveConfig==='object'){safeSettings.liveConfig=Object.assign({},safeSettings.liveConfig);delete safeSettings.liveConfig.liveKey;delete safeSettings.liveConfig.key;}
+  var d={exportiert:new Date().toISOString(),version:'sfp-v1',employees:employees,protocols:protocols,performance:performance,solidroadData:solidroadData,tasks:tasks,reviews:reviews,KPI_TARGETS:KPI_TARGETS,settings:safeSettings,ratingCriteria:ratingCriteria};
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));
   a.download='sfp-backup-'+today()+'.json';a.click();
@@ -4058,6 +4061,8 @@ function saveZielvereinbarung(){
 }
 function ini(n){return n.split(' ').map(function(x){return x[0];}).join('').toUpperCase().slice(0,2);}
 function esc(s){if(s==null)return '';return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+// Für Werte in '...' innerhalb von onclick="…": erst als JS-String maskieren, dann fürs HTML-Attribut
+function jsq(s){if(s==null)return '';return esc(String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n').replace(/</g,'\\x3c'));}
 function fd(d){
   if(!d)return '';
   var p=d.split('-');
@@ -6513,7 +6518,7 @@ function renderTeam(){
       +'<div style="display:flex;align-items:center;gap:9px">'
       +'<div class="av" style="width:26px;height:26px;font-size:10px;background:'+c.bg+';color:'+c.text+'">'+ini(e.name)+'</div>'
       +'<div><div style="font-weight:500">'+esc(e.name)+(al.length?'<i class="ti ti-alert-triangle" style="font-size:12px;color:var(--amber);margin-left:4px"></i>':'')+'</div>'
-      +'<div style="font-size:11px;color:var(--text2)">'+e.phase+'</div></div></div></td>'
+      +'<div style="font-size:11px;color:var(--text2)">'+esc(e.phase)+'</div></div></div></td>'
       // CR Spalten
       +crCell(ea('crOEM'),empTargets(e).crOEM.val,empTargets(e).crOEM.dir)
       +crCell(ea('crTeilweise'),empTargets(e).crTeilweise.val,empTargets(e).crTeilweise.dir)
@@ -6533,9 +6538,9 @@ function renderTeam(){
       // Letzte Session
       +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;color:'+aFarbe+'">'+(tage===null?'Keine':tage===0?'Heute':tage+'d')+'</td>'
       // Art des Coachings
-      +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">'+lsType+'</td>'
+      +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">'+esc(lsType)+'</td>'
       // Inhalt des Coachings
-      +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">'+lsTopics+'</td>'
+      +'<td style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">'+esc(lsTopics)+'</td>'
       // Aktion
       +'<td style="padding:10px 14px;border-bottom:1px solid var(--border)"><button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openSessionModal(\''+e.id+'\')"><i class="ti ti-calendar-plus"></i> Planen</button></td>'
       +'</tr>';
@@ -7897,11 +7902,11 @@ function renderTab(){
         var dtP=new Date(s.date+'T00:00:00'),dfP=Math.round((dtP-new Date(today()+'T00:00:00'))/86400000);
         var whenTxt=dfP===0?'Heute':dfP===1?'Morgen':dfP<0?'Überfällig':'in '+dfP+' Tagen';
         var whenCol=dfP<0?'var(--red)':dfP<=1?'var(--amber-dark)':'var(--purple)';
-        html+='<div style="background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" data-eid="'+emp.id+'" data-sid="'+s.id+'" data-typ="'+(s.type||'')+'" data-fokus="'+(s.focus||'')+'" data-datum="'+s.date+'" data-uhrzeit="'+(s.uhrzeit||'')+'" onclick="openPlannedSession(this.dataset.eid,this.dataset.sid,this.dataset.typ,this.dataset.fokus,this.dataset.datum,this.dataset.uhrzeit)">';
+        html+='<div style="background:var(--s-sub);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer" data-eid="'+emp.id+'" data-sid="'+esc(s.id)+'" data-typ="'+esc(s.type||'')+'" data-fokus="'+esc(s.focus||'')+'" data-datum="'+esc(s.date)+'" data-uhrzeit="'+esc(s.uhrzeit||'')+'" onclick="openPlannedSession(this.dataset.eid,this.dataset.sid,this.dataset.typ,this.dataset.fokus,this.dataset.datum,this.dataset.uhrzeit)">';
         html+='<div style="width:8px;height:8px;border-radius:50%;background:'+whenCol+';flex-shrink:0"></div>';
         html+='<div style="font-size:12px;font-weight:700;white-space:nowrap">'+fd(s.date)+(s.uhrzeit?' · '+s.uhrzeit:'')+'</div>';
-        html+='<span class="badge">'+(s.type||'Coaching')+'</span>';
-        html+='<span style="font-size:12px;color:var(--purple);flex:1">'+(s.focus||'')+'</span>';
+        html+='<span class="badge">'+esc(s.type||'Coaching')+'</span>';
+        html+='<span style="font-size:12px;color:var(--purple);flex:1">'+esc(s.focus||'')+'</span>';
         html+='<span style="font-size:11px;font-weight:600;color:'+whenCol+'">'+whenTxt+'</span>';
         html+='<i class="ti ti-chevron-right" style="color:var(--text3)"></i>';
         html+='</div>';
@@ -8145,11 +8150,11 @@ function renderTab(){
         +'<div class="task-row" onclick="toggleTaskDetail(\''+t.id+'\')">'
         +'<div class="task-check'+(t.done?' done':'')+'" onclick="event.stopPropagation();toggleTask(\''+t.id+'\')">'+(t.done?'<i class="ti ti-check" style="font-size:11px"></i>':'')+'</div>'
         +'<div style="flex:1;min-width:0"><div class="task-title'+(t.done?' done':'')+'">'+(od?'<i class="ti ti-alert-circle" style="font-size:13px;color:var(--red);margin-right:4px"></i>':'')+esc(t.text)+statusBadge+'</div>'
-        +'<div class="task-meta">'+(t.source?'<span>'+t.source+'</span>':'')+( dueLabel?'<span style="color:'+dueColor+'">'+dueLabel+'</span>':'')+'</div></div>'
+        +'<div class="task-meta">'+(t.source?'<span>'+esc(t.source)+'</span>':'')+( dueLabel?'<span style="color:'+dueColor+'">'+dueLabel+'</span>':'')+'</div></div>'
         +'<span class="task-prio" style="background:'+ps.bg+';color:'+ps.color+'">'+t.priority+'</span>'
         +'<button class="task-del" onclick="event.stopPropagation();deleteTask(\''+t.id+'\')"><i class="ti ti-x"></i></button>'
         +'</div>'
-        +'<div class="task-detail" id="td-'+t.id+'">'+(t.description||'No description added.')
+        +'<div class="task-detail" id="td-'+t.id+'">'+esc(t.description||'No description added.')
         +'<div class="task-actions">'
         +(!t.done&&(t.status||'open')==='open'?'<button class="btn btn-sm" onclick="setTaskStatus(\''+t.id+'\',\'in_progress\')"><i class="ti ti-player-play"></i> Start</button>':'')
         +(!t.done?'<button class="btn btn-sm btn-primary" onclick="toggleTask(\''+t.id+'\')"><i class="ti ti-check"></i> Mark as done</button>':'<button class="btn btn-sm" onclick="toggleTask(\''+t.id+'\')"><i class="ti ti-rotate-left"></i> Reopen</button>')
@@ -8484,7 +8489,7 @@ function renderTab(){
           var arrow=delta===null?'':(delta>0?'↑':delta<0?'↓':'→');
           return '<div style="display:flex;align-items:center;gap:14px;padding:10px 12px;margin-bottom:6px;background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md)">'
             +'<div style="width:80px;font-size:12px;font-weight:600;flex-shrink:0">'+fd(s.date)+'</div>'
-            +'<div style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.type||'Coaching')+(s.focus?' · '+s.focus:'')+'</div>'
+            +'<div style="flex:1;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.type||'Coaching')+(s.focus?' · '+esc(s.focus):'')+'</div>'
             +'<div style="font-size:11px;color:var(--text2);font-weight:600;width:70px;text-align:right">Ø vorher<br><b style="font-size:14px;color:var(--text)">'+(before!==null?before.toFixed(1):'—')+'</b></div>'
             +'<div style="font-size:11px;color:var(--text2);font-weight:600;width:70px;text-align:right">Ø nachher<br><b style="font-size:14px;color:var(--text)">'+(after!==null?after.toFixed(1):'—')+'</b></div>'
             +'<div style="width:70px;text-align:right;font-size:14px;font-weight:700;color:'+(delta===null?'var(--text3)':good?'var(--teal-dark)':'var(--red)')+'">'+arrow+' '+deltaTxt+'</div>'
@@ -11318,7 +11323,7 @@ function esBuildHtml(emp,asPopup,html){
         cut('zeit');
 
         html+='<div style="margin-bottom:4px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
-          +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+(emp.notes||'')+'</textarea></div>';
+          +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+esc(emp.notes||'')+'</textarea></div>';
 
         cut('person');
         (function(){var mk=today().slice(0,7),nx=kalAdd(kalAdd(mk+'-28',4).slice(0,7)+'-01',0).slice(0,7),f=function(m){return m.slice(5,7)+'/'+m.slice(0,4);};
@@ -13642,7 +13647,7 @@ function spRenderList(){
       +'<div style="width:150px;flex-shrink:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3)">'+fd(x.date)+'</span><span style="font-size:13.5px;font-weight:600;line-height:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.type||'Session')+'</span></div>'
       +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;line-height:18px;color:var(--text3);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(meta)+'</div>'
       +'<div style="font-size:13.5px;line-height:19px;height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:'+(txt?'var(--text)':'var(--text3)')+'">'+(txt?esc(txt):'Kein Anlass notiert')+'</div></div>'
-      +'<span style="display:flex;gap:6px;flex-shrink:0;align-self:flex-start"><button class="btn" type="button" title="Jetzt erfassen" onclick="openPlannedSession(selectedEmp,\''+x.id+'\',\''+esc(x.type||'').replace(/'/g,'')+'\',\''+esc((x.topics&&x.topics[0])||'').replace(/'/g,'')+'\',\''+x.date+'\',\''+(x.uhrzeit||'')+'\')" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-check"></i></button></span>'
+      +'<span style="display:flex;gap:6px;flex-shrink:0;align-self:flex-start"><button class="btn" type="button" title="Jetzt erfassen" onclick="openPlannedSession(selectedEmp,\''+jsq(x.id)+'\',\''+jsq(x.type||'')+'\',\''+jsq((x.topics&&x.topics[0])||'')+'\',\''+jsq(x.date)+'\',\''+jsq(x.uhrzeit||'')+'\')" style="width:34px;height:34px;padding:0;justify-content:center"><i class="ti ti-check"></i></button></span>'
       +'</div>';
   }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px 2px">Keine Sessions geplant.</div>';
 }
@@ -14456,7 +14461,7 @@ function kalSesChip(o){return '<div class="kal-ch kal-ses kal-sopen'+(kalSesPast
 // Kurzname der Session-Art für die Chips im Kalender
 function kalSesArt(t){if(!t)return '';return {'Einzelcoaching':'Coaching','Performance Review':'Performance','Performance-Gespräch':'Performance','KPI Review':'Weekly','1:1 Coaching':'Coaching'}[t]||t;}
 function kalFreeOver(d,o){var R=kalRules();if(R.freiBezug!=='team')return o.length>=R.freiGrenze;var c={};o.forEach(function(z){var t=kalTeamOf(z.e);c[t]=(c[t]||0)+1;});return Object.keys(c).some(function(t){return c[t]>=R.freiGrenze;});}
-function kalFreeTag(d){if(kalFixDay(d))return '';var o=kalFree(d,KAL.loc,null);return kalFreeOver(d,o)?'<span class="kal-tag warn" data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'">'+o.length+' frei</span>':'';}
+function kalFreeTag(d){if(kalFixDay(d))return '';var o=kalFree(d,KAL.loc,null);return kalFreeOver(d,o)?'<span class="kal-tag warn" data-ktip="'+esc(o.map(function(z){return esc(z.e.name)+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'">'+o.length+' frei</span>':'';}
 // Vorschläge: noch nicht geplante Weeklys / Performance Reviews gestrichelt am Fälligkeitstag (Überfälliges heute). Klick → Woche zum Einplanen, Ziehen auf eine Uhrzeit → Termin
 function kalSuggest(d){if(kalCtx()==='coach'||!kalCanEdit())return [];var t=today();if(d<t)return [];var hid=kalHid();
   return kalTasks().filter(function(x){var dd=x.due<t?t:x.due;if(dd!==d)return false;if(!kalLocMatch(x.e))return false;var cat=/Weekly/i.test(x.art)?'Weekly':'Performance';return !hid[cat];});}
@@ -14477,7 +14482,7 @@ function kalVMonth(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),fi
   var h='<div class="kal-mg">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(function(w){return '<div class="wh">'+w+'</div>';}).join('');
   while(d<=last||kalP(d).getDay()!==1){var hn=kalHol(d,KAL.loc),hp=kalHolPart(d),out=kalP(d).getMonth()!==mo;
     if(kalWknd(d)){h+='<div class="c we'+(out?' out':'')+'"><div class="dn">'+kalP(d).getDate()+'</div></div>';d=kalAdd(d,1);continue;}
-    var ch=[];kalPeople().forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));if(latCanSee())latOn(e.id,d).forEach(function(l){ch.push('<div class="kal-ch kal-vzc" data-kedit="'+l.id+'" data-ktip="'+esc('<b>'+e.name+'</b><br>'+(l.minuten||0)+' Min. zu spät'+(l.notiz?'<br>'+l.notiz:''))+'"><i class="ti ti-clock"></i> '+esc(kalFirst(e.name))+' · '+(l.minuten||0)+'′</div>');});});kalSuggest(d).forEach(function(x){ch.push(kalSuggestChip(x));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
+    var ch=[];kalPeople().forEach(function(e){var x=kalOnV(e.id,d);if(x&&!x.fixed)ch.push(kalAbsChip(e,x,d));if(latCanSee())latOn(e.id,d).forEach(function(l){ch.push('<div class="kal-ch kal-vzc" data-kedit="'+l.id+'" data-ktip="'+esc('<b>'+esc(e.name)+'</b><br>'+(l.minuten||0)+' Min. zu spät'+(l.notiz?'<br>'+esc(l.notiz):''))+'"><i class="ti ti-clock"></i> '+esc(kalFirst(e.name))+' · '+(l.minuten||0)+'′</div>');});});kalSuggest(d).forEach(function(x){ch.push(kalSuggestChip(x));});kalSess(d).forEach(function(o){ch.push(kalSesChip(o));});
     var fix=kalFixDay(d)?'<div class="kal-ch '+(d.slice(-2)==='24'?'kal-u':'kal-a')+'">alle · '+(d.slice(-2)==='24'?'Urlaubstag':'Ausgleichstag')+'</div>':'';
     h+='<div class="c'+(hn?' hl':'')+(out?' out':'')+'" data-kday="'+d+'" data-kopen="'+d+'"><div class="dn">'+(d===t?'<span class="tday">'+kalP(d).getDate()+'</span>':kalP(d).getDate())+kalFreeTag(d)+(view==='kalender'&&ch.length>kalMgCut(ch.length)?'<span class="kal-more" style="margin-left:auto;font-weight:600">+'+(ch.length-kalMgCut(ch.length))+'</span>':'')+'</div>'+(hn?'<div class="hn">'+esc(hn)+'</div>':'')+(hp?'<div class="hn hp">'+esc(hp)+'</div>':'')+fix+ch.slice(0,kalMgCut(ch.length)).join('')+(view!=='kalender'&&ch.length>kalMgCut(ch.length)?'<div class="kal-more">+'+(ch.length-kalMgCut(ch.length))+' weitere</div>':'')+'</div>';d=kalAdd(d,1);}
   return h+'</div>';}
@@ -14486,7 +14491,7 @@ function kalVYear(){if(kalCtx()==='coach')return kalVYearCoach();var y=+KAL.cur.
     for(var k=0;k<(f.getDay()+6)%7;k++)g+='<b class="e"></b>';
     for(var dd=1;dd<=n;dd++){var d=kalI(new Date(y,m,dd));if(kalWknd(d)){g+='<b class="we">'+dd+'</b>';continue;}var hn=kalHol(d,KAL.loc);if(hn){g+='<b class="hd" data-ktip="'+esc(hn)+'">'+dd+'</b>';continue;}var hpY=kalHolPart(d);if(hpY){g+='<b class="hpy" data-ktip="'+esc(hpY)+'">'+dd+'</b>';continue;}
       var ab=L.map(function(e){return {e:e,x:kalOnV(e.id,d)};}).filter(function(o){return o.x&&!o.x.fixed;});tot+=ab.length;var lv=Math.min(3,ab.length);
-      g+='<b class="'+(lv?'l'+lv:'')+(d===t?' td':'')+'"'+(ab.length?' data-ktip="'+esc(kalF(d)+' · '+ab.map(function(o){return kalFirst(o.e.name)+' ('+KAL_ART[kalShowArt(o.x)]+')';}).join(', '))+'"':'')+'>'+dd+'</b>';}
+      g+='<b class="'+(lv?'l'+lv:'')+(d===t?' td':'')+'"'+(ab.length?' data-ktip="'+esc(kalF(d)+' · '+ab.map(function(o){return esc(kalFirst(o.e.name))+' ('+KAL_ART[kalShowArt(o.x)]+')';}).join(', '))+'"':'')+'>'+dd+'</b>';}
     h+='<div class="kal-ym'+(m===+t.slice(5,7)-1&&String(y)===t.slice(0,4)?' cur':'')+'" data-kmonth="'+kalI(f)+'"><h4>'+KAL_MON[m]+'<span>'+tot+' Abw.-Tage</span></h4><div class="g">'+g+'</div></div>';}
   return h+'</div>';}
 // Jahr im Coaching: je dunkler, desto mehr Sessions an dem Tag (1–2 / 3–4 / ab 5)
@@ -14516,7 +14521,7 @@ function kalVTeam(){var d0=kalP(KAL.cur),y=d0.getFullYear(),mo=d0.getMonth(),n=n
       // Feiertag je Mitarbeiter (Valencia hat eigene Feiertage) – auch wenn die Spalte für den Standort-Filter kein Feiertag ist
       var hE=kalHolE(e,d),nw=!x&&!hE&&kalNoWork(e,d);h+='<div class="cell'+(kalWknd(d)||hn||hE?' we':'')+(nw?' nw':'')+(d===t?' td':'')+'" data-kday="'+d+'" data-kemp="'+e.id+'"'+(!kalWknd(d)?' data-kopen="'+d+'"':'')+(nw?' data-ktip="'+kalNoWorkTip(e,d)+'"':(hE&&!hn?' data-ktip="'+esc('Feiertag '+(kalIsVlc(e)?'Valencia':'Bayern')+': '+hE)+'"':''))+'>'+inner+'</div>';});});
   if(co){h+='<div class="ft nm">Sessions</div>'+D.map(function(d){var c=0;TE.forEach(function(e){c+=kalSess(d,e.id).length;});return '<div class="ft'+(kalWknd(d)||kalHol(d,KAL.loc)?' we':'')+'">'+(c||'')+'</div>';}).join('');return h+'</div></div>';}
-  h+='<div class="ft nm">Frei (ohne Krank)</div>'+D.map(function(d){if(kalWknd(d)||kalHol(d,KAL.loc)||kalFixDay(d))return '<div class="ft we">·</div>';var o=kalFree(d,KAL.loc,null);return '<div class="ft'+(kalFreeOver(d,o)?' w3':'')+'"'+(o.length?' data-ktip="'+esc(o.map(function(z){return z.e.name+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'"':'')+'>'+(o.length||'')+'</div>';}).join('');
+  h+='<div class="ft nm">Frei (ohne Krank)</div>'+D.map(function(d){if(kalWknd(d)||kalHol(d,KAL.loc)||kalFixDay(d))return '<div class="ft we">·</div>';var o=kalFree(d,KAL.loc,null);return '<div class="ft'+(kalFreeOver(d,o)?' w3':'')+'"'+(o.length?' data-ktip="'+esc(o.map(function(z){return esc(z.e.name)+(z.x.status==='offen'?' (beantragt)':'');}).join(' · '))+'"':'')+'>'+(o.length||'')+'</div>';}).join('');
   return h+'</div></div>';}
 // Einheitliche, schmale Karten rechts (alle gleich hoch), höchstens 8
 var KAL_PANE_MAX=12;
@@ -15162,7 +15167,7 @@ function abRender(){if(!AB.f)abNewForm();var e=kalEmp(AB.emp),b=document.getElem
   var selTo=F.halb?F.von:F.bis;
   var tl='<div class="ab-tl" style="grid-template-columns:130px repeat('+D.length+',minmax(14px,1fr))"><div class="nm hd"><b>'+mn+'</b></div>'+D.map(function(x){return '<div class="hd'+(kalWknd(x)||kalHol(x,loc)?' we':'')+'"><b>'+kalP(x).getDate()+'</b>'+KAL_WD[kalP(x).getDay()].slice(0,1)+'</div>';}).join('');
   T.forEach(function(t){var me=t.id===e.id;tl+='<div class="nm'+(me?' me':'')+'">'+esc(t.name)+'</div>'+D.map(function(x){if(kalWknd(x)||kalHol(x,loc))return '<div class="we"></div>';var a=kalOn(t.id,x),sel=me&&F.von&&x>=F.von&&x<=selTo;
-    var lm=latCanSee()?latMinOn(t.id,x):0,nw=!a&&kalNoWork(t,x);return '<div class="'+(me?'me2 ab-pick':'')+(sel?' ab-sel':'')+(nw?' nw':'')+'"'+(me&&ed?' onclick="abPick(\''+x+'\')"':'')+(nw?' data-ktip="'+kalNoWorkTip(t,x)+'"':'')+'>'+(a&&!a.fixed?'<span class="'+(KAL_CLS[kalShowArt(a)]||'')+(a.status==='offen'?' kal-op':'')+'" data-ktip="'+esc(kalTip(a))+'"></span>':'')+(lm&&!a?'<i class="ti ti-clock ab-vz" data-ktip="'+esc(t.name+' · '+lm+' Min. zu spät')+'"></i>':'')+'</div>';}).join('');});
+    var lm=latCanSee()?latMinOn(t.id,x):0,nw=!a&&kalNoWork(t,x);return '<div class="'+(me?'me2 ab-pick':'')+(sel?' ab-sel':'')+(nw?' nw':'')+'"'+(me&&ed?' onclick="abPick(\''+x+'\')"':'')+(nw?' data-ktip="'+kalNoWorkTip(t,x)+'"':'')+'>'+(a&&!a.fixed?'<span class="'+(KAL_CLS[kalShowArt(a)]||'')+(a.status==='offen'?' kal-op':'')+'" data-ktip="'+esc(kalTip(a))+'"></span>':'')+(lm&&!a?'<i class="ti ti-clock ab-vz" data-ktip="'+esc(esc(t.name)+' · '+lm+' Min. zu spät')+'"></i>':'')+'</div>';}).join('');});
   tl+='<div class="nm sum">frei</div>'+D.map(function(x){if(kalWknd(x)||kalHol(x,loc))return '<div class="we"></div>';var o=kalFree(x,loc,null);return '<div class="sum'+(kalFreeOver(x,o)?' w3':'')+'">'+(o.length||'')+'</div>';}).join('')+'</div>';
   h+='<div id="abSecT" style="'+CARD+';margin-bottom:4px"><div style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;margin-bottom:10px"><button class="kal-nav" onclick="abStep(-1)">‹</button>Team '+mn+' '+y+'<button class="kal-nav" onclick="abStep(1)">›</button><span class="kal-note" style="margin-left:auto;font-weight:400">'+esc(kalFirst(e.name))+'s Zeile: Tag anklicken = Zeitraum wählen, Eintrag anklicken = ändern · '+(loc==='VLC'?'Valencia':'Olching')+'</span></div><div style="overflow-x:auto">'+tl+'</div>'
     +'<div style="margin-top:10px;font-size:13px">Ziel '+mn+': <b>'+p.t+' T · '+ztEur(p.z)+'</b>'+(zielLocks[mk]?' <span class="kal-note">· Monat festgeschrieben, neue Abwesenheiten erscheinen bei „Wer lag genauer?“ als „Urlaub ungeplant“</span>':'')+'</div></div>';
@@ -15311,7 +15316,7 @@ function renderAufgaben(){var ma=document.getElementById('mainArea');if(!ma)retu
   h+=(AU.view==='k'?aufgKanban(C,S):aufgList(C,me))+'</div>'+aufgRoutineTable()+'</div>';
   var oc=ma.querySelector('.content'),sc=oc?oc.scrollTop:0;ma.innerHTML=h;var nc=ma.querySelector('.content');if(nc&&sc)nc.scrollTop=sc;aufgBadge(L);}
 function aufgCardHtml(c){var s=aufgState(c),items=c.items;
-  return '<div class="au-kc" draggable="true" data-akey="'+esc(c.key)+'" onclick="aufgClick(\''+esc(c.key).replace(/'/g,"\\'")+'\')"><div class="au-st '+s.c+'"><i class="ti '+(s.c==='od'?'ti-alarm':'ti-clock')+'"></i>'+s.l+'<span class="r">'+aufgFmt(c.due)+'</span></div>'
+  return '<div class="au-kc" draggable="true" data-akey="'+esc(c.key)+'" onclick="aufgClick(\''+jsq(c.key)+'\')"><div class="au-st '+s.c+'"><i class="ti '+(s.c==='od'?'ti-alarm':'ti-clock')+'"></i>'+s.l+'<span class="r">'+aufgFmt(c.due)+'</span></div>'
     +'<div class="au-b"><b>'+esc(c.art)+'</b><small>'+esc(c.t)+'</small><div class="ft"><span class="au-tag">'+(items?'Routine':c.kind==='task'?'Task':'automatisch')+'</span>'+(items&&c.total?'<span class="au-pr"><i><b style="width:'+Math.max(0,(c.total-items.length)/c.total*100)+'%"></b></i>'+(c.total-items.length)+'/'+c.total+'</span>':'<small class="au-s">'+esc(c.s||'')+'</small>')+'</div></div></div>';}
 function aufgKanban(C,S){if(AU.group==='d'||AU.group==='a')return aufgKanban2(C);return '<div class="au-kb" style="grid-template-columns:repeat('+S.length+',minmax(250px,1fr))">'+S.map(function(p){var X=C.filter(function(c){return c.assignee===p.key;}),od=X.some(function(c){return aufgState(c).c==='od';});
   return '<div class="au-col" data-acol="'+esc(p.key)+'"><div class="au-ch"><i style="background:'+(od?'#F08566':'#9a9a96')+'"></i>'+esc(p.name)+'<small>'+esc(p.sub)+'</small><span>'+X.length+'</span></div>'+(X.length?X.map(aufgCardHtml).join(''):'<div class="kal-note" style="text-align:center;padding:14px">Keine Aufgaben</div>')+'</div>';}).join('')+'</div>';}
@@ -15321,16 +15326,16 @@ function aufgKanban2(C){var cols;if(AU.group==='d'){var wk=kalAdd(kalMon(kalRef(
   else{cols=['Performance Reviews','Weekly','QA-Bewertungen','Aufgaben'].map(function(a){return [a,function(c){return aufgArtCol(c)===a;}];});}
   return '<div class="au-kb" style="grid-template-columns:repeat('+cols.length+',minmax(250px,1fr))">'+cols.map(function(cl){var X=C.filter(cl[1]);return '<div class="au-col"><div class="au-ch"><i style="background:'+(cl[0]==='Überfällig'&&X.length?'#F08566':'#9a9a96')+'"></i>'+esc(cl[0])+'<span>'+X.length+'</span></div>'+(X.length?X.map(function(c){return aufgCardHtml(c).replace('<span class="au-tag">','<span class="au-tag">'+esc(kalFirst(aufgName(c.assignee)))+'</span><span class="au-tag">');}).join(''):'<div class="kal-note" style="text-align:center;padding:14px">Keine Aufgaben</div>')+'</div>';}).join('')+'</div>';}
 function aufgRow(c){var s=aufgState(c),km=aufgKomm.find(function(k){return k.key===c.key;});
-  return '<tr onclick="aufgClick(\''+esc(c.key).replace(/'/g,"\\'")+'\')" style="cursor:pointer"><td class="au-due '+s.c+'">'+s.l.replace('überfällig seit','seit')+'</td><td><b>'+esc(c.art)+'</b> · '+esc(c.t)+'<small>'+esc(c.s||'')+'</small></td><td>'+esc(aufgName(c.assignee))+'</td><td class="au-cm">'+(km?'<b>'+new Date(km.am).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'</b> '+esc(aufgKommText(km.text)):'<span class="zt-dim">–</span>')+'</td></tr>';}
+  return '<tr onclick="aufgClick(\''+jsq(c.key)+'\')" style="cursor:pointer"><td class="au-due '+s.c+'">'+s.l.replace('überfällig seit','seit')+'</td><td><b>'+esc(c.art)+'</b> · '+esc(c.t)+'<small>'+esc(c.s||'')+'</small></td><td>'+esc(aufgName(c.assignee))+'</td><td class="au-cm">'+(km?'<b>'+new Date(km.am).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'</b> '+esc(aufgKommText(km.text)):'<span class="zt-dim">–</span>')+'</td></tr>';}
 function aufgList(C,me){var oth=C.filter(function(c){return me.indexOf(c.assignee)<0;}),mine=C.filter(function(c){return me.indexOf(c.assignee)>=0&&!c.items;}),rout=C.filter(function(c){return me.indexOf(c.assignee)>=0&&c.items;});
   var t=today(),ses=[];employees.forEach(function(e){(protocols[e.id]||[]).forEach(function(p){if(p.date===t&&p.status==='geplant'&&(!currentCoach||!p.coachId||p.coachId===currentCoach.id))ses.push({e:e,p:p});});});
   var seen={};ses=ses.filter(function(o){if(o.p.groupId){if(seen[o.p.groupId])return false;seen[o.p.groupId]=1;}return true;}).sort(function(a,b){return (a.p.uhrzeit||'').localeCompare(b.p.uhrzeit||'');});
   var head='<colgroup><col style="width:130px"><col style="width:38%"><col style="width:180px"><col></colgroup><thead><tr><th>Fällig</th><th>Aufgabe · Mitarbeiter</th><th>Zuständig</th><th>Letzter Kommentar</th></tr></thead>';
   var now=new Date(),nm=now.getHours()*60+now.getMinutes(),line=false,sr='';ses.forEach(function(o){var m=o.p.uhrzeit?timeStrToMin(o.p.uhrzeit):0;if(!line&&m>nm){sr+='<tr><td colspan="4"><div class="au-now">jetzt '+('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2)+'</div></td></tr>';line=true;}
     sr+='<tr class="kal-sopen" style="cursor:pointer" onclick="openPlannedSessionFromChip(this)"'+kalSesAttrs({e:o.e,p:o.p,n:1})+'><td class="au-due'+(m<nm?' od':'')+'" style="width:110px">'+(o.p.uhrzeit||'–')+'</td><td><span class="au-dot'+(m<nm?' od':'')+'"></span><b>'+esc(o.p.type||'Session')+'</b> · '+esc(o.p.groupId?'Gruppencoaching':o.e.name)+'<small>'+(m<nm?'verpasst · ':'')+'geplante Session</small></td><td></td><td></td></tr>';});
-  return '<div class="au-mine"><div class="au-mh"><i class="ti ti-list-check"></i> Meine Aufgaben<span>'+mine.length+' offen · '+ses.length+' Termine</span>'+(mine.length?'<button class="btn btn-primary" onclick="aufgOpen(\''+esc(mine[0].key).replace(/'/g,"\\'")+'\')"><i class="ti ti-player-play"></i> Jetzt abarbeiten ('+mine.length+')</button>':'')+'</div>'
+  return '<div class="au-mine"><div class="au-mh"><i class="ti ti-list-check"></i> Meine Aufgaben<span>'+mine.length+' offen · '+ses.length+' Termine</span>'+(mine.length?'<button class="btn btn-primary" onclick="aufgOpen(\''+jsq(mine[0].key)+'\')"><i class="ti ti-player-play"></i> Jetzt abarbeiten ('+mine.length+')</button>':'')+'</div>'
     +'<div class="au-sec">Offen, ohne feste Uhrzeit</div><div class="au-in"><table class="zt-t au-t">'+head+'<tbody>'+(mine.length?mine.map(aufgRow).join(''):'<tr><td colspan="4" class="kal-note">Alles erledigt.</td></tr>')+'</tbody></table></div>'
-    +(rout.length?'<div class="au-sec">Routinen</div><div class="au-in"><table class="zt-t au-t"><colgroup><col style="width:130px"><col style="width:38%"><col style="width:180px"><col></colgroup><tbody>'+rout.map(function(c){return '<tr onclick="aufgClick(\''+esc(c.key).replace(/'/g,"\\'")+'\')" style="cursor:pointer"><td class="au-due" style="width:110px">'+aufgState(c).l+'</td><td><b>'+esc(c.art)+'</b><small>'+esc(c.s)+'</small></td><td colspan="2">'+(c.total?'<span class="au-pr"><i style="width:160px"><b style="width:'+((c.total-c.items.length)/c.total*100)+'%"></b></i>'+(c.total-c.items.length)+' von '+c.total+'</span>':c.items.length+' offen')+'</td></tr>';}).join('')+'</tbody></table></div>':'')
+    +(rout.length?'<div class="au-sec">Routinen</div><div class="au-in"><table class="zt-t au-t"><colgroup><col style="width:130px"><col style="width:38%"><col style="width:180px"><col></colgroup><tbody>'+rout.map(function(c){return '<tr onclick="aufgClick(\''+jsq(c.key)+'\')" style="cursor:pointer"><td class="au-due" style="width:110px">'+aufgState(c).l+'</td><td><b>'+esc(c.art)+'</b><small>'+esc(c.s)+'</small></td><td colspan="2">'+(c.total?'<span class="au-pr"><i style="width:160px"><b style="width:'+((c.total-c.items.length)/c.total*100)+'%"></b></i>'+(c.total-c.items.length)+' von '+c.total+'</span>':c.items.length+' offen')+'</td></tr>';}).join('')+'</tbody></table></div>':'')
     +'<div class="au-sec">Termine heute</div><div class="au-in"><table class="zt-t au-t"><colgroup><col style="width:130px"><col style="width:38%"><col style="width:180px"><col></colgroup><tbody>'+(sr||'<tr><td class="kal-note">Keine Termine.</td></tr>')+'</tbody></table></div></div>'
     +'<div class="au-oth" style="margin-top:16px"><div class="au-mh"><i class="ti ti-users"></i> Zugewiesene Aufgaben · andere<span>'+oth.length+' offen</span></div><div class="au-in" style="margin-top:12px"><table class="zt-t au-t">'+head+'<tbody>'+(oth.length?oth.map(aufgRow).join(''):'<tr><td colspan="4" class="kal-note">Keine.</td></tr>')+'</tbody></table></div></div>';}
 function aufgRoutineTable(){var R=kalRules().routinen||[];if(!R.length)return '';var mo=kalMon(kalRef()),W=[];for(var i=5;i>=0;i--)W.push(kalAdd(mo,-7*i));
@@ -15352,12 +15357,12 @@ function aufgFind(key){var L=aufgAll(),C=aufgCards(L);return C.find(function(c){
 function aufgOpen(key){var c=aufgFind(key);if(!c)return;AU.open=key;var m=document.getElementById('aufgModal');if(!m){m=document.createElement('div');m.className='modal-ov hidden';m.id='aufgModal';m.innerHTML='<div class="modal" style="width:640px!important;background:#EEEDE9;padding:18px"><div id="aufgBody"></div></div>';m.addEventListener('mousedown',function(ev){if(ev.target===m)closeModal('aufgModal');});document.body.appendChild(m);}
   var s=aufgState(c),K=aufgKomm.filter(function(k){return k.key===key;}),S=aufgStaff();
   var h='<div style="display:flex;align-items:center;margin:2px 4px 12px"><div><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">'+(c.items?'Routine':'Aufgabe')+'</div><div style="font-size:16px;font-weight:700">'+esc(c.art)+(c.items?'':' · '+esc(c.t))+'</div></div><button class="btn" style="margin-left:auto" onclick="closeModal(\'aufgModal\')" aria-label="Schließen"><i class="ti ti-x"></i></button></div>'
-    +'<div class="kal-fs"><div class="zt-k3" style="grid-template-columns:repeat(3,1fr)"><div style="min-height:0"><small>Fällig</small><b style="font-size:15px">'+aufgFmt(c.due)+'</b></div><div style="min-height:0"><small>Status</small><b style="font-size:15px">'+s.l+'</b></div><div style="min-height:0"><small>Zuständig</small><select style="height:30px;margin-top:2px" onchange="aufgAssign(\''+esc(key).replace(/'/g,"\\'")+'\',this.value)"'+(kalCanEdit()?'':' disabled')+'>'+S.map(function(p){return '<option value="'+esc(p.key)+'"'+(p.key===c.assignee?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div></div>'
+    +'<div class="kal-fs"><div class="zt-k3" style="grid-template-columns:repeat(3,1fr)"><div style="min-height:0"><small>Fällig</small><b style="font-size:15px">'+aufgFmt(c.due)+'</b></div><div style="min-height:0"><small>Status</small><b style="font-size:15px">'+s.l+'</b></div><div style="min-height:0"><small>Zuständig</small><select style="height:30px;margin-top:2px" onchange="aufgAssign(\''+jsq(key)+'\',this.value)"'+(kalCanEdit()?'':' disabled')+'>'+S.map(function(p){return '<option value="'+esc(p.key)+'"'+(p.key===c.assignee?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div></div>'
     +(c.items?'':'<div class="kal-note" style="margin-top:8px">'+esc(c.s||'')+'</div>')+'</div>';
-  if(c.items)h+='<div class="kal-fs"><div class="h">Offen ('+c.items.length+')</div>'+c.items.map(function(o){return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #E4E0D6"><span class="kal-av">'+kalIni(o.t)+'</span><div style="flex:1;min-width:0">'+esc(o.t)+'<div class="kal-note">'+esc(o.s||'')+'</div></div>'+'<button class="btn btn-sm" onclick="closeModal(\'aufgModal\');aufgOpenEmp(\''+esc(o.key).replace(/'/g,"\\'")+'\')">Öffnen</button>'+'</div>';}).join('')+'</div>';
+  if(c.items)h+='<div class="kal-fs"><div class="h">Offen ('+c.items.length+')</div>'+c.items.map(function(o){return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #E4E0D6"><span class="kal-av">'+kalIni(o.t)+'</span><div style="flex:1;min-width:0">'+esc(o.t)+'<div class="kal-note">'+esc(o.s||'')+'</div></div>'+'<button class="btn btn-sm" onclick="closeModal(\'aufgModal\');aufgOpenEmp(\''+jsq(o.key)+'\')">Öffnen</button>'+'</div>';}).join('')+'</div>';
   h+='<div class="kal-fs"><div class="h">Kommentare</div>'+(K.length?K.map(function(k){return '<div style="padding:6px 0;border-bottom:1px solid #E4E0D6;font-size:13px"><b>'+new Date(k.am).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'</b> '+esc(k.text)+' <span class="kal-note">· '+esc(k.von||'')+'</span></div>';}).join(''):'<div class="kal-note">Noch kein Kommentar.</div>')
     +(kalCanEdit()?'<div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="aufgKommIn" placeholder="Kommentar schreiben …" onkeydown="if(event.key===\'Enter\')aufgComment()"><button class="btn" onclick="aufgComment()"><i class="ti ti-send"></i></button></div>':'')+'</div>';
-  if(!c.items&&kalCanEdit())h+='<div class="kal-acts" style="justify-content:flex-end">'+(c.quit&&kalCanEdit()?'<button class="btn" onclick="aufgQuit(\''+esc(key).replace(/'/g,"\\'")+'\',\''+c.quit+'\')"><i class="ti ti-check"></i> '+c.quit+'</button>':'')+'<button class="btn btn-primary" onclick="closeModal(\'aufgModal\');aufgGo(\''+esc(key).replace(/'/g,"\\'")+'\')">'+esc(c.act)+'</button></div>';
+  if(!c.items&&kalCanEdit())h+='<div class="kal-acts" style="justify-content:flex-end">'+(c.quit&&kalCanEdit()?'<button class="btn" onclick="aufgQuit(\''+jsq(key)+'\',\''+c.quit+'\')"><i class="ti ti-check"></i> '+c.quit+'</button>':'')+'<button class="btn btn-primary" onclick="closeModal(\'aufgModal\');aufgGo(\''+jsq(key)+'\')">'+esc(c.act)+'</button></div>';
   document.getElementById('aufgBody').innerHTML=h;openModal('aufgModal');}
 function aufgGo(key){var o=aufgAll().find(function(x){return x.key===key;});if(o&&o.go)o.go();}
 function aufgAssign(key,who){var c=aufgFind(key);if(!c)return;var keys=c.items?c.items.map(function(o){return o.key;}):[key];
@@ -15412,7 +15417,7 @@ function aufgEmpDoneHtml(eid){var L=[],dm=function(d){return d?String(d).slice(8
     +'<span style="font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:10px;background:#fff;border:1px solid #E4E0D6;color:var(--text2);white-space:nowrap">erledigt '+dm(x.d)+'</span></div>';}).join('');}
 function aufgEmpHtml(eid){var L=aufgAll().filter(function(o){return String(o.emp)===String(eid);}).sort(function(a,b){var x=aufgState(a).r-aufgState(b).r;return x||(a.due<b.due?-1:1);}),S=aufgStaff(),ed=kalCanEdit();
   if(!L.length)return {n:0,h:'<div class="kal-note">Keine offenen Aufgaben.</div>'};
-  return {n:L.length,h:L.map(function(o){var s=aufgState(o),km=aufgKomm.find(function(k){return k.key===o.key;}),tag=o.kind==='task'?'Task':o.bundle?'Routine':'automatisch',k=esc(o.key).replace(/'/g,"\\'");
+  return {n:L.length,h:L.map(function(o){var s=aufgState(o),km=aufgKomm.find(function(k){return k.key===o.key;}),tag=o.kind==='task'?'Task':o.bundle?'Routine':'automatisch',k=jsq(o.key);
     return '<div class="at-tk'+(AU.hl===o.key?' hl':'')+'" data-akey="'+esc(o.key)+'"><div class="au-st '+s.c+'"><i class="ti '+(s.c==='od'?'ti-alarm':'ti-clock')+'"></i>'+s.l+'<span class="r">'+aufgFmt(o.due)+'</span></div>'
       +'<div class="at-b2"><div class="at-tt"><b>'+esc(o.kind==='task'?o.t:o.art)+'</b><span class="au-tag" style="margin-left:6px">'+tag+'</span><small>'+esc(o.kind==='task'?(o.s||'').replace(/^[^·]*·?\s*/,''):o.s||'')+'</small></div>'
       +'<div class="at-ar"><div class="at-selw"><span>Zuständig</span><select onchange="aufgAssign(\''+k+'\',this.value);atRender()"'+(ed?'':' disabled')+'>'+S.map(function(p){return '<option value="'+esc(p.key)+'"'+(p.key===o.assignee?' selected':'')+'>'+esc(kalFirst(p.name))+'</option>';}).join('')+(S.some(function(p){return p.key===o.assignee;})?'':'<option selected>'+esc(kalFirst(aufgName(o.assignee)))+'</option>')+'</select></div>'
@@ -15530,7 +15535,7 @@ function ovNext4(e){var t=today(),m0=kalMon(t),L=[];try{L=aufgAll().filter(funct
     return '<div class="ov-wk'+(w===m0?' cur':'')+'"><b>KW '+kalKw(w)+(w===m0?' <span class="kal-note">· jetzt</span>':'')+'</b><div class="kal-note">'+kalF(a)+'–'+kalF(kalAdd(a,4))+'</div><div class="ov-its">'+(it.length?it.slice(0,4).map(function(x){return '<span class="ov-it '+x[0]+'">'+esc(x[1])+'</span>';}).join(''):'<span class="kal-note">nichts geplant</span>')+'</div></div>';};
   return '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">'+[0,1,2,3].map(function(i){return cell(kalAdd(m0,7*i));}).join('')+'</div>';}
 function ovSteps(e){var t=today(),S=[],L=[];try{L=aufgAll().filter(function(o){return String(o.emp)===String(e.id);}).sort(function(a,b){return a.due<b.due?-1:1;});}catch(er){}
-  var key=function(k){return esc(k).replace(/'/g,"\\'");},st=puSesStats(e),rs='';try{rs=kalWeeklyReason(e)||'';}catch(er){}
+  var key=function(k){return jsq(k);},st=puSesStats(e),rs='';try{rs=kalWeeklyReason(e)||'';}catch(er){}
   var lastD=st.last?kalDiff(st.last.date,t):null;
   if(rs||lastD==null||lastD>14){var wk=L.find(function(o){return o.art==='Weekly';});S.push(['Weekly führen',(rs?rs:'')+(lastD!=null?(rs?' · ':'')+'letzte Session vor '+lastD+' Tagen':' · noch keine Session dokumentiert'),'Session erfassen',wk?'aufgDone(\''+key(wk.key)+'\')':'window._puOpenNew=true;puGo(\'se\')']);}
   L.filter(function(o){return aufgState(o).c==='od'&&o.art!=='Weekly';}).slice(0,2).forEach(function(o){S.push([o.art+(o.kind==='task'?': '+o.t:''),aufgState(o).l+(o.s?' · '+o.s:''),aufgActLabel(o),'aufgDone(\''+key(o.key)+'\')']);});
