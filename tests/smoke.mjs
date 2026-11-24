@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import { gesamtText } from './quellen.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const file = process.argv[2] || path.join(here, '..', 'index.html');
@@ -319,7 +320,7 @@ check('D5: Startlader meldet Fehler statt abzubrechen', d5.fehl === 'Test' && d5
 check('D5: Meldung mit automatischem Nachladen', d5.zeigt && d5.weg, JSON.stringify(d5));
 check('D5: nach 3 Versuchen „Seite neu laden“', d5.ende);
 
-{ const src = fs.readFileSync(path.resolve(file), 'utf8');
+{ const src = gesamtText(path.resolve(file));
   check('D7: Gesamtzeile nutzt Standard-Ziele, nicht die des ersten Mitarbeiters', /empT:empTargets\(\{\}\),hours:aggHours/.test(src) && !/empTargets\(selectedEmps\[0\]/.test(src)); }
 
 check('D7: Tagesdatum in Ortszeit (kurz nach Mitternacht)', await page.evaluate("localYmd(new Date(2026,10,24,0,30))==='2026-11-24'&&localYmd(new Date('x'))===''"));
