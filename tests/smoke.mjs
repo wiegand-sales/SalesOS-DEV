@@ -348,6 +348,43 @@ const b1 = await page.evaluate(`(async function(){var e=kalEmp('e1'),w=function(
   return r;})()`);
 check('B1: CR aus Rohzahlen (Benchmark, Bestwert, Meilenstein, Ziel, Impact, Team-Linie)', Object.values(b1).every(Boolean), JSON.stringify(b1));
 
+// B2: Diagramm-Auswahl „Onboarding“ ohne VLC
+const b2 = await page.evaluate(`(function(){var v=employees.find(function(e){return e.role==='VLC';}),sv=v.phase;v.phase='Onboarding';
+  selectWiegandSub('overview');setOverviewChartMetric('margeGesamt');setOverviewChartEmp('group:Onboarding');
+  var d=window._overviewChartData.datasets[0].data,i=d.map(function(x,j){return x!=null?j:-1;}).filter(function(j){return j>=0;}).pop(),w=buildChartPeriods(overviewChartGroup,+today().slice(0,4))[i];
+  var ob=employees.filter(function(e){return e.phase==='Onboarding'&&e.role!=='VLC';}),soll=chartSumsForRange(ob,w.from,w.to).margeGes;
+  var ist=d[i];v.phase=sv;setOverviewChartEmp('');return ist===soll?'ok':ist+'≠'+soll;})()`);
+check('B2: Diagramm „Onboarding“ ohne VLC', b2 === 'ok', b2);
+// B3: Warnungen am persönlichen Ziel, nicht am Team-Durchschnitt
+const b3 = await page.evaluate(`(function(){var sv=window.empTargets,kv=KPI_TARGETS.crOEM.val,r=[];
+  KPI_TARGETS.crOEM.val=0;window.empTargets=function(){return {crOEM:{val:100,dir:'gte'}};};
+  r.push(checkAlerts('e1').filter(function(a){return a.key==='CR OEM'&&a.ziel==='100%';}).length);
+  KPI_TARGETS.crOEM.val=100;window.empTargets=function(){return {crOEM:{val:null,dir:'gte'}};};
+  r.push(checkAlerts('e1').filter(function(a){return a.key==='CR OEM';}).length);
+  window.empTargets=sv;KPI_TARGETS.crOEM.val=kv;return r.join('/');})()`);
+check('B3: Warnung nach persönlichem Ziel (leer = keine Prüfung)', b3 === '1/0', b3);
+// B4: Ersatzwert Opt./Std. 3,5 und CR TW aus dem Team-Ziel crTeilweise
+const b4 = await page.evaluate(`(function(){var sv=KPI_TARGETS,r=[];KPI_TARGETS={};r.push(empTargets({}).optPerH.val);
+  KPI_TARGETS={crTeilweise:{val:33,dir:'lte'}};r.push(empTargets({}).crTeilweise.val);KPI_TARGETS=sv;return r.join('/');})()`);
+check('B4: Opt./Std.-Ersatzwert 3,5, CR TW aus Team-Ziel', b4 === '3.5/33', b4);
+// B5: Wochenziel-Kachel einer KW über den Monatswechsel = Soll beider Monatsanteile
+const b5 = await page.evaluate(`(function(){var cur=today().slice(0,7),d=new Date(cur+'-01T00:00:00Z');d.setUTCMonth(d.getUTCMonth()-1);var prev=d.toISOString().slice(0,7);
+  var wm=null;[prev,cur].forEach(function(mk){getMonthWeeksZiel(mk).forEach(function(w){if(!wm&&w.from.slice(0,7)!==w.to.slice(0,7)&&(w.from.slice(0,7)===mk))wm=w;});});
+  if(!wm)return 'keine Monatswechsel-KW';
+  function part(mk){var wi=-1;getMonthWeeksZiel(mk).forEach(function(w,i){if(w.from===wm.from)wi=i;});if(wi<0)return 0;var z=0;
+    employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;}).forEach(function(e){var r=(zielStore[mk]||{})[e.id]||{},n=getMonthWeeksZiel(mk)[wi].defaultDays;var x=ztEmpMonth(e,mk);if(x.weeks[wi])n=x.weeks[wi].n;z+=n*(r.optTag||0)*(r.margeOpt||0);});return z;}
+  var soll=Math.round(part(wm.from.slice(0,7))+part(wm.to.slice(0,7))).toLocaleString('de-DE');
+  var h=wochenzielKachelnHtml(),m=h.match(new RegExp('KW '+wm.kw+'[^€]*?€[^€]*?Ziel: € ([0-9.]+)'))||h.match(new RegExp('KW '+wm.kw+'[\\\\s\\\\S]*?Ziel: € ([0-9.]+)'));
+  return m&&m[1]===soll?'ok':(m?m[1]:'?')+'≠'+soll;})()`);
+check('B5: Wochenziel über den Monatswechsel zählt beide Monatsanteile', b5 === 'ok' || b5 === 'keine Monatswechsel-KW', b5);
+// B6: ohne Zielvereinbarung NL-Ziel anteilig nach Arbeitsstunden auf die Teams
+const b6 = await page.evaluate(`(function(){var mk=(+today().slice(0,4)+1)+'-03',svZ=zielStore[mk],svN=zielNlTargets[mk];zielStore[mk]={};zielNlTargets[mk]=100000;_dshPlanCache={};
+  function sum(L){var p=dshPlanMonth(L,mk).days,s=0;Object.keys(p).forEach(function(d){s+=p[d];});return s;}
+  var all=sum(dshAll()),teams=DSH_TEAMS.reduce(function(a,t){return a+sum(dshTeam(t));},0),se=sum(dshTeam('SE'));
+  zielStore[mk]=svZ;if(svN===undefined)delete zielNlTargets[mk];else zielNlTargets[mk]=svN;_dshPlanCache={};
+  return Math.round(all)+'/'+Math.round(teams)+'/'+(se>0&&se<all);})()`);
+check('B6: NL-Ziel anteilig auf Teams (Summe = NL-Ziel)', b6 === '100000/100000/true', b6);
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();

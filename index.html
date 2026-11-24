@@ -3157,7 +3157,7 @@ var KPI_TARGETS={
   crTeilweise:{val:25, dir:'lte', label:'TW'},
   crSuperYes:{val:12, dir:'gte', label:'SY'},
   crMegaYes: {val:8,  dir:'gte', label:'MY'},
-  optPerH:   {val:2.0,dir:'gte', label:'Opt./Std.'},
+  optPerH:   {val:3.5,dir:'gte', label:'Opt./Std.'}, // B4: Ersatzwert 3,5
 };
 var CR_GOOD=KPI_TARGETS.crOEM.val;
 
@@ -3673,9 +3673,20 @@ function wochenzielKachelnHtml(){
   var todayStr=today();
   var curKw=isoWeekNum(new Date(todayStr+'T00:00:00Z'));
 
+  // Soll eines Monatsanteils einer KW (Tage des Monats in dieser Woche x Opt./Tag x Marge/Opt.)
+  function portion(mk2,from){
+    var wi=-1;getMonthWeeksZiel(mk2).forEach(function(w,i){if(w.from===from)wi=i;});if(wi<0)return 0;
+    var wm2=getMonthWeeksZiel(mk2)[wi],rec2=zielStore[mk2]||{},z=0;
+    employees.filter(function(e){return empActiveInZielMonth(e,mk2)&&!e.isPureCoach;}).forEach(function(e){
+      var r=rec2[e.id]||{};
+      var days=(r.weeks&&r.weeks[wi]!=null)?r.weeks[wi]:wm2.defaultDays;
+      if(typeof ztEmpMonth==='function'){var zx=ztEmpMonth(e,mk2);if(zx.weeks[wi])days=zx.weeks[wi].n;}
+      z+=days*(r.optTag!=null?r.optTag:0)*(r.margeOpt!=null?r.margeOpt:0);
+    });
+    return z;
+  }
   function tileFor(mk,seenKw){
     var weeks=getMonthWeeksZiel(mk);
-    var rec=zielStore[mk]||{};
     var visible=employees.filter(function(e){return empActiveInZielMonth(e,mk)&&!e.isPureCoach;});
     var out='';
     weeks.forEach(function(wm,wi){
@@ -3683,15 +3694,12 @@ function wochenzielKachelnHtml(){
       seenKw[wm.kw]=true;
       var target=0,ist=0;
       var isFuture=wm.from>todayStr;
-      visible.forEach(function(e){
-        var r=rec[e.id]||{};
-        var days=(r.weeks&&r.weeks[wi]!=null)?r.weeks[wi]:wm.defaultDays;
-        if(typeof ztEmpMonth==='function'){var zx=ztEmpMonth(e,mk);if(zx.weeks[wi])days=zx.weeks[wi].n;}
-        var optTag=r.optTag!=null?r.optTag:0;
-        var margeOpt=r.margeOpt!=null?r.margeOpt:0;
-        target+=days*optTag*margeOpt;
-        if(!isFuture)ist+=istForEmpWeek(e.id,wm.from,wm.to);
-      });
+      // B5: KW über den Monatswechsel – Ist zählt die ganze Woche, also auch das Soll beider Monatsanteile
+      var m1=wm.from.slice(0,7),m2=wm.to.slice(0,7);
+      target=portion(m1,wm.from)+(m2!==m1?portion(m2,wm.from):0);
+      if(!isFuture){var vis={};visible.forEach(function(e){vis[e.id]=e;});
+        if(m2!==m1)employees.forEach(function(e){if(!e.isPureCoach&&(empActiveInZielMonth(e,m1)||empActiveInZielMonth(e,m2)))vis[e.id]=e;});
+        Object.keys(vis).forEach(function(id){ist+=istForEmpWeek(vis[id].id,wm.from,wm.to);});}
       var pct=target>0?Math.round(ist/target*100):(ist>0?100:0);
       var isCur=wm.kw===curKw;
       if(isFuture){
@@ -4001,8 +4009,10 @@ function pavg(id,key,days){
 }
 function checkAlerts(id){
   var alerts=[];
+  // B3: Maßstab sind die persönlichen Ziele (Provisionsvereinbarung/Stammdaten), nicht der Team-Durchschnitt
+  var emp=employees.find(function(e){return e.id===id;}),T=emp?empTargets(emp):{};
   function check(key,perfKey,label,days){
-    var t=KPI_TARGETS[key];if(!t)return;
+    var t=T[key];if(!t||t.val==null||t.val===''||isNaN(+t.val))return;t={val:+t.val,dir:t.dir||'gte',label:(KPI_TARGETS[key]||{}).label};
     var v=pavg(id,perfKey,days||7);if(v===null)return;
     var fail=t.dir==='gte'?v<t.val:v>t.val;
     if(fail)alerts.push({key:label||t.label,val:(perfKey==='optPerH'?v.toFixed(1):v.toFixed(0)+'%'),ziel:(perfKey==='optPerH'?t.val:t.val+'%'),dir:t.dir});
@@ -4062,14 +4072,15 @@ function empTargets(emp){
     if(provKpi&&provKey&&Object.prototype.hasOwnProperty.call(provKpi,provKey))return provKpi[provKey]!=null&&provKpi[provKey]!==''?+provKpi[provKey]:null;
     if(t[key]!=null)return t[key];
     if(provKpi&&provKpi[provKey]!=null)return provKpi[provKey];
-    return (g[key]&&g[key].val!=null)?g[key].val:fallback;
+    var gk=key==='crTW'?'crTeilweise':key; // B4: Team-Ziel CR TW heißt crTeilweise
+    return (g[gk]&&g[gk].val!=null)?g[gk].val:fallback;
   }
   return {
     crOEM:      {val:pval('crOEM','crOem',55),          dir:dir('crOEMDir','crOEM','gte')},
     crTeilweise:{val:pval('crTW','tw',25),            dir:dir('crTWDir','crTeilweise','lte')},
     crSuperYes: {val:pval('crSuperYes','sy',12),      dir:dir('crSYDir','crSuperYes','gte')},
     crMegaYes:  {val:pval('crMegaYes','my',8),        dir:dir('crMYDir','crMegaYes','gte')},
-    optPerH:     {val:pval('optPerH','optH',2.0),         dir:dir('optPerHDir','optPerH','gte')},
+    optPerH:     {val:pval('optPerH','optH',3.5),         dir:dir('optPerHDir','optPerH','gte')},
     optPerDay:   {val:val('optPerDay',16),          dir:dir('optPerDayDir','optPerDay','gte')},
     crYes:       {val:pval('crYes','crYes',null),             dir:provKpi?'lte':dir('crYesDir','crYes','lte')}, // CR YES ist ein Max.-Wert
     crSyMy:      {val:pval('crSyMy','syMy',null),             dir:dir('crSyMyDir','crSyMy','gte')},
@@ -5760,7 +5771,8 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
       liste=visible.slice();
     } else if(overviewChartEmpId.indexOf('group:')===0){
       var grp=overviewChartEmpId.slice(6);
-      liste=visible.filter(function(e){return e.role===grp||e.phase===grp;});
+      // B2: Onboarding ohne VLC (VLC immer getrennt vom Onboarding)
+      liste=visible.filter(function(e){return grp==='Onboarding'?(e.phase==='Onboarding'&&e.role!=='VLC'):(e.role===grp||e.phase===grp);});
     } else {
       liste=visible.filter(function(e){return e.id===overviewChartEmpId;});
     }
@@ -8608,7 +8620,7 @@ function dshCoachBox(all,T){
 // ── Plan: Tagesziele je Mitarbeiter aus der Zielvereinbarung, verteilt nach Wochenarbeitszeit ──
 // Monatsziel je Mitarbeiter = Einsatztage x Opt./Tag x Marge/Opt.; verteilt auf seine Arbeitstage
 // (Kalender aus der Zielvereinbarung, sonst Mo–Fr ohne Feiertage) im Verhältnis seiner Arbeitsstunden.
-// Monate ohne Zielvereinbarung nutzen das „Ziel NL“ des Monats, verteilt nach Arbeitstagen.
+// Monate ohne Zielvereinbarung nutzen das „Ziel NL“ des Monats, verteilt nach Arbeitstagen (Teamfilter: Anteil nach Arbeitsstunden, B6).
 var _dshPlanCache={};
 function dshPlanMonth(list,mk){
   var key=mk+'|'+list.map(function(e){return e.id;}).join(',');
@@ -8633,7 +8645,11 @@ function dshPlanMonth(list,mk){
     });
   } else if(zielNlTargets[mk]>0){
     src='nl';var wd=Object.keys(days).filter(function(d){return dshIsWork(d)&&!fe[d];});
-    wd.forEach(function(d){days[d]=zielNlTargets[mk]/wd.length;});
+    // B6 (Peter 24.11.: „NL-Ziel anteilig“): Teilmenge (Teamfilter) bekommt den Anteil ihrer Arbeitsstunden am Tag
+    var allL=dshAll(),ids={};list.forEach(function(e){ids[e.id]=1;});
+    var full=allL.every(function(e){return ids[e.id];});
+    function hrs(L,d){var h=0;L.forEach(function(e){if(e.startDate&&d<e.startDate)return;if(e.endDate&&d>e.endDate)return;h+=workHoursForDate(e,d)||0;});return h;}
+    wd.forEach(function(d){var sh=1;if(!full){var ha=hrs(allL,d);sh=ha>0?hrs(list,d)/ha:0;}days[d]=zielNlTargets[mk]/wd.length*sh;});
   }
   return (_dshPlanCache[key]={days:days,src:src});
 }
