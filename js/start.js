@@ -362,15 +362,11 @@ var adminAuditLog=[]; // [{id, changedAt, changedBy, action, details}]
 var activityLog=[]; // [{id, createdAt, actorId, category, action, description, targetEmployeeId, targetLabel}]
 var employeeDocuments={}; // {empId: [{id, filename, storagePath, description, uploadedBy, uploadedAt}]}
 var MONTH_NAMES_ZIEL=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-var zielMonth=today().slice(0,7);
 var zielStore={};
 // C1: Spalte week6 (sql/50) – erst schreiben, wenn sie in der Datenbank existiert
 var ZIEL_W6=false;
 var zielYearView=today().slice(0,4);
 var zielNlTargets={};
-// ── Arbeitstage-Kalender: Tage statt reiner KW-Zahlen anklicken, daraus werden die Wochensummen berechnet ──
-var _kalenderState=null; // {empId, mk, tage:{'YYYY-MM-DD':true/false}}
-var KALENDER_ZYKLUS=['work','off','urlaub','krank'];
 // Chart.js-Animation, die die Linie beim ersten Rendern von links nach rechts "einzeichnet" statt
 // nur einzublenden (Punkte/Segmente je nach Index leicht zeitversetzt starten lassen), statt der
 // reinen Standard-Animation (die von der Grundlinie nach oben wachsen wuerde).
