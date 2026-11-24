@@ -7278,7 +7278,7 @@ function renderTab(){
         html+='<span id="arr-'+cardId+'" style="width:34px;height:34px;border-radius:var(--r-md);border:1px solid var(--border2);background:#F7F5F0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:12px;transition:transform .2s">▾</span></span></div>';
         html+='<div id="body-'+cardId+'" style="display:none;border:1px solid #E4E0D6;border-top:none;border-radius:0 0 10px 10px;background:#F7F5F0;margin:-1px 8px 0;padding:14px 14px 10px">';
         if(!hasPts)html+='<div style="font-size:13px;color:var(--text2);padding:2px 0 8px">Für diesen Call wurden keine Einzelpunkte gespeichert.</div>';
-        else CALL_CATS.forEach(function(cat){
+        else qaCatsFor(r).forEach(function(cat){ // B8: Kategorien passend zum Bewertungsstand (vor/nach 11.11.)
           var v=catAvg(r,cat);
           var rv=Math.round(v);
           html+='<div style="display:grid;grid-template-columns:minmax(170px,220px) 1fr 48px;align-items:center;gap:14px;height:30px;border-bottom:1px solid #eae7e0;font-size:13.5px">'
@@ -7337,7 +7337,7 @@ function renderTab(){
           }
         });
       },120);
-    })(showCall?[showCall]:[],CALL_CATS);
+    })(showCall?[showCall]:[],qaCatsFor(showCall)); // B8
   }
 
 
@@ -7627,11 +7627,12 @@ function renderTab(){
     };
     var sessions=(protocols[emp.id]||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
     var completedSessions=sessions.filter(function(s){return s.status!=='geplant'||s.date<=today();});
+    var doneSessions=sessions.filter(function(s){return s.status!=='geplant';}); // B9: überfällige geplante zählen nicht als abgeschlossen
     var plannedSessions=sessions.filter(function(s){return s.status==='geplant'&&s.date>today();}).sort(function(a,b){return a.date.localeCompare(b.date);});
 
     // Zähle abgeschlossene Sessions pro Topic (geplante zählen noch nicht mit)
     var tc={};SDIMS.forEach(function(d){tc[d.key]=0;});
-    completedSessions.forEach(function(s){(s.topics||[]).forEach(function(t){t=TOPIC_ALIAS[t]||t;if(tc[t]!==undefined)tc[t]++;});});
+    doneSessions.forEach(function(s){(s.topics||[]).forEach(function(t){t=TOPIC_ALIAS[t]||t;if(tc[t]!==undefined)tc[t]++;});});
     var maxVal=Math.max(1,Math.max.apply(null,SDIMS.map(function(d){return tc[d.key];})));
     var catSum={skill:0,will:0,result:0};
     SDIMS.forEach(function(d){catSum[d.cat]+=tc[d.key];});
@@ -7639,7 +7640,7 @@ function renderTab(){
     // ── Coaching-Übersicht: EINE Karte, links Spinnendiagramm + Aktionen, rechts Zusammenfassung (oben) ──
     html+='<div class="card" style="margin-bottom:22px">';
     html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
-    html+='<div class="card-title" style="margin:0"><i class="ti ti-chart-radar"></i> Coaching-Übersicht <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+completedSessions.length+' abgeschlossene Sessions</span></div>';
+    html+='<div class="card-title" style="margin:0"><i class="ti ti-chart-radar"></i> Coaching-Übersicht <span style="font-weight:400;font-size:12px;color:var(--text3);text-transform:none;letter-spacing:0">· '+doneSessions.length+' abgeschlossene Sessions</span></div>';
     html+='</div>';
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:flex-start;margin-top:12px">';
 
@@ -7651,7 +7652,7 @@ function renderTab(){
     html+='<div style="display:flex;flex-direction:column;gap:8px">';
     ['skill','will','result'].forEach(function(cat){
       var s=catSum[cat];
-      var catDurMin=completedSessions.filter(function(sess){
+      var catDurMin=doneSessions.filter(function(sess){
         return (sess.topics||[]).some(function(t){t=TOPIC_ALIAS[t]||t;var dim=SDIMS.find(function(d){return d.key===t;});return dim&&dim.cat===cat;});
       }).reduce(function(sum,sess){return sum+(sessionDuration(sess.uhrzeit,sess.endUhrzeit)||0);},0);
       html+='<div style="background:'+SCCAT[cat].bg+';border:1px solid '+SCCAT[cat].col+';border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;justify-content:space-between">';
@@ -7660,10 +7661,10 @@ function renderTab(){
       html+='</div>';
     });
     (function(){
-      var totalDurationMin=completedSessions.reduce(function(sum,s){return sum+(sessionDuration(s.uhrzeit,s.endUhrzeit)||0);},0);
+      var totalDurationMin=doneSessions.reduce(function(sum,s){return sum+(sessionDuration(s.uhrzeit,s.endUhrzeit)||0);},0);
       html+='<div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;justify-content:space-between">';
-      html+='<div><div style="font-size:11px;font-weight:700;color:var(--text)">GESAMT</div><div style="font-size:11px;color:var(--text2);opacity:0.8;margin-top:1px">'+completedSessions.length+' Sessions'+(totalDurationMin?' · '+formatDuration(totalDurationMin):'')+'</div></div>';
-      html+='<div style="font-size:20px;font-weight:700;color:var(--text)">'+completedSessions.length+'</div>';
+      html+='<div><div style="font-size:11px;font-weight:700;color:var(--text)">GESAMT</div><div style="font-size:11px;color:var(--text2);opacity:0.8;margin-top:1px">'+doneSessions.length+' Sessions'+(totalDurationMin?' · '+formatDuration(totalDurationMin):'')+'</div></div>';
+      html+='<div style="font-size:20px;font-weight:700;color:var(--text)">'+doneSessions.length+'</div>';
       html+='</div>';
     })();
     html+='</div>';
@@ -8248,7 +8249,7 @@ function renderTab(){
       (function(){
         var panel=document.getElementById('coachImpactPanel');
         if(!panel)return;
-        var relevant=(protocols[selectedEmp]||[]).filter(function(s){return (s.status!=='geplant'||s.date<=today())&&s.focusMetric===empChartMetric;});
+        var relevant=(protocols[selectedEmp]||[]).filter(function(s){return s.status!=='geplant'&&s.focusMetric===empChartMetric;}); // B9
         var fullPerf=(performance[selectedEmp]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
         // B1: CR aus den Rohzahlen des Fensters (erst summieren, dann teilen), Zählwerte als Ø je Tag
         function avgWindow(centerDate,daysBefore,daysAfter){

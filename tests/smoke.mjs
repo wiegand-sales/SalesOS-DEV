@@ -385,6 +385,22 @@ const b6 = await page.evaluate(`(function(){var mk=(+today().slice(0,4)+1)+'-03'
   return Math.round(all)+'/'+Math.round(teams)+'/'+(se>0&&se<all);})()`);
 check('B6: NL-Ziel anteilig auf Teams (Summe = NL-Ziel)', b6 === '100000/100000/true', b6);
 
+// B8: alte QA-Bewertung (vor 11.11.) wird in den alten Kategorien aufgeschlüsselt (Historie + Netzdiagramm)
+const b8 = await page.evaluate(`(async function(){var sv=callRatings.e1;window._selCallId=null;
+  callRatings.e1=[{id:'q1',date:'2026-10-01',status:'ja',scores:{intro:3,umgang:4,vertrauen:3,potenzial:2,kaufsignale:4,klarheit:3}}];
+  selectEmp('e1');switchTab('call-performance');await new Promise(function(r){setTimeout(r,400);});
+  var t=document.getElementById('tabContent').textContent,c=document.getElementById('callRadar'),n=c&&c._ci?c._ci.data.labels.length:-1;
+  callRatings.e1=sv;selectWiegandSub('overview');return /Einwandsentkräftung\\s*35 %/.test(t)+'/'+n;})()`);
+check('B8: alte QA-Bewertung in alten Kategorien', b8 === 'true/7', b8);
+// B9: überfällige geplante Session zählt nicht als abgeschlossen
+const b9 = await page.evaluate(`(function(){var sv=protocols.e1;
+  protocols.e1=[{id:'p1',date:addDaysUTC(today(),-3),status:'geplant',topics:['Einwand']},{id:'p2',date:addDaysUTC(today(),-10),status:'abgeschlossen'}];
+  selectEmp('e1');switchTab('session');var t=document.getElementById('tabContent').textContent;
+  protocols.e1=sv;selectWiegandSub('overview');var m=t.match(/· (\\d+) abgeschlossene Sessions/);return m?m[1]:'?';})()`);
+check('B9: überfällige geplante Session zählt nicht als abgeschlossen', b9 === '1', b9);
+{ const ext = fs.readFileSync(path.join(here, '..', 'extension', 'data.js'), 'utf8');
+  check('B10: Erweiterung erkennt SDC als Coach', /ownRow\.role === 'SDC'/.test(ext) && /e\.role !== 'SDC'/.test(ext)); }
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();
