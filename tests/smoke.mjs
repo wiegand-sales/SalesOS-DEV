@@ -412,6 +412,13 @@ const qaf = await page.evaluate(`(function(){var sv=callRatings.e1;callRatings.e
   closeModal('qaBewertungModal');callRatings.e1=sv;selectWiegandSub('overview');return r.join('/');})()`);
 check('QA: alte Bewertung behält beim Bearbeiten ihre alten Punkte', qaf === 'intro,kaufsignale,klarheit,potenzial,umgang,vertrauen/true/true', qaf);
 
+// Provisionsvereinbarung in der Mitarbeiterkarte: Coach sieht sie nur bei Sales Agents und SDL, Admin immer
+const pvc = await page.evaluate(`(function(){var sv=currentUserRole,e=employees[0],svR=e.role,r=[];
+  function hat(rolle,role){currentUserRole=rolle;e.role=role;return /id="esSec4"/.test(esBuildHtml(e,'panels','')||'')&&/id="esSec1"/.test(esBuildHtml(e,'panels','')||'');}
+  try{r=[hat('admin','SDC'),hat('coach','SDC'),hat('coach','SDM'),hat('coach','SE'),hat('coach','SDL'),hat('viewer','SDC')];}
+  finally{currentUserRole=sv;e.role=svR;}return r.join('/');})()`);
+check('Provisionsvereinbarung: Coach/Betrachter nur bei Sales Agents und SDL', pvc === 'true/false/false/true/true/false', pvc);
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 
