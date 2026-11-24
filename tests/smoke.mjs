@@ -248,6 +248,7 @@ check('Zielvereinbarung: Ziel = Tage × Opt./Tag × Marge/Opt.', zt.ziel);
 check('Zielvereinbarung: Tabelle Jahr/Monat/Mitarbeiter', zt.html && zt.os);
 const zw = await page.evaluate(`(function(){ZT.zv='w';var h=zielTreeHtml();ZT.zv='m';return {ok:/KW \\d+/.test(h)&&/Jahr \\d{4}/.test(h),leer:/01\\.11\\.–30\\.10\\./.test(h)};})()`);
 check('Zielvereinbarung: Wochenansicht', zw.ok && !zw.leer);
+check('Zielvereinbarung: keine alte Ansicht ohne Monatssperre mehr', await page.evaluate("typeof zielvereinbarungHtml==='undefined'&&typeof saveZielvereinbarung==='undefined'&&!/alte Ansicht/.test(zielTreeHtml())"));
 const au = await page.evaluate(`(function(){AU.view='k';selectAufgaben();var n=document.querySelectorAll('#mainArea .au-col').length,L=aufgAll(),k=L.length?L[0].key:null;if(k){var to=aufgStaff()[aufgStaff().length-1].key;aufgAssign(k,to);}var moved=k?aufgAll().find(function(o){return o.key===k;}).assignee===aufgStaff()[aufgStaff().length-1].key:true;AU.view='l';renderAufgaben();var list=!!document.querySelector('#mainArea .au-mine');AU.view='k';view='kalender';return {n:n,moved:moved,list:list};})()`);
 check('Aufgaben: Kanban mit Spalten je Person', au.n >= 1, au.n);
 check('Aufgaben: Neu zuweisen', au.moved);
