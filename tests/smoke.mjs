@@ -283,6 +283,42 @@ check('Coaching: zeigt den neuen Kalender', kalF.coach);
 check('Kalender: Filter blendet Flex Days aus', kalF.vor > 0 && kalF.nach === 0, kalF.vor + '→' + kalF.nach);
 await step("kalOpenForm('e1')"); await step("kalCloseForm()"); await step("KAL.open='e1';renderKalender()");
 
+// D6: Rolle wie in der Datenbank – app_users zuerst, Mail ohne Groß-/Kleinschreibung
+const d6 = await page.evaluate(`(async function(){
+  var keep={r:currentUserRole,c:currentCoach,f:coachFilterView,au:appUsers,gu:sb.auth.getUser,e0:employees[0].auth_user_id};
+  var res={};
+  sb.auth.getUser=function(){return Promise.resolve({data:{user:{id:'u1',email:'Chef@Firma.de'}}});};
+  employees[0].auth_user_id='u1';employees[0].boardRole='coach';
+  appUsers=[{id:'a1',authUserId:null,email:'chef@firma.de',name:'Chef',role:'admin'}];
+  await resolveCurrentCoach(); res.beide=currentUserRole;
+  appUsers=[];await resolveCurrentCoach(); res.nurMa=currentUserRole;
+  employees[0].auth_user_id=keep.e0;delete employees[0].boardRole;
+  appUsers=[{id:'a2',authUserId:null,email:'leser@firma.de',name:'Leser',role:'viewer'}];
+  sb.auth.getUser=function(){return Promise.resolve({data:{user:{id:'u9',email:'LESER@firma.de'}}});};
+  await resolveCurrentCoach(); res.gross=currentUserRole; res.name=resolveNonEmployeeName('Leser@Firma.de');
+  sb.auth.getUser=keep.gu;appUsers=keep.au;currentUserRole=keep.r;currentCoach=keep.c;coachFilterView=keep.f;
+  return res;})()`);
+check('D6: Benutzerliste vor Mitarbeiterliste (wie Datenbank)', d6.beide === 'admin' && d6.nurMa === 'coach', d6.beide + '/' + d6.nurMa);
+check('D6: Mail ohne Groß-/Kleinschreibung', d6.gross === 'viewer' && d6.name === 'Leser', d6.gross + '/' + d6.name);
+// D5: fehlgeschlagener Ladevorgang → Meldung, Nachladen per Knopf, Meldung verschwindet
+const d5 = await page.evaluate(`(async function(){
+  var orig=loadPerformanceFromSupabase,res={};
+  res.fehl=await startLoad('Test',function(){return Promise.reject(new Error('Netz'));});
+  res.falsch=await startLoad('Test',function(){return Promise.resolve(false);});
+  res.ok=await startLoad('Test',function(){return Promise.resolve(true);});
+  window.loadPerformanceFromSupabase=function(){return Promise.resolve(false);};
+  startRetryData(['Leistungsdaten'],1);
+  var t=document.getElementById('startRetry');res.zeigt=!!t&&/Leistungsdaten nicht geladen/.test(t.textContent)&&/Versuch 1 von 3/.test(t.textContent);
+  window.loadPerformanceFromSupabase=function(){return Promise.resolve(true);};
+  t.querySelector('button').click(); await new Promise(function(r){setTimeout(r,300);});
+  res.weg=!document.getElementById('startRetry');
+  startRetryData(['Leistungsdaten'],4); res.ende=/Seite neu laden/.test(document.getElementById('startRetry').textContent);
+  startRetryHide(); window.loadPerformanceFromSupabase=orig;
+  return res;})()`);
+check('D5: Startlader meldet Fehler statt abzubrechen', d5.fehl === 'Test' && d5.falsch === 'Test' && d5.ok === null);
+check('D5: Meldung mit automatischem Nachladen', d5.zeigt && d5.weg, JSON.stringify(d5));
+check('D5: nach 3 Versuchen „Seite neu laden“', d5.ende);
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();

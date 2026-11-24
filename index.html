@@ -2138,20 +2138,25 @@ function resolveCurrentCoach(){
     var match = employees.find(function(e){return e.auth_user_id===uid;});
     currentCoach = match || null;
     coachFilterView = currentCoach ? currentCoach.id : 'overview';
-    if(currentCoach && currentCoach.boardRole && BOARD_ROLE_LABEL[currentCoach.boardRole]){
+    // Rolle wie in der Datenbank (board_role()): zuerst app_users (Login-ID oder Mail ohne Groß-/Kleinschreibung, Admin vor Betrachter),
+    // dann employees.board_role, dann die Position.
+    var lm=String(email||'').toLowerCase();
+    var auAll=appUsers.filter(function(u){return (uid&&u.authUserId===uid)||(lm&&String(u.email||'').toLowerCase()===lm);});
+    var au=auAll.find(function(u){return u.role==='admin';})||auAll[0]||null;
+    if(au){
+      currentUserRole = au.role==='admin' ? 'admin' : 'viewer';
+    } else if(currentCoach && currentCoach.boardRole && BOARD_ROLE_LABEL[currentCoach.boardRole]){
       // bewusst gesetzte Board-Rolle geht vor der Position
       currentUserRole=currentCoach.boardRole;
-    } else if(currentCoach && !(currentCoach.isPureCoach || currentCoach.role==='SDC' || currentCoach.role==='SDM' || currentCoach.role==='SDL')){
+    } else if(currentCoach && !(currentCoach.isPureCoach || currentCoach.role==='SC' || currentCoach.role==='SDC' || currentCoach.role==='SDM' || currentCoach.role==='SDL')){
       // Mitarbeiter mit Login, aber kein Coach: Agent (nutzt nur die Chrome-Erweiterung, kein Board-Zugang)
       currentUserRole='agent';
     } else if(currentCoach){
       currentUserRole='coach';
     } else {
-      var au=appUsers.find(function(u){return u.authUserId===uid;})||appUsers.find(function(u){return u.email===email;});
       // Unbekannter Login ohne Eintrag bekommt KEINEN Zugriff. Ausnahme: die fest hinterlegten Admin-Adressen,
       // damit Admins nicht ausgesperrt werden, falls die Benutzerliste einmal nicht geladen werden kann.
-      var lm=String(email||'').toLowerCase();
-      currentUserRole = au ? au.role : (ADMIN_NAME_MAP[lm] ? 'admin' : 'none');
+      currentUserRole = ADMIN_NAME_MAP[lm] ? 'admin' : 'none';
     }
   }).catch(function(){currentCoach=null;currentAuthUser=null;currentUserRole=null;});
 }
@@ -2218,20 +2223,71 @@ function showNoAccessLock(){
   document.body.appendChild(d);
   document.getElementById('noAccessLogout').onclick=function(){ d.remove(); logout(); };
 }
+// ── D5: Startfehler – fehlende Teile automatisch nachladen (Variante C, Peter 24.11.2026) ──
+var START_LOADERS=[['Leistungsdaten',function(){return loadPerformanceFromSupabase();}],['Protokolle',function(){return loadProtocolsFromSupabase();}],
+  ['Call-Bewertungen',function(){return loadCallRatingsFromSupabase();}],['Aufgaben (alt)',function(){return loadTasksFromSupabase();}],
+  ['Entwicklungs-Bewertungen',function(){return loadReviewsFromSupabase();}],['KPI-Ziele',function(){return loadKpiTargetsFromSupabase();}],
+  ['Bewertungskriterien',function(){return loadRatingCriteriaFromSupabase();}],['Einstellungen',function(){return loadSettingsFromSupabase();}],
+  ['Mitarbeiter-Ziele',function(){return loadEmployeeKpiTargetsFromSupabase();}],['Änderungshistorie',function(){return loadEmployeeHistoryFromSupabase();}],
+  ['Arbeitszeit-Verlauf',function(){return loadEmployeeVerlaufFromSupabase();}],['Dokumente',function(){return loadEmployeeDocumentsFromSupabase();}],
+  ['Ziele',function(){return loadGoalsFromSupabase();}],['Admin-Protokoll',function(){return loadAdminAuditLogFromSupabase();}],
+  ['Aktivitätsprotokoll',function(){return loadActivityLogFromSupabase();}],['Zielvereinbarung',function(){return loadZielvereinbarungFromSupabase();}],
+  ['Abwesenheiten',function(){return loadAbsencesFromSupabase();}],['Zielsperren',function(){return loadZielLocksFromSupabase();}],
+  ['Aufgaben',function(){return loadAufgabenFromSupabase();}]];
+var START_RETRY_MAX=3, START_RETRY_SEC=10, _startTimer=null, _startBaseTry=0;
+function startLoad(name,fn){ // liefert null bei Erfolg, sonst den Namen
+  return Promise.resolve().then(fn).then(function(r){return r===false?name:null;},function(e){console.warn('Start: '+name+' nicht geladen',e);return name;});
+}
+function startRetryHide(){ if(_startTimer){clearTimeout(_startTimer);_startTimer=null;} var t=document.getElementById('startRetry'); if(t)t.remove(); }
+function startRetryShow(names,txt,btn,onBtn){
+  var t=document.getElementById('startRetry');
+  if(!t){ t=document.createElement('div'); t.id='startRetry'; t.setAttribute('role','status');
+    t.style.cssText='position:fixed;right:24px;bottom:24px;z-index:7000;width:340px;box-sizing:border-box;background:#F7F5F0;border:1px solid #E9A58F;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 14px rgba(60,40,30,.12);font-size:13px';
+    document.body.appendChild(t); }
+  t.innerHTML='<strong style="font-size:14px;color:#8a2f17">'+esc(names.join(', '))+' nicht geladen</strong><span style="color:#5c4a42">'+esc(txt)+'</span><div><button class="btn btn-primary" type="button">'+esc(btn)+'</button></div>';
+  t.querySelector('button').onclick=onBtn;
+}
+function startRetryData(names,n){
+  if(_startTimer){clearTimeout(_startTimer);_startTimer=null;}
+  if(n>START_RETRY_MAX){ startRetryShow(names,'Automatische Versuche erfolglos. Zahlen und Listen können unvollständig sein.','Seite neu laden',function(){location.reload();}); return; }
+  var run=function(){
+    startRetryHide();
+    Promise.all(START_LOADERS.filter(function(x){return names.indexOf(x[0])>=0;}).map(function(x){return startLoad(x[0],x[1]);})).then(function(f){
+      f=f.filter(Boolean);
+      var b=document.getElementById('fst-banner'); if(b&&Object.keys(performance).some(function(k){return performance[k]&&performance[k].length;}))b.remove();
+      try{renderSidebar();renderMain();}catch(e){console.warn('Neu zeichnen nach Nachladen',e);}
+      if(f.length)startRetryData(f,n+1);
+    });
+  };
+  startRetryShow(names,'Neuer Versuch in '+START_RETRY_SEC+' Sekunden (Versuch '+n+' von '+START_RETRY_MAX+').','Jetzt neu laden',run);
+  _startTimer=setTimeout(run,START_RETRY_SEC*1000);
+}
+function startRetryBase(names){ // Mitarbeiter/Benutzer fehlen: ganzen Start wiederholen
+  _startBaseTry++;
+  if(_startBaseTry>START_RETRY_MAX){ startRetryShow(names,'Automatische Versuche erfolglos. Bitte später neu laden.','Seite neu laden',function(){location.reload();}); return; }
+  var run=function(){ if(_startTimer){clearTimeout(_startTimer);_startTimer=null;} _appInitStarted=false; initAppAfterLogin(); };
+  startRetryShow(names,'Neuer Versuch in '+START_RETRY_SEC+' Sekunden (Versuch '+_startBaseTry+' von '+START_RETRY_MAX+').','Jetzt neu laden',run);
+  _startTimer=setTimeout(run,START_RETRY_SEC*1000);
+}
 function initAppAfterLogin(){
   if(_appInitStarted)return;   // verhindert doppelten Init durch ueberlappende Auth-Events
   _appInitStarted = true;
   document.getElementById('auth-gate').style.display = 'none';
-  loadEmployeesFromSupabase().then(function(){
-    return loadAppUsersFromSupabase();
-  }).then(function(){
+  // D5: Fehlschlag (false oder Ausnahme) bricht den Start nicht mehr ab; Mitarbeiter/Benutzer werden sonst neu versucht,
+  // statt fälschlich „Kein Zugang“ zu zeigen.
+  Promise.all([startLoad('Mitarbeiter',loadEmployeesFromSupabase), startLoad('Benutzer',loadAppUsersFromSupabase)]).then(function(f){
+    f=f.filter(Boolean);
+    if(f.length){ startRetryBase(f); return 'retry'; }
+    startRetryHide();
     return resolveCurrentCoach();
-  }).then(function(){
+  }).then(function(st){
+    if(st==='retry')return;
     if(currentUserRole==='agent'){ showAgentLock(); return; }
     if(currentUserRole==='none'){ showNoAccessLock(); return; }
-    Promise.all([loadPerformanceFromSupabase(), loadProtocolsFromSupabase(), loadCallRatingsFromSupabase(), loadTasksFromSupabase(), loadReviewsFromSupabase(), loadKpiTargetsFromSupabase(), loadRatingCriteriaFromSupabase(), loadSettingsFromSupabase(), loadEmployeeKpiTargetsFromSupabase(),loadEmployeeHistoryFromSupabase(), loadEmployeeVerlaufFromSupabase(), loadEmployeeDocumentsFromSupabase(), loadGoalsFromSupabase(), loadAdminAuditLogFromSupabase(), loadActivityLogFromSupabase(), loadZielvereinbarungFromSupabase(), loadAbsencesFromSupabase(), loadZielLocksFromSupabase(), loadAufgabenFromSupabase()]).then(function(){
+    Promise.all(START_LOADERS.map(function(x){return startLoad(x[0],x[1]);})).then(function(f){
       lsLoad();               // Rest der Daten (protocols, ...) bleibt vorerst lokal
       runAppInit();
+      f=f.filter(Boolean); if(f.length) startRetryData(f,1);
       logAppOpen(); // Zugriff protokollieren (max. 1 Eintrag je 30 Min. und Nutzer)
       if(window._freshLoginClick){
         window._freshLoginClick=false;
@@ -3300,10 +3356,14 @@ function loadActivityLogFromSupabase(){
     return true;
   });
 }
+function appUserByEmail(email){ // Mail ohne Groß-/Kleinschreibung, wie in der Datenbank
+  var lm=String(email||'').toLowerCase(); if(!lm)return null;
+  return appUsers.find(function(u){return String(u.email||'').toLowerCase()===lm;})||null;
+}
 function resolveNonEmployeeName(email){
   if(!email)return null;
-  var au=appUsers.find(function(u){return u.email===email;});
-  return (au&&au.name)||ADMIN_NAME_MAP[email]||email;
+  var au=appUserByEmail(email);
+  return (au&&au.name)||ADMIN_NAME_MAP[String(email).toLowerCase()]||email;
 }
 // Zentrale Protokollierungsfunktion – von allen mutierenden Aktionen aufgerufen.
 // Feuert asynchron (kein await nötig), fügt lokal sofort ein optimistisches Eintrag hinzu.
@@ -12710,7 +12770,7 @@ function saveEmpEinstellungen(){
   var actorName=null;
   if(typeof currentCoach!=='undefined'&&currentCoach)actorName=currentCoach.name;
   else if(typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof appUsers!=='undefined'){
-    var _mu=appUsers.find(function(u){return u.email===currentAuthUser.email;});
+    var _mu=appUserByEmail(currentAuthUser.email);
     if(_mu)actorName=_mu.name;
   }
   var histRows=[];
@@ -12918,7 +12978,7 @@ function saveProvisionSettings(empId){
   var actorNamePv=null;
   if(typeof currentCoach!=='undefined'&&currentCoach)actorNamePv=currentCoach.name;
   else if(typeof currentAuthUser!=='undefined'&&currentAuthUser&&typeof appUsers!=='undefined'){
-    var _mu2=appUsers.find(function(u){return u.email===currentAuthUser.email;});
+    var _mu2=appUserByEmail(currentAuthUser.email);
     if(_mu2)actorNamePv=_mu2.name;
   }
   var pvHistRows=[];
