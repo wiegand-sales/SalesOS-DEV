@@ -915,7 +915,13 @@ if(!hasData){
   showView('team');
 }
 }
-function perfRefreshToday(){if(typeof sb==='undefined'||!sb)return Promise.resolve(false);var t=today();_perfTodayT=Date.now();
+// Zeitpunkt des letzten Datenabgleichs neu lesen. Sonst rechnet „bisher gearbeitet“ (Soll-Linie, persönliches Soll, Opt./Std. heute)
+// auf lange offenen Seiten weiter mit der Abgleich-Zeit vom Seitenstart, während die Zahlen nachgeladen werden.
+function ftpLastSyncNachladen(){if(typeof sb==='undefined'||!sb)return Promise.resolve(false);
+  try{return Promise.resolve(sb.from('settings').select('value').eq('key','ftpLastSync')).then(function(res){
+    if(!res||res.error||!res.data||!res.data.length||!res.data[0].value)return false;settings.ftpLastSync=res.data[0].value;return true;},function(){return false;});}
+  catch(e){return Promise.resolve(false);}}
+function perfRefreshToday(){if(typeof sb==='undefined'||!sb)return Promise.resolve(false);var t=today();_perfTodayT=Date.now();ftpLastSyncNachladen();
   return sb.from('performance').select(PERF_COLS).eq('date',t).then(function(res){if(!res||res.error){console.warn('Leistungsdaten heute',res&&res.error);return false;}
     var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push(perfRowMap(r));});
     Object.keys(by).forEach(function(id){performance[id]=(performance[id]||[]).filter(function(x){return x.date!==t;}).concat(by[id]);});

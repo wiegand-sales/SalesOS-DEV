@@ -383,7 +383,7 @@ function dshLivePull(){var el=document.getElementById('dshLiveBox');if(!el||docu
   var PAGE=1000,rows=[];
   function page(off){var qq;try{qq=sb.from('performance').select(PERF_COLS);if(!qq||typeof qq.gte!=='function')return Promise.resolve(null);}catch(e){return Promise.resolve(null);}
     return qq.gte('date',from).order('employee_id').order('date').range(off,off+PAGE-1).then(function(res){if(!res||res.error)return null;var d=res.data||[];rows=rows.concat(d);return d.length===PAGE?page(off+PAGE):{data:rows};});}
-  page(0).then(function(res){if(!res)return;var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push({
+  Promise.all([page(0),ftpLastSyncNachladen()]).then(function(a){var res=a[0];if(!res)return;var by={};(res.data||[]).forEach(function(r){(by[r.employee_id]=by[r.employee_id]||[]).push({
       date:r.date,notReached:r.oem_nicht_erreicht,notPossible:r.oem_nicht_moeglich,notSuccessful:r.oem_nicht_erfolgreich,convTW:r.oem_tw,convYes:r.oem_yes,convSY:r.oem_sy,convMY:r.oem_my,ups_yes:r.ups_yes,wka_gesamt_yes:r.wka_gesamt_yes,
       margeOEM:r.oem_margenerhoehung,margeUpsell:r.ups_margenerhoehung,margeWKA:r.wka_margenerhoehung,convOEM:r.oem_gesamt,oem_aktivitaeten:r.oem_aktivitaeten,optGesamt:r.gesamt_optimierungen,margeGesamt:r.gesamt_margenerhoehung,
       gesamtAktivitaeten:r.gesamt_aktivitaeten,gesamtNichtErreicht:r.gesamt_nicht_erreicht,gesamtNichtMoeglich:r.gesamt_nicht_moeglich,gesamtNichtErfolgreich:r.gesamt_nicht_erfolgreich,upsNichtErfolgreich:r.ups_nicht_erfolgreich,

@@ -420,6 +420,13 @@ const pvc = await page.evaluate(`(function(){var sv=currentUserRole,e=employees[
   finally{currentUserRole=sv;e.role=svR;currentCoach=svC;}return r.join('/');})()`);
 check('Provisionsvereinbarung: Coach/Betrachter nur bei Sales Agents und SDL, eigene immer', pvc === 'true/false/false/true/true/false/true', pvc);
 
+// Soll „bisher gearbeitet“: beim Nachladen wird auch die Abgleich-Zeit neu gelesen (sonst bleibt das Soll auf dem Stand vom Seitenstart)
+const fls = await page.evaluate(`(async function(){var o=sb.from,sv=settings.ftpLastSync;settings.ftpLastSync='2026-01-01T08:00:00Z';
+  sb.from=function(t){if(t==='settings')return {select:function(){return {eq:function(){return Promise.resolve({data:[{value:'2026-11-24T15:20:00Z'}],error:null});}};}};return o.apply(this,arguments);};
+  try{await ftpLastSyncNachladen();return settings.ftpLastSync;}finally{sb.from=o;settings.ftpLastSync=sv;}})()`);
+{ const src = gesamtText(path.resolve(file));
+  check('Soll heute: Nachladen holt auch die Abgleich-Zeit', fls === '2026-11-24T15:20:00Z' && /Promise\.all\(\[page\(0\),ftpLastSyncNachladen\(\)\]\)/.test(src) && /_perfTodayT=Date\.now\(\);ftpLastSyncNachladen\(\);/.test(src), fls); }
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 
