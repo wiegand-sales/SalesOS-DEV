@@ -225,6 +225,19 @@ const c10 = await page.evaluate(`(async function(){var e=kalEmp('e1'),sv=e.notes
   e.notes='alt2';closeEmpSetModal();openEmpSetModal('e1');e.notes='neu2';document.getElementById('es-notes').value='meins';window.confirm=function(){return false;};saveEmpEinstellungen();r.push(e.notes);await w();
   window.confirm=cf;closeEmpSetModal();e.notes=sv;return r.join('/');})()`);
 check('Einstellungen: veraltetes Formular überschreibt neuere Notiz nicht', c10 === 'neu/neu2', c10);
+const c8 = await page.evaluate(`(async function(){var sv=sb,svR=reviews.e1,cf=window.confirm,log=[],day=null,w=function(){return new Promise(function(r){setTimeout(r,40);});};
+  function ch(t){var o={t:t,op:'select',args:[]};var c={};['select','eq','in','order','limit','single','maybeSingle'].forEach(function(k){c[k]=function(){if(k==='eq'||k==='in')o.args.push([].slice.call(arguments));return c;};});
+    ['update','insert','upsert','delete'].forEach(function(k){c[k]=function(){o.op=k;return c;};});
+    c.then=function(r,j){log.push(o.t+':'+o.op+(o.op==='delete'?':'+JSON.stringify(o.args[0][1]):''));var d=o.op==='select'?(day||[]):o.op==='update'?{id:o.args[0][1]}:o.op==='insert'?{id:'neu'}:null;return Promise.resolve({data:d,error:null}).then(r,j);};return c;}
+  var t=today(),d1=addDaysUTC(t,-20),d2=addDaysUTC(t,-10),base={opener:5,einwand:5,note:''};
+  reviews.e1=[Object.assign({id:'r1',date:d1},base),Object.assign({id:'r2',date:d2},base)];sb={from:ch};var r=[];
+  openCoachingEval('e1','r1');document.getElementById('cev-date').value=addDaysUTC(t,-15);day=[];saveCoachEval('e1','r1');await w();
+  r.push(reviews.e1.filter(function(x){return x.id==='r1';}).length+'x'+reviews.e1.find(function(x){return x.id==='r1';}).date.slice(5)+'/'+reviews.e1.length);
+  log=[];window.confirm=function(){return false;};document.getElementById('cev-date').value=d2;day=[{id:'r2'}];saveCoachEval('e1',null);await w();r.push(log.join(','));
+  log=[];window.confirm=function(){return true;};saveCoachEval('e1',null);await w();r.push(log.filter(function(x){return /reviews:(update|insert)/.test(x);}).join(','));
+  window.confirm=cf;sb=sv;reviews.e1=svR;var m=document.getElementById('cevModal');if(m)m.remove();try{puResetAll();}catch(x){}
+  return {r:r,soll:'1x'+addDaysUTC(t,-15).slice(5)+'/2'};})()`);
+check('Entwicklung: Datum ändern ersetzt, zweite am Tag nur nach Rückfrage', c8.r[0] === c8.soll && c8.r[1] === 'reviews:select' && c8.r[2] === 'reviews:update', JSON.stringify(c8.r));
 const zt = await page.evaluate(`(function(){var mk=today().slice(0,7);var nx=kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),1)).slice(0,7);var e=employees[0];
   zielStore[nx]=zielStore[nx]||{};zielStore[nx][e.id]={optTag:20,margeOpt:50,weeks:[1,1,1,1,1]};
   var calOld=ZT_KAL_START;ZT_KAL_START=nx;var x=ztEmpMonth(e,nx);var wd=0;ztDaysOfMonth(nx).forEach(function(d){if(kalWorkday(e,d)&&!(kalOn(e.id,d)&&kalOn(e.id,d).art!=='krank'))wd++;});

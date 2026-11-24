@@ -10633,7 +10633,7 @@ function openCoachingEval(empId,editEvalId){
   }
   window._cevAfterSave=function(){var wasEdit=!!st.editId;setEdit(null);renderList();toast(wasEdit?'Änderung gespeichert':'Bewertung gespeichert');};
   $('cevCancelEdit').onclick=function(){setEdit(null);};
-  $('cevSave').onclick=function(){saveCoachEval(empId);};
+  $('cevSave').onclick=function(){saveCoachEval(empId,st.editId);};
   var e0=editEvalId?evals().find(function(r){return String(r.id)===String(editEvalId);}):null;
   setEdit(e0||null);renderList();
 
@@ -10701,7 +10701,7 @@ function openGoalInPopup(empId){
   setTimeout(function(){var el=document.getElementById('cevSec3');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});var d=document.getElementById('cevg-desc');if(d)d.focus();},80);
 }
 var _savingCoachEval=false;
-function saveCoachEval(empId){
+function saveCoachEval(empId,editId){
   if(_savingCoachEval)return;
   var KEYS=['opener','einwand','loop','bedarf','abschluss','gespraech','zusammenfassung','produkt','motivation','coach','zuverl','team','crOEM','crTW','crSY','crMY'];
   var dateEl=document.getElementById('cev-date');
@@ -10716,9 +10716,12 @@ function saveCoachEval(empId){
     entry[k]=el?parseInt(el.value):5;
   });
   _savingCoachEval=true;
-  sb.from('reviews').select('id').eq('employee_id',empId).eq('type','Mitarbeiterentwicklung').eq('date',date).maybeSingle().then(function(existRes){
+  sb.from('reviews').select('id').eq('employee_id',empId).eq('type','Mitarbeiterentwicklung').eq('date',date).then(function(existRes){
     if(existRes.error){_savingCoachEval=false;alert('Fehler beim Speichern: '+existRes.error.message);return;}
-    var existingId=existRes.data?existRes.data.id:null;
+    // C8: Bearbeiten ersetzt die bearbeitete Zeile (auch bei neuem Datum); eine andere Bewertung am selben Tag nur nach Rückfrage ersetzen
+    var other=(existRes.data||[]).map(function(r){return r.id;}).filter(function(id){return String(id)!==String(editId||'');});
+    if(other.length&&!confirm('Am '+fd(date)+' gibt es schon eine Bewertung.\n\nOK = diese ersetzen\nAbbrechen = nicht speichern (z. B. anderes Datum wählen)')){_savingCoachEval=false;return;}
+    var existingId=editId||other[0]||null,drop=other.filter(function(id){return String(id)!==String(existingId);});
     var payload={employee_id:empId,type:'Mitarbeiterentwicklung',date:date,status:'abgeschlossen',notes:note};
     var upsert=existingId
       ? sb.from('reviews').update(payload).eq('id',existingId).select().single()
@@ -10731,7 +10734,8 @@ function saveCoachEval(empId){
         _savingCoachEval=false;
         if(res2.error)alert('Bewertung gespeichert, aber die Einzel-Werte (12 Dimensionen) konnten NICHT gespeichert werden: '+res2.error.message);
         if(!reviews[empId])reviews[empId]=[];
-        reviews[empId]=reviews[empId].filter(function(r){return !(r.date===date&&r.einwand!==undefined);});
+        reviews[empId]=reviews[empId].filter(function(r){return String(r.id)!==String(reviewId)&&!(drop.some(function(id){return String(id)===String(r.id);}))&&!(r.date===date&&r.einwand!==undefined);});
+        if(drop.length)sb.from('review_kpis').delete().in('review_id',drop).then(function(){return sb.from('reviews').delete().in('id',drop);}).then(function(rd){if(rd&&rd.error)alert('Die ersetzte Bewertung konnte nicht gelöscht werden: '+rd.error.message);});
         entry.id=reviewId;
         reviews[empId].push(entry);
         var e0=employees.find(function(x){return x.id===empId;});
