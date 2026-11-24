@@ -237,6 +237,12 @@ const c8 = await page.evaluate(`(async function(){var sv=sb,svR=reviews.e1,cf=wi
   log=[];window.confirm=function(){return true;};saveCoachEval('e1',null);await w();r.push(log.filter(function(x){return /reviews:(update|insert)/.test(x);}).join(','));
   window.confirm=cf;sb=sv;reviews.e1=svR;var m=document.getElementById('cevModal');if(m)m.remove();try{puResetAll();}catch(x){}
   return {r:r,soll:'1x'+addDaysUTC(t,-15).slice(5)+'/2'};})()`);
+const c12 = await page.evaluate(`(async function(){var sv=sb,svC=settings.liveConfig,out=null,db={crOEM:20,feiern:{a:1,b:2},zeitplan:{x:1}};
+  sb={from:function(){var c={},up=null;['select','eq'].forEach(function(k){c[k]=function(){return c;};});c.maybeSingle=function(){return Promise.resolve({data:{value:JSON.stringify(db)},error:null});};
+    c.upsert=function(row){out=JSON.parse(row.value);return Promise.resolve({error:null});};return c;}};
+  settings.liveConfig={crOEM:20,feiern:{a:1,b:1}};await new Promise(function(r){liveCfgSave({crOEM:25,feiern:{a:0,b:1}},r);});
+  var res=JSON.stringify(out),loc=JSON.stringify(settings.liveConfig);sb=sv;settings.liveConfig=svC;return res+'|'+loc;})()`);
+check('Live-Einstellungen: nur Geändertes auf frischen Stand schreiben', c12 === '{"crOEM":25,"feiern":{"a":0,"b":2},"zeitplan":{"x":1}}|{"crOEM":25,"feiern":{"a":0,"b":2},"zeitplan":{"x":1}}', c12);
 check('Entwicklung: Datum ändern ersetzt, zweite am Tag nur nach Rückfrage', c8.r[0] === c8.soll && c8.r[1] === 'reviews:select' && c8.r[2] === 'reviews:update', JSON.stringify(c8.r));
 const zt = await page.evaluate(`(function(){var mk=today().slice(0,7);var nx=kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),1)).slice(0,7);var e=employees[0];
   zielStore[nx]=zielStore[nx]||{};zielStore[nx][e.id]={optTag:20,margeOpt:50,weeks:[1,1,1,1,1]};

@@ -4237,12 +4237,22 @@ function liveNewKey(){if(currentUserRole!=='admin')return;
     settings.liveKey=k;LIVE.msg='Neue Adresse erzeugt. Bitte auf den Fernsehern neu öffnen.';
     if(typeof logActivity==='function'){try{logActivity('employee','updated','Live-Ansicht: neue Adresse erzeugt');}catch(e){}}
     renderLive();});}
+// C12: liveConfig nie blind überschreiben – nur geänderte Schlüssel (bei Objekten je Unterschlüssel) auf den frisch geladenen Stand setzen
+function liveCfgDiff(base,next){base=base||{};var p={},J=JSON.stringify,isO=function(v){return v&&typeof v==='object'&&!Array.isArray(v);};
+  Object.keys(next||{}).forEach(function(k){var a=base[k],b=next[k];if(J(a)===J(b))return;
+    if(isO(a)&&isO(b)){var sub={},del=[];Object.keys(b).forEach(function(j){if(J(a[j])!==J(b[j]))sub[j]=b[j];});Object.keys(a).forEach(function(j){if(!(j in b))del.push(j);});p[k]={sub:sub,del:del};}else p[k]={v:b};});return p;}
+function liveCfgApply(cur,p){var c=Object.assign({},cur||{});Object.keys(p).forEach(function(k){var x=p[k];if(x.sub){var o=Object.assign({},(c[k]&&typeof c[k]==='object'&&!Array.isArray(c[k]))?c[k]:{},x.sub);x.del.forEach(function(j){delete o[j];});c[k]=o;}else c[k]=x.v;});return c;}
+function liveCfgSave(next,cb){var p=liveCfgDiff(settings.liveConfig,next);if(!Object.keys(p).length){cb({error:null});return;}
+  sb.from('settings').select('value').eq('key','liveConfig').maybeSingle().then(function(r){if(r&&r.error){cb(r);return;}
+    var v=r&&r.data&&!Array.isArray(r.data)?r.data.value:null,cur={};try{cur=typeof v==='string'?(JSON.parse(v||'{}')||{}):(v||{});}catch(e){cur={};}
+    var c=liveCfgApply(cur,p);return sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){if(!(res&&res.error))settings.liveConfig=c;cb(res||{error:null});});
+  }).catch(function(err){cb({error:{message:(err&&err.message)||String(err)}});});}
 function liveSaveCfg(){if(currentUserRole!=='admin')return;var g=function(id){var el=document.getElementById(id);return el?el.value.replace(',','.'):'';};
   var c={crOEM:g('liveCrOem'),crMY:g('liveCrMy'),knappOEM:g('liveKnOem'),knappMY:g('liveKnMy'),optProStd:g('liveOph')};
   Object.keys(c).forEach(function(k){c[k]=c[k]===''?null:+c[k];if(c[k]!=null&&isNaN(c[k]))c[k]=null;});c=Object.assign({},settings.liveConfig||{},c);
-  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
+  liveCfgSave(c,function(res){
     if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}
-    settings.liveConfig=c;LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
+    LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
 var LIVE_TAB='uebersicht';
 function liveTab(t){LIVE_TAB=t;renderLive();}
 function liveTest(k){LIVE.test=k;LIVE.testN=(LIVE.testN||0)+1;var f=document.getElementById('liveFrame');if(f)f.src=liveUrl(true)+'&test='+encodeURIComponent(k)+'&r='+LIVE.testN;}
@@ -4255,7 +4265,7 @@ function liveSettingsSave(){if(currentUserRole!=='admin')return;var g=function(i
   var fo={};figPeople().forEach(function(e){var el=document.getElementById('set_fokus_'+e.id);fo[e.id]=el?el.value:figFokus(e);});
   var c=Object.assign({},settings.liveConfig||{},{crOEM:n('ls_fo'),knappOEM:n('ls_fok'),crMY:n('ls_my'),knappMY:n('ls_myk'),crTW:n('ls_tw'),knappTW:n('ls_twk'),crSM:n('ls_sm'),knappSM:n('ls_smk'),crAO:n('ls_ao'),knappAO:n('ls_aok'),optProStd:n('ls_oph'),fokus:fo,
     feiern:{aufstieg:cb('lf_auf'),ziel:cb('lf_ziel'),marge:cb('lf_marge'),margeSchwelle:n('lf_margeS')||2000,auftrag:cb('lf_auftrag'),auftragSchwelle:n('lf_auftragS')||500,team:cb('lf_team'),teamSchritt:n('lf_teamS')||100,zaehlen:cb('lf_zaehl'),kippen:cb('lf_kipp')},dori:{cameo:cb('ld_cameo')}});
-  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
+  liveCfgSave(c,function(res){if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}LIVE.msg='Einstellungen gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
 function liveFokusSet(id,v){var el=document.getElementById('set_fokus_'+id);if(el)el.value=v;var g=document.getElementById('fk_'+id);if(g)g.querySelectorAll('button').forEach(function(x){x.className=x.textContent===v?'on':'';});}
 function liveSettingsHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',c=settings.liveConfig||{},F=c.feiern||{},Dr=c.dori||{};
   var inp='height:32px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);width:80px';
@@ -4490,8 +4500,8 @@ function figRead(){var out={};figPeople().forEach(function(e,i){var g=function(k
 function figPreview(id){var all=figRead(),el=document.getElementById('fig_p_'+id),e=figPeople().find(function(x){return String(x.id)===String(id);});if(el&&all[id])el.innerHTML=kidSvg(Object.assign({letter:e?String(e.name||'').charAt(0):''},all[id]));}
 function figFokus(e){var f=((settings.liveConfig||{}).fokus||{})[e.id];if(f)return f;var n=String(e.name||'').split(' ')[0];return /^bianca$/i.test(n)?'UPS':/^abenezer$/i.test(n)?'WKA':'OEM';}
 function figSave(){if(currentUserRole!=='admin')return;var fo={};figPeople().forEach(function(e){var el=document.getElementById('fig_fokus_'+e.id);fo[e.id]=el?el.value:figFokus(e);});var c=Object.assign({},settings.liveConfig||{},{figuren:figRead(),fokus:fo});
-  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
-    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;FIG.msg='Figuren gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
+  liveCfgSave(c,function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}FIG.msg='Figuren gespeichert. Die Fernseher übernehmen sie innerhalb einer Minute.';renderLive();});}
 function figMore(id){var d=document.getElementById('fig_m_'+id);if(d){var op=d.style.display==='none';d.style.display=op?'grid':'none';FIG.open=FIG.open||{};FIG.open[id]=op;}}
 function figHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled',P=figPeople();
   var inp='height:30px;box-sizing:border-box;font-size:12px;padding:0 6px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);min-width:0';
@@ -4530,8 +4540,8 @@ function zpbSave(){if(currentUserRole!=='admin')return;var zpl={};
   ZPB_ROWS.forEach(function(r){var k=r[0],g=function(id){return document.getElementById('zp_'+id+'_'+k);};var o={on:!!(g('on')&&g('on').checked),t:(g('t')&&g('t').value)||ZPB_DEF[k].t};
     if(g('wd'))o.wd=g('wd').value===''?null:+g('wd').value;if(g('min'))o.min=Math.max(1,+g('min').value||2);if(g('bis'))o.bis=g('bis').value||'13:00';zpl[k]=o;});
   var c=Object.assign({},settings.liveConfig||{},{zeitplan:zpl});
-  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(c)},{onConflict:'key'}).then(function(res){
-    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}settings.liveConfig=c;ZPB.msg='Zeitplan gespeichert. Die Fernseher übernehmen ihn innerhalb einer Minute.';renderLive();});}
+  liveCfgSave(c,function(res){
+    if(res&&res.error){alert('Speichern fehlgeschlagen: '+res.error.message);return;}ZPB.msg='Zeitplan gespeichert. Die Fernseher übernehmen ihn innerhalb einer Minute.';renderLive();});}
 function zpbHtml(){var adm=currentUserRole==='admin',dis=adm?'':' disabled';
   var inp='height:34px;box-sizing:border-box;font-size:13px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text)';
   var WD=[['','täglich'],['1','Montag'],['2','Dienstag'],['3','Mittwoch'],['4','Donnerstag'],['5','Freitag']];
@@ -4551,7 +4561,7 @@ function liveZieleCalc(){var out={};(employees||[]).forEach(function(e){if(e.act
   out[e.id]={fo:t.crOEM&&t.crOEM.val,my:t.crMegaYes&&t.crMegaYes.val,tw:t.crTeilweise&&t.crTeilweise.val,sm:t.crSyMy&&t.crSyMy.val,ao:t.anteilOEM&&t.anteilOEM.val,oph:t.optPerH&&t.optPerH.val};});return out;}
 function liveZieleSync(){try{if(currentUserRole!=='admin'||!employees||!employees.length||typeof sb==='undefined')return;var z=liveZieleCalc(),c=settings.liveConfig||{};
   if(JSON.stringify(c.ziele||{})===JSON.stringify(z))return;var n=Object.assign({},c,{ziele:z,zieleStand:today()});
-  sb.from('settings').upsert({key:'liveConfig',value:JSON.stringify(n)},{onConflict:'key'}).then(function(res){if(!(res&&res.error))settings.liveConfig=n;});}catch(e){}}
+  liveCfgSave(n,function(){});}catch(e){}}
 setInterval(liveZieleSync,10*60*1000);setTimeout(liveZieleSync,20000);
 
 function selectLive(){view='live';bannerViewMode='overview';resetBannerRotation();renderSidebar();renderMain();}
