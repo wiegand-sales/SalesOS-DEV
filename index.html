@@ -14206,7 +14206,7 @@ function kalEval(r){var e=kalEmp(r.employeeId),H=[];if(!e)return {n:0,H:[{t:'err
     var G=kalRules().freiGrenze,tb=kalRules().freiBezug==='team',hit={};ds.forEach(function(d){var o=kalFreeFor(d,e,r.id);if(o.length>=G)hit[d]=o;});
     var hd=Object.keys(hit);if(hd.length){var nm={};hd.forEach(function(d){hit[d].forEach(function(o){nm[o.e.name+(o.x.status==='offen'?' (beantragt)':'')]=1;});});
       H.push({t:'warn',h:'Am '+hd.map(kalF).join(', ')+' haben '+(tb?'im Team '+esc(kalTeamOf(e)):'in '+loc)+' schon <b>'+G+' oder mehr andere frei</b>: '+esc(Object.keys(nm).join(', '))+'. Eintragen geht trotzdem.'});}
-    var isFx=r.art==='flex'||(!r.verschobenVon&&v<15&&!r.normal),rest=k.frei-(r.id||isFx?0:n);H.push({t:rest<0?'err':'info',h:(isFx?'Urlaubskonto bleibt bei ':'Urlaubskonto danach: ')+'<b>'+kalNf(rest)+' von '+(k.ans+k.uebEff)+'</b> Tagen frei, offene Anträge mitgerechnet.'});}
+    var isFx=r.art==='flex'||(!r.normal&&(r.wasFlex||!r.verschobenVon&&v<15)),rest=k.frei-(r.id||isFx?0:n);H.push({t:rest<0?'err':'info',h:(isFx?'Urlaubskonto bleibt bei ':'Urlaubskonto danach: ')+'<b>'+kalNf(rest)+' von '+(k.ans+k.uebEff)+'</b> Tagen frei, offene Anträge mitgerechnet.'});}
   if(r.art==='freistellung')H.push({t:'info',h:'Freistellung (z. B. Gerichtstermin, Sonderurlaub): kostet keinen Urlaub. Kollegen und Betrachter sehen nur „abwesend“.'});
   if(r.art==='krank')H.push({t:'info',h:'Zählt als Arbeitstag mit 50 % der vereinbarten Stunden (z. B. 8 Std. → 4 Std.). Kollegen und Betrachter sehen nur „abwesend“.'});
   if(r.art==='ausgleich')H.push({t:'info',h:'Ausgleichstag: kostet keinen Urlaub und ändert das Ziel nicht. '+esc(kalFirst(e.name))+' hatte dieses Jahr '+kalNf(k.ag)+' Ausgleichstag'+(k.ag===1?'':'e')+'.'});
@@ -14703,7 +14703,7 @@ function latSaveForm(){var e=kalEmp(KF.employeeId),x={id:KF.id,employeeId:KF.emp
   kalRerender();}
 function latErr(res){var m=(res&&res.error&&res.error.message)||'';if(/minuten|absences_art_check|check constraint/i.test(m))return 'Für Verspätungen fehlt noch die Datenbank-Erweiterung. Bitte 31_verspaetung.sql ausführen.';return kalErrText(res);}
 function kalSaveForm(){if(!KF)return;var ev=kalEval(KF);if(!ev.n)return;if(KF.art==='verspaetung'){latSaveForm();return;}var art=KF.art,e=kalEmp(KF.employeeId);
-  if(art==='urlaub'&&!KF.normal&&!KF.verschobenVon&&kalWdBetween(e,KF.eingereichtAm||today(),KF.von)<15)art='flex';
+  if(art==='urlaub'&&!KF.normal&&(KF.wasFlex||!KF.verschobenVon&&kalWdBetween(e,KF.eingereichtAm||today(),KF.von)<15))art='flex';
   if(art==='krank')KF.status='genehmigt';
   var x={id:KF.id,employeeId:KF.employeeId,art:art,von:KF.von,bis:KF.halb?KF.von:KF.bis,halb:!!KF.halb,halbTeil:KF.halb?(KF.halbTeil||'vm'):null,status:KF.status,notiz:KF.notiz||'',verschobenVon:KF.verschobenVon||null,eingereichtAm:KF.eingereichtAm||today(),eingereichtVon:kalActor(),
     entschiedenVon:KF.status==='genehmigt'?kalActor():'',entschiedenAm:KF.status==='genehmigt'?new Date().toISOString():null};
@@ -15060,7 +15060,7 @@ function abChecks(e,F,ev){var tile=function(l,v,sub,c,tip){return '<div class="a
   if(!F.von)return '<div class="ab-ck4">'+tile('Dieser Eintrag','–','Zeitraum wählen','off')+tile('Vorlauf','–','','off')+tile('Zählt als','–','','off')+tile('Andere frei','–','','off')+'</div>';
   var err=(ev.H||[]).filter(function(x){return x.t==='err';})[0],y=F.von.slice(0,4),k=kalKonto(e.id,y),n=ev.n||0,bis=F.halb?F.von:(F.bis||F.von);
   var t1=err?tile('Dieser Eintrag','Prüfen',err.h.replace(/<[^>]+>/g,''),'w',err.h.replace(/<[^>]+>/g,'')):tile('Dieser Eintrag',kalNf(n)+' Arbeitstag'+(n===1?'':'e'),kalF(F.von)+(bis!==F.von?'–'+kalF(bis):'')+(F.halb?' · '+(F.halbTeil==='nm'?'Nachmittag':'Vormittag'):''));
-  var vl=kalWdBetween(e,F.eingereichtAm||today(),F.von),isU=F.art==='urlaub',isFx=isU&&!F.normal&&!F.verschobenVon&&vl<15;
+  var vl=kalWdBetween(e,F.eingereichtAm||today(),F.von),isU=F.art==='urlaub',isFx=isU&&!F.normal&&(F.wasFlex||!F.verschobenVon&&vl<15);
   var t2=F.art==='krank'?tile('Vorlauf','–','nicht relevant','off'):tile('Vorlauf',vl<0?'rückwirkend':vl+' AT',isU?(F.verschobenVon?'verschoben, kein Flex Day':vl<15?(F.normal?'unter 15 · trotzdem Urlaub':'unter 15 → Flex Day'):'15-Tage-Regel erfüllt'):'',isU&&vl<15&&!F.normal&&!F.verschobenVon?'w':'');
   var t3;if(F.art==='krank')t3=tile('Zählt als','Krank','50 % Std. für Opt./Std.');else if(F.art==='freistellung')t3=tile('Zählt als','Freistellung','kostet keinen Urlaub');else if(F.art==='ausgleich')t3=tile('Zählt als','Ausgleichstag','kostet keinen Urlaub');
   else if(isFx){var fr=k.flex-(F.id?0:n);t3=tile('Zählt als','Flex Day','danach '+kalNf(fr)+' von '+k.flexMax+' übrig','w');}else{var ur=k.frei-(F.id?0:n);t3=tile('Zählt als','Urlaub','Konto danach '+kalNf(ur)+' von '+kalNf(k.ans+k.uebEff),ur<0?'w':'');}
@@ -15070,7 +15070,7 @@ function abChecks(e,F,ev){var tile=function(l,v,sub,c,tip){return '<div class="a
 
 function abNewForm(){AB.fOpen=AB.fOpen||false;AB.f={id:null,employeeId:AB.emp,art:'urlaub',von:null,bis:null,halb:false,halbTeil:'vm',status:'genehmigt',notiz:'',normal:false,eingereichtAm:today(),pend:false};}
 function abPick(d){var e=kalEmp(AB.emp);var x=absences.find(function(a){return a.employeeId===e.id&&!a.fixed&&a.status!=='abgelehnt'&&a.status!=='storniert'&&a.von<=d&&a.bis>=d&&kalDays(a).indexOf(d)>=0;});
-  if(x&&!(AB.f&&AB.f.pend)){if(x.masked)return;AB.f={id:x.id,employeeId:x.employeeId,art:x.art==='flex'?'urlaub':x.art,von:x.von,bis:x.bis,halb:!!x.halb,halbTeil:x.halbTeil||'vm',status:x.status==='offen'?'offen':'genehmigt',notiz:x.notiz||'',normal:false,eingereichtAm:x.eingereichtAm||today(),verschobenVon:x.verschobenVon||null,pend:false};abRender();return;}
+  if(x&&!(AB.f&&AB.f.pend)){if(x.masked)return;AB.f={id:x.id,employeeId:x.employeeId,art:x.art==='flex'?'urlaub':x.art,wasFlex:x.art==='flex',von:x.von,bis:x.bis,halb:!!x.halb,halbTeil:x.halbTeil||'vm',status:x.status==='offen'?'offen':'genehmigt',notiz:x.notiz||'',normal:x.art==='urlaub'&&x.status==='genehmigt',eingereichtAm:x.eingereichtAm||today(),verschobenVon:x.verschobenVon||null,pend:false};abRender();return;}
   AB.fOpen=true;var F=AB.f;if(!F||F.id||!F.pend){abNewForm();F=AB.f;F.von=d;F.bis=d;F.pend=true;}else{if(d<F.von)F.von=d;else F.bis=d;F.pend=false;}if(F.halb)F.bis=F.von;abRender();}
 function abSave(){var F=AB.f;if(!F||!kalCanEdit())return;KF=Object.assign({},F);kalSaveForm();AB.f=null;AB.base=null;abRender();}
 function abDelete(){var F=AB.f;if(!F||!F.id)return;KF=Object.assign({},F);var n=absences.length+lateness.length;kalDelete();if(absences.length+lateness.length<n){AB.f=null;AB.base=null;}abRender();}
