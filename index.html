@@ -11237,7 +11237,7 @@ function esBuildHtml(emp,asPopup,html){
         cut('zeit');
 
         html+='<div style="margin-bottom:4px"><label>Notizen <span style="font-weight:400;color:var(--text3);font-size:11px">(Stärken, Motivation, Karriereziele – nicht Teil der QA-Bewertung)</span></label>'
-          +'<textarea id="es-notes" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+esc(emp.notes||'')+'</textarea></div>';
+          +'<textarea id="es-notes" data-orig="'+esc(emp.notes||'')+'" rows="3" style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical" placeholder="z. B. sehr motiviert, will perspektivisch ins Teamlead-Track, hat Stärken im Erstgespräch...">'+esc(emp.notes||'')+'</textarea></div>';
 
         cut('person');
         (function(){var mk=today().slice(0,7),nx=kalAdd(kalAdd(mk+'-28',4).slice(0,7)+'-01',0).slice(0,7),f=function(m){return m.slice(5,7)+'/'+m.slice(0,4);};
@@ -12838,7 +12838,10 @@ function saveEmpEinstellungen(){
   var emailEl=document.getElementById('es-email');
   if(emailEl)emp.email=emailEl.value.trim()||null;
   var notesEl=document.getElementById('es-notes');
-  if(notesEl)emp.notes=notesEl.value;
+  if(notesEl){var _nl=function(v){return String(v==null?'':v).replace(/\r\n/g,'\n');},_no=notesEl.getAttribute('data-orig'),_nv=_nl(notesEl.value),_nc=_nl(emp.notes);
+    // C10: Notiz nur übernehmen, wenn sie im Formular geändert wurde; ist sie inzwischen neuer (z. B. Kommentar „zur Notiz“), nachfragen
+    if(_no===null||_nv!==_nl(_no)){if(_no===null||_nc===_nl(_no)||_nc===_nv||confirm('Die Notiz wurde inzwischen an anderer Stelle geändert.\n\nOK = deine Fassung aus diesem Formular speichern (die neuere geht verloren)\nAbbrechen = neuere Notiz behalten'))emp.notes=notesEl.value;}
+    notesEl.value=emp.notes||'';notesEl.setAttribute('data-orig',emp.notes||'');}
   renderSidebar();renderEmpDetail();  lsSave();
   _savingEmpEinstellungen=true;
   var empUpd={

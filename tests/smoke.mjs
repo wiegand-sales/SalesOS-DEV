@@ -220,6 +220,11 @@ const c9 = await page.evaluate(`(function(){var e=kalEmp('e6'),sv=absences.slice
   absences=absences.filter(function(x){return x.employeeId!=='e6';});absences.push({id:'c9u',employeeId:'e6',art:'urlaub',von:a,bis:a,halb:false,status:'genehmigt',eingereichtAm:t},{id:'c9f',employeeId:'e6',art:'flex',von:b,bis:b,halb:false,status:'genehmigt',eingereichtAm:addDaysUTC(t,-60)});_kalOnIdx=null;
   openAbsPopup('e6',a.slice(0,7));AB.f=null;abPick(a);abSave();AB.f=null;abPick(b);abSave();var r=['c9u','c9f'].map(function(i){return absences.find(function(x){return x.id===i;}).art;}).join('/');absences=sv;_kalOnIdx=null;AB.f=null;closeModal('absPopModal');return r;})()`);
 check('Urlaub: Bearbeiten im Popup behält die Art (Urlaub/Flex Day)', c9 === 'urlaub/flex', c9);
+const c10 = await page.evaluate(`(async function(){var e=kalEmp('e1'),sv=e.notes,cf=window.confirm,w=function(){return new Promise(function(r){setTimeout(r,30);});},r=[];
+  e.notes='alt';openEmpSetModal('e1');e.notes='neu';saveEmpEinstellungen();r.push(e.notes);await w();
+  e.notes='alt2';closeEmpSetModal();openEmpSetModal('e1');e.notes='neu2';document.getElementById('es-notes').value='meins';window.confirm=function(){return false;};saveEmpEinstellungen();r.push(e.notes);await w();
+  window.confirm=cf;closeEmpSetModal();e.notes=sv;return r.join('/');})()`);
+check('Einstellungen: veraltetes Formular überschreibt neuere Notiz nicht', c10 === 'neu/neu2', c10);
 const zt = await page.evaluate(`(function(){var mk=today().slice(0,7);var nx=kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),1)).slice(0,7);var e=employees[0];
   zielStore[nx]=zielStore[nx]||{};zielStore[nx][e.id]={optTag:20,margeOpt:50,weeks:[1,1,1,1,1]};
   var calOld=ZT_KAL_START;ZT_KAL_START=nx;var x=ztEmpMonth(e,nx);var wd=0;ztDaysOfMonth(nx).forEach(function(d){if(kalWorkday(e,d)&&!(kalOn(e.id,d)&&kalOn(e.id,d).art!=='krank'))wd++;});
