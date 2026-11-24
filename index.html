@@ -4742,7 +4742,7 @@ function personalBestEvents(empId){
   fields.forEach(function(f){
     var max=null;
     rows.forEach(function(r){
-      var v=r[f.key];
+      var v=/^cr/.test(f.key)?perfKpiWin(null,[r],f.key):r[f.key]; // B1: CR je Tag aus Rohzahlen
       if(v===undefined||v===null)return;
       if(max!==null&&v>max){
         events.push({date:r.date,label:'Bestwert '+f.label+': '+f.fmt(v)+' (bisher: '+f.fmt(max)+')'});
@@ -4762,12 +4762,13 @@ function kpiMilestones(empId){
   defs.forEach(function(d){
     var tgt=t[d.k];
     if(!tgt||tgt.val==null)return;
+    var hv=null;
     var hit=perf.find(function(p){
-      var v=p[d.k];
+      var v=perfKpiWin(emp,[p],d.k); // B1: CR je Tag aus Rohzahlen
       if(v===undefined||v===null)return false;
-      return tgt.dir==='lte'?v<=tgt.val:v>=tgt.val;
+      hv=v;return tgt.dir==='lte'?v<=tgt.val:v>=tgt.val;
     });
-    if(hit)out.push({date:hit.date,label:d.l+'-Ziel erstmals erreicht ('+Math.round(hit[d.k])+'%)'});
+    if(hit)out.push({date:hit.date,label:d.l+'-Ziel erstmals erreicht ('+Math.round(hv)+'%)'});
   });
   return out;
 }
@@ -4777,13 +4778,16 @@ function roleBenchmark(empId,metricKey,days){
   var emp=employees.find(function(e){return e.id===empId;});
   if(!emp)return null;
   var peers=employees.filter(function(e){return e.role===emp.role&&e.active!==false;});
-  var vals=[];
+  var vals=[],pool=[];
   peers.forEach(function(e){
     var p=getPerf(e.id,days);
     if(!p.length)return;
+    pool=pool.concat(p);
     var avg=p.reduce(function(a,x){return a+(x[metricKey]||0);},0)/p.length;
     vals.push(avg);
   });
+  // B1: CR aus den summierten Rohzahlen aller Kollegen der Rolle (erst summieren, dann teilen)
+  if(/^cr/.test(metricKey))return pool.length?perfKpiWin(null,pool,metricKey):null;
   if(!vals.length)return null;
   return vals.reduce(function(a,b){return a+b;},0)/vals.length;
 }
@@ -7446,8 +7450,10 @@ function renderTab(){
           if(g.targetDate)metaParts.push('Ziel-Datum: '+fd(g.targetDate));
           if(g.metricKey){
             var recentP=getPerf(emp.id,30);
-            var curVal=recentP.length?recentP.reduce(function(a,x){return a+(x[g.metricKey]||0);},0)/recentP.length:null;
-            metaParts.push('Aktuell (Ø 30 Tage): '+(curVal!==null?Math.round(curVal)+'%':'—')+' → Ziel: '+g.targetValue+'% ('+focusMetricLabel(g.metricKey)+')');
+            // B1: CR aus Rohzahlen der 30 Tage (erst summieren, dann teilen)
+            var curVal=goalIsDev(g.metricKey)?goalDevVal(emp.id,String(g.metricKey).slice(4)):perfKpiWin(emp,recentP,g.metricKey);
+            var _gu=goalUnit(g.metricKey);
+            metaParts.push('Aktuell (Ø 30 Tage): '+(curVal!=null?(Math.round(curVal*10)/10).toString().replace('.',',')+_gu:'—')+' → Ziel: '+g.targetValue+_gu+' ('+focusMetricLabel(g.metricKey)+')');
           }
           html+='<div style="background:var(--s-tint);border:1px solid var(--border2);border-radius:var(--r-md);padding:12px 14px">'
             +'<div style="display:flex;align-items:center;gap:10px">'
@@ -8064,6 +8070,8 @@ function renderTab(){
       var teamEmps=myTeam?employees.filter(function(e){return e.team===myTeam&&e.id!==selectedEmp&&e.active!==false;}):[];
       var teamAvgVals=periods.map(function(p){
         if(p.from>todayStr||!teamEmps.length)return null;
+        // B1: CR-Kennzahlen aus den summierten Rohzahlen des Teams (nicht Ø der Einzel-CRs); Zählwerte bleiben Ø je Kopf
+        if(/^cr/.test(empChartMetric)){var tv=metricValFromSums(empChartMetric,chartSumsForRange(teamEmps,p.from,p.to));return tv!=null?+tv.toFixed(1):null;}
         var dayVals=teamEmps.map(function(te){return metricValFromSums(empChartMetric,chartSumsForRange([te],p.from,p.to));}).filter(function(v){return v!==null;});
         return dayVals.length?+(dayVals.reduce(function(a,b){return a+b;},0)/dayVals.length).toFixed(1):null;
       });
@@ -8230,12 +8238,12 @@ function renderTab(){
         if(!panel)return;
         var relevant=(protocols[selectedEmp]||[]).filter(function(s){return (s.status!=='geplant'||s.date<=today())&&s.focusMetric===empChartMetric;});
         var fullPerf=(performance[selectedEmp]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+        // B1: CR aus den Rohzahlen des Fensters (erst summieren, dann teilen), Zählwerte als Ø je Tag
         function avgWindow(centerDate,daysBefore,daysAfter){
           var fromS=addDaysUTC(centerDate,-daysBefore);
           var toS=addDaysUTC(centerDate,daysAfter);
           var rows=fullPerf.filter(function(p){return p.date>=fromS&&p.date<toS;});
-          var vals2=rows.map(function(p){return p[empChartMetric];}).filter(function(v){return v!==undefined&&v!==null;});
-          return vals2.length?(vals2.reduce(function(a,b){return a+b;},0)/vals2.length):null;
+          return perfKpiWin(empObj,rows,empChartMetric);
         }
         var sortedRelevant=relevant.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
         function buildRow(s){
@@ -10468,10 +10476,10 @@ function openCoachingEval(empId,editEvalId){
   setEdit(e0||null);renderList();
 
   // ── Ziele ──
-  function goalCur(g){if(!g.metricKey)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4));var rp=getPerf(empId,30);if(!rp.length)return null;var vs=rp.map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
+  function goalCur(g){if(!g.metricKey)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4));var rp=getPerf(empId,30);if(!rp.length)return null;return perfKpiWin(employees.find(function(x){return x.id===empId;}),rp,g.metricKey);} // B1: CR aus Rohzahlen
   function goalStart(g){if(!g.metricKey||!g.createdAt)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4),String(g.createdAt).slice(0,10));var c=localYmd(new Date(g.createdAt))||String(g.createdAt).slice(0,10);var f0=addDaysUTC(c,-30);
-    var vs=(performance[empId]||[]).filter(function(x){return x.date>=f0&&x.date<c;}).map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});
-    return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
+    var rs=(performance[empId]||[]).filter(function(x){return x.date>=f0&&x.date<c;});
+    return rs.length?perfKpiWin(employees.find(function(x){return x.id===empId;}),rs,g.metricKey):null;}
   function renderGoals(){
     var el=$('cevGoalList');if(!el)return;
     var list=(goals[empId]||[]).slice().sort(function(a,b){var oa=(a.status==='erreicht'||a.status==='verfehlt')?1:0,ob=(b.status==='erreicht'||b.status==='verfehlt')?1:0;return oa-ob||String(a.targetDate||'9999').localeCompare(String(b.targetDate||'9999'));});

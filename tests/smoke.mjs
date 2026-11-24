@@ -324,6 +324,30 @@ check('D5: nach 3 Versuchen „Seite neu laden“', d5.ende);
 
 check('D7: Tagesdatum in Ortszeit (kurz nach Mitternacht)', await page.evaluate("localYmd(new Date(2026,10,24,0,30))==='2026-11-24'&&localYmd(new Date('x'))===''"));
 
+// B1: CR-Werte immer aus Rohzahlen (erst summieren, dann teilen) – Leistungszeilen haben keine CR-Felder
+const b1 = await page.evaluate(`(async function(){var e=kalEmp('e1'),w=function(ms){return new Promise(function(r){setTimeout(r,ms||300);});},r={},svP=protocols.e1,svG=goals.e1,svM=empChartMetric,svT=employees.map(function(x){return x.team;});
+  function S(rows,k){var s=0;rows.forEach(function(x){s+=x[k]||0;});return s;}
+  function myCr(rows){var q=S(rows,'convYes')+S(rows,'convSY')+S(rows,'convMY');return q>0?S(rows,'convMY')/q*100:null;}
+  var peers=employees.filter(function(x){return x.role===e.role&&x.active!==false;}),pool=[];peers.forEach(function(x){pool=pool.concat(getPerf(x.id,30));});
+  r.bench=Math.abs(roleBenchmark('e1','crMegaYes',30)-myCr(pool))<1e-9;
+  r.best=personalBestEvents('e1').some(function(x){return /Bestwert CR OEM/.test(x.label);});
+  r.meil=kpiMilestones('e1').length>0;
+  var d=addDaysUTC(today(),-20);protocols.e1=[{date:d,status:'abgeschlossen',focusMetric:'crMegaYes',type:'Coaching'}];
+  goals.e1=[{id:'g1',metricKey:'crMegaYes',targetValue:30,status:'offen',createdAt:addDaysUTC(today(),-40)}];
+  employees.forEach(function(x){x.team=x.role;});empChartMetric='crMegaYes';
+  selectEmp('e1');switchTab('coaching-eval');await w(100);
+  var soll=myCr(getPerf('e1',30));r.ziel=(document.getElementById('tabContent').textContent.match(/Aktuell \\(Ø 30 Tage\\): ([0-9,]+) %/)||[])[1]===(Math.round(soll*10)/10).toString().replace('.',',');
+  switchTab('performance');await w(400);
+  var vor=(performance.e1||[]).filter(function(p){return p.date>=addDaysUTC(d,-14)&&p.date<d;});
+  r.impact=(document.getElementById('coachImpactPanel').textContent.indexOf('Ø vorher'+myCr(vor).toFixed(1))>=0);
+  var ds=activeChart&&activeChart.data.datasets.find(function(x){return x.label==='Durch. Team';}),te=employees.filter(function(x){return x.team===e.team&&x.id!=='e1'&&x.active!==false;});
+  var lastIdx=ds?ds.data.map(function(v,i){return v!=null?i:-1;}).filter(function(i){return i>=0;}).pop():-1,pp=buildChartPeriods(empChartGroup,+today().slice(0,4))[lastIdx];
+  var tr=[];if(pp)te.forEach(function(x){tr=tr.concat((performance[x.id]||[]).filter(function(p){return p.date>=pp.from&&p.date<=pp.to;}));});
+  r.team=!!ds&&lastIdx>=0&&ds.data[lastIdx]===+myCr(tr).toFixed(1);
+  protocols.e1=svP;goals.e1=svG;empChartMetric=svM;employees.forEach(function(x,i){x.team=svT[i];});selectWiegandSub('overview');
+  return r;})()`);
+check('B1: CR aus Rohzahlen (Benchmark, Bestwert, Meilenstein, Ziel, Impact, Team-Linie)', Object.values(b1).every(Boolean), JSON.stringify(b1));
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();
