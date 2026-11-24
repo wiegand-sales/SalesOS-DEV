@@ -10906,6 +10906,9 @@ function saveSession(empId){
     coach_id:currentCoach?currentCoach.id:null,
     focus_metric:focusMetric||null
   };
+  // C7: beim Bearbeiten Coach und Bewertung der bestehenden Session behalten
+  var _old=editId?(protocols[singleEmpId]||[]).find(function(p){return String(p.id)===String(editId);}):null;
+  if(editId){delete payload.rating;if(_old&&_old.coachId)delete payload.coach_id;}
   var dbCall=editId
     ? sb.from('protocols').update(payload).eq('id',editId).select().single()
     : sb.from('protocols').insert(payload).select().single();
@@ -10915,14 +10918,14 @@ function saveSession(empId){
     if(res.error){alert('Fehler beim Speichern: '+res.error.message);return;}
     var r=res.data;
     var entry={
-      id:r.id,date:r.date,uhrzeit:uhrzeit,endUhrzeit:endUhrzeit,type:type,rating:null,
+      id:r.id,date:r.date,uhrzeit:uhrzeit,endUhrzeit:endUhrzeit,type:type,rating:r.rating!=null?r.rating:null,
       topics:topics,start:start,stop:stop,cont:cont,notes:notes,note:notes,focus:focus,status:'abgeschlossen',
       coachId:r.coach_id||null,focusMetric:r.focus_metric||null
     };
     if(!protocols[singleEmpId])protocols[singleEmpId]=[];
     if(editId){
       var idx=protocols[singleEmpId].findIndex(function(p){return String(p.id)===String(editId);});
-      if(idx>=0){protocols[singleEmpId][idx]=entry;}else{protocols[singleEmpId].unshift(entry);}
+      if(idx>=0){protocols[singleEmpId][idx]=Object.assign({},protocols[singleEmpId][idx],entry);}else{protocols[singleEmpId].unshift(entry);}
     } else {
       protocols[singleEmpId].unshift(entry);
     }
@@ -13260,15 +13263,15 @@ function saveInlineCallBewertung(empId){
       if(view==='emp')renderTab();
     };
     if(isEditing){
-      sb.from('call_rating_scores').delete().eq('call_rating_id',r.id).then(function(){
-        if(scoreRows.length){
-          sb.from('call_rating_scores').insert(scoreRows).then(function(res2){
-            _savingCallBewertung=false;
-            if(res2.error)alert('Bewertung gespeichert, aber die Einzel-Scores konnten NICHT gespeichert werden: '+res2.error.message);
-            afterScores();
-          });
-        } else { _savingCallBewertung=false; afterScores(); }
-      });
+      // C13: erst neue Punkte schreiben (upsert), dann nur weggefallene löschen – bei Fehler bleiben die alten Punkte erhalten
+      var _keys=scoreRows.map(function(x){return x.item_key;});
+      var _fail=function(m){_savingCallBewertung=false;alert('Bewertung gespeichert, aber die Einzel-Scores konnten NICHT gespeichert werden (die bisherigen Punkte sind noch da): '+m);afterScores();};
+      (scoreRows.length?sb.from('call_rating_scores').upsert(scoreRows,{onConflict:'call_rating_id,item_key'}):Promise.resolve({})).then(function(res2){
+        if(res2&&res2.error){_fail(res2.error.message);return;}
+        var q=sb.from('call_rating_scores').delete().eq('call_rating_id',r.id);
+        if(_keys.length)q=q.not('item_key','in','('+_keys.map(function(k){return '"'+String(k).replace(/"/g,'\\"')+'"';}).join(',')+')');
+        q.then(function(res3){_savingCallBewertung=false;if(res3&&res3.error)console.warn('Alte Einzel-Scores nicht gelöscht',res3.error);afterScores();},function(){_savingCallBewertung=false;afterScores();});
+      },function(e){_fail(e&&e.message||String(e));});
     } else if(scoreRows.length){
       sb.from('call_rating_scores').insert(scoreRows).then(function(res2){
         _savingCallBewertung=false;
