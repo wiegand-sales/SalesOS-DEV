@@ -1979,10 +1979,11 @@ function applyOverviewWeek(){
   var parts=el.value.split('-W'); // "2026-W29"
   var year=parseInt(parts[0],10),week=parseInt(parts[1],10);
   // Montag der ISO-Woche berechnen
-  var simple=new Date(Date.UTC(year,0,1+(week-1)*7));
-  var dow=simple.getUTCDay()||7; // Sonntag=0 -> 7
-  var monday=new Date(simple);
-  monday.setUTCDate(simple.getUTCDate()-dow+1);
+  // C6: KW 1 ist die Woche mit dem 4. Januar (sonst z. B. 2027 um eine Woche verschoben)
+  var jan4=new Date(Date.UTC(year,0,4));
+  var dow=jan4.getUTCDay()||7; // Sonntag=0 -> 7
+  var monday=new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate()-dow+1+(week-1)*7);
   var sunday=new Date(monday);
   sunday.setUTCDate(monday.getUTCDate()+6);
   setOverviewDateRange(monday.toISOString().slice(0,10),sunday.toISOString().slice(0,10));
@@ -3407,13 +3408,16 @@ function getMonthWeeksZiel(monthKey){
 var MONTH_NAMES_ZIEL=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 var zielMonth=today().slice(0,7);
 var zielStore={};
+// C1: Spalte week6 (sql/50) – erst schreiben, wenn sie in der Datenbank existiert
+var ZIEL_W6=false;
+function zielW6Row(row,wk){if(ZIEL_W6)row.week6=wk[5]!=null?wk[5]:0;return row;}
 function loadZielvereinbarungFromSupabase(){
   return selectAllPaginated('zielvereinbarung').then(function(res){
     if(res.error){console.warn('zielvereinbarung load failed:',res.error);return false;}
-    zielStore={};
+    zielStore={};ZIEL_W6=res.data.some(function(r){return 'week6' in r;});
     res.data.forEach(function(r){
       if(!zielStore[r.month])zielStore[r.month]={};
-      zielStore[r.month][r.employee_id]={weeks:[r.week1,r.week2,r.week3,r.week4,r.week5],optTag:r.opt_per_tag,margeOpt:r.marge_per_opt,arbeitstage:r.arbeitstage||null};
+      zielStore[r.month][r.employee_id]={weeks:[r.week1,r.week2,r.week3,r.week4,r.week5].concat(ZIEL_W6&&r.week6!=null?[r.week6]:[]),optTag:r.opt_per_tag,margeOpt:r.marge_per_opt,arbeitstage:r.arbeitstage||null};
     });
     return true;
   });
@@ -4007,13 +4011,13 @@ function saveZielvereinbarung(){
   var rows=visibleEmps.map(function(e){
     var r=rec[e.id]||{};
     var weeks=weeksMeta.map(function(wm,i){return(r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays;});
-    return {
+    return zielW6Row({
       employee_id:e.id,month:zielMonth,
       week1:weeks[0],week2:weeks[1],week3:weeks[2],week4:weeks[3],week5:weeks[4],
       opt_per_tag:r.optTag!=null?r.optTag:0,
       marge_per_opt:r.margeOpt!=null?r.margeOpt:0,
       arbeitstage:r.arbeitstage||[]
-    };
+    },weeks);
   });
   _savingZielvereinbarung=true;
   sb.from('zielvereinbarung').upsert(rows,{onConflict:'employee_id,month'}).then(function(res){
@@ -10013,7 +10017,9 @@ function provGoKal(eid,mk){var f=kalFilterCats();KAL.hide={};f.ses.forEach(funct
 var PROV_CLOSED={},PROV_CLOSED_TABLE=false;
 function loadProvClosed(){return sb.from('provision_monat').select('*').then(function(res){if(res&&res.error){PROV_CLOSED_TABLE=false;return true;}PROV_CLOSED_TABLE=true;PROV_CLOSED={};
   (res.data||[]).forEach(function(m){PROV_CLOSED[m.monat]={von:m.abgeschlossen_von||'',am:(m.abgeschlossen_am||'').slice(0,10),rows:{}};});
-  return sb.from('provision_abschluss').select('monat,employee_id,werte').then(function(r2){(r2&&r2.data||[]).forEach(function(x){if(PROV_CLOSED[x.monat])PROV_CLOSED[x.monat].rows[String(x.employee_id)]=typeof x.werte==='string'?JSON.parse(x.werte):x.werte;});return true;});}).catch(function(){PROV_CLOSED_TABLE=false;return true;});}
+  return sb.from('provision_abschluss').select('monat,employee_id,werte').then(function(r2){(r2&&r2.data||[]).forEach(function(x){if(PROV_CLOSED[x.monat])PROV_CLOSED[x.monat].rows[String(x.employee_id)]=typeof x.werte==='string'?JSON.parse(x.werte):x.werte;});
+    // C3: gesperrter Monat ohne eingefrorene Werte (alter Abbruch) rechnet weiter live statt 0 € zu zeigen
+    if(r2&&!r2.error)Object.keys(PROV_CLOSED).forEach(function(mk){if(!Object.keys(PROV_CLOSED[mk].rows).length){console.warn('Provision '+mk+': abgeschlossen, aber ohne Werte – wird live berechnet');delete PROV_CLOSED[mk];}});return true;});}).catch(function(){PROV_CLOSED_TABLE=false;return true;});}
 function provCloseMonth(mk){if(currentUserRole!=='admin')return;var ml=KAL_MON[+mk.slice(5,7)-1]+' '+mk.slice(0,4);
   // Werte aller Mitarbeiter mit Daten in diesem Monat einsammeln (gleiche Berechnung wie die Tabelle)
   var sv={m:provisionMode,c:provisionCustomMonth,sel:provisionTeamSelectedIds};provisionMode='custom';provisionCustomMonth=mk;provisionTeamSelectedIds=null;window._provSnap={};
@@ -10022,10 +10028,13 @@ function provCloseMonth(mk){if(currentUserRole!=='admin')return;var ml=KAL_MON[+
   if(!ids.length){alert('Für '+ml+' gibt es keine Provisionsdaten.');return;}
   if(!confirm(ml+' abschließen?\n\n'+ids.length+' Mitarbeiter werden mit den aktuellen Werten eingefroren. Danach ändern Datenkorrekturen und geänderte Einstellungen diesen Monat nicht mehr.'+(warn.length?'\n\nAchtung, Tage stimmen noch nicht (x von X ⚠) bei: '+warn.join(', '):'')+'\n\nWurde der Monat mit der SFP abgeglichen?'))return;
   var who=(typeof qaCurrentName==='function'&&qaCurrentName())||'';
+  // C3: provision_abschluss hängt per Fremdschlüssel an provision_monat, daher erst den Monat anlegen.
+  // Scheitert das Schreiben der Werte, wird der Monat wieder gelöscht (nie „abgeschlossen mit 0 €“).
+  var rows=ids.map(function(id){return {monat:mk,employee_id:id,werte:snap[id]};});
+  function undo(msg){sb.from('provision_monat').delete().eq('monat',mk).then(function(r3){alert('Abschluss fehlgeschlagen: '+msg+(r3&&r3.error?'\n\nDer Monat konnte nicht wieder geöffnet werden ('+r3.error.message+'). Bitte neu laden und „Wieder öffnen“ klicken.':'\n\nDer Monat bleibt offen.'));},function(){alert('Abschluss fehlgeschlagen: '+msg+'\n\nBitte neu laden und prüfen, ob der Monat offen ist.');});}
   sb.from('provision_monat').upsert({monat:mk,abgeschlossen_von:who,abgeschlossen_am:new Date().toISOString()},{onConflict:'monat'}).then(function(r){if(r&&r.error){alert('Abschluss fehlgeschlagen: '+r.error.message);return;}
-    var rows=ids.map(function(id){return {monat:mk,employee_id:id,werte:snap[id]};});
-    sb.from('provision_abschluss').upsert(rows,{onConflict:'monat,employee_id'}).then(function(r2){if(r2&&r2.error){alert('Abschluss fehlgeschlagen: '+r2.error.message);return;}
-      PROV_CLOSED[mk]={von:who,am:today(),rows:snap};logActivity('employee','updated','Provision '+ml+' abgeschlossen ('+ids.length+' Mitarbeiter)');renderMain();});});}
+    sb.from('provision_abschluss').upsert(rows,{onConflict:'monat,employee_id'}).then(function(r2){if(r2&&r2.error){undo(r2.error.message);return;}
+      PROV_CLOSED[mk]={von:who,am:today(),rows:snap};logActivity('employee','updated','Provision '+ml+' abgeschlossen ('+ids.length+' Mitarbeiter)');renderMain();},function(e){undo(e&&e.message||String(e));});},function(e){alert('Abschluss fehlgeschlagen: '+(e&&e.message||e));});}
 function provReopenMonth(mk){if(currentUserRole!=='admin')return;var ml=KAL_MON[+mk.slice(5,7)-1]+' '+mk.slice(0,4);
   if(!confirm(ml+' wieder öffnen?\n\nDie eingefrorenen Werte werden gelöscht, der Monat rechnet wieder mit den aktuellen Daten und Einstellungen.'))return;
   sb.from('provision_monat').delete().eq('monat',mk).then(function(r){if(r&&r.error){alert('Öffnen fehlgeschlagen: '+r.error.message);return;}delete PROV_CLOSED[mk];logActivity('employee','updated','Provision '+ml+' wieder geöffnet');renderMain();});}
@@ -10086,7 +10095,7 @@ function buildProvisionTeamTable(){
   var selLabel=isAll?'Alle Mitarbeiter':(selectedEmps.length===1?selectedEmps[0].name:selectedEmps.length+' Mitarbeiter ausgewählt');
   // Mitarbeiterkarte: dieselbe Tabelle, nur für diese Person
   if(window._provOnly){selectedEmps=employees.filter(function(e){return String(e.id)===window._provOnly&&canSeeSalary(e);});selLabel=selectedEmps.length?selectedEmps[0].name:'';isAll=false;}
-  var yr=today().slice(0,4), curMk=today().slice(0,7);
+  var curMk=today().slice(0,7), yr=(provisionMode==='custom'&&provisionCustomMonth?provisionCustomMonth:curMk).slice(0,4); // C2: gewählter Monat kann im Vorjahr liegen
 
   var h='<div class="card">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
@@ -10341,7 +10350,7 @@ function buildProvisionTableAlt(empId){
     }
     return {urlaub:urlaub,krank:krank};
   }
-  var yr=today().slice(0,4), curMk=today().slice(0,7);
+  var curMk=today().slice(0,7), yr=(provisionMode==='custom'&&provisionCustomMonth?provisionCustomMonth:curMk).slice(0,4); // C2: gewählter Monat kann im Vorjahr liegen
   var rowsAll=(performance[empId]||[]).filter(function(x){return (x.date||'').slice(0,4)===yr;});
   var grouped=groupPerfRows(rowsAll,'month'); // ein Eintrag je Monat, neueste zuerst
   var rows=provisionMode==='month'?grouped.filter(function(g){return g.key===curMk;}):(provisionMode==='custom'?grouped.filter(function(g){return g.key===provisionCustomMonth;}):grouped);
@@ -14160,7 +14169,8 @@ function kalKonto(eid,year){var e=kalEmp(eid),y=String(year||today().slice(0,4))
       if(d<=y+'-03-31')k.bisMaerz+=f;
       if(x.art==='flex')k.flexUsed+=f;});});
   // Übertrag verfällt am 31.03.: danach zählt nur, was bis dahin genommen wurde
-  k.uebEff=(t>y+'-03-31'&&t.slice(0,4)===y)?Math.min(k.uebertrag,k.bisMaerz+k.vorher):k.uebertrag;
+  // C5: gilt auch für vergangene Jahre (sonst wäre der Übertrag ins Folgejahr zu hoch)
+  k.uebEff=(t>y+'-03-31')?Math.min(k.uebertrag,k.bisMaerz+k.vorher):k.uebertrag;
   k.rest=k.ans+k.uebEff-k.tk-k.pl;k.frei=k.rest-k.be;k.flex=k.flexMax-k.flexUsed;
   return k;}
 function kalFlags(eid){var k=kalKonto(eid),f=[],m=+today().slice(5,7);
@@ -14970,7 +14980,7 @@ function ztLog(mk,eid,feld,alt,neu,grund){var row={month:mk,employee_id:eid||nul
 function ztSetNl(mk,v){var n=parseFloat(v);if(isNaN(n))n=0;var old=zielNlTargets[mk]!=null?zielNlTargets[mk]:0;if(n===old)return;ztLog(mk,null,'Ziel NL',Math.round(old),Math.round(n));updateZielNlTarget(mk,n);}
 function ztSetField(mk,eid,f,v){if(!ztCanEditMonth(mk))return;ztKeep(mk);if(!zielStore[mk])zielStore[mk]={};if(!zielStore[mk][eid])zielStore[mk][eid]={};var n=parseFloat(v);if(isNaN(n))n=0;zielStore[mk][eid][f]=n;ZT.dirty=ZT.dirty||{};ZT.dirty[mk]=1;renderTeam();}
 function ztRowsFor(mk,useCal){var W=ztWeeks(mk),rec=zielStore[mk]||{};return ztEmps(mk).map(function(e){var r=rec[e.id]||{},x=ztEmpMonth(e,mk),wk=W.map(function(wm,i){return (useCal&&x.weeks[i])?x.weeks[i].n:((r.weeks&&r.weeks[i]!=null)?r.weeks[i]:wm.defaultDays);});while(wk.length<5)wk.push(0);
-  return {employee_id:e.id,month:mk,week1:wk[0],week2:wk[1],week3:wk[2],week4:wk[3],week5:wk[4],opt_per_tag:r.optTag!=null?r.optTag:0,marge_per_opt:r.margeOpt!=null?r.margeOpt:0,arbeitstage:r.arbeitstage||[]};});}
+  return zielW6Row({employee_id:e.id,month:mk,week1:wk[0],week2:wk[1],week3:wk[2],week4:wk[3],week5:wk[4],opt_per_tag:r.optTag!=null?r.optTag:0,marge_per_opt:r.margeOpt!=null?r.margeOpt:0,arbeitstage:r.arbeitstage||[]},wk);});}
 function ztSave(){var st=document.getElementById('ziel-status'),D=Object.keys(ZT.dirty||{});if(!D.length){if(st)st.textContent='Nichts geändert.';return;}
   var grund=null;if(D.some(function(mk){return zielLocks[mk];})){grund=prompt('Grund für die Änderung am festgeschriebenen Monat (steht im Protokoll):','');if(grund===null)return;}
   if(st)st.textContent='Speichere …';
@@ -14983,9 +14993,9 @@ function ztFestschreiben(mk){if(!ztIsAdmin())return;if(ZT.dirty&&ZT.dirty[mk]){a
   var L=ztEmps(mk),M=ztMonth(mk),snap={};L.forEach(function(e){var x=ztEmpMonth(e,mk),os=ztOS(e,mk);snap[e.id]={weeks:x.weeks.map(function(w){return w.n;}),optTag:x.opt,margeOpt:x.mo,ziel:Math.round(x.ziel),zielOS:Math.round(os.sum)};});
   if(!confirm(MONTH_NAMES_ZIEL[+mk.slice(5)-1]+' festschreiben?\n\nZiel Marge '+ztEur(M.ziel)+' · Ziel NL '+ztEur(M.nl)+'\nDie Einsatztage aus dem Kalender werden übernommen. Danach können nur Admins ändern, jede Änderung wird protokolliert.'))return;
   var rows=ztRowsFor(mk,true);var oldRec=zielStore[mk]||{};
-  rows.forEach(function(r){var o=oldRec[r.employee_id];var ow=o&&o.weeks?o.weeks.slice(0,5).join('/'):null,nw=[r.week1,r.week2,r.week3,r.week4,r.week5].join('/');if(ow&&ow!==nw)ztLog(mk,r.employee_id,'Einsatztage je KW (vorher gespeichert)',ow,nw,'beim Festschreiben aus dem Kalender übernommen');});
+  rows.forEach(function(r){var o=oldRec[r.employee_id];var nwA=[r.week1,r.week2,r.week3,r.week4,r.week5].concat(r.week6!=null?[r.week6]:[]),ow=o&&o.weeks?o.weeks.slice(0,nwA.length).join('/'):null,nw=nwA.join('/');if(ow&&ow!==nw)ztLog(mk,r.employee_id,'Einsatztage je KW (vorher gespeichert)',ow,nw,'beim Festschreiben aus dem Kalender übernommen');});
   sb.from('zielvereinbarung').upsert(rows,{onConflict:'employee_id,month'}).then(function(res){if(res&&res.error){alert('Festschreiben abgebrochen, nichts gesperrt: '+res.error.message);return;}
-    rows.forEach(function(r){if(!zielStore[mk])zielStore[mk]={};if(!zielStore[mk][r.employee_id])zielStore[mk][r.employee_id]={};zielStore[mk][r.employee_id].weeks=[r.week1,r.week2,r.week3,r.week4,r.week5];});
+    rows.forEach(function(r){if(!zielStore[mk])zielStore[mk]={};if(!zielStore[mk][r.employee_id])zielStore[mk][r.employee_id]={};zielStore[mk][r.employee_id].weeks=[r.week1,r.week2,r.week3,r.week4,r.week5].concat(r.week6!=null?[r.week6]:[]);});
     var lk={month:mk,festgeschrieben_von:kalActor(),ziel_nl:M.nl,ziel_marge:Math.round(M.ziel),ziel_os:Math.round(M.os),snapshot:snap};
     sb.from('ziel_festschreibung').upsert(lk,{onConflict:'month'}).then(function(r2){if(r2&&r2.error){alert('Sperre konnte nicht gespeichert werden: '+r2.error.message+'\nDie Werte sind gespeichert, der Monat ist aber nicht gesperrt.');return;}
       lk.festgeschrieben_am=new Date().toISOString();zielLocks[mk]=lk;ztLog(mk,null,'Monat festgeschrieben',null,'Ziel Marge '+Math.round(M.ziel)+' · Ziel OS '+Math.round(M.os));logActivity('ziel','locked','Zielvereinbarung festgeschrieben',null,mk);renderTeam();});});}

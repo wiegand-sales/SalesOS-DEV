@@ -144,14 +144,15 @@ for (const v of ['woche', 'jahr', 'team', 'monat']) await step(`kalSetView('${v}
 await step("kalSetPane('gen')"); await step("kalSetPane('plan')"); await step("kalLocToggle('MUC')"); await step("kalLocToggle('MUC')");
 const kal = await page.evaluate(`(function(){
   var t=today(),d=function(n){return addDaysUTC(t,n);},y=t.slice(0,4);
+  var f30=d(30);while(![1,2,3,4].every(function(i){return kalWorkday(employees[i],f30);}))f30=addDaysUTC(f30,1); // Werktag für alle (z. B. nicht 24.12.)
   employees[0].urlaub={};employees[0].urlaub[y]={anspruch:28,flex:5,uebertrag:0,vorher_genommen:10};
-  absences=[{id:'k1',employeeId:'e2',art:'urlaub',von:d(30),bis:d(30),halb:false,status:'genehmigt',eingereichtAm:d(-5)},
-    {id:'k2',employeeId:'e3',art:'urlaub',von:d(30),bis:d(30),halb:false,status:'genehmigt',eingereichtAm:d(-5)},
-    {id:'k3',employeeId:'e4',art:'urlaub',von:d(30),bis:d(30),halb:false,status:'offen',eingereichtAm:d(-5)},
+  absences=[{id:'k1',employeeId:'e2',art:'urlaub',von:f30,bis:f30,halb:false,status:'genehmigt',eingereichtAm:d(-5)},
+    {id:'k2',employeeId:'e3',art:'urlaub',von:f30,bis:f30,halb:false,status:'genehmigt',eingereichtAm:d(-5)},
+    {id:'k3',employeeId:'e4',art:'urlaub',von:f30,bis:f30,halb:false,status:'offen',eingereichtAm:d(-5)},
     {id:'k4',employeeId:'e1',art:'urlaub',von:d(3),bis:d(3),halb:false,status:'offen',eingereichtAm:t}];
   renderKalender();
   var kurz=kalEval({employeeId:'e1',art:'urlaub',von:d(3),bis:d(3),halb:false}).H.some(function(h){return /Flex Day/.test(h.h);});
-  var frei=kalEval({employeeId:'e5',art:'urlaub',von:d(30),bis:d(30),halb:false}).H.some(function(h){return /3 oder mehr andere frei/.test(h.h);});
+  var frei=kalEval({employeeId:'e5',art:'urlaub',von:f30,bis:f30,halb:false}).H.some(function(h){return /3 oder mehr andere frei/.test(h.h);});
   var wd=d(1);while(!kalWorkday(employees[4],wd))wd=addDaysUTC(wd,1);var kr=kalEval({employeeId:'e5',art:'krank',von:wd,bis:wd,halb:false}).H.some(function(h){return /50 %/.test(h.h);});
   var vor=kalKonto('e1').tk;
   kalDecide('k4',true);var fx=absences.find(function(a){return a.id==='k4';});
@@ -199,6 +200,11 @@ check('Einstellungen: Reiter Kalender', kalRg.page);
 const kalFs = await page.evaluate(`(function(){var y=today().slice(0,4),wd=y+'-03-02';while(!kalWorkday(employees[5],wd))wd=addDaysUTC(wd,1);var vor=kalKonto('e6').tk;
   absences.push({id:'fs1',employeeId:'e6',art:'freistellung',von:wd,bis:wd,halb:false,status:'genehmigt',eingereichtAm:wd});_kalOnIdx=null;var k=kalKonto('e6');return {gleich:k.tk===vor,fs:k.fs||0};})()`);
 check('Kalender: Freistellung kostet keinen Urlaub', kalFs.gleich && kalFs.fs === 1, kalFs.fs);
+const jw = await page.evaluate(`(function(){var py=String(+today().slice(0,4)-1),e=kalEmp('e6');e.urlaub=e.urlaub||{};e.urlaub[py]={anspruch:28,flex:5,uebertrag:5};_kalOnIdx=null;var k=kalKonto('e6',py);
+  var el=document.createElement('input');el.id='overviewWeekInput';el.value='2027-W01';document.body.appendChild(el);var f0=overviewFromDate,t0=overviewToDate,r={};try{applyOverviewWeek();}catch(x){}r.von=overviewFromDate;r.bis=overviewToDate;el.value='2026-W48';try{applyOverviewWeek();}catch(x){}r.von2=overviewFromDate;el.remove();overviewFromDate=f0;overviewToDate=t0;
+  delete e.urlaub[py];return {ueb:k.uebEff,von:r.von,bis:r.bis,von2:r.von2};})()`);
+check('Urlaub: Übertrag im Vorjahr nach 31.03. verfallen', jw.ueb === 0, jw.ueb);
+check('Wochenauswahl: KW 1/2027 = 04.01.–10.01.2027', jw.von === '2027-01-04' && jw.bis === '2027-01-10' && jw.von2 === '2026-11-23', jw.von + '–' + jw.bis + ' / ' + jw.von2);
 const zt = await page.evaluate(`(function(){var mk=today().slice(0,7);var nx=kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),1)).slice(0,7);var e=employees[0];
   zielStore[nx]=zielStore[nx]||{};zielStore[nx][e.id]={optTag:20,margeOpt:50,weeks:[1,1,1,1,1]};
   var calOld=ZT_KAL_START;ZT_KAL_START=nx;var x=ztEmpMonth(e,nx);var wd=0;ztDaysOfMonth(nx).forEach(function(d){if(kalWorkday(e,d)&&!(kalOn(e.id,d)&&kalOn(e.id,d).art!=='krank'))wd++;});
