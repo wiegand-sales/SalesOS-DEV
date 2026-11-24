@@ -338,7 +338,7 @@ const b1 = await page.evaluate(`(async function(){var e=kalEmp('e1'),w=function(
   selectEmp('e1');switchTab('coaching-eval');await w(100);
   var soll=myCr(getPerf('e1',30));r.ziel=(document.getElementById('tabContent').textContent.match(/Aktuell \\(Ø 30 Tage\\): ([0-9,]+) %/)||[])[1]===(Math.round(soll*10)/10).toString().replace('.',',');
   switchTab('performance');await w(400);
-  var vor=(performance.e1||[]).filter(function(p){return p.date>=addDaysUTC(d,-14)&&p.date<d;});
+  var vor=(performance.e1||[]).filter(function(p){return p.date<d;}).sort(function(x,y){return y.date.localeCompare(x.date);}).slice(0,3); // 3 Arbeitstage wie Historie
   r.impact=(document.getElementById('coachImpactPanel').textContent.indexOf('Ø vorher'+myCr(vor).toFixed(1))>=0);
   var ds=activeChart&&activeChart.data.datasets.find(function(x){return x.label==='Durch. Team';}),te=employees.filter(function(x){return x.team===e.team&&x.id!=='e1'&&x.active!==false;});
   var lastIdx=ds?ds.data.map(function(v,i){return v!=null?i:-1;}).filter(function(i){return i>=0;}).pop():-1,pp=buildChartPeriods(empChartGroup,+today().slice(0,4))[lastIdx];
@@ -403,6 +403,13 @@ check('B9: überfällige geplante Session zählt nicht als abgeschlossen', b9 ==
 
 { const py = fs.readFileSync(path.join(here, '..', 'scripts', 'sync_user_activity.py'), 'utf8');
   check('B12: Sync ordnet doppelte Namen nicht still zu (aktive bevorzugt, sonst mehrdeutig)', /"select": "id,name,active"/.test(py) && /if emp_id == AMBIGUOUS:/.test(py) && !/by_name = \{normalize_name\(row\["name"\]\): row\["id"\] for row in rows\}/.test(py)); }
+
+// QA: alte Bewertung im Formular mit den alten Punkten bearbeiten (nichts geht beim Speichern verloren)
+const qaf = await page.evaluate(`(function(){var sv=callRatings.e1;callRatings.e1=[{id:'q9',date:'2026-10-01',status:'ja',scores:{umgang:4,vertrauen:3,potenzial:2,kaufsignale:4,klarheit:3,intro:3}}];
+  selectEmp('e1');openQaBewertungModal('e1','q9');var r=[Object.keys(_cbScores).sort().join(','),!!document.getElementById('qas_umgang')];
+  openQaBewertungModal('e1');r.push(!document.getElementById('qas_umgang')&&!!document.getElementById('qas_produktnutzen'));
+  closeModal('qaBewertungModal');callRatings.e1=sv;selectWiegandSub('overview');return r.join('/');})()`);
+check('QA: alte Bewertung behält beim Bearbeiten ihre alten Punkte', qaf === 'intro,kaufsignale,klarheit,potenzial,umgang,vertrauen/true/true', qaf);
 
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));

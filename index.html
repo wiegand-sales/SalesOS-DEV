@@ -8251,17 +8251,11 @@ function renderTab(){
         if(!panel)return;
         var relevant=(protocols[selectedEmp]||[]).filter(function(s){return s.status!=='geplant'&&s.focusMetric===empChartMetric;}); // B9
         var fullPerf=(performance[selectedEmp]||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
-        // B1: CR aus den Rohzahlen des Fensters (erst summieren, dann teilen), Zählwerte als Ø je Tag
-        function avgWindow(centerDate,daysBefore,daysAfter){
-          var fromS=addDaysUTC(centerDate,-daysBefore);
-          var toS=addDaysUTC(centerDate,daysAfter);
-          var rows=fullPerf.filter(function(p){return p.date>=fromS&&p.date<toS;});
-          return perfKpiWin(empObj,rows,empChartMetric);
-        }
+        // Wirkung wie in der Coaching-Historie: Ø 3 Arbeitstage vor gegen nach der Session (perfImpact, CR aus Rohzahlen; Peter 24.11.)
+        function impactOf(s){var im=perfImpact(empObj,fullPerf,s.date,empChartMetric);return im.state==='ok'?im:{before:null,after:null};}
         var sortedRelevant=relevant.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
         function buildRow(s){
-          var before=avgWindow(s.date,14,0);
-          var after=avgWindow(s.date,0,14);
+          var im=impactOf(s),before=im.before,after=im.after;
           var delta=(before!==null&&after!==null)?(after-before):null;
           var good=delta!==null&&(target===null?delta>0:(tk&&empT[tk]&&empT[tk].dir==='lte'?delta<0:delta>0));
           var deltaTxt=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1);
@@ -13092,7 +13086,7 @@ function setCbScore(key,val){
   updateQaChips();
 }
 function updateQaChips(){
-  CALL_CATS.forEach(function(cat){
+  (_qaFormCats||CALL_CATS).forEach(function(cat){
     var vs=cat.items.map(function(k){return _cbScores[k]||0;}).filter(function(x){return x>0;});
     var e=document.getElementById('qacg_'+cat.key);if(e)e.textContent=vs.length?'Ø '+(vs.reduce(function(a,b){return a+b;},0)/vs.length).toFixed(1).replace('.',','):'';
   });
@@ -13658,12 +13652,14 @@ function deleteHistorieCallRating(empId,ratingId){
     sb.from('call_ratings').delete().eq('id',ratingId).then(function(res){if(res&&res.error)alert('Löschen fehlgeschlagen: '+res.error.message);renderTab();}).catch(function(err){alert('Löschen fehlgeschlagen: '+(err&&err.message||err));renderTab();});
   });
 }
-var _editingCallRatingId=null;
+var _editingCallRatingId=null,_qaFormCats=null;
 function openQaBewertungModal(empId,editRatingId){
   if(empId)selectedEmp=empId;
   _cbScores={};
   _editingCallRatingId=editRatingId||null;
   var editingRating=editRatingId?((callRatings[selectedEmp]||[]).find(function(r){return r.id===editRatingId;})):null;
+  // Alte Bewertung (vor QA_V2_FROM) mit den alten Punkten bearbeiten – sonst gingen Umgang, Vertrauen usw. beim Speichern verloren
+  _qaFormCats=editingRating?qaCatsFor(editingRating):CALL_CATS;
   var dateEl=document.getElementById('cb-date');
   if(dateEl)dateEl.value=editingRating?editingRating.date:today();
   var fieldMap={'cb-auftrag':'auftragsnr','cb-bewerter':'bewertetVon','cb-einwand':'einwand','cb-hinweis':'hinweis'};
@@ -13682,7 +13678,7 @@ function openQaBewertungModal(empId,editRatingId){
   if(box){
     var BAND='font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);background:#EFECE5;border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between';
     var h='';
-    CALL_CATS.forEach(function(cat,ci){
+    (_qaFormCats||CALL_CATS).forEach(function(cat,ci){
       h+='<div style="'+BAND+';margin:'+(ci?12:0)+'px 0 4px"><span>'+esc(cat.label)+' · '+Math.round(cat.weight*100)+' %</span><span id="qacg_'+cat.key+'" style="letter-spacing:0;text-transform:none;color:var(--text3)"></span></div>';
       cat.items.forEach(function(k){
         h+='<div style="display:flex;align-items:center;gap:12px;height:36px;padding:0 10px;border-bottom:1px solid #eae7e0">'
@@ -13694,7 +13690,7 @@ function openQaBewertungModal(empId,editRatingId){
       });
     });
     box.innerHTML='<div class="sf-sub" style="margin:0 0 8px">Nur bewerten, was im Call vorkam · leer wird nicht gezählt · nochmal klicken leert den Punkt</div>'+h;
-    CALL_CATS.forEach(function(cat){cat.items.forEach(function(k){
+    (_qaFormCats||CALL_CATS).forEach(function(cat){cat.items.forEach(function(k){
       var v=editingRating&&editingRating.scores&&editingRating.scores[k]?editingRating.scores[k]:0;
       setCbScore(k,v);
     });});
