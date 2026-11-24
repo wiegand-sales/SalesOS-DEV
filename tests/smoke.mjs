@@ -225,6 +225,14 @@ const c10 = await page.evaluate(`(async function(){var e=kalEmp('e1'),sv=e.notes
   e.notes='alt2';closeEmpSetModal();openEmpSetModal('e1');e.notes='neu2';document.getElementById('es-notes').value='meins';window.confirm=function(){return false;};saveEmpEinstellungen();r.push(e.notes);await w();
   window.confirm=cf;closeEmpSetModal();e.notes=sv;return r.join('/');})()`);
 check('Einstellungen: veraltetes Formular überschreibt neuere Notiz nicht', c10 === 'neu/neu2', c10);
+const c4 = await page.evaluate(`(async function(){var e=kalEmp('e1'),svV=employeeVerlauf,svOk=EV_OK,svW=e.workHours,svH=e.hours,svS=e.startDate,w=function(){return new Promise(function(r){setTimeout(r,30);});},r=[];
+  var kurz=JSON.parse(JSON.stringify(DEFAULT_WORK_HOURS));kurz.mo={von:'08:30',bis:'12:30',pause:0};
+  EV_OK=true;employeeVerlauf={};employeeVerlauf[String(e.id)]={workHours:[{ab:'2026-01-01',wert:null},{ab:'2026-11-02',wert:kurz}]};
+  r.push(workHoursForDate(e,'2025-12-29'),workHoursForDate(e,'2026-10-26'),workHoursForDate(e,'2026-11-09'));
+  employeeVerlauf={};e.workHours=null;e.startDate='2026-01-01';openEmpSetModal('e1');document.getElementById('es-wh-mo-bis').value='12:30';document.getElementById('es-wh-ab').value='2026-11-02';saveEmpEinstellungen();await w();
+  var L=(employeeVerlauf[String(e.id)]||{}).workHours||[];r.push(L.map(function(x){return x.ab;}).join('+'),workHoursForDate(e,'2026-10-26'),workHoursForDate(e,'2026-11-09'));
+  closeEmpSetModal();employeeVerlauf=svV;EV_OK=svOk;e.workHours=svW;e.hours=svH;e.startDate=svS;return r.join('/');})()`);
+check('Arbeitszeit: Änderung gilt erst ab „gültig ab“, Vormonate rechnen mit alter Zeit (C4)', c4 === '9/9/4/2026-01-01+2026-11-02/9/3.5', c4);
 const c8 = await page.evaluate(`(async function(){var sv=sb,svR=reviews.e1,cf=window.confirm,log=[],day=null,w=function(){return new Promise(function(r){setTimeout(r,40);});};
   function ch(t){var o={t:t,op:'select',args:[]};var c={};['select','eq','in','order','limit','single','maybeSingle'].forEach(function(k){c[k]=function(){if(k==='eq'||k==='in')o.args.push([].slice.call(arguments));return c;};});
     ['update','insert','upsert','delete'].forEach(function(k){c[k]=function(){o.op=k;return c;};});
