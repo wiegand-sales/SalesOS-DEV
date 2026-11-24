@@ -322,6 +322,8 @@ check('D5: nach 3 Versuchen „Seite neu laden“', d5.ende);
 { const src = fs.readFileSync(path.resolve(file), 'utf8');
   check('D7: Gesamtzeile nutzt Standard-Ziele, nicht die des ersten Mitarbeiters', /empT:empTargets\(\{\}\),hours:aggHours/.test(src) && !/empTargets\(selectedEmps\[0\]/.test(src)); }
 
+check('D7: Tagesdatum in Ortszeit (kurz nach Mitternacht)', await page.evaluate("localYmd(new Date(2026,10,24,0,30))==='2026-11-24'&&localYmd(new Date('x'))===''"));
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();

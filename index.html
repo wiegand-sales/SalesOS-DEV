@@ -2517,7 +2517,7 @@ function dwPrognose(kind){
 }
 function dwStandStr(){
   var ref=new Date();
-  if(settings.ftpLastSync){var sd=new Date(settings.ftpLastSync);if(!isNaN(sd.getTime())&&sd.toISOString().slice(0,10)===today()&&sd<ref)ref=sd;}
+  if(settings.ftpLastSync){var sd=new Date(settings.ftpLastSync);if(!isNaN(sd.getTime())&&localYmd(sd)===today()&&sd<ref)ref=sd;}
   return ('0'+ref.getHours()).slice(-2)+':'+('0'+ref.getMinutes()).slice(-2);
 }
 // Einheitliches Slide-Geruest: feste Hoehe, Kopf (Icon/Titel/Stand) oben, Inhalt, Fussnote immer unten
@@ -3948,6 +3948,10 @@ function reapplyChartGradient(chart,canvas,a1,a2){
 // interpretiert und .toISOString() dann in Zeitzonen mit positivem UTC-Offset (z.B. Deutschland)
 // auf den Vortag zurückrutscht. Immer nutzen, wenn ein berechnetes Datum mit echten
 // gespeicherten Datums-Strings (z.B. createdAt, performance.date) verglichen wird.
+function localYmd(d){ // Datum eines Zeitpunkts in Ortszeit (wie today()), nicht UTC; ungültig → ''
+  if(!(d instanceof Date)||isNaN(d.getTime()))return '';
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
 function addDaysUTC(dateStr,delta){
   var p=dateStr.split('-').map(Number);
   var d=new Date(Date.UTC(p[0],p[1]-1,p[2]));
@@ -9589,7 +9593,7 @@ function elapsedWorkHoursTodayFor(emp){
   var now=new Date(),refTime=now;
   if(settings.ftpLastSync){
     var syncDate=new Date(settings.ftpLastSync);
-    if(!isNaN(syncDate.getTime())&&syncDate.toISOString().slice(0,10)===today()&&syncDate<now)refTime=syncDate;
+    if(!isNaN(syncDate.getTime())&&localYmd(syncDate)===today()&&syncDate<now)refTime=syncDate;
   }
   var elapsed=(refTime.getHours()*60+refTime.getMinutes()-startMin)/60;
   elapsed=Math.max(elapsed,0.5);
@@ -10465,7 +10469,7 @@ function openCoachingEval(empId,editEvalId){
 
   // ── Ziele ──
   function goalCur(g){if(!g.metricKey)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4));var rp=getPerf(empId,30);if(!rp.length)return null;var vs=rp.map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
-  function goalStart(g){if(!g.metricKey||!g.createdAt)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4),String(g.createdAt).slice(0,10));var c=String(g.createdAt).slice(0,10);var d0=new Date(c+'T00:00:00');d0.setDate(d0.getDate()-30);var f0=d0.toISOString().slice(0,10);
+  function goalStart(g){if(!g.metricKey||!g.createdAt)return null;if(goalIsDev(g.metricKey))return goalDevVal(empId,String(g.metricKey).slice(4),String(g.createdAt).slice(0,10));var c=localYmd(new Date(g.createdAt))||String(g.createdAt).slice(0,10);var f0=addDaysUTC(c,-30);
     var vs=(performance[empId]||[]).filter(function(x){return x.date>=f0&&x.date<c;}).map(function(x){return x[g.metricKey];}).filter(function(v){return v!=null&&!isNaN(v);});
     return vs.length?vs.reduce(function(a,b){return a+(+b);},0)/vs.length:null;}
   function renderGoals(){
