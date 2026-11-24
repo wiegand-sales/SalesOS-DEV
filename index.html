@@ -14169,7 +14169,8 @@ function kalKonto(eid,year){var e=kalEmp(eid),y=String(year||today().slice(0,4))
   var k={ans:c.anspruch,flexMax:c.flex,uebertrag:c.uebertrag,vorher:c.vorher,tk:c.vorher,pl:0,be:0,flexUsed:0,kr:0,ag:0,bisMaerz:0,mon:[]};
   for(var i=0;i<12;i++)k.mon.push({tk:0,pl:0,be:0});
   kalAll().forEach(function(x){if(x.employeeId!==eid||x.status==='abgelehnt'||x.status==='storniert'||x.masked)return;var f=x.halb?0.5:1;
-    kalDays(x).forEach(function(d){if(d.slice(0,4)!==y)return;var m=+d.slice(5,7)-1;
+    kalDays(x).forEach(function(d){if(d.slice(0,4)!==y)return;if((e.startDate&&d<e.startDate)||(e.endDate&&d>e.endDate))return; // nur Tage im Arbeitsverhältnis
+      var m=+d.slice(5,7)-1;
       if(x.art==='krank'){if(x.status==='genehmigt')k.kr+=f;return;}
       if(x.art==='freistellung'){if(x.status==='genehmigt')k.fs=(k.fs||0)+f;return;}
       if(x.art==='ausgleich'){if(x.status==='genehmigt'&&!x.fixed)k.ag+=f;return;}
