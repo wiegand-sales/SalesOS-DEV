@@ -233,6 +233,18 @@ const c4 = await page.evaluate(`(async function(){var e=kalEmp('e1'),svV=employe
   var L=(employeeVerlauf[String(e.id)]||{}).workHours||[];r.push(L.map(function(x){return x.ab;}).join('+'),workHoursForDate(e,'2026-10-26'),workHoursForDate(e,'2026-11-09'));
   closeEmpSetModal();employeeVerlauf=svV;EV_OK=svOk;e.workHours=svW;e.hours=svH;e.startDate=svS;return r.join('/');})()`);
 check('Arbeitszeit: Änderung gilt erst ab „gültig ab“, Vormonate rechnen mit alter Zeit (C4)', c4 === '9/9/4/2026-01-01+2026-11-02/9/3.5', c4);
+const c4b = await page.evaluate(`(async function(){var e=kalEmp('e1'),sv=sb,svV=employeeVerlauf,svOk=EV_OK,svW=e.workHours,svH=e.hours,cf=window.confirm,log=[],w=function(){return new Promise(function(r){setTimeout(r,40);});},r=[];
+  function ch(t){var o={t:t,op:'select'};var c={};['select','eq','order','range'].forEach(function(k){c[k]=function(){return c;};});['update','insert','upsert','delete'].forEach(function(k){c[k]=function(){o.op=k;return c;};});
+    c.then=function(a,b){log.push(o.t+':'+o.op);return Promise.resolve({data:o.op==='delete'?[{}]:[],error:null}).then(a,b);};return c;}
+  var kurz=JSON.parse(JSON.stringify(DEFAULT_WORK_HOURS));kurz.mo={von:'08:30',bis:'12:30',pause:0};
+  EV_OK=true;employeeVerlauf={};employeeVerlauf[String(e.id)]={workHours:[{ab:'2025-05-01',wert:null,von:'Startwert (SQL 51)'},{ab:'2025-12-01',wert:kurz,von:'Test'},{ab:'2026-11-01',wert:kurz,von:'Test'}]};e.workHours=kurz;
+  sb={from:ch};window.confirm=function(){return true;};openEmpSetModal('e1');
+  var t=document.getElementById('es-wh-verlauf');r.push(t.querySelectorAll('tbody tr').length+'z'+t.querySelectorAll('button').length+'b');
+  esWhVerlaufDel(String(e.id),'2025-12-01');await w();r.push(employeeVerlauf[String(e.id)].workHours.map(function(x){return x.ab;}).join('+'),log.join(','));
+  log=[];esWhVerlaufDel(String(e.id),'2026-11-01');await w();r.push(employeeVerlauf[String(e.id)].workHours.length+'/'+(e.workHours===null)+'/'+log.join(','),document.getElementById('es-wh-verlauf').querySelectorAll('button').length);
+  esWhVerlaufDel(String(e.id),'2025-05-01');await w();r.push(employeeVerlauf[String(e.id)].workHours.length);
+  closeEmpSetModal();sb=sv;window.confirm=cf;employeeVerlauf=svV;EV_OK=svOk;e.workHours=svW;e.hours=svH;return r.join(' | ');})()`);
+check('Arbeitszeit: Verlaufstabelle, Version löschen, erste nicht löschbar (C4)', c4b === '3z2b | 2025-05-01+2026-11-01 | employee_verlauf:delete,employee_history:insert,employee_history:select | 1/true/employee_verlauf:delete,employee_history:insert,employees:update,employee_history:select | 0 | 1', c4b);
 const c8 = await page.evaluate(`(async function(){var sv=sb,svR=reviews.e1,cf=window.confirm,log=[],day=null,w=function(){return new Promise(function(r){setTimeout(r,40);});};
   function ch(t){var o={t:t,op:'select',args:[]};var c={};['select','eq','in','order','limit','single','maybeSingle'].forEach(function(k){c[k]=function(){if(k==='eq'||k==='in')o.args.push([].slice.call(arguments));return c;};});
     ['update','insert','upsert','delete'].forEach(function(k){c[k]=function(){o.op=k;return c;};});

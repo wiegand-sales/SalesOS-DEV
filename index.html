@@ -10999,9 +10999,8 @@ function esBuildHtml(emp,asPopup,html){
             +'</tr>';
           html+='</tbody></table></div>';
           // C4: Änderungen gelten ab einem Datum; frühere Tage rechnen mit der damaligen Arbeitszeit
-          (function(){var L=((employeeVerlauf[String(emp.id)]||{}).workHours)||[],sum=function(w){w=w||DEFAULT_WH;return days.reduce(function(s,d){var dv=w[d.key]||DEFAULT_WH[d.key];return s+calcNetHours(dv.von,dv.bis,dv.pause);},0);};
-            html+='<div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:-6px 0 16px"><div><label>Änderung gültig ab</label><input type="date" id="es-wh-ab" value="'+today()+'"'+(EV_OK?'':' disabled')+'></div>'
-              +'<div style="font-size:11.5px;color:var(--text3);line-height:1.5;padding-bottom:6px">'+(EV_OK?(L.length?'Verlauf: '+L.map(function(x){return 'ab '+fd(x.ab)+' · '+sum(x.wert).toFixed(1).replace('.',',')+' Std.';}).join(' | '):'Noch kein Verlauf – die bisherige Arbeitszeit gilt ab Vertragsbeginn.'):'Verlauf nicht verfügbar (SQL 51 fehlt) – eine Änderung wirkt auf alle offenen Monate.')+'</div></div>';})();
+          html+='<div style="margin:-6px 0 12px"><label>Änderung gültig ab</label><input type="date" id="es-wh-ab" value="'+today()+'"'+(EV_OK?'':' disabled')+' style="width:auto"></div>';
+          html+='<div id="es-wh-verlauf" style="margin-bottom:16px">'+esWhVerlaufHtml(emp)+'</div>';
           esWeekTotal=weekTotal;
           var wdIdx=[];days.forEach(function(d,ix){var dv=wh[d.key]||DEFAULT_WH[d.key];if(calcNetHours(dv.von,dv.bis,dv.pause)>0)wdIdx.push(ix);});
           var sh=['Mo','Di','Mi','Do','Fr','Sa','So'];
@@ -12016,13 +12015,52 @@ var employeeVerlauf={},EV_OK=false; // {empId:{workHours:[{ab:'YYYY-MM-DD',wert:
 function loadEmployeeVerlaufFromSupabase(){
   return selectAllPaginated('employee_verlauf','gueltig_ab',true).then(function(res){
     if(res.error){console.warn('employee_verlauf nicht geladen (SQL 51 ausgeführt?):',res.error.message||res.error);EV_OK=false;employeeVerlauf={};return false;}
-    var m={};(res.data||[]).forEach(function(r){var k=String(r.employee_id);m[k]=m[k]||{};(m[k][r.feld]=m[k][r.feld]||[]).push({ab:String(r.gueltig_ab).slice(0,10),wert:r.wert});});
+    var m={};(res.data||[]).forEach(function(r){var k=String(r.employee_id);m[k]=m[k]||{};(m[k][r.feld]=m[k][r.feld]||[]).push({ab:String(r.gueltig_ab).slice(0,10),wert:r.wert,von:r.geaendert_von||null});});
     employeeVerlauf=m;EV_OK=true;return true;
   });
 }
 // Wert eines Felds am Tag d: letzte Version mit gueltig_ab <= d; vor der ersten Version gilt die erste. undefined = kein Verlauf.
 function empVerlaufWert(emp,feld,d){var L=emp&&employeeVerlauf[String(emp.id)];L=L&&L[feld];if(!L||!L.length)return undefined;var v=L[0];for(var i=1;i<L.length;i++){if(L[i].ab<=d)v=L[i];else break;}return v.wert;}
-function empVerlaufSet(emp,feld,ab,wert){var k=String(emp.id);employeeVerlauf[k]=employeeVerlauf[k]||{};var L=employeeVerlauf[k][feld]=(employeeVerlauf[k][feld]||[]).filter(function(x){return x.ab!==ab;});L.push({ab:ab,wert:wert});L.sort(function(a,b){return a.ab<b.ab?-1:a.ab>b.ab?1:0;});}
+function empVerlaufSet(emp,feld,ab,wert,von){var k=String(emp.id);employeeVerlauf[k]=employeeVerlauf[k]||{};var L=employeeVerlauf[k][feld]=(employeeVerlauf[k][feld]||[]).filter(function(x){return x.ab!==ab;});L.push({ab:ab,wert:wert,von:von||null});L.sort(function(a,b){return a.ab<b.ab?-1:a.ab>b.ab?1:0;});}
+// Wochensumme und Arbeitstage einer Arbeitszeit-Version (null = Standard)
+function whWeekSum(w){w=w||DEFAULT_WORK_HOURS;return ['mo','di','mi','do','fr','sa','so'].reduce(function(s,k){var dv=w[k]||DEFAULT_WORK_HOURS[k];if(!dv||!dv.von||!dv.bis)return s;return s+Math.max(0,(timeStrToMin(dv.bis)-timeStrToMin(dv.von)-(+dv.pause||0))/60);},0);}
+function whDaysTxt(w){w=w||DEFAULT_WORK_HOURS;var K=['mo','di','mi','do','fr','sa','so'],S=['Mo','Di','Mi','Do','Fr','Sa','So'],ix=[];K.forEach(function(k,i){var dv=w[k]||DEFAULT_WORK_HOURS[k];if(dv&&dv.von&&dv.bis&&timeStrToMin(dv.bis)>timeStrToMin(dv.von))ix.push(i);});
+  if(!ix.length)return 'keine';return ix.length>1&&ix[ix.length-1]-ix[0]===ix.length-1?S[ix[0]]+'–'+S[ix[ix.length-1]]:ix.map(function(i){return S[i];}).join(', ');}
+function whVerLabel(v){return 'ab '+fd(v.ab)+' · '+whWeekSum(v.wert).toFixed(1).replace('.',',')+' Std.';}
+// Verlaufstabelle in Stammdaten › Arbeitszeit (Variante B, Peter 24.11.): erste Version nicht löschbar
+function esWhVerlaufHtml(emp){
+  var M='font-size:11.5px;color:var(--text3);line-height:1.5';
+  if(!EV_OK)return '<div style="'+M+'">Verlauf nicht verfügbar (SQL 51 fehlt) – eine Änderung wirkt auf alle offenen Monate.</div>';
+  var L=((employeeVerlauf[String(emp.id)]||{}).workHours)||[];
+  if(!L.length)return '<div style="'+M+'">Noch kein Verlauf – die bisherige Arbeitszeit gilt ab Vertragsbeginn.</div>';
+  var TH='font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text2);padding:7px 10px;text-align:left',TD='padding:7px 10px;border-top:1px solid #e2dfd7;font-size:12.5px';
+  return '<label>Verlauf der Arbeitszeit</label><div class="std-wrap"><table style="width:100%;border-collapse:collapse;background:#EFECE5;border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums">'
+    +'<thead><tr><th style="'+TH+'">Gültig ab</th><th style="'+TH+';text-align:right">Std./Woche</th><th style="'+TH+'">Arbeitstage</th><th style="'+TH+'">Eingetragen von</th><th style="'+TH+'"></th></tr></thead><tbody>'
+    +L.map(function(v,i){var von=v.von?(/^Startwert/.test(v.von)?'Startwert':v.von):'—';
+      return '<tr><td style="'+TD+'">'+fd(v.ab)+'</td><td style="'+TD+';text-align:right">'+whWeekSum(v.wert).toFixed(1).replace('.',',')+'</td><td style="'+TD+'">'+whDaysTxt(v.wert)+'</td><td style="'+TD+'">'+esc(von)+'</td>'
+        +'<td style="'+TD+';text-align:right">'+(i===0?'<span style="font-size:11.5px;color:var(--text3)">nicht löschbar</span>':'<button type="button" class="btn btn-sm btn-danger" style="display:inline-flex" onclick="esWhVerlaufDel(\''+esc(String(emp.id))+'\',\''+v.ab+'\')">Löschen</button>')+'</td></tr>';}).join('')
+    +'</tbody></table></div>';
+}
+function esWhVerlaufDel(empId,ab){
+  var emp=employees.find(function(e){return String(e.id)===String(empId);});if(!emp)return;
+  var L=((employeeVerlauf[String(emp.id)]||{}).workHours)||[],i=-1;L.forEach(function(x,j){if(x.ab===ab)i=j;});if(i<1)return;
+  var v=L[i],lbl=whVerLabel(v),wasLast=i===L.length-1;
+  if(!confirm('Arbeitszeit-Version '+lbl+' löschen?\n\nFür diese Tage gilt dann wieder die vorherige Arbeitszeit.'+(wasLast?'\nDas Formular wird danach neu geladen; nicht gespeicherte Eingaben gehen verloren.':'')))return;
+  sb.from('employee_verlauf').delete().eq('employee_id',emp.id).eq('feld','workHours').eq('gueltig_ab',ab).select().then(function(r){
+    if(r&&r.error){alert('Löschen fehlgeschlagen: '+r.error.message);return;}
+    if(r&&Array.isArray(r.data)&&!r.data.length){alert('Löschen fehlgeschlagen: keine Berechtigung oder Version nicht mehr vorhanden. Bitte Seite neu laden.');return;}
+    L.splice(i,1);
+    var who=(typeof currentCoach!=='undefined'&&currentCoach)?currentCoach.name:((typeof currentAuthUser!=='undefined'&&currentAuthUser&&currentAuthUser.email)||null);
+    sb.from('employee_history').insert([{employee_id:emp.id,field:'workHours_version',old_value:lbl,new_value:'gelöscht',changed_by:currentCoach?currentCoach.id:null,changed_by_name:who}]).then(function(h){if(h&&h.error)console.warn('Historie konnte nicht gespeichert werden:',h.error);else loadEmployeeHistoryFromSupabase().then(function(){espRenderHist();});});
+    if(wasLast){var nw=L[L.length-1].wert||null;emp.workHours=nw;emp.hours=whWeekSum(nw);
+      sb.from('employees').update({work_hours:nw,hours:emp.hours}).eq('id',emp.id).then(function(u){if(u&&u.error)alert('Version gelöscht, aber die aktuelle Arbeitszeit in den Stammdaten nicht aktualisiert: '+u.error.message);});
+    }
+    lsSave();renderSidebar();renderEmpDetail();
+    var pb=document.getElementById('espBody'),c=document.getElementById('es-wh-verlauf');
+    if(wasLast&&pb&&c&&pb.contains(c))openEmpSetModal(emp.id); // Formular zeigt sonst noch die gelöschte Arbeitszeit
+    else if(c)c.innerHTML=esWhVerlaufHtml(emp);
+  });
+}
 // Arbeitszeit je Wochentag, die am Tag d galt
 function workHoursPlanFor(emp,d){var w=empVerlaufWert(emp,'workHours',d||today());if(w===undefined)w=emp&&emp.workHours;return w||DEFAULT_WORK_HOURS;}
 function loadGoalsFromSupabase(){
@@ -12624,8 +12662,8 @@ function saveEmpEinstellungen(){
     var _abEl=document.getElementById('es-wh-ab'),_who=(typeof currentCoach!=='undefined'&&currentCoach)?currentCoach.name:((typeof currentAuthUser!=='undefined'&&currentAuthUser&&currentAuthUser.email)||null);
     whAb=(_abEl&&/^\d{4}-\d{2}-\d{2}$/.test(_abEl.value))?_abEl.value:today();whRows=[];
     if(!(((employeeVerlauf[String(emp.id)]||{}).workHours)||[]).length){var _a0=oldSnapshot.startDate||'2000-01-01';
-      if(_a0<whAb){whRows.push({employee_id:emp.id,feld:'workHours',gueltig_ab:_a0,wert:oldWorkHours,geaendert_von:'Startwert'});empVerlaufSet(emp,'workHours',_a0,oldWorkHours);}}
-    whRows.push({employee_id:emp.id,feld:'workHours',gueltig_ab:whAb,wert:newWorkHours,geaendert_von:_who});empVerlaufSet(emp,'workHours',whAb,newWorkHours);
+      if(_a0<whAb){whRows.push({employee_id:emp.id,feld:'workHours',gueltig_ab:_a0,wert:oldWorkHours,geaendert_von:'Startwert'});empVerlaufSet(emp,'workHours',_a0,oldWorkHours,'Startwert');}}
+    whRows.push({employee_id:emp.id,feld:'workHours',gueltig_ab:whAb,wert:newWorkHours,geaendert_von:_who});empVerlaufSet(emp,'workHours',whAb,newWorkHours,_who);
   }
   emp.workHours=newWorkHours;
   emp.hours=whDays.reduce(function(sum,d){
@@ -12705,7 +12743,7 @@ var esOpenSections={};
 var histFilter='all', histShowAll=false, histExpanded={};
 var HIST_AREAS={stamm:'Stammdaten',prov:'Provision',kpi:'KPI-Ziele',zeit:'Arbeitszeit'};
 function histFieldInfo(field){
-  var FL={team:'Team',role:'Position',name:'Name',phase:'Phase',contract:'Anstellung',hours:'Stunden/Woche',startDate:'Vertragsbeginn',endDate:'Vertragsende',email:'E-Mail',
+  var FL={team:'Team',role:'Position',name:'Name',phase:'Phase',contract:'Anstellung',hours:'Stunden/Woche',startDate:'Vertragsbeginn',endDate:'Vertragsende',email:'E-Mail',workHours_version:'Arbeitszeit-Version',
     provision_gueltigAb:'Gültig ab',provision_grundgehalt:'Grundgehalt',provision_agSozialabgaben:'AG-Sozialabgaben',provision_basisProOpt:'Basisprovision/Opt.',
     provision_divOEM:'Divisor OEM',provision_divUpsell:'Divisor Upsells',provision_divWka:'Divisor WKA',provision_reduktionProKpi:'Reduzierung je KPI',
     provision_mindestprovision:'Mindestprovision',provision_mindestleistungOptH:'Mindestleistung Opt./Std.',
@@ -12717,7 +12755,7 @@ function histFieldInfo(field){
   var PCTF={provision_agSozialabgaben:1,provision_reduktionProKpi:1,provision_mindestprovision:1,provision_vlc_extraPayPct:1};
   var m;
   if(FL[field]){
-    var area=/^provision_/.test(field)?'prov':(field==='hours'?'zeit':'stamm');
+    var area=/^provision_/.test(field)?'prov':(field==='hours'||field==='workHours_version'?'zeit':'stamm');
     return {label:FL[field],area:area,fmt:EUR[field]?('eur'+(EUR[field]===2?'2':'')):PCTF[field]?'pct':(/Date$|gueltigAb$/.test(field)?'date':'')};
   }
   if((m=field.match(/^provision_kpis?_(monat1|monat2|monat3plus)$/)))return {label:'KPI-Vorgaben '+MON[m[1]],area:'kpi',legacy:true};
