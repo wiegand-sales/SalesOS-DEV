@@ -205,6 +205,13 @@ const jw = await page.evaluate(`(function(){var py=String(+today().slice(0,4)-1)
   delete e.urlaub[py];return {ueb:k.uebEff,von:r.von,bis:r.bis,von2:r.von2};})()`);
 check('Urlaub: Übertrag im Vorjahr nach 31.03. verfallen', jw.ueb === 0, jw.ueb);
 check('Wochenauswahl: KW 1/2027 = 04.01.–10.01.2027', jw.von === '2027-01-04' && jw.bis === '2027-01-10' && jw.von2 === '2026-11-23', jw.von + '–' + jw.bis + ' / ' + jw.von2);
+const ua = await page.evaluate(`(function(){var y=today().slice(0,4),e=kalEmp('e6'),sv={s:e.startDate,x:e.endDate,u:e.urlaub};e.urlaub={};
+  e.startDate=y+'-02-01';e.endDate=null;var a=kalKonto('e6',y).ans;
+  e.startDate=y+'-02-15';e.urlaub[y]={anspruch:30};var b=kalKonto('e6',y).ans;
+  e.startDate=null;e.endDate=y+'-08-31';e.urlaub={};var c=kalKonto('e6',y).ans;
+  e.startDate=String(+y-3)+'-05-01';e.endDate=null;var d=kalKonto('e6',y).ans;
+  e.startDate=sv.s;e.endDate=sv.x;e.urlaub=sv.u;return [a,b,c,d].join('/');})()`);
+check('Urlaub: anteiliger Anspruch bei Eintritt/Austritt (28÷12, 30÷12)', ua === '26/25/19/28', ua);
 const zt = await page.evaluate(`(function(){var mk=today().slice(0,7);var nx=kalI(new Date(+mk.slice(0,4),+mk.slice(5,7),1)).slice(0,7);var e=employees[0];
   zielStore[nx]=zielStore[nx]||{};zielStore[nx][e.id]={optTag:20,margeOpt:50,weeks:[1,1,1,1,1]};
   var calOld=ZT_KAL_START;ZT_KAL_START=nx;var x=ztEmpMonth(e,nx);var wd=0;ztDaysOfMonth(nx).forEach(function(d){if(kalWorkday(e,d)&&!(kalOn(e.id,d)&&kalOn(e.id,d).art!=='krank'))wd++;});
