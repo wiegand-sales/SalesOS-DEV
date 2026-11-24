@@ -6019,7 +6019,7 @@ function buildOverviewTab(liste,section,skipBanner,skipChart,hideMemberCol){
         // Stunden genauso skalieren wie die Rohwerte, sonst stimmen Akt./Std. und Opt./Std. in den Ø-Modi nicht
         var aggHours=(overviewDisplayMode==='durchschnitt_mitarbeiter'||overviewDisplayMode==='durchschnitt_tag')?pd.totalHours/divisor:pd.totalHours;
         var aggName=overviewDisplayMode==='gesamt'?'Team gesamt':overviewDisplayMode==='durchschnitt_tag'?'Ø pro Einsatztag':'Ø pro Mitarbeiter';
-        return {g:{label:pd.label,key:pd.periodKey,row:aggRow,count:nTage},emp:{id:'__agg__',name:aggName,role:''},empT:empTargets(selectedEmps[0]||{}),hours:aggHours};
+        return {g:{label:pd.label,key:pd.periodKey,row:aggRow,count:nTage},emp:{id:'__agg__',name:aggName,role:''},empT:empTargets({}),hours:aggHours}; // D7: Standard-Ziele (Peter 24.11.), nicht die des ersten Mitarbeiters
       });
       combinedGroupedRows=aggGroupedRows;
     }

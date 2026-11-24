@@ -319,6 +319,9 @@ check('D5: Startlader meldet Fehler statt abzubrechen', d5.fehl === 'Test' && d5
 check('D5: Meldung mit automatischem Nachladen', d5.zeigt && d5.weg, JSON.stringify(d5));
 check('D5: nach 3 Versuchen „Seite neu laden“', d5.ende);
 
+{ const src = fs.readFileSync(path.resolve(file), 'utf8');
+  check('D7: Gesamtzeile nutzt Standard-Ziele, nicht die des ersten Mitarbeiters', /empT:empTargets\(\{\}\),hours:aggHours/.test(src) && !/empTargets\(selectedEmps\[0\]/.test(src)); }
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();
