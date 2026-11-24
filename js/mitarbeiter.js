@@ -2581,8 +2581,9 @@ function esBuildHtml(emp,asPopup,html){
           {n:6,t:'Ergänzende KPI-Ziele',sum:deOnly('<span id="pk-count-erg">'+(PROV_KPI_CAT.length-effectiveProvisionSettings(emp,'9999-12').kpis.length)+' Kennzahlen</span>')+vlcOnly('12 Kennzahlen')+' · nicht provisionsrelevant',body:SEG.erg}
         ];
         // Provisionsvereinbarung (Abschnitte 4–6) für Coaches/Betrachter nur bei Sales Agents und SDL – gleiche Regel wie
-        // Provisions-Übersicht und -Popup (Recht „Provision: auch Coaches sehen“). Wer sie ändern darf, sieht sie immer.
-        if(emp.id&&currentUserRole!=='admin'&&!provCanEdit()&&!isAgentEmp(emp)&&!canSeeArea('provCoaches'))sections=sections.filter(function(s){return s.n<4;});
+        // Provisions-Übersicht und -Popup (Recht „Provision: auch Coaches sehen“). Wer sie ändern darf, sieht sie immer;
+        // die eigene sieht jeder Coach (Peter 24.11.2026).
+        if(emp.id&&currentUserRole!=='admin'&&!provCanEdit()&&!isAgentEmp(emp)&&!canSeeArea('provCoaches')&&!(currentCoach&&String(currentCoach.id)===String(emp.id)))sections=sections.filter(function(s){return s.n<4;});
         if(asPopup==='panels'){
           // Popup-Bereich „Einstellungen“: die sechs Abschnitte als getönte Flächen in einer Kachel
           var pp='';
