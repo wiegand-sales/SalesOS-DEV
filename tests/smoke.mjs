@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
-import { gesamtText } from './quellen.mjs';
+import { gesamtText, quellen } from './quellen.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const file = process.argv[2] || path.join(here, '..', 'index.html');
@@ -414,6 +414,44 @@ check('QA: alte Bewertung behält beim Bearbeiten ihre alten Punkte', qaf === 'i
 
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
+
+// Aufteilung in Dateien: Netz-Tests (nur wenn das Board aus mehreren lokalen Skriptdateien besteht)
+const dateien = quellen(path.resolve(file)).filter(q => !q.datei.includes('(inline)')).map(q => q.datei);
+if (dateien.includes('js/start.js')) {
+  // angemeldete Sitzung, damit der Start (initAppAfterLogin → alle Lader) wirklich läuft
+  const MOCK_ANGEMELDET = MOCK.replace('getSession:function(){return Promise.resolve({data:{session:null}});}',
+    "getSession:function(){return Promise.resolve({data:{session:{user:{id:'u1',email:'t@example.org',last_sign_in_at:new Date().toISOString()}}}});}");
+  async function laden(behandle) {
+    const pg = await browser.newPage(); const fe = [];
+    pg.on('pageerror', e => fe.push(String(e.message || e)));
+    await pg.route('**/*', async r => {
+      const u = r.request().url();
+      if (u.includes('supabase')) return r.fulfill({ body: '/*supabase-stub*/', contentType: 'application/javascript' });
+      if (/chart(\.umd)?(\.min)?\.js/i.test(u)) return r.fulfill({ body: fs.readFileSync(path.join(here, 'node_modules', 'chart.js', 'dist', 'chart.umd.js'), 'utf8'), contentType: 'application/javascript' });
+      if (u.startsWith('file:') && /\.js(\?|$)/.test(u)) return behandle(r, u);
+      if (u.startsWith('file:') || u.startsWith('blob:') || u.includes('cdnjs') || u.includes('jsdelivr')) return r.continue();
+      return r.fulfill({ body: '', status: 200 });
+    });
+    await pg.addInitScript(MOCK_ANGEMELDET);
+    await pg.goto('file://' + path.resolve(file));
+    await pg.waitForTimeout(2500);
+    const st = await pg.evaluate("({gestartet:typeof _appInitStarted!=='undefined'&&_appInitStarted===true,retry:!!document.getElementById('startRetry'),waechter:!!document.getElementById('sosLadeFehler')})");
+    await pg.close(); return { ...st, fe };
+  }
+  // Verzögerung: jede Skriptdatei kommt 300–800 ms verspätet, die Datenbank antwortet sofort
+  let n = 0;
+  const v = await laden((r) => new Promise(ok => setTimeout(() => ok(r.continue()), 300 + (n++ * 137) % 500)));
+  check('Aufteilung: Start mit verzögerten Skriptdateien ohne Fehler', v.gestartet && !v.retry && !v.waechter && v.fe.length === 0, JSON.stringify(v));
+  // Ausfall: fehlt eine Datei, zeigt der Wächter den Hinweis und das Board startet nicht halb
+  if (fs.readFileSync(path.join(path.dirname(path.resolve(file)), 'js', 'start.js'), 'utf8').includes('sosLadeFehler')) {
+    const schlecht = [];
+    for (const d of dateien.filter(x => x !== 'js/start.js')) {
+      const a = await laden((r, u) => u.includes('/' + d) ? r.abort() : r.continue());
+      if (!(a.waechter && !a.gestartet)) schlecht.push(d + ' ' + JSON.stringify(a));
+    }
+    check(`Aufteilung: Wächter meldet jede fehlende Datei (${dateien.length - 1} geprüft)`, schlecht.length === 0, schlecht.join(' | '));
+  }
+}
 await browser.close();
 console.log(results.join('\n'));
 console.log(failed ? `\n${failed} Prüfung(en) fehlgeschlagen` : '\nAlle Prüfungen bestanden');

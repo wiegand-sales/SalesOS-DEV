@@ -1,5 +1,16 @@
 // Sales OS – Lade-Code: globale Variablen und alles, was beim Laden läuft, in Originalreihenfolge.
 // Wird als LETZTE Datei geladen; alle Funktionen sind dann schon da.
+// ── Wächter (eigener, neuer Code – nicht aus der alten index.html): fehlt eine Programmdatei, nicht halb starten ──
+(function(){
+  var fehlt=[['config.js',typeof SUPABASE_URL],['shared/figuren.js',typeof kidSvg],['js/core.js',typeof initAppAfterLogin],['js/kpi.js',typeof workHoursForDate],['js/ui.js',typeof renderMain],['js/zielvereinbarung.js',typeof zielTreeHtml],['js/uebersicht.js',typeof renderTeam],['js/mitarbeiter.js',typeof renderEmpDetail],['js/popup.js',typeof puInit],['js/dashboard.js',typeof renderDashboard],['js/provision.js',typeof calculateProvision],['js/einstellungen.js',typeof renderEinstellungen],['js/live-menue.js',typeof renderLive],['js/import.js',typeof importCSV],['js/kalender.js',typeof renderKalender],['js/aufgaben.js',typeof renderAufgaben]].filter(function(x){return x[1]==='undefined';}).map(function(x){return x[0];});
+  if(!fehlt.length)return;
+  var zeige=function(){var d=document.createElement('div');d.id='sosLadeFehler';d.setAttribute('role','alert');
+    d.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(29,28,26,.55);display:flex;align-items:center;justify-content:center;font-family:Urbanist,sans-serif';
+    d.innerHTML='<div style="background:#F7F5F0;border-radius:14px;padding:22px 24px;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.25)"><div style="font-weight:700;font-size:16px;margin-bottom:6px">Sales OS wurde nicht vollständig geladen</div><div style="font-size:13.5px;color:#5c4a42;margin-bottom:14px">Es fehlt: '+fehlt.join(', ')+'. Meist hilft es, die Seite neu zu laden.</div><button type="button" style="background:#F08566;color:#fff;border:0;border-radius:8px;height:34px;padding:0 14px;font-weight:700;font-family:inherit;cursor:pointer">Seite neu laden</button></div>';
+    d.querySelector('button').onclick=function(){location.reload();};document.body.appendChild(d);};
+  if(document.body)zeige();else document.addEventListener('DOMContentLoaded',zeige);
+  throw new Error('Sales OS: Dateien nicht geladen: '+fehlt.join(', ')); // bricht start.js ab: kein halber Start
+})();
 // ── Teil 1 ──
 // ══ SUPABASE SETUP ══
 var _sbRaw = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
