@@ -401,6 +401,9 @@ check('B9: überfällige geplante Session zählt nicht als abgeschlossen', b9 ==
 { const ext = fs.readFileSync(path.join(here, '..', 'extension', 'data.js'), 'utf8');
   check('B10: Erweiterung erkennt SDC als Coach', /ownRow\.role === 'SDC'/.test(ext) && /e\.role !== 'SDC'/.test(ext)); }
 
+{ const py = fs.readFileSync(path.join(here, '..', 'scripts', 'sync_user_activity.py'), 'utf8');
+  check('B12: Sync ordnet doppelte Namen nicht still zu (aktive bevorzugt, sonst mehrdeutig)', /"select": "id,name,active"/.test(py) && /if emp_id == AMBIGUOUS:/.test(py) && !/by_name = \{normalize_name\(row\["name"\]\): row\["id"\] for row in rows\}/.test(py)); }
+
 check('Chart.js mit Prüfsumme geladen', await page.evaluate("typeof Chart==='function'"));
 check('Keine Skriptfehler', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();

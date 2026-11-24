@@ -122,17 +122,33 @@ def strip_role_prefix(name):
     return split_role_prefix(name)[1]
 
 
+AMBIGUOUS = "__mehrdeutig__"
+
+
 def load_employees():
     log("Lade Mitarbeiterliste aus Supabase …")
     r = requests.get(
         f"{SUPABASE_URL}/rest/v1/employees",
         headers=HEADERS,
-        params={"select": "id,name"},
+        params={"select": "id,name,active"},
     )
     r.raise_for_status()
     rows = r.json()
     # Name (kleingeschrieben, getrimmt) -> id
-    by_name = {normalize_name(row["name"]): row["id"] for row in rows}
+    # B12: Bei gleichen Namen bekommt die einzige aktive Person die Daten; sonst wird nicht
+    # zugeordnet, sondern unter „nicht zugeordnet“ als mehrdeutig gemeldet (AMBIGUOUS).
+    groups = {}
+    for row in rows:
+        groups.setdefault(normalize_name(row["name"]), []).append(row)
+    by_name = {}
+    for key, group in groups.items():
+        if len(group) == 1:
+            by_name[key] = group[0]["id"]
+            continue
+        aktive = [g for g in group if g.get("active") is not False]
+        by_name[key] = aktive[0]["id"] if len(aktive) == 1 else AMBIGUOUS
+        log(f"Hinweis: {len(group)} Mitarbeiter mit gleichem Namen ({group[0]['name']}), "
+            + ("Daten gehen an die aktive Person." if len(aktive) == 1 else "nicht zugeordnet (mehrdeutig)."))
     log(f"{len(by_name)} Mitarbeiter geladen.")
     return by_name
 
@@ -320,6 +336,9 @@ def main():
         if role in IGNORE_PREFIXES:
             continue
         emp_id = employees_by_name.get(normalize_name(clean_name))
+        if emp_id == AMBIGUOUS:
+            not_found.add(raw_name.strip() + " (mehrdeutig: mehrere Mitarbeiter mit diesem Namen)")
+            continue
         if not emp_id:
             not_found.add(raw_name.strip())
             continue
