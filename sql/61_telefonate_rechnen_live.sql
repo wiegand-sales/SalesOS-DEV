@@ -166,13 +166,15 @@ $$;
 create or replace function telefonie.r_eingang(p_von date, p_bis date, p_gruppierung text default 'tag')
 returns jsonb language sql stable security definer set search_path = '' as $$
   with z as (select telefonie.r_zeit(p_von) v, telefonie.r_zeit(p_bis + 1) b)
-  select coalesce(jsonb_agg(jsonb_build_object('k', k, 'n', n, 'a800', a800, 'a831', a831) order by k), '[]'::jsonb)
+  select coalesce(jsonb_agg(jsonb_build_object('k', k, 'n', n, 'a800', a800, 'a831', a831, 'n800', n800, 'n831', n831) order by k), '[]'::jsonb)
   from (
     select (date_trunc(case p_gruppierung when 'woche' then 'week' when 'monat' then 'month' else 'day' end,
                        e.beginn at time zone 'Europe/Berlin'))::date k,
            count(*) n,
            count(*) filter (where e.angenommen and e.gruppe = '800') a800,
-           count(*) filter (where e.angenommen and e.gruppe = '831') a831
+           count(*) filter (where e.angenommen and e.gruppe = '831') a831,
+           count(*) filter (where e.gruppe = '800') n800,
+           count(*) filter (where e.gruppe = '831') n831
     from telefonie.eingehend e, z
     where e.gruppe in (select nummer from telefonie.sales_gruppen) and e.beginn >= z.v and e.beginn < z.b
     group by 1) x

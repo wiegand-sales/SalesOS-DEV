@@ -947,3 +947,7 @@ tr.pv-empty td{background:repeating-linear-gradient(-45deg,transparent 0 6px,rgb
 .kal-undo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d1c1a;color:#fff;border-radius:12px;padding:11px 12px 11px 18px;display:none;align-items:center;gap:16px;z-index:300;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .kal-undo.on{display:flex}.kal-undo button{background:#fff;color:#1d1c1a;border:0;border-radius:8px;height:30px;padding:0 12px;font-weight:700;cursor:pointer;font-family:inherit}
 .kal-tip{position:fixed;z-index:400;background:#1d1c1a;color:#fff;padding:8px 11px;border-radius:9px;font-size:12.5px;pointer-events:none;max-width:280px;display:none;line-height:1.5}
+/* Menü Telefonate: schwarze Infobox beim Darüberfahren (wie Performance-Diagramm, Entwurf D) */
+.tel-tip{position:relative}.tel-tip:hover{filter:brightness(0.97)}
+.tel-tip:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#1d1c1a;color:#fff;font-size:11.5px;font-weight:500;line-height:1.45;padding:7px 10px;border-radius:7px;white-space:pre;z-index:60;pointer-events:none;box-shadow:0 8px 20px rgba(0,0,0,.25);text-align:left;font-style:normal;letter-spacing:0;text-transform:none}
+.tel-tip.tb:hover::after{bottom:auto;top:calc(100% + 8px)}.tel-tip.tc:hover::after{bottom:auto;top:50%;transform:translate(-50%,-50%)}

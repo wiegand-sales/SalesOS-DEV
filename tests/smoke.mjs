@@ -129,7 +129,7 @@ check('Telefonate: Box 1 zählt Wahlversuche + angenommene (218+5=223, 279+22=30
 check('Telefonate: Eingehend „ohne Nummer“ sichtbar', await page.evaluate("document.getElementById('mainArea').textContent.indexOf('ohne Nummer')>=0"));
 await step("telToggle('a')");
 check('Telefonate: Box zuklappbar', await page.evaluate("!TEL.a&&document.getElementById('mainArea').textContent.indexOf('zum Aufklappen klicken')>=0"));
-for (const s of ["telToggle('a')", "telSetPer('monat')", "telSetOrt('VLC')", "telSetOrt('')", "telSetHl('worst')", "telSetVper('jahr')", "telSetEper('wochen')", "telSetEper('monate')", "telSetDir('ein')", "telSetDir('aus')", "telToggleTv()", "telSetAtt('2')", "telToggleTf()", "telSetTeam('SE')", "telSetEmp('e1')", "selectSettingsSub('telefonate')"]) await step(s);
+for (const s of ["telToggle('a')", "telSetPer('monat')", "telSetOrt('VLC')", "telSetOrt('')", "telSetHl('worst')", "telSetVper('jahr')", "telSetEper('wochen')", "telSetEper('monate')", "telSetDir('ein')", "telSetDir('aus')", "ddToggle('telVs')", "ddPick('telVs','telSetAtt','2')", "ddToggle('telAg')", "ddPick('telAg','telPickAgents','T:SE')", "ddPick('telAg','telPickAgents','E:e1')", "ddPick('telAg','telPickAgents','T:')", "selectSettingsSub('telefonate')"]) await step(s);
 check('Telefonate: Einstellungen › Telefonate', await page.evaluate("settingsView==='telefonate'&&!!document.getElementById('tel-grenze')"));
 
 // 8) Paralleles Laden: alle Zeilen vollstaendig und ohne Doppelte
