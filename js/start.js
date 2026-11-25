@@ -106,7 +106,7 @@ document.addEventListener('click',function(){document.querySelectorAll('.dd-pane
 var _bannerRotationOrder=['performance','overview','ziel','coaching','activity','kalender','aufgaben','telefonate'];
 var BANNER_TITLES={performance:'Performance',overview:'Overview',ziel:'Zielvereinbarung',coaching:'Coaching',activity:'Aktivitäten',kalender:'Kalender',aufgaben:'Aufgaben',telefonate:'Telefonate'};
 // Menü „Telefonate“ (js/telefonate.js): offen/zu je Box, Filter, Zwischenspeicher der Auswertungen
-var TEL={a:true,e:true,c:true,d:true,hl:'top',ort:'',per:'tag',vper:'monat',eper:'tage',dir:'aus',att:'alle',team:'',emp:'',cache:{},_rt:null};
+var TEL={a:true,e:true,c:true,d:true,hl:'top',aTeam:'',aEmp:'',per:'tag',vper:'monat',eper:'tage',dir:'aus',att:'alle',team:'',emp:'',cache:{},_rt:null};
 var _bannerRotationTimer=null;
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
 var coachCalYear=null, coachCalMonthIdx=null; // Kalender-Monatsnavigation SFP Coaching (init. beim ersten Rendern auf aktuellen Monat)

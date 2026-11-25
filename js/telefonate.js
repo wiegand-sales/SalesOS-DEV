@@ -39,7 +39,7 @@ function telParam(extra){var c=telCfg(),p={grenze:+c.grenze,fenster:+c.fenster};
 function telGet(art,r,extra){var p=telParam(extra),key=art+'|'+r.von+'|'+r.bis+'|'+JSON.stringify(p),c=TEL.cache[key];
   if(c&&(Date.now()-c.t<300000||c.laeuft))return c.err?{fehler:c.err}:c.d;
   TEL.cache[key]={t:Date.now(),laeuft:true,d:c?c.d:null};
-  sb.rpc('telefonate_daten',{p_art:art,p_von:r.von,p_bis:r.bis,p_param:p}).then(function(res){
+  (art==='stunden'?sb.rpc('telefonate_stunden',{p_von:r.von,p_bis:r.bis,p_param:p}):sb.rpc('telefonate_daten',{p_art:art,p_von:r.von,p_bis:r.bis,p_param:p})).then(function(res){
     TEL.cache[key]={t:Date.now(),d:res.error?null:res.data,err:res.error?(res.error.message||'Fehler'):null};
     if(view==='telefonate')telRerender();
     else if(bannerViewMode==='telefonate'){var gb=document.getElementById('gBan');if(gb)gb.outerHTML=buildGlobalBannerHtml(gbVisible());}});
@@ -136,13 +136,68 @@ function telBannerHtml(){var r=telRange('monat'),t=telGet('trichter',r);
   return h;}
 
 // ── Box 1: Telefonate je Mitarbeiter ──
-function telBoxAgenten(){var c=telCfg(),r=telRange(TEL.per),d=telGet('agenten',r);
-  var rechts='<span style="font-size:11.5px;color:#9a948a;margin-right:4px">'+telRangeLabel(r)+' · alle aktiven Agents · '+(TEL.per==='tag'?'ganzer Tag':TEL.per==='woche'?'ganze Woche':'ganzer Monat')+'</span>'
-    +telSeg([['top','Top'],['worst','Worst']],TEL.hl,'telSetHl')+telSeg([['','Alle'],['MUC','Olching'],['VLC','Valencia']],TEL.ort,'telSetOrt')+telSeg([['tag','Tag'],['woche','Woche'],['monat','Monat']],TEL.per,'telSetPer');
+// Auswahl „Agents“ (Abschnitt 9): ddSelectHtml mit Suche, Teams + einzelne Mitarbeiter mit Rollen-Spalte; Knopf in Entwurfs-Optik
+function telDd(id,lab,val,items,cur,fn,such){return ddSelectHtml(id,'',lab,items,cur,fn,such).replace(/<button[^>]*>[\s\S]*?<\/button>/,'<button type="button" onclick="ddToggle(\''+id+'\')" style="height:34px;padding:0 12px;border-radius:11px;border:1px solid #E4E0D6;background:#EFECE5;font:inherit;font-size:13px;font-weight:600;color:#1a1a18;cursor:pointer;display:inline-flex;align-items:center;gap:8px"><span style="color:#6b6b67;font-weight:500">'+lab+'</span>'+val+'</button>');}
+// Rangfarben: bester Wert dunkel, oberes Viertel taupe, unteres Viertel fast weiß, Rest hellgrau (umk = Worst: umgekehrt); null = ohne Farbe
+function telRang(vals,hoch,umk){var s0=(hoch?1:-1)*(umk?-1:1),ok=vals.filter(function(v){return v!=null;}).sort(function(p,q){return s0*(q-p);}),n=ok.length,q=Math.round(n/4);
+  return function(v){if(v==null)return 'none';if(v===ok[0])return 'dark';if(q&&s0*(v-ok[q])>=0)return 'mid';if(q&&s0*(v-ok[n-q])<=0)return 'pale';return 'light';};}
+// Einzelansicht: eine Säule je Arbeitsstunde 8–18; Tag = Werte des Tages, Woche/Monat = Ø je Arbeitstag (Summe ÷ Tage mit Anrufen)
+function telAgentStunden(e,r){var c=telCfg(),d=telGet('stunden',r,{employee_id:String(e.id)}),tag=TEL.per==='tag',minQ=tag?5:10,vn=telVorname(e);
+  var hull=function(x){return '<div style="background:#EFECE5;border-radius:14px;padding:12px 16px 14px">'+x+'</div>';};
+  if(!d||d.fehler)return hull(telLaedt(d,300));
+  var div=tag?1:Math.max(1,+d.tage||0),S={},sW=0,sE=0;(d.stunden||[]).forEach(function(x){S[x.std]=x;sW+=+x.wv||0;sE+=+x.err||0;});
+  var f1=function(v){return tag?telN(v):(Math.round(v*10)/10).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});};
+  var std=[8,9,10,11,12,13,14,15,16,17],H=300,Z=std.map(function(h){var x=S[h]||{wv:0,err:0,mb:0,ne:0,ein_ang:0,gz_aus:0,gz_ein:0,klingel_ne:null};
+    var wv=+x.wv||0;return {h:h,x:x,wv:wv,tot:(wv+(+x.ein_ang||0))/div,qE:wv>=minQ?telP(x.err,wv):null,qM:wv>=minQ?telP(x.mb,wv):null};});
+  if(!sW&&!Z.some(function(z){return z.tot>0;}))return hull('<div style="padding:30px;text-align:center;font-size:12px;color:#9a948a">Keine Telefonate von '+esc(vn)+' in diesem Zeitraum.</div>');
+  var max=0;Z.forEach(function(z){max=Math.max(max,z.tot);});var stp=telNice(max/7),ax=Math.ceil(max/stp)*stp||stp;
+  var fE=telRang(Z.map(function(z){return z.qE;}),true,false),fM=telRang(Z.map(function(z){return z.qM;}),false,false),best=null;
+  Z.forEach(function(z){if(z.qE!=null&&(!best||z.qE>best.qE))best=z;});
+  var zeit=r.von===r.bis?telDM(r.von):telDM(r.von)+'–'+telDM(r.bis);
+  var kopf='<span><b>'+esc(e.name)+'</b> · '+telRangeLabel(r)+' · '+telN(sW)+' Wahlversuche'+(tag?'':' an '+telN(d.tage)+' Tagen')+' · Erreichtquote '+telP(sE,sW)+' %'+(best?' · beste Stunde <b style="color:#5F574D">'+best.h+'–'+(best.h+1)+' Uhr ('+best.qE+' %)</b>':'')+'</span>';
+  var leg=telLeg([{bg:'#5F574D',t:'Angenommen 800 / 831'},{bg:'#A89C8E',t:'Erreicht'},{bg:'#CBC2B5',t:'Mailbox'},{bg:'#E8E2D8',t:'Nicht erreicht'}]);
+  var s='<div style="display:flex;align-items:center;font-size:11.5px;color:#5f594e">'+kopf+leg+'</div>';
+  s+='<div style="display:grid;grid-template-columns:118px minmax(0,1fr);height:'+H+'px;margin-top:22px"><div style="position:relative"><span style="position:absolute;left:4px;top:50%;transform:rotate(-90deg) translateX(-50%);transform-origin:left top;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#9a948a;white-space:nowrap">'+(tag?'TELEFONATE':'Ø TELEFONATE JE TAG')+'</span>';
+  var ticks=[];for(var v=0;v<=ax+1e-9;v+=stp)ticks.push(v);
+  ticks.forEach(function(v){s+='<span style="position:absolute;right:10px;bottom:'+(100*v/ax).toFixed(2)+'%;transform:translateY(50%);font-size:11px;color:#9a948a">'+telN(v)+'</span>';});
+  s+='</div><div style="position:relative;border-bottom:1px solid #C9C2B4">';
+  ticks.forEach(function(v){s+='<div style="position:absolute;left:0;right:0;bottom:'+(100*v/ax).toFixed(2)+'%;border-top:1px solid #E1DCD2"></div>';});
+  s+='<div style="position:absolute;inset:0;display:flex;gap:6px;align-items:flex-end;padding:0 4px">';
+  Z.forEach(function(z){var x=z.x,t=z.tot,hb=100*t/ax,seg=[[x.ein_ang,'#5F574D','#fff'],[x.err,'#A89C8E','#fff'],[x.mb,'#CBC2B5','#3a3833'],[x.ne,'#E8E2D8','#5f594e']],roh=z.wv+(+x.ein_ang||0);
+    var tip=vn+' · '+z.h+'–'+(z.h+1)+' Uhr · '+zeit+(tag?'':' · Ø je Arbeitstag')+'\nTelefonate: '+f1(t)+'\nangenommen 800 / 831: '+f1((+x.ein_ang||0)/div)+'\nerreicht: '+f1(x.err/div)+' ('+telP(x.err,z.wv)+' %)\nMailbox: '+f1(x.mb/div)+' ('+telP(x.mb,z.wv)+' %)'
+      +'\nnicht erreicht: '+f1(x.ne/div)+(x.klingel_ne!=null?' · Ø Klingeln '+Math.round(x.klingel_ne)+' s':'')+'\nGesprächszeit: '+f1(((+x.gz_aus||0)+(+x.gz_ein||0))/60/div)+' Min.';
+    s+='<div'+telTip(tip)+' style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;cursor:default">'+(t>0?'<b style="font-size:12.5px;font-weight:700;margin-bottom:3px">'+f1(t)+'</b>':'')
+      +'<span style="width:74%;height:'+hb.toFixed(2)+'%;display:flex;flex-direction:column-reverse;border-radius:3px 3px 0 0;overflow:hidden">';
+    seg.forEach(function(g,i){if(!(+g[0]>0)||!roh)return;var pc=100*g[0]/roh,px=H*hb/100*pc/100;
+      s+='<i style="display:flex;align-items:center;justify-content:center;flex-shrink:0;height:'+pc.toFixed(2)+'%;background:'+g[1]+';color:'+g[2]+';font-size:10px;font-style:normal;font-weight:700;overflow:hidden">'
+        +(i===3&&x.klingel_ne!=null&&px>=14?'<span style="box-sizing:border-box;height:20px;min-width:34px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;border:1px solid #C2B9AB;background:#DDD6CA;color:#3a3833;font-size:11px;font-weight:700">'+Math.round(x.klingel_ne)+' s</span>':'')+'</i>';});
+    s+='</span></div>';});
+  s+='</div></div></div>';
+  var row=function(lab,hgt,cells){return '<div style="display:grid;grid-template-columns:118px minmax(0,1fr);align-items:center;height:'+hgt+'px"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9a948a;white-space:nowrap">'+lab+'</span><div style="display:flex;gap:6px;padding:0 4px;min-width:0">'+cells+'</div></div>';};
+  var txt=function(t,css){return '<span style="flex:1;min-width:0;text-align:center;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;'+(css||'color:#1d1c1a')+'">'+t+'</span>';};
+  s+='<div style="margin-top:8px;display:flex;flex-direction:column;gap:2px">';
+  s+=row('Gespr.-Zeit (Min.)',22,Z.map(function(z){var m=((+z.x.gz_aus||0)+(+z.x.gz_ein||0))/60/div;return txt(m?f1(m):'–');}).join(''));
+  s+=row('Wahlv.',22,Z.map(function(z){return txt(z.wv?f1(z.wv/div):'–','color:#9a948a;font-weight:600');}).join(''));
+  s+='<div style="border-top:1px solid #DDD6CA;margin:8px 0 4px"></div>';
+  s+=row('Uhrzeit',24,Z.map(function(z){return '<span style="flex:1;min-width:0;text-align:center;font-weight:700;white-space:nowrap;overflow:hidden;font-size:12px;color:#1d1c1a">'+z.h+'–'+(z.h+1)+'</span>';}).join(''));
+  s+=row('Erreicht',24,Z.map(function(z){return z.wv?telChip(telP(z.x.err,z.wv)+' %',fE(z.qE)):telChip('–','none');}).join(''));
+  s+=row('Mailbox',24,Z.map(function(z){return z.wv?telChip(telP(z.x.mb,z.wv)+' %',fM(z.qM)):telChip('–','none');}).join(''));
+  s+=row('Ø Klingeln',24,Z.map(function(z){return z.x.klingel_ne!=null?telChip(Math.round(z.x.klingel_ne)+' s','light'):telChip('–','none');}).join(''));
+  s+='</div><div style="font-size:11px;color:#9a948a;margin-top:10px">Mailbox = angenommen unter '+c.grenze+' s · Quoten ab '+minQ+' Wahlversuchen je Stunde · Farben: beste Stunde dunkel bis schwächste fast weiß · Ø Klingeln = bis zum Auflegen durch den Agent'+(tag?'':' · Werte = Ø je Arbeitstag ('+telN(d.tage)+' Tage mit Anrufen)')+'</div>';
+  return hull(s);}
+function telRolle(e){return e.phase==='Onboarding'?'OB':(e.role||'');}
+function telBoxAgenten(){var c=telCfg(),r=telRange(TEL.per);
+  var tn={'':'Team (alle)',OB:'Onboarding',VLC:'VLC',SR:'SR',SE:'SE'},ae=TEL.aEmp?telEmp(TEL.aEmp):null;if(TEL.aEmp&&!ae)TEL.aEmp='';
+  var items=[{head:'TEAMS'}].concat(['','OB','VLC','SR','SE'].map(function(t){return {v:'T:'+t,l:tn[t]};}),[{head:'AGENTS'}],telAgentenListe().map(function(e){return {v:'E:'+e.id,l:telVorname(e),role:telRolle(e)};}));
+  var wahl=telDd('telAgA','Agents',ae?esc(telVorname(ae)):tn[TEL.aTeam]||'Team (alle)',items,ae?'E:'+ae.id:'T:'+TEL.aTeam,'telPickAgA',true);
+  var rechts='<span style="font-size:11.5px;color:#9a948a;margin-right:4px">'+telRangeLabel(r)+' · '+(ae?esc(ae.name):TEL.aTeam?'Team '+tn[TEL.aTeam]:'alle aktiven Agents')+' · '+(TEL.per==='tag'?'ganzer Tag':ae?'Ø je Arbeitstag':TEL.per==='woche'?'ganze Woche':'ganzer Monat')+'</span>'
+    +(ae?'':telSeg([['top','Top'],['worst','Worst']],TEL.hl,'telSetHl'))+wahl+telSeg([['tag','Tag'],['woche','Woche'],['monat','Monat']],TEL.per,'telSetPer');
   if(!TEL.a)return telBox('a','Telefonate je Mitarbeiter','',rechts,'');
+  if(ae)return telBox('a','Telefonate je Mitarbeiter','',rechts,telAgentStunden(ae,r));
+  var d=telGet('agenten',r);
   if(!d||d.fehler)return telBox('a','Telefonate je Mitarbeiter','',rechts,'<div style="background:#EFECE5;border-radius:14px;padding:12px 16px 14px">'+telLaedt(d,300)+'</div>');
   var dates=telDates(r),A=d.map(function(x){var e=telEmp(x.employee_id);return e&&e.active!==false?{e:e,x:x,tot:(+x.wv||0)+(+x.ein_ang||0)}:null;})
-    .filter(function(a){return a&&a.tot>0&&(!TEL.ort||personOrt(a.e)===TEL.ort);});
+    .filter(function(a){return a&&a.tot>0&&(!TEL.aTeam||telTeam(a.e)===TEL.aTeam);});
   A.sort(function(p,q){return q.tot-p.tot;});// Top/Worst sortiert nicht um, nur die Kästchen-Farben drehen sich (Abschnitt 9, Punkt 1)
   if(!A.length)return telBox('a','Telefonate je Mitarbeiter','',rechts,'<div style="background:#EFECE5;border-radius:14px;padding:30px;text-align:center;font-size:12px;color:#9a948a">Keine Telefonate in diesem Zeitraum.</div>');
   var basis=A.filter(function(a){return a.x.wv>=c.minWv;}),sE=0,sW=0,sM=0;basis.forEach(function(a){sE+=a.x.err;sW+=a.x.wv;sM+=a.x.mb;});
@@ -179,8 +234,7 @@ function telBoxAgenten(){var c=telCfg(),r=telRange(TEL.per),d=telGet('agenten',r
   s+=row('Agents',24,A.map(function(a){return '<span title="'+esc(a.e.name)+'" style="flex:1;min-width:0;text-align:center;font-weight:700;white-space:nowrap;overflow:hidden;font-size:12px;color:#1d1c1a">'+esc(telVorname(a.e))+'</span>';}).join(''));
   // Kästchen-Farben (Abschnitt 9, Punkt 1): Top = bester Wert dunkel, oberes Viertel taupe, Mitte hellgrau, unteres Viertel fast weiß; Worst genau umgekehrt.
   // Erreicht/Mailbox nur ab Mindest-Wahlversuchen bewertet (sonst ohne Farbe).
-  var worst=TEL.hl==='worst',rang=function(vals,hoch){var s0=(hoch?1:-1)*(worst?-1:1),ok=vals.filter(function(v){return v!=null;}).sort(function(p,q){return s0*(q-p);}),n=ok.length,q=Math.round(n/4);
-      return function(v){if(v==null)return 'none';if(v===ok[0])return 'dark';if(q&&s0*(v-ok[q])>=0)return 'mid';if(q&&s0*(v-ok[n-q])<=0)return 'pale';return 'light';};};
+  var worst=TEL.hl==='worst',rang=function(vals,hoch){return telRang(vals,hoch,worst);};
   var qE=A.map(function(a){return a.x.wv>=c.minWv?telP(a.x.err,a.x.wv):null;}),qM=A.map(function(a){return a.x.wv>=c.minWv?telP(a.x.mb,a.x.wv):null;}),fE=rang(qE,true),fM=rang(qM,false);
   s+=row('Erreicht',24,A.map(function(a,i){var q=telP(a.x.err,a.x.wv);return a.x.wv?telChip(q+' %',fE(qE[i])):telChip('–','none');}).join(''));
   s+=row('Mailbox',24,A.map(function(a,i){var q=telP(a.x.mb,a.x.wv);return a.x.wv?telChip(q+' %',fM(qM[i])):telChip('–','none');}).join(''));
@@ -191,7 +245,7 @@ function telBoxAgenten(){var c=telCfg(),r=telRange(TEL.per),d=telGet('agenten',r
   var ab=A.map(function(a,i){var k=crm[i];return k?k.ne-((+a.x.ne||0)+(+a.x.mb||0)):null;}),aMax=Math.max.apply(null,ab.filter(function(v){return v!=null;}).concat([-Infinity]));
   s+=row('N. err. Abw.',24,A.map(function(a,i){var dd=ab[i];if(dd==null)return telChip('–','none');
     return telChip(dd===0?'±0':(dd>0?'+':'−')+Math.abs(dd),worst?(dd===aMax&&dd>0?'dark':dd>=3?'mid':'light'):(dd<=0?'dark':dd<=3?'light':'pale'));}).join(''));
-  s+='</div></div><div style="font-size:11px;color:#9a948a;margin-top:10px">Mailbox = angenommen unter '+c.grenze+' s · Zahl im Balken = Ø Klingelzeit bis zum Auflegen bei nicht erreicht · Std. laut Wochenarbeitszeit · N. err. Abw. = „nicht erreicht“ im CRM minus nicht erreicht + Mailbox in 3CX</div>';
+  s+='</div></div><div style="font-size:11px;color:#9a948a;margin-top:10px">Mailbox = angenommen unter '+c.grenze+' s · Zahl im Balken = Ø Klingelzeit, bis der Agent auflegt (ohne weggedrückte) · Std. laut Wochenarbeitszeit · N. err. Abw. = „nicht erreicht“ im CRM minus nicht erreicht + Mailbox in 3CX</div>';
   return telBox('a','Telefonate je Mitarbeiter','',rechts,s);}
 
 // ── Box 2: Ausgehende Telefonate (Lead-Anrufe nach Versuch) ──
@@ -203,12 +257,13 @@ function telBoxAusgehend(){var c=telCfg(),r=telRange(TEL.vper),d=telGet('versuch
   var V={},G=d.gesamt||{},A4=d.ab4||{anrufe:0,err:0,mb:0,wg:0,na:0};(d.versuche||[]).forEach(function(v){V[v.n]=v;});
   var jeder=A4.err?Math.floor(A4.anrufe/A4.err):0;
   var kopf=(A4.err?'<b style="color:#B5513A">Ab dem 4. Versuch</b> erreicht ihr nur noch jeden '+jeder+'. Kunden · ':'')+'<b>'+telN(G.nur_einmal)+' Kunden</b> nach dem 1. Versuch nie wieder angerufen';
-  // Gemeinsame %-Achse 0–50 % (Abschnitt 9, Punkt 5): Säule = Erreichtquote je Versuch, Linie = Rückrufquote der nicht Erreichten
-  var leg=telLeg([{bg:'#A89C8E',t:'erreicht (ab '+c.grenze+' s)'},{w:14,h:0,r:0,css:'border-top:2.5px solid #E9773F',t:'ruft auf 800 / 831 zurück'}],true);
-  var yP=function(p){return Math.min(100,100*p/50);},pts=[];for(var n=1;n<=6;n++){var v0=V[n]||{kunden:0,err:0,rueck:0},ne0=(v0.kunden-v0.err);pts.push(ne0?100*v0.rueck/ne0:0);}
+  // Gemeinsame %-Achse 0–80 % (Abschnitt 9, Nachtrag Balken im Balken): gestrichelter Rahmen = abgenommen inkl. Mailbox,
+  // Säule davor = erreicht (ab Mailbox-Grenze), Linie = Rückrufquote der nicht Erreichten
+  var leg=telLeg([{css:'border:1px dashed #9a948a',t:'abgenommen inkl. Mailbox'},{bg:'#A89C8E',t:'erreicht (ab '+c.grenze+' s)'},{w:14,h:0,r:0,css:'border-top:2.5px solid #E9773F',t:'ruft auf 800 / 831 zurück'}],true);
+  var yP=function(p){return Math.min(100,100*p/80);},pts=[];for(var n=1;n<=6;n++){var v0=V[n]||{kunden:0,err:0,rueck:0},ne0=(v0.kunden-v0.err);pts.push(ne0?100*v0.rueck/ne0:0);}
   var s='<div style="background:#EFECE5;border-radius:12px;padding:12px 16px 10px">'+telHead(kopf,leg)
     +'<div style="position:relative;height:280px;display:flex;align-items:flex-end;border-bottom:1px solid #D8D2C6;margin-left:46px">';
-  for(var g=1;g<=5;g++)s+='<div style="position:absolute;left:-46px;right:0;bottom:'+(20*g).toFixed(1)+'%;border-top:1px solid #E1DCD2"><span style="position:absolute;left:0;top:-8px;font-size:11px;font-weight:600;color:#7d776c">'+(10*g)+' %</span></div>';
+  for(var g=1;g<=8;g++)s+='<div style="position:absolute;left:-46px;right:0;bottom:'+(12.5*g).toFixed(1)+'%;border-top:1px solid #E1DCD2"><span style="position:absolute;left:0;top:-8px;font-size:11px;font-weight:600;color:#7d776c">'+(10*g)+' %</span></div>';
   var poly=pts.map(function(pr,i){return ((i+0.5)/6*100).toFixed(2)+','+(100-yP(pr)).toFixed(2);}).join(' ');
   s+='<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;z-index:3;overflow:visible;pointer-events:none" aria-hidden="true"><polyline points="'+poly+'" fill="none" stroke="#E9773F" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"></polyline></svg>';
   pts.forEach(function(pr,i){var v=V[i+1]||{kunden:0,err:0,rueck:0},lx=((i+0.5)/6*100).toFixed(2),by=yP(pr).toFixed(2);
@@ -216,10 +271,11 @@ function telBoxAusgehend(){var c=telCfg(),r=telRange(TEL.vper),d=telGet('versuch
     s+='<div'+telTip(tip)+' style="position:absolute;left:'+lx+'%;bottom:'+by+'%;transform:translate(-50%,50%);width:11px;height:11px;border-radius:50%;background:#E9773F;border:2px solid #EFECE5;z-index:4;cursor:default"></div>'
       +'<div style="position:absolute;left:'+lx+'%;bottom:calc('+by+'% + 10px);transform:translateX(-50%);z-index:4;white-space:nowrap;font-size:10.5px;font-weight:700;color:#C2553A;background:#fff;border:1px solid #F3C6B5;border-radius:4px;padding:0 5px;pointer-events:none">'+telN(v.rueck)+' · '+Math.round(pr)+' %</div>';});
   s+='<div style="display:flex;gap:14px;width:100%;height:100%;position:relative;z-index:1">';
-  for(var m=1;m<=6;m++){var w=V[m]||{kunden:0,err:0,rueck:0},pq=w.kunden?100*w.err/w.kunden:0,hb=yP(pq).toFixed(2),nw=w.kunden-w.err;
-    var bt=m+'. Versuch\nKunden angerufen: '+telN(w.kunden)+'\nerreicht: '+telN(w.err)+' ('+Math.round(pq)+' %)\nnicht erreicht: '+telN(nw)+'\nrufen auf 800 / 831 zurück: '+telN(w.rueck)+' ('+Math.round(pts[m-1])+' %)';
-    s+='<div'+telTip(bt)+' style="flex:1;height:100%;position:relative;min-width:0;cursor:default"><div style="position:absolute;left:22%;right:22%;bottom:0;height:'+hb+'%;background:#A89C8E;border-radius:4px 4px 0 0"></div>'
-      +(w.kunden?'<div style="position:absolute;left:0;right:0;bottom:calc('+hb+'% + 4px);text-align:center;font-size:12px;font-weight:700;color:'+(m>=4?'#B5513A':'#1d1c1a')+'">'+Math.round(pq)+' %</div>':'')+'</div>';}
+  for(var m=1;m<=6;m++){var w=V[m]||{kunden:0,err:0,mb:0,rueck:0},pq=w.kunden?100*w.err/w.kunden:0,ab=(+w.err||0)+(+w.mb||0),pa=w.kunden?100*ab/w.kunden:0,hb=yP(pq).toFixed(2),hr=yP(pa).toFixed(2),nw=w.kunden-w.err;
+    var bt=m+'. Versuch\nKunden angerufen: '+telN(w.kunden)+'\nabgenommen inkl. Mailbox: '+telN(ab)+' ('+Math.round(pa)+' %)\nerreicht: '+telN(w.err)+' ('+Math.round(pq)+' %)\nnicht erreicht: '+telN(nw)+'\nrufen auf 800 / 831 zurück: '+telN(w.rueck)+' ('+Math.round(pts[m-1])+' %)';
+    s+='<div'+telTip(bt)+' style="flex:1;height:100%;position:relative;min-width:0;cursor:default"><div style="position:absolute;left:15%;right:15%;bottom:0;height:'+hr+'%;border:1.5px dashed #BDB4A6;border-bottom:0;border-radius:4px 4px 0 0;box-sizing:border-box;background:rgba(255,255,255,.35)"></div>'
+      +'<div style="position:absolute;left:26%;right:26%;bottom:0;height:'+hb+'%;background:#A89C8E;border-radius:4px 4px 0 0"></div>'
+      +(w.kunden?'<div style="position:absolute;left:0;right:0;bottom:calc('+hr+'% + 4px);text-align:center;font-size:12px;font-weight:700;color:'+(m>=4?'#B5513A':'#1d1c1a')+'">'+Math.round(pq)+' % <span style="font-weight:500;color:#7d776c">· '+Math.round(pa)+' %</span></div>':'')+'</div>';}
   s+='</div></div><div style="display:flex;gap:14px;margin:6px 0 0 46px;font-size:11px;color:#9a948a">';
   for(var l=1;l<=6;l++)s+='<span style="flex:1;text-align:center"><b style="color:#5f594e">'+l+'. Versuch</b> · '+telN((V[l]||{}).kunden||0)+' Kunden</span>';
   s+='</div></div>';
@@ -292,7 +348,7 @@ function telBoxErreichbarkeit(){var c=telCfg(),r=telRange('bisgestern'),aus=TEL.
   var extra={richtung:TEL.dir,versuch:aus?TEL.att:'alle'};if(ids)extra.employee_ids=ids;
   var d=telGet('heatmap',r,extra),mon=telMonName(r.von);
   // Filter wie das Performance-Diagramm (ddSelectHtml, Panel schwebt über dem Diagramm); Knopf in Entwurfs-Optik
-  var dd=function(id,lab,val,items,cur,fn,such){return ddSelectHtml(id,'',lab,items,cur,fn,such).replace(/<button[^>]*>[\s\S]*?<\/button>/,'<button type="button" onclick="ddToggle(\''+id+'\')" style="height:34px;padding:0 12px;border-radius:11px;border:1px solid #E4E0D6;background:#EFECE5;font:inherit;font-size:13px;font-weight:600;color:#1a1a18;cursor:pointer;display:inline-flex;align-items:center;gap:8px"><span style="color:#6b6b67;font-weight:500">'+lab+'</span>'+val+'</button>');};
+  var dd=telDd;
   var teamTxt=TEL.emp?esc(telVorname(telEmp(TEL.emp))):TEL.team||'Alle Teams',vTxt=TEL.att==='alle'?'Alle':TEL.att==='4'?'4.+ Versuch':TEL.att+'. Versuch';
   var agItems=[{head:'TEAMS'},{v:'T:',l:'Alle Teams'},{v:'T:SE',l:'SE'},{v:'T:SR',l:'SR'},{v:'T:OB',l:'OB'},{v:'T:VLC',l:'VLC'},{head:'AGENTS'}].concat(telAgentenListe().map(function(e){return {v:'E:'+e.id,l:telVorname(e),role:e.phase==='Onboarding'?'OB':(e.role||'')};}));
   var vItems=[['alle','Alle Versuche'],['1','1. Versuch'],['2','2. Versuch'],['3','3. Versuch'],['4','4.+ Versuch']].map(function(o){return {v:o[0],l:o[1]};});
@@ -341,7 +397,7 @@ function renderTelefonate(){var ma=document.getElementById('mainArea');if(!ma)re
 function selectTelefonate(){view='telefonate';bannerViewMode='telefonate';resetBannerRotation();renderSidebar();renderMain();}
 function telToggle(k){TEL[k]=!TEL[k];renderTelefonate();}
 function telSetHl(v){TEL.hl=v;renderTelefonate();}
-function telSetOrt(v){TEL.ort=v;renderTelefonate();}
+function telPickAgA(v){v=String(v);if(v.indexOf('E:')===0){TEL.aEmp=v.slice(2);TEL.aTeam='';}else{TEL.aTeam=v.slice(2);TEL.aEmp='';}renderTelefonate();}
 function telSetPer(v){TEL.per=v;renderTelefonate();}
 function telSetVper(v){TEL.vper=v;renderTelefonate();}
 function telSetEper(v){TEL.eper=v;renderTelefonate();}

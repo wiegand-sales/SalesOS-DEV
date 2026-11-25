@@ -119,7 +119,7 @@ await page.evaluate(`(function(){
     eingang_kacheln:{n:7229,ang:2872,gruppen:[{g:'800',n:7103,ang:2845},{g:'831',n:126,ang:27}],kern:{n:6673,ang:2856},von:[{employee_id:'e1',n:130}],gespraech_avg:134,warte_ang_avg:11,warte_auflegen_avg:42,
       gewartet:{u15:584,m15_59:2873,ab60:900},verpasst:{n:4357,angerufen:1497,durch:805,kein:1962,unbekannt:93},ausser:{n:556,ang:16,ab17:330,fr14:176,we:30,vor8:20},heute:{n:69,ueber2:55}},
     heatmap:[{wd:1,std:9,n:1673,ok:619},{wd:5,std:12,n:303,ok:127},{wd:2,std:10,n:12,ok:3}]};
-  sb.rpc=function(name,args){return Promise.resolve({data:name==='telefonate_daten'?D[args.p_art]:[],error:null});};
+  sb.rpc=function(name,args){return Promise.resolve({data:name==='telefonate_daten'?D[args.p_art]:name==='telefonate_stunden'?{tage:1,stunden:[{std:9,wv:30,err:14,mb:9,ne:7,klingel_ne:33,gz_aus:1233,ein_ang:0,gz_ein:0},{std:15,wv:28,err:15,mb:7,ne:6,klingel_ne:34,gz_aus:2180,ein_ang:1,gz_ein:95}]}:[],error:null});};
   TEL.cache={};
 })()`);
 await step("selectTelefonate()"); await page.waitForTimeout(400);
@@ -129,7 +129,7 @@ check('Telefonate: Box 1 zählt Wahlversuche + angenommene (218+5=223, 279+22=30
 check('Telefonate: Eingehend „ohne Nummer“ sichtbar', await page.evaluate("document.getElementById('mainArea').textContent.indexOf('ohne Nummer')>=0"));
 await step("telToggle('a')");
 check('Telefonate: Box zuklappbar', await page.evaluate("!TEL.a&&document.getElementById('mainArea').textContent.indexOf('zum Aufklappen klicken')>=0"));
-for (const s of ["telToggle('a')", "telSetPer('monat')", "telSetOrt('VLC')", "telSetOrt('')", "telSetHl('worst')", "telSetVper('jahr')", "telSetEper('wochen')", "telSetEper('monate')", "telSetDir('ein')", "telSetDir('aus')", "ddToggle('telVs')", "ddPick('telVs','telSetAtt','2')", "ddToggle('telAg')", "ddPick('telAg','telPickAgents','T:SE')", "ddPick('telAg','telPickAgents','E:e1')", "ddPick('telAg','telPickAgents','T:')", "selectSettingsSub('telefonate')"]) await step(s);
+for (const s of ["telToggle('a')", "telSetPer('monat')", "ddPick('telAgA','telPickAgA','T:VLC')", "ddPick('telAgA','telPickAgA','E:e1')", "telSetPer('woche')", "ddPick('telAgA','telPickAgA','T:')", "telSetHl('worst')", "telSetVper('jahr')", "telSetEper('wochen')", "telSetEper('monate')", "telSetDir('ein')", "telSetDir('aus')", "ddToggle('telVs')", "ddPick('telVs','telSetAtt','2')", "ddToggle('telAg')", "ddPick('telAg','telPickAgents','T:SE')", "ddPick('telAg','telPickAgents','E:e1')", "ddPick('telAg','telPickAgents','T:')", "selectSettingsSub('telefonate')"]) await step(s);
 check('Telefonate: Einstellungen › Telefonate', await page.evaluate("settingsView==='telefonate'&&!!document.getElementById('tel-grenze')"));
 
 // 8) Paralleles Laden: alle Zeilen vollstaendig und ohne Doppelte
