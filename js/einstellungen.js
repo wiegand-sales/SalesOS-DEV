@@ -936,7 +936,7 @@ function renderEinstellungen(){
   var ma=document.getElementById('mainArea');if(!ma)return;
   if(currentUserRole!=='admin'){ view='team'; wiegandView='overview'; renderSidebar(); renderTeam(); return; }
 
-  var STABS=[['users','Benutzer'],['roles','Rollen &amp; Rechte'],['kalender','Kalender'],['wizards','Wizards'],['integrations','Integrationen'],['data','Daten &amp; Backup']];
+  var STABS=[['users','Benutzer'],['roles','Rollen &amp; Rechte'],['kalender','Kalender'],['telefonate','Telefonate'],['wizards','Wizards'],['integrations','Integrationen'],['data','Daten &amp; Backup']];
   var curTab=STABS.find(function(t){return t[0]===settingsView;})||STABS[0];
   // Kopf wie auf der Mitarbeiterseite: Box mit Titel und Infozeile, darunter die Bereiche als Schalter, rechts Hinweise
   var _isDev=SUPABASE_URL.indexOf('kjlkneodyvfqgaukdjvb')>=0;
@@ -963,6 +963,7 @@ function renderEinstellungen(){
     +(settingsView==='roles'?buildRolesHtml():'')
     +(settingsView==='wizards'?buildWizardsHtml():'')
     +(settingsView==='kalender'?buildKalRulesHtml():'')
+    +(settingsView==='telefonate'?buildTelefonateSettingsHtml():'')
 
     +(settingsView==='integrations'?buildIntegrationsHtml():'')
     +(settingsView==='data'?buildDataHtml():'')

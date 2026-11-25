@@ -53,12 +53,12 @@ function bannerDots(active){return _bannerRotationOrder.map(function(m){var on=m
 function bannerDotsBar(active){return '<div style="display:flex;justify-content:center;gap:8px;position:absolute;bottom:16px;left:0;right:0">'+bannerDots(active)+'</div>';}
 function gbVisible(){return employees.filter(function(e){return !e.isPureCoach;});}
 // In Kalender und Aufgaben nur den Banner austauschen (die Seite selbst bleibt unberührt: Scroll, Ziehen, offene Leisten)
-function bannerSwapInPlace(){if(view!=='kalender'&&view!=='aufgaben')return false;var el=document.getElementById('gBan');if(!el)return false;el.outerHTML=buildGlobalBannerHtml(gbVisible());return true;}
+function bannerSwapInPlace(){if(view!=='kalender'&&view!=='aufgaben'&&view!=='telefonate')return false;var el=document.getElementById('gBan');if(!el)return false;el.outerHTML=buildGlobalBannerHtml(gbVisible());return true;}
 function _bannerRotateNext(){
   // Auf der Mitarbeiter-Detailseite wird ein eigenstaendiger Banner gezeigt (nicht der globale) -
   // ein Re-Render hier wuerde nur unnoetig die Seite zuruecksetzen (u.a. Scroll-Position), ohne
   // dass sich optisch etwas Sichtbares aendert. Rotation daher auf diesen Seiten pausieren.
-  if(view!=='team'&&view!=='coaching'&&view!=='activity'&&view!=='kalender'&&view!=='aufgaben')return;
+  if(view!=='team'&&view!=='coaching'&&view!=='activity'&&view!=='kalender'&&view!=='aufgaben'&&view!=='telefonate')return;
   var cur=bannerViewMode||'overview';
   var idx=_bannerRotationOrder.indexOf(cur);
   bannerViewMode=_bannerRotationOrder[(idx+1)%_bannerRotationOrder.length];
@@ -109,9 +109,9 @@ function reapplyChartGradient(chart,canvas,a1,a2){
   chart.update('none');
 }
 function updateRail(){
-  var area=view==='live'?'live':view==='aufgaben'?'aufgaben':view==='kalender'?'kalender':view==='dashboard'?'dashboard':view==='settings'?'settings':view==='activity'?'activity':view==='provisionTeam'?'provision':view==='coaching'?'coaching':(view==='team'&&wiegandView==='ziel')?'ziel':view==='team'?'overview':_railArea;
+  var area=view==='live'?'live':view==='telefonate'?'telefonate':view==='aufgaben'?'aufgaben':view==='kalender'?'kalender':view==='dashboard'?'dashboard':view==='settings'?'settings':view==='activity'?'activity':view==='provisionTeam'?'provision':view==='coaching'?'coaching':(view==='team'&&wiegandView==='ziel')?'ziel':view==='team'?'overview':_railArea;
   _railArea=area;
-  var MAPID={aufgaben:'nav-team-aufgaben',kalender:'nav-team-kalender',dashboard:'nav-team-dashboard',overview:'nav-team-overview',coaching:'nav-team-coaching',provision:'nav-team-provision',live:'nav-team-live',activity:'nav-coaching-activity',ziel:'nav-team-ziel',settings:'nav-settings'};
+  var MAPID={telefonate:'nav-team-telefonate',aufgaben:'nav-team-aufgaben',kalender:'nav-team-kalender',dashboard:'nav-team-dashboard',overview:'nav-team-overview',coaching:'nav-team-coaching',provision:'nav-team-provision',live:'nav-team-live',activity:'nav-coaching-activity',ziel:'nav-team-ziel',settings:'nav-settings'};
   Object.keys(SB_AREAS).forEach(function(k){
     var b=document.getElementById('rail-'+k);if(!b)return;
     b.classList.toggle('on',k===area&&view!=='emp');
@@ -122,7 +122,7 @@ function updateRail(){
   var st=document.getElementById('sbPanelSettings'),sf=document.getElementById('sbPanelStaff'),sp=document.getElementById('sbPanelSpacer');
   var showSet=(area==='settings'&&view==='settings');
   if(st){st.style.display=showSet?'':'none';
-    if(showSet){var L=[['users','Benutzer'],['roles','Rollen &amp; Rechte'],['kalender','Kalender'],['wizards','Wizards'],['integrations','Integrationen'],['data','Daten &amp; Backup']];
+    if(showSet){var L=[['users','Benutzer'],['roles','Rollen &amp; Rechte'],['kalender','Kalender'],['telefonate','Telefonate'],['wizards','Wizards'],['integrations','Integrationen'],['data','Daten &amp; Backup']];
       st.innerHTML=L.map(function(x){return '<a href="#" class="'+(settingsView===x[0]?'on':'')+'" onclick="selectSettingsSub(\''+x[0]+'\');return false">'+x[1]+'</a>';}).join('');}}
   if(sf)sf.style.display=showSet?'none':'flex';
   if(sp)sp.style.display=showSet?'':'none';
@@ -188,6 +188,7 @@ function renderSidebar(){
   var nto=document.getElementById('nav-team-overview');if(nto)nto.classList.toggle('active',view==='team'&&wiegandView==='overview');
   var ntc=document.getElementById('nav-team-coaching');if(ntc)ntc.classList.toggle('active',view==='coaching'&&coachFilterView==='overview');
   var ntz=document.getElementById('nav-team-ziel');if(ntz)ntz.classList.toggle('active',view==='team'&&wiegandView==='ziel');
+  var ntt=document.getElementById('nav-team-telefonate');if(ntt)ntt.classList.toggle('active',view==='telefonate');
   var nc=document.getElementById('nav-coaching');if(nc)nc.classList.toggle('active',view==='coaching'||isTeamTab||view==='activity'||view==='provisionTeam');
   var nct=document.getElementById('nav-coaching-team');if(nct)nct.classList.toggle('active',isTeamTab);
   var na=document.getElementById('nav-coaching-activity');if(na)na.classList.toggle('active',view==='activity');
@@ -316,7 +317,7 @@ function toggleWiegandNav(){
   selectWiegandSub(wiegandView);
 }
 function selectWiegandSub(v){wiegandView=v;view='team';if(v==='ziel'){bannerViewMode='ziel';resetBannerRotation();}if(v==='overview'){bannerViewMode='performance';resetBannerRotation();}renderSidebar();renderMain();}
-function renderMain(){recomputeTeamTargets();if(view==='dashboard'){var _nd=document.getElementById('nav-team-dashboard');if(_nd&&_nd.style.display==='none'){view='team';wiegandView='overview';renderSidebar();}}if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching'){view='kalender';renderKalender();}else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else if(view==='live')renderLive();else renderEmpDetail();}
+function renderMain(){recomputeTeamTargets();if(view==='dashboard'){var _nd=document.getElementById('nav-team-dashboard');if(_nd&&_nd.style.display==='none'){view='team';wiegandView='overview';renderSidebar();}}if(view==='dashboard')renderDashboard();else if(view==='team')renderTeam();else if(view==='coaching'){view='kalender';renderKalender();}else if(view==='activity')renderActivity();else if(view==='provisionTeam')renderProvisionTeam();else if(view==='settings')renderEinstellungen();else if(view==='kalender')renderKalender();else if(view==='aufgaben')renderAufgaben();else if(view==='live')renderLive();else if(view==='telefonate')renderTelefonate();else renderEmpDetail();}
 function navState(){return {view:view,wiegandView:typeof wiegandView!=='undefined'?wiegandView:null,selectedEmp:typeof selectedEmp!=='undefined'?selectedEmp:null,activeTab:typeof activeTab!=='undefined'?activeTab:null,settingsView:typeof settingsView!=='undefined'?settingsView:null,coachFilterView:typeof coachFilterView!=='undefined'?coachFilterView:null};}
 function navKeyOf(st){
   // nur die fuer die jeweilige Ansicht relevanten Teile vergleichen

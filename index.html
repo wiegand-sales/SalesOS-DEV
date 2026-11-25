@@ -13,7 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
 <!-- feste Versionen mit Pruefsumme: veraenderte Dateien vom CDN werden vom Browser abgelehnt -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="css/board.css?v=20261124m">
+<link rel="stylesheet" href="css/board.css?v=20261125a">
 </head>
 <body>
 <div id="stg-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#BA7517;color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-weight:600;font-family:inherit">⚠ STAGING · <a href="https://wiegand-sales.github.io/CoachingOS/" style="color:#fff;text-decoration:underline">→ Live</a></div><style id="stg-banner-style"></style>
@@ -89,6 +89,7 @@
     <div class="rl-sep"></div>
     <button class="rl-btn" id="rail-dashboard" onclick="selectDashboard()"><i class="ti ti-layout-dashboard" style="color:#F08566"></i><span class="rl-tip">Dashboard</span></button>
     <button class="rl-btn" id="rail-overview" onclick="selectWiegandSub('overview')"><i class="ti ti-chart-bar"></i><span class="rl-tip">Performance</span></button>
+    <button class="rl-btn" id="rail-telefonate" onclick="selectTelefonate()"><i class="ti ti-phone"></i><span class="rl-tip">Telefonate</span></button>
     <button class="rl-btn" id="rail-ziel" onclick="selectWiegandSub('ziel')"><i class="ti ti-target"></i><span class="rl-tip">Zielvereinbarung</span></button>
     <button class="rl-btn" id="rail-provision" onclick="selectProvisionTeam()"><i class="ti ti-coin-euro"></i><span class="rl-tip">Provision</span></button>
     <div class="rl-sep"></div>
@@ -127,6 +128,7 @@
     <div id="wiegandSubNav" class="wiegand-subnav">
       <div class="sb-item sb-navsub" id="nav-team-dashboard" onclick="selectDashboard()">Dashboard</div>
       <div class="sb-item sb-navsub" id="nav-team-overview" onclick="selectWiegandSub('overview')">Performance</div>
+      <div class="sb-item sb-navsub" id="nav-team-telefonate" onclick="selectTelefonate()">Telefonate</div>
       
       <div class="sb-item sb-navsub" id="nav-team-provision" onclick="selectProvisionTeam()">Provision</div>
       <div class="sb-item sb-navsub" id="nav-team-live" onclick="selectLive()">Live</div>
@@ -448,22 +450,23 @@
 
 
 <!-- Reihenfolge wichtig: config zuerst, dann Bereichsdateien (nur Funktionen), zuletzt der Lade-Code -->
-<script src="config.js?v=20261124m"></script>
-<script src="shared/figuren.js?v=20261124m"></script>
-<script src="js/core.js?v=20261124m"></script>
-<script src="js/kpi.js?v=20261124m"></script>
-<script src="js/ui.js?v=20261124m"></script>
-<script src="js/zielvereinbarung.js?v=20261124m"></script>
-<script src="js/uebersicht.js?v=20261124m"></script>
-<script src="js/mitarbeiter.js?v=20261124m"></script>
-<script src="js/popup.js?v=20261124m"></script>
-<script src="js/dashboard.js?v=20261124m"></script>
-<script src="js/provision.js?v=20261124m"></script>
-<script src="js/einstellungen.js?v=20261124m"></script>
-<script src="js/live-menue.js?v=20261124m"></script>
-<script src="js/import.js?v=20261124m"></script>
-<script src="js/kalender.js?v=20261124m"></script>
-<script src="js/aufgaben.js?v=20261124m"></script>
-<script src="js/start.js?v=20261124m"></script>
+<script src="config.js?v=20261125a"></script>
+<script src="shared/figuren.js?v=20261125a"></script>
+<script src="js/core.js?v=20261125a"></script>
+<script src="js/kpi.js?v=20261125a"></script>
+<script src="js/ui.js?v=20261125a"></script>
+<script src="js/zielvereinbarung.js?v=20261125a"></script>
+<script src="js/uebersicht.js?v=20261125a"></script>
+<script src="js/mitarbeiter.js?v=20261125a"></script>
+<script src="js/popup.js?v=20261125a"></script>
+<script src="js/dashboard.js?v=20261125a"></script>
+<script src="js/provision.js?v=20261125a"></script>
+<script src="js/einstellungen.js?v=20261125a"></script>
+<script src="js/live-menue.js?v=20261125a"></script>
+<script src="js/import.js?v=20261125a"></script>
+<script src="js/kalender.js?v=20261125a"></script>
+<script src="js/aufgaben.js?v=20261125a"></script>
+<script src="js/telefonate.js?v=20261125a"></script>
+<script src="js/start.js?v=20261125a"></script>
 </body>
 </html>

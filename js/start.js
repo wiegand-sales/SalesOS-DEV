@@ -2,7 +2,7 @@
 // Wird als LETZTE Datei geladen; alle Funktionen sind dann schon da.
 // ── Wächter (eigener, neuer Code – nicht aus der alten index.html): fehlt eine Programmdatei, nicht halb starten ──
 (function(){
-  var fehlt=[['config.js',typeof SUPABASE_URL],['shared/figuren.js',typeof kidSvg],['js/core.js',typeof initAppAfterLogin],['js/kpi.js',typeof workHoursForDate],['js/ui.js',typeof renderMain],['js/zielvereinbarung.js',typeof zielTreeHtml],['js/uebersicht.js',typeof renderTeam],['js/mitarbeiter.js',typeof renderEmpDetail],['js/popup.js',typeof puInit],['js/dashboard.js',typeof renderDashboard],['js/provision.js',typeof calculateProvision],['js/einstellungen.js',typeof renderEinstellungen],['js/live-menue.js',typeof renderLive],['js/import.js',typeof importCSV],['js/kalender.js',typeof renderKalender],['js/aufgaben.js',typeof renderAufgaben]].filter(function(x){return x[1]==='undefined';}).map(function(x){return x[0];});
+  var fehlt=[['config.js',typeof SUPABASE_URL],['shared/figuren.js',typeof kidSvg],['js/core.js',typeof initAppAfterLogin],['js/kpi.js',typeof workHoursForDate],['js/ui.js',typeof renderMain],['js/zielvereinbarung.js',typeof zielTreeHtml],['js/uebersicht.js',typeof renderTeam],['js/mitarbeiter.js',typeof renderEmpDetail],['js/popup.js',typeof puInit],['js/dashboard.js',typeof renderDashboard],['js/provision.js',typeof calculateProvision],['js/einstellungen.js',typeof renderEinstellungen],['js/live-menue.js',typeof renderLive],['js/import.js',typeof importCSV],['js/kalender.js',typeof renderKalender],['js/aufgaben.js',typeof renderAufgaben],['js/telefonate.js',typeof renderTelefonate]].filter(function(x){return x[1]==='undefined';}).map(function(x){return x[0];});
   if(!fehlt.length)return;
   var zeige=function(){var d=document.createElement('div');d.id='sosLadeFehler';d.setAttribute('role','alert');
     d.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(29,28,26,.55);display:flex;align-items:center;justify-content:center;font-family:Urbanist,sans-serif';
@@ -103,8 +103,10 @@ var PERSON_FN=[['agent','Sales Agent'],['sdl','SDL'],['coach','Coach'],['salesop
 var _savingNewAppUser=false;
 var _deletingAppUser=false;
 document.addEventListener('click',function(){document.querySelectorAll('.dd-panel').forEach(function(p){p.style.display='none';});document.querySelectorAll('.dd-raised').forEach(function(c){c.style.zIndex='';c.classList.remove('dd-raised');});});
-var _bannerRotationOrder=['performance','overview','ziel','coaching','activity','kalender','aufgaben'];
-var BANNER_TITLES={performance:'Performance',overview:'Overview',ziel:'Zielvereinbarung',coaching:'Coaching',activity:'Aktivitäten',kalender:'Kalender',aufgaben:'Aufgaben'};
+var _bannerRotationOrder=['performance','overview','ziel','coaching','activity','kalender','aufgaben','telefonate'];
+var BANNER_TITLES={performance:'Performance',overview:'Overview',ziel:'Zielvereinbarung',coaching:'Coaching',activity:'Aktivitäten',kalender:'Kalender',aufgaben:'Aufgaben',telefonate:'Telefonate'};
+// Menü „Telefonate“ (js/telefonate.js): offen/zu je Box, Filter, Zwischenspeicher der Auswertungen
+var TEL={a:true,e:true,c:true,d:true,hl:'top',ort:'',per:'tag',vper:'monat',eper:'tage',dir:'aus',att:'alle',team:'',emp:'',tv:false,tf:false,cache:{},_rt:null};
 var _bannerRotationTimer=null;
 var overviewToDate=null;   // Bis-Datum (Overview Performance-Tabelle), null = Standard (Monatsende/heute)
 var coachCalYear=null, coachCalMonthIdx=null; // Kalender-Monatsnavigation SFP Coaching (init. beim ersten Rendern auf aktuellen Monat)
@@ -422,7 +424,7 @@ if(typeof Chart!=='undefined'){
 
 
 // ── Menueleiste: Symbolleiste + Panel ──
-var SB_AREAS={dashboard:'Dashboard',overview:'Performance',coaching:'Coaching',kalender:'Kalender',aufgaben:'Aufgaben',provision:'Provision',live:'Live',activity:'Aktivitäten',ziel:'Zielvereinbarung',settings:'Einstellungen'};
+var SB_AREAS={dashboard:'Dashboard',overview:'Performance',telefonate:'Telefonate',coaching:'Coaching',kalender:'Kalender',aufgaben:'Aufgaben',provision:'Provision',live:'Live',activity:'Aktivitäten',ziel:'Zielvereinbarung',settings:'Einstellungen'};
 var _railArea='overview';
 try{applySidebarState();}catch(e){}
 
@@ -473,6 +475,7 @@ window.addEventListener('popstate',function(ev){
       if(view==='team'&&wiegandView==='ziel')bannerViewMode='ziel';
       else if(view==='team'&&wiegandView==='overview')bannerViewMode='performance';
       else if(view==='dashboard'||view==='provisionTeam')bannerViewMode='overview';
+      else if(view==='telefonate')bannerViewMode='telefonate';
       if(typeof resetBannerRotation==='function')resetBannerRotation();
     }
     renderSidebar();renderMain();
@@ -574,6 +577,7 @@ setInterval(dshLivePull,3*60*1000);
 // Werte je Bereich und Rolle: 'E' = bearbeiten, 'S' = ansehen, '-' = kein Zugriff. Admins immer 'E'.
 var PERM_ROWS=[
   {key:'performance',label:'Dashboard & Performance-Tabelle',group:'Bereiche',fixed:true},
+  {key:'telefonate',label:'Telefonate (3CX)',group:'Bereiche',seeOnly:true,nav:['nav-team-telefonate']},
   {key:'ziel',label:'Zielvereinbarung & Ziele',group:'Bereiche',tables:['zielvereinbarung','goals','kpi_targets','employee_kpi_targets'],nav:['nav-team-ziel']},
   {key:'provision',label:'Provision & Gehälter',group:'Bereiche',seeOnly:true,nav:['nav-team-provision'],tabs:['provision']},
   {key:'provCoaches',label:'Provision: auch Coaches sehen',group:'Bereiche',seeOnly:true},
@@ -590,8 +594,8 @@ var PERM_ROWS=[
   {key:'histEdit',label:'Bewertungen & Kommentare nachträglich ändern oder löschen',group:'Verwaltung',editOrNone:true},
   {key:'settings',label:'Einstellungen',group:'Verwaltung',adminOnly:true}
 ];
-var PERM_DEFAULT={coach:{salary:'S',kalEdit:'E',provEdit:'-',provCoaches:'-',performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
-                  viewer:{salary:'S',kalEdit:'-',provEdit:'-',provCoaches:'-',performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
+var PERM_DEFAULT={coach:{telefonate:'S',salary:'S',kalEdit:'E',provEdit:'-',provCoaches:'-',performance:'S',ziel:'E',provision:'S',coaching:'E',qa:'E',dev:'E',timeline:'E',activity:'S',stammdaten:'E',histEdit:'E',settings:'-'},
+                  viewer:{telefonate:'S',salary:'S',kalEdit:'-',provEdit:'-',provCoaches:'-',performance:'S',ziel:'S',provision:'S',coaching:'S',qa:'S',dev:'S',timeline:'S',activity:'S',stammdaten:'S',histEdit:'-',settings:'-'}};
 // ══ Wizards ══════════════════════════════════════════════════════════════════
 // Alt-Einstellung des Tagesüberblicks (settings.wizardSettings) bleibt erhalten und wird beim Speichern mitgeführt.
 var WIZ_DEFAULT={on:true,time:'13:00',roles:{admin:true,coach:true,viewer:false},slides:{opt:true,marge:true,cr:true,worst:true},minOpt:5};

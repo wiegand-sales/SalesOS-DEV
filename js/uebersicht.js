@@ -616,6 +616,7 @@ function buildGlobalBannerInner(visible){
   var _bm=bannerViewMode||'overview';
   if(_bm==='kalender'){if(!KAL.cur)KAL.cur=kalRef();_kalOnIdx=null;return kalBanner();}
   if(_bm==='aufgaben')return aufgBannerHtml(aufgAll());
+  if(_bm==='telefonate')return telBannerHtml();
   function avgOptTagZielvereinbarungLocal(){
     var zmk=today().slice(0,7);
     var zRec=zielStore[zmk]||{};

@@ -107,6 +107,31 @@ await step("selectEmp('e1')"); await step("openEmpDocument('d1')"); await page.w
 check('Dokumente: PDF öffnet im Board', await page.evaluate("!!document.querySelector('#docPrevOv iframe')"));
 await step("closeDocPreview()");
 
+// 7b) Menü „Telefonate“: Banner-Folie + vier Boxen mit Testdaten (Prüfwerte 24.11.2026)
+await page.evaluate(`(function(){
+  var D={
+    trichter:{erstanruf:25357,err1:11572,nicht_err:13785,rueck:2275,angen:1271,verloren:1004,gleich_1:1038,median_min:14},
+    agenten:[{employee_id:'e1',wv:218,err:93,mb:67,ne:58,wg:20,klingel_ne:24,gz_aus:11280,ein_ang:5,gz_ein:360},
+             {employee_id:'e2',wv:279,err:116,mb:64,ne:99,wg:30,klingel_ne:17,gz_aus:10260,ein_ang:22,gz_ein:2820}],
+    versuche:{versuche:[{n:1,kunden:25357,err:11572,mb:6957,wg:3046,na:3782,rueck:1426,median_std:null,gespraech_avg:137},{n:2,kunden:9618,err:2242,mb:3506,wg:2008,na:1862,rueck:488,median_std:2.49,gespraech_avg:129}],
+      ab4:{anrufe:5872,err:545,mb:1908,wg:2398,na:1021,median_std:2.39,gespraech_avg:115},gesamt:{kunden:25357,err:15251,err1:11572,err2:2242,err3:892,err4:545,nie:10106,nur_einmal:4167,rueckrufer:2275}},
+    eingang:[{k:today(),n:448,a800:247,a831:4}],
+    eingang_kacheln:{n:7229,ang:2872,gruppen:[{g:'800',n:7103,ang:2845},{g:'831',n:126,ang:27}],kern:{n:6673,ang:2856},von:[{employee_id:'e1',n:130}],gespraech_avg:134,warte_ang_avg:11,warte_auflegen_avg:42,
+      gewartet:{u15:584,m15_59:2873,ab60:900},verpasst:{n:4357,angerufen:1497,durch:805,kein:1962,unbekannt:93},ausser:{n:556,ang:16,ab17:330,fr14:176,we:30,vor8:20},heute:{n:69,ueber2:55}},
+    heatmap:[{wd:1,std:9,n:1673,ok:619},{wd:5,std:12,n:303,ok:127},{wd:2,std:10,n:12,ok:3}]};
+  sb.rpc=function(name,args){return Promise.resolve({data:name==='telefonate_daten'?D[args.p_art]:[],error:null});};
+  TEL.cache={};
+})()`);
+await step("selectTelefonate()"); await page.waitForTimeout(400);
+check('Telefonate: Ansicht und Banner-Folie 8', await page.evaluate("view==='telefonate'&&bannerViewMode==='telefonate'&&_bannerRotationOrder.indexOf('telefonate')===7&&document.getElementById('gBan').textContent.indexOf('Erstanruf')>=0"));
+check('Telefonate: vier Boxen', await page.evaluate("document.querySelectorAll('#mainArea section').length") === 4);
+check('Telefonate: Box 1 zählt Wahlversuche + angenommene (218+5=223, 279+22=301)', await page.evaluate("document.getElementById('mainArea').textContent.indexOf('301')>=0&&document.getElementById('mainArea').textContent.indexOf('223')>=0"));
+check('Telefonate: Eingehend „ohne Nummer“ sichtbar', await page.evaluate("document.getElementById('mainArea').textContent.indexOf('ohne Nummer')>=0"));
+await step("telToggle('a')");
+check('Telefonate: Box zuklappbar', await page.evaluate("!TEL.a&&document.getElementById('mainArea').textContent.indexOf('zum Aufklappen klicken')>=0"));
+for (const s of ["telToggle('a')", "telSetPer('monat')", "telSetOrt('VLC')", "telSetOrt('')", "telSetHl('worst')", "telSetVper('jahr')", "telSetEper('wochen')", "telSetEper('monate')", "telSetDir('ein')", "telSetDir('aus')", "telToggleTv()", "telSetAtt('2')", "telToggleTf()", "telSetTeam('SE')", "telSetEmp('e1')", "selectSettingsSub('telefonate')"]) await step(s);
+check('Telefonate: Einstellungen › Telefonate', await page.evaluate("settingsView==='telefonate'&&!!document.getElementById('tel-grenze')"));
+
 // 8) Paralleles Laden: alle Zeilen vollstaendig und ohne Doppelte
 const par = await page.evaluate(`(async function(){
   var rows=[];for(var i=0;i<2500;i++)rows.push({employee_id:'e'+(i%20),date:'d'+String(i).padStart(5,'0')});

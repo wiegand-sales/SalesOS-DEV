@@ -723,6 +723,7 @@ function loadSettingsFromSupabase(){
       if(r.key==='liveKey')settings.liveKey=r.value||'';
       if(r.key==='powerHourConfig'){try{settings.powerHourConfig=JSON.parse(r.value||'{}')||{};}catch(e){settings.powerHourConfig={};}}
       if(r.key==='liveConfig'){try{settings.liveConfig=JSON.parse(r.value||'{}')||{};}catch(e){settings.liveConfig={};}}
+      if(r.key==='telefonateConfig'){try{settings.telefonateConfig=JSON.parse(r.value||'{}')||{};}catch(e){settings.telefonateConfig={};}}
       if(r.key==='rolePermissions'||r.key==='kalenderRules'||r.key==='wizardSettings'||r.key==='wizardConfig'||r.key==='dashboardTargets'||r.key==='ftpUnmatched'||r.key==='ftpRange'||r.key==='permPersons'){ try{ settings[r.key]=JSON.parse(r.value||'null'); }catch(e){} }
       if(r.key.indexOf('ziel_nl_')===0)zielNlTargets[r.key.slice(8)]=parseFloat(r.value)||0;
     });
